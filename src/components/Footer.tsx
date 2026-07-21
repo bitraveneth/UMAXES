@@ -3,102 +3,121 @@ import Link from "next/link";
 import FooterSubscribe from "@/components/FooterSubscribe";
 import { logos } from "@/lib/assets";
 
-const menu = [
-  { href: "/#products", label: "Products" },
-  { href: "/#news", label: "News & Events" },
+const shopLinks = [
+  { href: "/shop", label: "Shop" },
+  { href: "/#news", label: "News" },
   { href: "/#features", label: "Why UMAXES" },
-  { href: "/support", label: "Support" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/support/verify", label: "Product verify" },
-  { href: "/contact", label: "Contact us" },
 ] as const;
 
+const supportLinks = [
+  { href: "/support", label: "Support" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/support/verify", label: "Verify" },
+  { href: "/contact", label: "Contact" },
+] as const;
+
+function FooterLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
+  const className =
+    "font-display text-sm text-white/80 transition hover:text-white";
+
+  if (href.startsWith("/#")) {
+    return (
+      <a href={href} className={className}>
+        {label}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={className}>
+      {label}
+    </Link>
+  );
+}
+
 export default function Footer() {
+  const year = new Date().getFullYear();
+
   return (
     <div className="footer-hang-wrap">
       <footer className="relative bg-umx-orange text-white">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-white/10 blur-3xl"
-        />
-
-        <div className="relative mx-auto max-w-[1200px] px-4 pt-20 sm:px-6 sm:pt-28">
-          <div className="grid grid-cols-3 items-start gap-3 sm:gap-8 lg:gap-14">
-            <div className="min-w-0">
+        <div className="relative mx-auto max-w-[1200px] px-5 pt-16 pb-10 sm:px-8 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
+          <div className="grid gap-12 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-14 lg:grid-cols-[1.2fr_0.9fr_1.15fr] lg:gap-x-16">
+            <div className="min-w-0 sm:col-span-2 lg:col-span-1">
               <Link href="/" className="inline-block">
-                <div className="relative h-8 w-36 sm:h-10 sm:w-48 lg:h-11 lg:w-56">
+                <div className="relative h-9 w-40 sm:h-10 sm:w-48">
                   <Image
-                    src={logos.orangeTransparent}
+                    src={logos.creamTransparent}
                     alt="UMAXES"
                     fill
-                    className="object-contain object-left brightness-0 invert"
-                    sizes="224px"
-                    priority
+                    className="object-contain object-left"
+                    sizes="192px"
                   />
                 </div>
               </Link>
-              <p className="mt-3 max-w-[16rem] font-body text-[0.7rem] leading-relaxed text-white/80 sm:mt-4 sm:text-sm lg:text-base">
+              <p className="mt-5 max-w-[22rem] font-body text-[0.95rem] leading-relaxed text-white/88">
                 Adult vape brand behind HOOKAMAX — bold flavor, clean design,
                 and a ritual built for 21+.
               </p>
+              <div className="mt-6 max-w-[22rem] border-t border-white/15 pt-5">
+                <p className="font-display text-sm font-semibold tracking-[0.08em] text-white">
+                  © {year} UMAXES
+                </p>
+                <p className="mt-1.5 font-body text-[0.7rem] leading-relaxed text-white/50">
+                  Adults 21+ only. Nicotine is an addictive chemical.
+                </p>
+              </div>
             </div>
 
-            <div className="min-w-0">
-              <ul className="flex flex-col gap-1 font-display text-[0.7rem] sm:gap-1.5 sm:text-sm lg:text-[0.95rem]">
-                {menu.map((item) => {
-                  const className =
-                    "footer-menu-link group relative inline-flex items-center gap-2 py-1 text-white/80 transition duration-300 hover:text-white";
-                  const inner = (
-                    <>
-                      <span
-                        aria-hidden
-                        className="h-px w-0 bg-white transition-all duration-300 group-hover:w-3"
-                      />
-                      <span className="transition duration-300 group-hover:translate-x-0.5">
-                        {item.label}
-                      </span>
-                    </>
-                  );
-                  return (
+            <div className="grid grid-cols-2 gap-8 sm:gap-10">
+              <div className="min-w-0">
+                <p className="font-display text-[0.68rem] font-semibold tracking-[0.18em] text-white/50 uppercase">
+                  Shop
+                </p>
+                <ul className="mt-4 space-y-2.5">
+                  {shopLinks.map((item) => (
                     <li key={item.href}>
-                      {item.href.startsWith("/#") ? (
-                        <a href={item.href} className={className}>
-                          {inner}
-                        </a>
-                      ) : (
-                        <Link href={item.href} className={className}>
-                          {inner}
-                        </Link>
-                      )}
+                      <FooterLink href={item.href} label={item.label} />
                     </li>
-                  );
-                })}
-              </ul>
+                  ))}
+                </ul>
+              </div>
+              <div className="min-w-0">
+                <p className="font-display text-[0.68rem] font-semibold tracking-[0.18em] text-white/50 uppercase">
+                  Help
+                </p>
+                <ul className="mt-4 space-y-2.5">
+                  {supportLinks.map((item) => (
+                    <li key={item.href}>
+                      <FooterLink href={item.href} label={item.label} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 sm:col-span-2 lg:col-span-1">
               <FooterSubscribe />
             </div>
           </div>
-
-          <div className="mt-10 border-t border-white/20 pt-4 pb-5 text-center sm:mt-12 sm:pt-5 sm:pb-6">
-            <p className="font-display text-[0.65rem] tracking-wide text-white/70 sm:text-[0.7rem]">
-              © {new Date().getFullYear()} UMAXES. All rights reserved.
-            </p>
-          </div>
         </div>
 
-        {/* 80% on orange · 20% always hangs below · page ends there */}
         <div className="footer-brand-band" aria-hidden>
           <svg
             className="footer-hollow-brand"
-            viewBox="0 0 1000 78"
+            viewBox="0 0 1000 110"
             preserveAspectRatio="none"
             role="presentation"
           >
             <text
               x="0"
-              y="62"
+              y="100"
               textLength="1000"
               lengthAdjust="spacingAndGlyphs"
               className="footer-hollow-brand__text"

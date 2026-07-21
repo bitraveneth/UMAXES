@@ -1,4 +1,5 @@
 import AgeGate from "@/components/AgeGate";
+import BrandFilm from "@/components/BrandFilm";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -15,6 +16,7 @@ export default function Home() {
       <main className="flex-1">
         <HeroProgress />
         <ProductShowcase />
+        <BrandFilm />
         <Features />
         <NewsEvents />
         <Testimonials />

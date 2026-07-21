@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Support() {
   return (
     <section id="support" className="bg-umx-cream-warm px-4 py-20 sm:px-6 sm:py-28">
@@ -19,12 +21,12 @@ export default function Support() {
           >
             Email support
           </a>
-          <a
-            href="#products"
+          <Link
+            href="/shop"
             className="rounded-full border border-black px-6 py-3 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange"
           >
-            View product
-          </a>
+            View shop
+          </Link>
         </div>
       </div>
     </section>

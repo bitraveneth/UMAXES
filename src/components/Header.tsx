@@ -10,7 +10,7 @@ import { useCart } from "@/context/CartContext";
 import { logos } from "@/lib/assets";
 
 const sectionNav = [
-  { href: "/#products", label: "Products", id: "products" },
+  { href: "/shop", label: "Shop", id: "shop" },
   { href: "/#news", label: "News", id: "news" },
   { href: "/#features", label: "Why UMAXES", id: "features" },
 ] as const;
@@ -178,6 +178,7 @@ export default function Header() {
                 fill
                 className="object-contain object-left"
                 sizes="160px"
+                quality={70}
                 priority
               />
             </Link>
@@ -186,28 +187,32 @@ export default function Header() {
               className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 lg:flex"
               aria-label="Primary"
             >
-              {sectionNav.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className={navLinkClass(
-                    pathname === "/" && activeSection === item.id
-                  )}
-                >
-                  {item.label}
-                </a>
-              ))}
+              {sectionNav.map((item) => {
+                const active =
+                  item.id === "shop"
+                    ? pathname === "/shop" || pathname.startsWith("/product")
+                    : pathname === "/" && activeSection === item.id;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={navLinkClass(active)}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
               <span aria-hidden className="mx-1.5 h-4 w-px bg-black/15" />
               <SupportDropdown pathname={pathname} />
             </nav>
 
             <div className="relative z-50 flex items-center gap-2 sm:gap-3">
-              <a
-                href="/#products"
+              <Link
+                href="/shop"
                 className="hidden rounded-full border border-black bg-transparent px-5 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:bg-umx-orange hover:!text-white sm:inline-flex"
               >
                 Shop now
-              </a>
+              </Link>
 
               <button
                 type="button"
@@ -279,26 +284,30 @@ export default function Header() {
             className="mx-auto flex max-w-[1200px] flex-col gap-1"
             aria-label="Mobile"
           >
-            {sectionNav.map((item, i) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={closeMenu}
-                className="flex items-center justify-between rounded-xl px-4 py-3.5 font-display text-lg font-semibold tracking-[0.04em] text-black uppercase transition hover:text-umx-orange"
-                style={{
-                  transitionDelay: open ? `${80 + i * 30}ms` : "0ms",
-                }}
-              >
-                {item.label}
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    pathname === "/" && activeSection === item.id
-                      ? "bg-umx-orange"
-                      : "bg-umx-cream-deep"
-                  }`}
-                />
-              </a>
-            ))}
+            {sectionNav.map((item, i) => {
+              const active =
+                item.id === "shop"
+                  ? pathname === "/shop" || pathname.startsWith("/product")
+                  : pathname === "/" && activeSection === item.id;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="flex items-center justify-between rounded-xl px-4 py-3.5 font-display text-lg font-semibold tracking-[0.04em] text-black uppercase transition hover:text-umx-orange"
+                  style={{
+                    transitionDelay: open ? `${80 + i * 30}ms` : "0ms",
+                  }}
+                >
+                  {item.label}
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      active ? "bg-umx-orange" : "bg-umx-cream-deep"
+                    }`}
+                  />
+                </Link>
+              );
+            })}
 
             <button
               type="button"
@@ -332,13 +341,13 @@ export default function Header() {
               </div>
             )}
 
-            <a
-              href="/#products"
+            <Link
+              href="/shop"
               onClick={closeMenu}
               className="mt-4 rounded-full border border-black px-5 py-4 text-center font-display text-base font-semibold text-black transition hover:border-umx-orange hover:bg-umx-orange hover:!text-white"
             >
               Shop now
-            </a>
+            </Link>
           </nav>
         </div>
       </div>

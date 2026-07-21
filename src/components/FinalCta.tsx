@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function FinalCta() {
   return (
     <section className="bg-black px-4 py-20 sm:px-6 sm:py-28">
@@ -7,16 +9,15 @@ export default function FinalCta() {
             Ready when you are.
           </h2>
           <p className="mt-2 max-w-md font-body text-lg text-umx-cream/90">
-            Adults 21+. One device. Straightforward checkout coming soon —
-            reserve your look now.
+            Adults 21+. One device. Browse the UMAXES Shop and check out when ready.
           </p>
         </div>
-        <a
-          href="#products"
+        <Link
+          href="/shop"
           className="rounded border border-umx-cream px-7 py-3.5 font-display text-sm font-semibold text-umx-cream transition hover:border-umx-orange hover:bg-umx-orange hover:text-umx-cream"
         >
           Shop UMAXES One
-        </a>
+        </Link>
       </div>
     </section>
   );

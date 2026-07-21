@@ -25,8 +25,8 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             Home
           </Link>
           <span className="mx-2">/</span>
-          <Link href="/#products" className="transition hover:text-umx-orange">
-            Products
+          <Link href="/shop" className="transition hover:text-umx-orange">
+            Shop
           </Link>
           <span className="mx-2">/</span>
           <span className="text-black">{flavor.name}</span>
@@ -43,6 +43,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               fill
               priority
               className="object-cover"
+              quality={70}
               sizes="(max-width: 1024px) 100vw, 600px"
             />
           </div>

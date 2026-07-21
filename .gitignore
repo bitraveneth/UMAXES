@@ -50,8 +50,29 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local databases
+*.db
+*.db-journal
+
 # vercel
 .vercel
 
 # typescript
 next-env.d.ts
+
+.vercel
+.env*
+
+# prisma generated client (regenerate with prisma generate)
+# keep in repo for simpler installs — or generate in postinstall
+
+
+/src/generated/prisma
+
+# local agent / audit caches
+.agents/
+.claude/
+.windsurf/
+.lighthouse/
+.lh-chrome*/
+skills-lock.json

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor, product } from "@/lib/assets";
@@ -60,13 +61,13 @@ export default function CartDrawer() {
               <p className="mt-2 max-w-xs font-body text-sm text-black/65">
                 Pick a flavor and add it to your cart.
               </p>
-              <a
-                href="#products"
+              <Link
+                href="/shop"
                 onClick={() => setOpen(false)}
                 className="mt-6 rounded-full bg-umx-orange px-6 py-3 font-display text-sm font-semibold text-white transition hover:bg-umx-orange-deep"
               >
-                Shop flavors
-              </a>
+                Shop UMAXES
+              </Link>
             </div>
           ) : (
             <ul className="space-y-4">
@@ -154,12 +155,13 @@ export default function CartDrawer() {
                 ${total}.00
               </span>
             </div>
-            <button
-              type="button"
-              className="w-full rounded-full bg-umx-orange py-3.5 font-display text-sm font-semibold text-white transition hover:bg-umx-orange-deep"
+            <Link
+              href="/checkout"
+              onClick={() => setOpen(false)}
+              className="block w-full rounded-full bg-umx-orange py-3.5 text-center font-display text-sm font-semibold text-white transition hover:bg-umx-orange-deep"
             >
               Checkout
-            </button>
+            </Link>
             <p className="mt-3 text-center font-display text-[0.65rem] tracking-wide text-black/45 uppercase">
               Adults 21+ only · Nicotine is addictive
             </p>

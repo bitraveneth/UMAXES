@@ -73,10 +73,10 @@ export default async function BlogPostPage({ params }: Props) {
 
             <div className="mt-12 border-t border-black/8 pt-8">
               <Link
-                href="/#products"
+                href="/shop"
                 className="inline-flex rounded-full bg-black px-7 py-3.5 font-display text-sm font-semibold text-umx-cream transition hover:bg-umx-orange hover:text-white"
               >
-                Shop flavors
+                Shop UMAXES
               </Link>
             </div>
           </div>

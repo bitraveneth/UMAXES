@@ -18,7 +18,7 @@ export const blogPosts: BlogPost[] = [
       "From Peach Mango to Blue Razz Ice — the full lineup is live, built for adults who want hookah depth in a disposable.",
     date: "2026-06-18",
     dateLabel: "Jun 18, 2026",
-    image: "/images/hero/01.png",
+    image: "/images/hero/01.webp",
     body: [
       "HOOKAMAX arrives with nine flavor profiles tuned for long sessions — juicy stone fruit, iced classics, and night-out mixes that stay rich from first draw to last.",
       "Each device pairs a 40ML tank with LIT MESH and dual MTL/DL airflow, so you get the ritual without the hookah setup.",
@@ -33,7 +33,7 @@ export const blogPosts: BlogPost[] = [
       "Limited adult-only tasting evenings across select cities. RSVP for flavor flights and early access drops.",
     date: "2026-07-02",
     dateLabel: "Jul 2, 2026",
-    image: "/images/hero/02.png",
+    image: "/images/hero/02.webp",
     body: [
       "This summer we’re hosting intimate Session Nights — adult-only (21+) pop-ups with flavor flights, merch, and early access to seasonal drops.",
       "Expect a lounge atmosphere, not a trade-show floor. Bring ID. Spaces are limited.",
@@ -48,7 +48,7 @@ export const blogPosts: BlogPost[] = [
       "Even heat, cleaner taste, and consistency that holds across 40K MTL puffs — a closer look at the coil.",
     date: "2026-05-28",
     dateLabel: "May 28, 2026",
-    image: "/images/hero/03.png",
+    image: "/images/hero/03.webp",
     body: [
       "LIT MESH is built for even heat and a smoother draw — the difference you feel when flavor doesn’t fade halfway through the device.",
       "Paired with 0.6Ω resistance and a 1300mAh rechargeable battery, HOOKAMAX is tuned for adults who notice the details.",

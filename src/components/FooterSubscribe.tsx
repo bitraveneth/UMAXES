@@ -13,20 +13,23 @@ export default function FooterSubscribe() {
   }
 
   return (
-    <div className="w-full">
-      <p className="font-display text-[0.6rem] font-semibold tracking-[0.16em] text-white uppercase sm:text-xs sm:tracking-[0.18em]">
+    <div className="w-full max-w-md lg:ml-auto lg:max-w-sm">
+      <p className="font-display text-[0.68rem] font-semibold tracking-[0.18em] text-white/50 uppercase">
         Stay in the loop
       </p>
-      <p className="mt-2 hidden font-body text-sm leading-relaxed text-white/75 sm:mt-3 sm:block">
-        Flavor drops and session news in your inbox.
+      <p className="mt-3 font-body text-sm leading-relaxed text-white/80">
+        Flavor drops and session news — straight to your inbox.
       </p>
 
       {done ? (
-        <p className="mt-3 rounded-full bg-white/15 px-3 py-2.5 font-display text-[0.65rem] font-semibold text-white ring-1 ring-white/25 sm:mt-5 sm:px-5 sm:py-3 sm:text-sm">
+        <p className="mt-5 font-display text-sm font-semibold text-white">
           You’re on the list.
         </p>
       ) : (
-        <form onSubmit={onSubmit} className="mt-3 flex flex-col gap-2 sm:mt-5 sm:gap-2.5">
+        <form
+          onSubmit={onSubmit}
+          className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-stretch"
+        >
           <label htmlFor="footer-email" className="sr-only">
             Email address
           </label>
@@ -36,12 +39,13 @@ export default function FooterSubscribe() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full rounded-full border border-white/25 bg-white/10 px-3 py-2 font-body text-[0.7rem] text-white outline-none placeholder:text-white/45 transition focus:border-white focus:bg-white/15 sm:px-4 sm:py-3 sm:text-sm"
+            placeholder="you@email.com"
+            autoComplete="email"
+            className="min-w-0 flex-1 rounded-full border border-white/25 bg-white/10 px-4 py-3 font-body text-sm text-white outline-none placeholder:text-white/45 transition focus:border-white focus:bg-white/15"
           />
           <button
             type="submit"
-            className="w-full rounded-full bg-white px-3 py-2 font-display text-[0.7rem] font-semibold !text-umx-orange transition hover:bg-umx-cream sm:px-5 sm:py-3 sm:text-sm"
+            className="shrink-0 rounded-full bg-white px-5 py-3 font-display text-sm font-semibold text-umx-orange transition hover:bg-umx-cream"
           >
             Subscribe
           </button>

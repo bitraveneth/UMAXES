@@ -56,33 +56,35 @@ export default function AgeGate() {
         <Image
           src={logos.orangeTransparent}
           alt="UMAXES"
-          width={280}
-          height={48}
-          className="mx-auto mb-6 h-auto w-48 object-contain"
+          width={192}
+          height={33}
+          className="mx-auto mb-5 h-auto w-40 object-contain sm:mb-6 sm:w-48"
+          sizes="192px"
+          quality={70}
           priority
         />
         <h2
           id="age-gate-title"
-          className="font-display text-2xl font-bold tracking-tight sm:text-[1.65rem]"
+          className="font-display text-[1.65rem] font-bold tracking-tight sm:text-[1.65rem]"
         >
           Are you 21 or older?
         </h2>
-        <p className="mt-3 font-body text-base text-umx-cream/80">
+        <p className="mt-3 font-body text-[0.95rem] leading-relaxed text-umx-cream/80 sm:text-base">
           You must be of legal age to enter this site. Nicotine products are for
           adult use only.
         </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="mt-7 flex flex-col gap-2.5 sm:mt-8 sm:flex-row sm:justify-center sm:gap-3">
           <button
             type="button"
             onClick={confirm}
-            className="rounded bg-umx-orange px-6 py-3 font-display text-sm font-semibold text-umx-cream transition hover:bg-umx-orange-deep"
+            className="rounded bg-umx-orange px-6 py-3.5 font-display text-sm font-semibold text-umx-cream transition hover:bg-umx-orange-deep sm:py-3"
           >
             Yes, I am 21+
           </button>
           <button
             type="button"
             onClick={exit}
-            className="rounded border border-umx-cream/35 px-6 py-3 font-display text-sm font-semibold text-umx-cream transition hover:border-umx-cream"
+            className="rounded border border-umx-cream/35 px-6 py-3.5 font-display text-sm font-semibold text-umx-cream transition hover:border-umx-cream sm:py-3"
           >
             No, exit
           </button>

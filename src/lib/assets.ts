@@ -1,28 +1,41 @@
 export const heroImages = [
-  "/images/hero/01.png",
-  "/images/hero/02.png",
-  "/images/hero/03.png",
-  "/images/hero/04.png",
+  "/images/hero/01.webp",
+  "/images/hero/02.webp",
+  "/images/hero/03.webp",
+  "/images/hero/04.webp",
 ] as const;
 
 export const productImages = [
-  "/images/product/01.png",
-  "/images/product/02.png",
-  "/images/product/03.png",
-  "/images/product/04.png",
-  "/images/product/05.png",
-  "/images/product/06.png",
-  "/images/product/07.png",
-  "/images/product/08.png",
-  "/images/product/09.png",
-  "/images/product/10.png",
+  "/images/product/01.webp",
+  "/images/product/02.webp",
+  "/images/product/03.webp",
+  "/images/product/04.webp",
+  "/images/product/05.webp",
+  "/images/product/06.webp",
+  "/images/product/07.webp",
+  "/images/product/08.webp",
+  "/images/product/09.webp",
+  "/images/product/10.webp",
+] as const;
+
+export const productPackImages = [
+  "/images/product/pack-01.webp",
+  "/images/product/pack-02.webp",
+  "/images/product/pack-03.webp",
+  "/images/product/pack-04.webp",
+  "/images/product/pack-05.webp",
+  "/images/product/pack-06.webp",
+  "/images/product/pack-07.webp",
+  "/images/product/pack-08.webp",
+  "/images/product/pack-09.webp",
+  "/images/product/pack-10.webp",
 ] as const;
 
 export const testimonialImages = [
-  "/images/testimonials/01.png",
-  "/images/testimonials/02.png",
-  "/images/testimonials/03.png",
-  "/images/testimonials/04.png",
+  "/images/testimonials/01.webp",
+  "/images/testimonials/02.webp",
+  "/images/testimonials/03.webp",
+  "/images/testimonials/04.webp",
 ] as const;
 
 export const logos = {
@@ -30,6 +43,9 @@ export const logos = {
   creamOnInk: "/images/logo/cream-on-ink.png",
   creamOnOrange: "/images/logo/cream-on-orange.png",
   orangeTransparent: "/images/logo/orange-transparent.png",
+  creamTransparent: "/images/logo/cream-transparent.png",
+  markOrange: "/images/logo/umaxes-mark-orange.png",
+  markCream: "/images/logo/umaxes-mark-cream.png",
 } as const;
 
 export const product = {
@@ -38,6 +54,8 @@ export const product = {
   currency: "USD",
   tagline: "Premium hookah-inspired disposables.",
   deviceImage: "/images/product/device-transparent.png",
+  deviceDuoImage: "/images/product/device-duo.webp",
+  featuresHero: "/images/product/features-hero.webp",
 } as const;
 
 export const productSpecs = [
@@ -91,14 +109,25 @@ export const productSpecs = [
   },
 ] as const;
 
+export const flavorProfiles = [
+  "Tropical",
+  "Ice",
+  "Berry",
+  "Mint",
+  "Candy",
+] as const;
+
+export type FlavorProfile = (typeof flavorProfiles)[number];
+
 export const flavors = [
   {
     id: "peach-mango",
     name: "Peach Mango",
     tagline: "Juicy stone fruit · Tropical",
     description: "Ripe peach meets sweet mango in a smooth, sunny draw.",
-    image: "/images/product/01.png",
+    image: "/images/product/01.webp",
     price: 29,
+    profile: "Tropical",
     accent: "#e8891a",
   },
   {
@@ -106,8 +135,9 @@ export const flavors = [
     name: "Watermelon Ice",
     tagline: "Fresh melon · Cool finish",
     description: "Crisp watermelon with a chilled, refreshing exhale.",
-    image: "/images/product/02.png",
+    image: "/images/product/02.webp",
     price: 29,
+    profile: "Ice",
     accent: "#e05a6a",
   },
   {
@@ -115,8 +145,9 @@ export const flavors = [
     name: "Fcuking Fab",
     tagline: "Bold mix · Candy bright",
     description: "A playful peach-citrus blend with candy-sweet energy.",
-    image: "/images/product/03.png",
-    price: 29,
+    image: "/images/product/03.webp",
+    price: 32,
+    profile: "Candy",
     accent: "#f06aa8",
   },
   {
@@ -124,8 +155,9 @@ export const flavors = [
     name: "Strawberry Watermelon Ice",
     tagline: "Berry · Melon · Ice",
     description: "Strawberry and watermelon layered with a cool kick.",
-    image: "/images/product/04.png",
-    price: 29,
+    image: "/images/product/04.webp",
+    price: 32,
+    profile: "Berry",
     accent: "#d6455d",
   },
   {
@@ -133,8 +165,9 @@ export const flavors = [
     name: "Miami Sunset",
     tagline: "Tropical blend · Warm glow",
     description: "Citrus and tropical fruit in a warm sunset profile.",
-    image: "/images/product/05.png",
+    image: "/images/product/05.webp",
     price: 29,
+    profile: "Tropical",
     accent: "#ff7a33",
   },
   {
@@ -142,8 +175,9 @@ export const flavors = [
     name: "Cool Mint",
     tagline: "Crisp · Clean · Icy",
     description: "Pure mint clarity with a sharp, cooling finish.",
-    image: "/images/product/06.png",
-    price: 29,
+    image: "/images/product/06.webp",
+    price: 27,
+    profile: "Mint",
     accent: "#2f8f7b",
   },
   {
@@ -151,8 +185,9 @@ export const flavors = [
     name: "Blue Razz Ice",
     tagline: "Blue raspberry · Frost",
     description: "Tangy blue raspberry wrapped in cool ice notes.",
-    image: "/images/product/07.png",
-    price: 29,
+    image: "/images/product/07.webp",
+    price: 32,
+    profile: "Ice",
     accent: "#3b6fd9",
   },
   {
@@ -160,8 +195,9 @@ export const flavors = [
     name: "Grape Ice",
     tagline: "Ripe grape · Chill",
     description: "Classic grape sweetness with a frosty edge.",
-    image: "/images/product/08.png",
+    image: "/images/product/08.webp",
     price: 29,
+    profile: "Ice",
     accent: "#7a3db8",
   },
   {
@@ -169,8 +205,9 @@ export const flavors = [
     name: "Blueberry Ice",
     tagline: "Deep berry · Cool",
     description: "Lush blueberry flavor with a refreshing ice finish.",
-    image: "/images/product/09.png",
-    price: 29,
+    image: "/images/product/09.webp",
+    price: 35,
+    profile: "Berry",
     accent: "#3d5aab",
   },
 ] as const;

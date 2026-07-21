@@ -183,51 +183,91 @@ a {
   animation: flavor-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Footer giant hollow wordmark — white outline on brand orange */
 /*
-  UMAXES full-stretch mark:
-  - 80% sits on orange
-  - 20% always hangs below (reserved in page flow — no extra scroll past it)
+  Footer brand mark sits flush to the bottom edge.
+  Bottom ~15% of the letters is clipped (not visible).
 */
 :root {
-  --footer-mark-h: clamp(4.5rem, 14vw, 11rem);
+  --footer-mark-h: clamp(11rem, 34vw, 24rem);
 }
 
 .footer-hang-wrap {
-  /* exactly the hanging slice — page ends at letter bottoms */
-  padding-bottom: calc(var(--footer-mark-h) * 0.2);
-  overflow: visible;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.footer-hang-wrap > footer {
+  overflow: hidden;
 }
 
 .footer-brand-band {
   line-height: 0;
   width: 100%;
   height: var(--footer-mark-h);
-  margin-bottom: calc(var(--footer-mark-h) * -0.2);
+  /* pull 15% past the footer bottom so that slice is clipped away */
+  margin-bottom: calc(var(--footer-mark-h) * -0.15);
+  overflow: visible;
+  cursor: default;
 }
 
 .footer-hollow-brand {
   display: block;
   width: 100%;
   height: 100%;
-  /* keeps the hanging 20% readable on cream */
-  filter: drop-shadow(0 0 0.5px rgba(61, 22, 5, 0.35));
 }
 
 .footer-hollow-brand__text {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.7);
-  stroke-width: 2.25;
+  fill: transparent;
+  stroke: rgba(255, 255, 255, 0.72);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
-  font-size: 70px;
+  font-size: 100px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
+  transition:
+    fill 0.45s ease,
+    stroke 0.45s ease,
+    stroke-width 0.45s ease;
+}
+
+.footer-brand-band:hover .footer-hollow-brand__text {
+  fill: var(--umx-cream, #fdf6e3);
+  stroke: var(--umx-cream, #fdf6e3);
+  stroke-width: 1.5;
 }
 
 @media (min-width: 768px) {
   .footer-hollow-brand__text {
     stroke-width: 3;
+  }
+
+  .footer-brand-band:hover .footer-hollow-brand__text {
+    stroke-width: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-hollow-brand__text {
+    transition: none;
+  }
+}
+
+@keyframes badge-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float-badge-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -242,5 +282,9 @@ a {
 
   .flavor-card-enter {
     animation: none;
+  }
+
+  #film video {
+    transition: none !important;
   }
 }

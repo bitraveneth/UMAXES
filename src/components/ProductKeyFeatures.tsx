@@ -10,7 +10,7 @@ import {
   Zap,
   ArrowLeftRight,
 } from "lucide-react";
-import { productSpecs } from "@/lib/assets";
+import { product, productSpecs } from "@/lib/assets";
 
 const iconMap: Record<(typeof productSpecs)[number]["icon"], LucideIcon> = {
   puffs: Wind,
@@ -50,7 +50,7 @@ export default function ProductKeyFeatures() {
             <div className="h-full overflow-hidden rounded-[1.75rem] shadow-[0_22px_55px_rgba(61,22,5,0.12)] ring-1 ring-black/5">
               <div className="relative aspect-[4/5] w-full lg:aspect-auto lg:h-full lg:min-h-[680px]">
                 <Image
-                  src="/images/product/features-hero.png"
+                  src={product.featuresHero}
                   alt="HOOKAMAX device and packaging"
                   fill
                   className="object-cover object-center"

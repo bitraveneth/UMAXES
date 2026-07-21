@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Lora, Poppins } from "next/font/google";
 import Providers from "@/components/Providers";
 import "./globals.css";
@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   title: "UMAXES — One device. Done right.",
   description:
     "UMAXES single-product adult vape experience. For adults 21+. Nicotine is an addictive chemical.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#FF5B04",
 };
 
 export default function RootLayout({

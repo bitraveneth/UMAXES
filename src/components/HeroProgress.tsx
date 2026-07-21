@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { heroImages } from "@/lib/assets";
 
@@ -36,6 +37,7 @@ const slides = [
 export default function HeroProgress() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [loaded, setLoaded] = useState<Set<number>>(() => new Set([0]));
   const startX = useRef(0);
   const startY = useRef(0);
   const tracking = useRef(false);
@@ -44,6 +46,15 @@ export default function HeroProgress() {
     const n = slides.length;
     setIndex(((next % n) + n) % n);
   }, []);
+
+  useEffect(() => {
+    setLoaded((prev) => {
+      if (prev.has(index)) return prev;
+      const next = new Set(prev);
+      next.add(index);
+      return next;
+    });
+  }, [index]);
 
   useEffect(() => {
     if (paused) return;
@@ -79,12 +90,11 @@ export default function HeroProgress() {
   return (
     <section
       id="top"
-      className="bg-umx-cream px-3 pb-4 pt-[8.5rem] sm:px-4 sm:pb-5 sm:pt-[9rem] md:px-5 md:pb-6"
+      className="bg-umx-cream px-3 pb-4 pt-[7.75rem] sm:px-4 sm:pb-5 sm:pt-[9rem] md:px-5 md:pb-6"
       aria-label="UMAXES hero"
     >
-      {/* Floating box slideshow — almost full screen, cream frame shows the curve */}
       <div
-        className="relative mx-auto h-[calc(100svh-9.75rem)] min-h-[520px] w-full max-w-[1680px] overflow-hidden rounded-[1.75rem] bg-umx-orange-ink shadow-[0_22px_55px_rgba(61,22,5,0.16)] touch-pan-y select-none sm:rounded-[2.15rem] md:h-[calc(100svh-10.5rem)] md:rounded-[2.5rem]"
+        className="relative mx-auto h-[calc(100svh-8.75rem)] min-h-[420px] w-full max-w-[1680px] overflow-hidden rounded-[1.5rem] bg-umx-orange-ink shadow-[0_22px_55px_rgba(61,22,5,0.16)] touch-pan-y select-none sm:min-h-[520px] sm:rounded-[2.15rem] md:h-[calc(100svh-10.5rem)] md:rounded-[2.5rem]"
         aria-roledescription="carousel"
         onPointerEnter={() => setPaused(true)}
         onPointerLeave={() => setPaused(false)}
@@ -94,7 +104,6 @@ export default function HeroProgress() {
           tracking.current = false;
         }}
       >
-        {/* Full-bleed slides */}
         {slides.map((slide, i) => (
           <div
             key={slide.src}
@@ -103,37 +112,39 @@ export default function HeroProgress() {
             }`}
             aria-hidden={i !== index}
           >
-            <Image
-              src={slide.src}
-              alt=""
-              fill
-              priority={i === 0}
-              sizes="(max-width: 1400px) 100vw, 1400px"
-              className="object-cover object-center"
-            />
+            {loaded.has(i) && (
+              <Image
+                src={slide.src}
+                alt=""
+                fill
+                priority={i === 0}
+                fetchPriority={i === 0 ? "high" : "auto"}
+                quality={70}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
+                className="object-cover object-center"
+              />
+            )}
           </div>
         ))}
 
-        {/* Soft scrim for left copy */}
-        <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-r from-umx-orange-ink/65 via-umx-orange-ink/20 to-transparent max-md:from-umx-orange-ink/55 max-md:via-umx-orange-ink/30" />
+        <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-r from-umx-orange-ink/65 via-umx-orange-ink/20 to-transparent max-md:from-umx-orange-ink/60 max-md:via-umx-orange-ink/35" />
 
-        {/* Left copy */}
-        <div className="absolute inset-y-0 left-0 z-[3] flex w-full max-w-2xl flex-col justify-center px-6 sm:px-10 md:px-14 lg:px-20">
+        <div className="absolute inset-y-0 left-0 z-[3] flex w-full max-w-2xl flex-col justify-end px-5 pb-16 sm:justify-center sm:px-10 sm:pb-0 md:px-14 lg:px-20">
           <h1
             key={active.title}
-            className="font-display text-[clamp(2.75rem,6.5vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.03em] text-umx-cream animate-[hero-copy-in_0.55s_ease-out]"
+            className="max-w-[14ch] font-display text-[clamp(2.1rem,8.5vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.03em] text-umx-cream animate-[hero-copy-in_0.55s_ease-out] sm:max-w-none"
           >
             {active.title}
           </h1>
           <p
             key={active.subtitle}
-            className="mt-4 max-w-md font-body text-base text-umx-cream/90 sm:text-xl animate-[hero-copy-in_0.55s_ease-out]"
+            className="mt-3 max-w-sm font-body text-[0.95rem] leading-snug text-umx-cream/90 sm:mt-4 sm:max-w-md sm:text-xl animate-[hero-copy-in_0.55s_ease-out]"
           >
             {active.subtitle}
           </p>
-          <a
-            href="#products"
-            className="group mt-8 inline-flex w-fit items-center gap-3 rounded-full bg-umx-cream px-6 py-3.5 font-display text-sm font-semibold tracking-[0.04em] text-black shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition duration-300 hover:bg-umx-orange hover:text-white hover:shadow-[0_12px_32px_rgba(255,91,4,0.35)] sm:mt-10 sm:gap-3.5 sm:px-8 sm:py-4 sm:text-base"
+          <Link
+            href="/shop"
+            className="group mt-6 inline-flex w-fit items-center gap-3 rounded-full bg-umx-cream px-5 py-3 font-display text-sm font-semibold tracking-[0.04em] text-black shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition duration-300 hover:bg-umx-orange hover:text-white hover:shadow-[0_12px_32px_rgba(255,91,4,0.35)] sm:mt-10 sm:gap-3.5 sm:px-8 sm:py-4 sm:text-base"
             onPointerDown={(e) => e.stopPropagation()}
           >
             <span>{active.cta}</span>
@@ -154,14 +165,13 @@ export default function HeroProgress() {
                 <path d="M13 6l6 6-6 6" />
               </svg>
             </span>
-          </a>
+          </Link>
         </div>
 
-        {/* Arrows */}
         <button
           type="button"
           aria-label="Previous slide"
-          className="absolute top-1/2 left-3 z-[4] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-umx-cream/15 font-display text-xl text-umx-cream backdrop-blur-md transition hover:bg-umx-cream/25 sm:left-5 sm:h-11 sm:w-11"
+          className="absolute top-1/2 left-3 z-[4] hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-umx-cream/15 font-display text-xl text-umx-cream backdrop-blur-md transition hover:bg-umx-cream/25 sm:left-5 sm:flex sm:h-11 sm:w-11"
           onClick={() => goTo(index - 1)}
           onPointerDown={(e) => e.stopPropagation()}
         >
@@ -170,16 +180,15 @@ export default function HeroProgress() {
         <button
           type="button"
           aria-label="Next slide"
-          className="absolute top-1/2 right-3 z-[4] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-umx-cream/15 font-display text-xl text-umx-cream backdrop-blur-md transition hover:bg-umx-cream/25 sm:right-5 sm:h-11 sm:w-11"
+          className="absolute top-1/2 right-3 z-[4] hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-umx-cream/15 font-display text-xl text-umx-cream backdrop-blur-md transition hover:bg-umx-cream/25 sm:right-5 sm:flex sm:h-11 sm:w-11"
           onClick={() => goTo(index + 1)}
           onPointerDown={(e) => e.stopPropagation()}
         >
           ›
         </button>
 
-        {/* Progress buttons */}
         <div
-          className="absolute bottom-5 left-1/2 z-[5] flex -translate-x-1/2 items-center gap-2.5 sm:bottom-7 sm:gap-3"
+          className="absolute bottom-4 left-1/2 z-[5] flex -translate-x-1/2 items-center gap-2 sm:bottom-7 sm:gap-3"
           role="tablist"
           aria-label="Hero slides"
           onPointerDown={(e) => e.stopPropagation()}
@@ -191,10 +200,10 @@ export default function HeroProgress() {
               role="tab"
               aria-selected={i === index}
               aria-label={`Go to slide ${i + 1}`}
-              className={`relative h-2.5 overflow-hidden rounded-full transition-all duration-300 ${
+              className={`relative h-2 overflow-hidden rounded-full transition-all duration-300 sm:h-2.5 ${
                 i === index
-                  ? "w-11 bg-umx-cream/25 ring-1 ring-umx-cream/40 sm:w-12"
-                  : "w-2.5 bg-umx-cream/50 hover:scale-110 hover:bg-umx-cream"
+                  ? "w-9 bg-umx-cream/25 ring-1 ring-umx-cream/40 sm:w-12"
+                  : "w-2 bg-umx-cream/50 hover:scale-110 hover:bg-umx-cream sm:w-2.5"
               }`}
               onClick={(e) => {
                 e.stopPropagation();

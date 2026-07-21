@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { testimonialImages } from "@/lib/assets";
 
 const reviews = [
@@ -27,43 +27,56 @@ const reviews = [
   },
 ] as const;
 
+const AUTO_MS = 4200;
+
+function ReviewCard({
+  review,
+  sizes,
+  className = "",
+}: {
+  review: (typeof reviews)[number];
+  sizes: string;
+  className?: string;
+}) {
+  return (
+    <article
+      className={`overflow-hidden rounded-[1.5rem] bg-umx-cream shadow-[0_14px_40px_rgba(61,22,5,0.06)] ring-1 ring-black/5 ${className}`}
+    >
+      <div className="relative aspect-[2/3] overflow-hidden bg-umx-cream-warm">
+        <Image
+          src={review.src}
+          alt={`Review by ${review.name}`}
+          fill
+          className="object-contain object-center"
+          sizes={sizes}
+        />
+      </div>
+      <div className="border-t border-black/5 px-4 py-4 text-center sm:px-5 sm:py-5">
+        <p className="font-display text-sm font-bold tracking-tight text-black">
+          {review.name}
+        </p>
+        <p className="mt-1.5 font-body text-sm leading-relaxed text-black/60">
+          “{review.quote}”
+        </p>
+      </div>
+    </article>
+  );
+}
+
 export default function Testimonials() {
   const [index, setIndex] = useState(0);
-  const scrollerRef = useRef<HTMLDivElement>(null);
   const n = reviews.length;
 
-  function go(next: number) {
-    const i = ((next % n) + n) % n;
-    setIndex(i);
-    const el = scrollerRef.current;
-    if (!el) return;
-    const card = el.children[i] as HTMLElement | undefined;
-    card?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }
-
   useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
+    const id = window.setTimeout(() => {
+      setIndex((prev) => (prev + 1) % n);
+    }, AUTO_MS);
+    return () => window.clearTimeout(id);
+  }, [index, n]);
 
-    const onScroll = () => {
-      const cards = Array.from(el.children) as HTMLElement[];
-      const mid = el.scrollLeft + el.clientWidth / 2;
-      let best = 0;
-      let bestDist = Infinity;
-      cards.forEach((card, i) => {
-        const center = card.offsetLeft + card.offsetWidth / 2;
-        const dist = Math.abs(center - mid);
-        if (dist < bestDist) {
-          bestDist = dist;
-          best = i;
-        }
-      });
-      setIndex(best);
-    };
-
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, []);
+  function go(next: number) {
+    setIndex(((next % n) + n) % n);
+  }
 
   return (
     <section
@@ -81,104 +94,83 @@ export default function Testimonials() {
             Reviews
           </p>
           <h2 className="mt-3 font-display text-[clamp(2.25rem,5vw,3.75rem)] font-extrabold leading-[0.95] tracking-[-0.035em] text-black">
-            Real people.
-            <span className="text-umx-orange"> Real sessions.</span>
+            <span className="block">Real people.</span>
+            <span className="block text-umx-orange">Real sessions.</span>
           </h2>
           <p className="mt-4 font-body text-base text-black/60 sm:text-lg">
             Lifestyle moments from the HOOKAMAX community.
           </p>
         </header>
 
-        {/* Desktop grid — portrait frames match image ratio */}
+        {/* Desktop grid */}
         <div className="mt-14 hidden gap-5 md:mt-16 md:grid md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
           {reviews.map((review) => (
-            <article
+            <ReviewCard
               key={review.src}
-              className="group overflow-hidden rounded-[1.5rem] bg-umx-cream shadow-[0_14px_40px_rgba(61,22,5,0.06)] ring-1 ring-black/5 transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_24px_55px_rgba(61,22,5,0.12)]"
-            >
-              <div className="relative aspect-[2/3] overflow-hidden bg-umx-cream-warm">
-                <Image
-                  src={review.src}
-                  alt={`Review by ${review.name}`}
-                  fill
-                  className="object-contain object-center transition duration-700 group-hover:scale-[1.03]"
-                  sizes="(max-width: 1024px) 50vw, 280px"
-                />
-              </div>
-              <div className="border-t border-black/5 px-4 py-4 text-center sm:px-5 sm:py-5">
-                <p className="font-display text-sm font-bold tracking-tight text-black">
-                  {review.name}
-                </p>
-                <p className="mt-1.5 font-body text-sm leading-relaxed text-black/60">
-                  “{review.quote}”
-                </p>
-              </div>
-            </article>
+              review={review}
+              sizes="(max-width: 1024px) 50vw, 280px"
+              className="group transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_24px_55px_rgba(61,22,5,0.12)]"
+            />
           ))}
         </div>
 
-        {/* Mobile snap carousel — same portrait fit */}
-        <div className="mt-14 md:hidden">
-          <div
-            ref={scrollerRef}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {reviews.map((review) => (
-              <article
-                key={review.src}
-                className="w-[78%] shrink-0 snap-center overflow-hidden rounded-[1.5rem] bg-umx-cream shadow-[0_14px_40px_rgba(61,22,5,0.06)] ring-1 ring-black/5"
-              >
-                <div className="relative aspect-[2/3] overflow-hidden bg-umx-cream-warm">
-                  <Image
-                    src={review.src}
-                    alt={`Review by ${review.name}`}
-                    fill
-                    className="object-contain object-center"
-                    sizes="80vw"
+        {/* Mobile — auto one-by-one with progress bars */}
+        <div className="mt-12 md:hidden">
+          <div className="relative mx-auto w-full max-w-[22rem]">
+            {/* Story-style progress tracks */}
+            <div className="mb-4 flex gap-1.5" aria-hidden>
+              {reviews.map((_, i) => (
+                <div
+                  key={i}
+                  className="relative h-1 flex-1 overflow-hidden rounded-full bg-black/10"
+                >
+                  <span
+                    key={i === index ? `${index}-fill` : `${i}-static`}
+                    className={`absolute inset-y-0 left-0 block rounded-full bg-umx-orange ${
+                      i < index ? "w-full" : i > index ? "w-0" : ""
+                    }`}
+                    style={
+                      i === index
+                        ? {
+                            width: "0%",
+                            animation: `hero-progress ${AUTO_MS}ms linear forwards`,
+                          }
+                        : undefined
+                    }
                   />
                 </div>
-                <div className="border-t border-black/5 px-4 py-4 text-center">
-                  <p className="font-display text-sm font-bold tracking-tight text-black">
-                    {review.name}
-                  </p>
-                  <p className="mt-1.5 font-body text-sm leading-relaxed text-black/60">
-                    “{review.quote}”
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-5 flex items-center justify-center gap-3">
-            <button
-              type="button"
-              aria-label="Previous review"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 font-display text-lg text-black transition hover:border-umx-orange hover:text-umx-orange"
-              onClick={() => go(index - 1)}
-            >
-              ‹
-            </button>
-            <div className="flex gap-2" role="tablist" aria-label="Reviews">
-              {reviews.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  aria-label={`Go to review ${i + 1}`}
-                  className={`h-2 rounded-full transition-all ${
-                    i === index ? "w-7 bg-umx-orange" : "w-2 bg-black/20"
-                  }`}
-                  onClick={() => go(i)}
-                />
               ))}
             </div>
-            <button
-              type="button"
-              aria-label="Next review"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 font-display text-lg text-black transition hover:border-umx-orange hover:text-umx-orange"
-              onClick={() => go(index + 1)}
-            >
-              ›
-            </button>
+
+            <div className="relative aspect-[2/3] w-full">
+              {reviews.map((review, i) => {
+                const active = i === index;
+                return (
+                  <button
+                    key={review.src}
+                    type="button"
+                    className={`absolute inset-0 text-left transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      active
+                        ? "z-[1] translate-y-0 scale-100 opacity-100"
+                        : "z-0 pointer-events-none translate-y-4 scale-[0.96] opacity-0"
+                    }`}
+                    aria-hidden={!active}
+                    tabIndex={active ? 0 : -1}
+                    onClick={() => go(index + 1)}
+                  >
+                    <ReviewCard
+                      review={review}
+                      sizes="90vw"
+                      className="h-full shadow-[0_22px_55px_rgba(61,22,5,0.12)]"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="mt-4 text-center font-display text-[0.65rem] font-semibold tracking-[0.14em] text-black/35 uppercase">
+              {String(index + 1).padStart(2, "0")} / {String(n).padStart(2, "0")} · Auto
+            </p>
           </div>
         </div>
       </div>

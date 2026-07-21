@@ -41,7 +41,7 @@ export default function LegalTicker() {
       {/* Orange accent edge */}
       <div className="absolute inset-x-0 top-0 h-[2px] bg-umx-orange" aria-hidden />
 
-      <div className="flex items-center whitespace-nowrap py-3.5 sm:py-4">
+      <div className="flex items-center whitespace-nowrap py-2.5 sm:py-4">
         <TickerSegment prefix="a" />
         <TickerSegment prefix="b" />
       </div>
