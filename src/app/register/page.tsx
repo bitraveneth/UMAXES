@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import AuthSplitShell from "@/components/AuthSplitShell";
 import RegisterForm from "@/components/RegisterForm";
 
@@ -13,7 +14,11 @@ export default function RegisterPage() {
       description="Choose email or phone to register. An admin will review your account before you can order."
       leftDescription="Register for wholesale HOOKAMAX ordering — adults 21+ only. Approval required before first purchase."
     >
-      <RegisterForm />
+      <Suspense
+        fallback={<p className="font-body text-sm text-black/50">Loading…</p>}
+      >
+        <RegisterForm />
+      </Suspense>
     </AuthSplitShell>
   );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import AuthSplitShell from "@/components/AuthSplitShell";
 import ForgotPasswordForm from "@/components/ForgotPasswordForm";
 
@@ -13,8 +14,11 @@ export default function ForgotPasswordPage() {
       description="Use your mobile phone to receive a verification code, then set a new password."
       leftDescription=""
     >
-      <ForgotPasswordForm />
+      <Suspense
+        fallback={<p className="font-body text-sm text-black/50">Loading…</p>}
+      >
+        <ForgotPasswordForm />
+      </Suspense>
     </AuthSplitShell>
   );
 }
-
