@@ -17,12 +17,17 @@ type AltchaFieldProps = {
 
 const CHALLENGE_URL = "/api/altcha/challenge";
 
+type AltchaEl = HTMLElement & {
+  challenge?: string;
+  reset?: () => void;
+};
+
 export default function AltchaField({
   value,
   onChange,
   className = "",
 }: AltchaFieldProps) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<AltchaEl | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
@@ -32,14 +37,14 @@ export default function AltchaField({
     () => false,
   );
 
-  // React often drops unknown attrs on custom elements — set them imperatively.
-  useEffect(() => {
-    if (!isClient) return;
-    const el = ref.current;
+  function bindWidget(el: AltchaEl | null) {
+    ref.current = el;
     if (!el) return;
+    // React may not forward custom-element attrs; set property + attribute.
+    el.challenge = CHALLENGE_URL;
     el.setAttribute("challenge", CHALLENGE_URL);
     el.setAttribute("name", "altcha");
-  }, [isClient]);
+  }
 
   useEffect(() => {
     const el = ref.current;
@@ -74,8 +79,7 @@ export default function AltchaField({
 
   useEffect(() => {
     if (value) return;
-    const el = ref.current as (HTMLElement & { reset?: () => void }) | null;
-    el?.reset?.();
+    ref.current?.reset?.();
   }, [value]);
 
   if (!isClient) {
@@ -91,8 +95,7 @@ export default function AltchaField({
   return (
     <div className={`altcha-field ${className}`}>
       <altcha-widget
-        ref={ref as never}
-        // Also keep JSX attrs for environments that forward them
+        ref={bindWidget as never}
         challenge={CHALLENGE_URL}
         name="altcha"
         style={
