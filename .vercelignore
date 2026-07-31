@@ -1,0 +1,18 @@
+# Keep Vercel upload under limits — only ship the app, not source dumps
+node_modules
+.next
+.git
+.vercel
+.agents
+.claude
+.windsurf
+.lighthouse
+.lh-chrome*
+assets
+/Hero/
+brand-guide
+/D63030-UMAXES-*/
+*.db
+.env
+.env.*
+# Keep prisma/ + prisma.config.ts — required for prisma generate on build

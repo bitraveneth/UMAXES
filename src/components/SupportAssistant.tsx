@@ -87,7 +87,14 @@ export default function SupportAssistant() {
     });
   }, [messages, open]);
 
-  if (pathname.startsWith("/checkout")) return null;
+  if (
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register")
+  ) {
+    return null;
+  }
 
   function pushBot(text: string) {
     setMessages((prev) => [
@@ -115,7 +122,7 @@ export default function SupportAssistant() {
   }
 
   return (
-    <div className="pointer-events-none fixed right-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[60] flex flex-col items-end gap-2.5 sm:right-6 sm:bottom-6 sm:gap-3">
+    <div className="pointer-events-none fixed right-3 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-[60] flex flex-col items-end gap-2.5 sm:right-6 lg:bottom-6 sm:gap-3">
       {!open && <FloatingShopBadge />}
 
       {open && (

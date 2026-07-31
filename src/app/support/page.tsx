@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import StoreTopPad from "@/components/StoreTopPad";
 import {
   BadgeCheck,
   CircleHelp,
@@ -45,7 +46,7 @@ export default function SupportPage() {
     <>
       <Header />
       <main className="flex-1 bg-umx-cream">
-        <div className="px-4 pb-20 pt-[8.5rem] sm:px-6 sm:pb-28 sm:pt-[9rem]">
+        <StoreTopPad className="px-4 pb-20 sm:px-6 sm:pb-28">
           <div className="mx-auto max-w-[1000px]">
             <header className="max-w-2xl">
               <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase">
@@ -98,7 +99,7 @@ export default function SupportPage() {
               })}
             </div>
           </div>
-        </div>
+        </StoreTopPad>
       </main>
       <Footer />
     </>

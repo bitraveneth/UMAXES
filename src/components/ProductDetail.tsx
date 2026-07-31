@@ -4,12 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import {
+  storeTopPadClass,
+  useCompactMobileStoreChrome,
+} from "@/hooks/useStoreChrome";
 import { flavors, product, type Flavor } from "@/lib/assets";
 
 export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const { add } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const compactChrome = useCompactMobileStoreChrome();
 
   function handleAdd() {
     add(flavor.id, qty);
@@ -18,7 +23,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   }
 
   return (
-        <div className="px-4 pb-20 pt-[8.5rem] sm:px-6 sm:pb-28 sm:pt-[9rem]">
+        <div className={`px-4 pb-20 sm:px-6 sm:pb-28 ${storeTopPadClass(compactChrome)}`}>
       <div className="mx-auto max-w-[1200px]">
         <nav className="mb-8 font-display text-xs tracking-wide text-black/50 sm:mb-10">
           <Link href="/" className="transition hover:text-umx-orange">

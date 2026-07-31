@@ -1,0 +1,83 @@
+{
+  "brand": "UMAXES",
+  "palette": "orange + cream only",
+  "colors": [
+    {
+      "name": "Orange",
+      "role": "Primary · CTAs & accents",
+      "hex": "#FF5B04",
+      "css": "--umx-orange"
+    },
+    {
+      "name": "Ivory cream",
+      "role": "Canvas · backgrounds",
+      "hex": "#FDF6E3",
+      "css": "--umx-cream"
+    },
+    {
+      "name": "Orange deep",
+      "role": "Hover / pressed",
+      "hex": "#C44503",
+      "css": "--umx-orange-deep"
+    },
+    {
+      "name": "Orange ink",
+      "role": "Dark surfaces",
+      "hex": "#3D1605",
+      "css": "--umx-orange-ink"
+    },
+    {
+      "name": "Orange mid",
+      "role": "Secondary accent",
+      "hex": "#FF7A33",
+      "css": "--umx-orange-mid"
+    },
+    {
+      "name": "Orange soft",
+      "role": "Soft accent",
+      "hex": "#FFB888",
+      "css": "--umx-orange-soft"
+    },
+    {
+      "name": "Orange wash",
+      "role": "Highlights · wash",
+      "hex": "#FFE8D6",
+      "css": "--umx-orange-wash"
+    },
+    {
+      "name": "Cream bright",
+      "role": "Cards · light UI",
+      "hex": "#FFFEF8",
+      "css": "--umx-cream-bright"
+    },
+    {
+      "name": "Cream warm",
+      "role": "Warm band",
+      "hex": "#F5EBD0",
+      "css": "--umx-cream-warm"
+    },
+    {
+      "name": "Cream deep",
+      "role": "Borders · dividers",
+      "hex": "#E8D9B8",
+      "css": "--umx-cream-deep"
+    },
+    {
+      "name": "Black",
+      "role": "Body text",
+      "hex": "#000000",
+      "css": "--umx-black"
+    }
+  ],
+  "typography": {
+    "display": "Poppins",
+    "body": "Lora",
+    "logo": "Climax (logo only)"
+  },
+  "usage": [
+    "Do not recolor the logo outside approved lockups.",
+    "Do not add drop shadows, outlines, or effects to the wordmark.",
+    "Keep clear space around the logo roughly the height of the letter U.",
+    "Adult 21+ brand — no youth-oriented placement."
+  ]
+}

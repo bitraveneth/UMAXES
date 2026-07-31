@@ -1,0 +1,14 @@
+/* UMAXES brand colors — orange + cream only */
+:root {
+  --umx-orange: #ff5b04;
+  --umx-cream: #fdf6e3;
+  --umx-orange-deep: #c44503;
+  --umx-orange-ink: #3d1605;
+  --umx-orange-mid: #ff7a33;
+  --umx-orange-soft: #ffb888;
+  --umx-orange-wash: #ffe8d6;
+  --umx-cream-bright: #fffef8;
+  --umx-cream-warm: #f5ebd0;
+  --umx-cream-deep: #e8d9b8;
+  --umx-black: #000000;
+}

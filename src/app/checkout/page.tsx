@@ -1,24 +1,11 @@
-import type { Metadata } from "next";
-import AgeGate from "@/components/AgeGate";
-import CheckoutView from "@/components/CheckoutView";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
+import CheckoutShell from "@/components/CheckoutShell";
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "Checkout · UMAXES",
   description:
-    "Checkout for UMAXES HOOKAMAX flavors. Adults 21+ only. Nicotine is an addictive chemical.",
+    "Wholesale checkout for UMAXES HOOKAMAX. Adults 21+ only. Nicotine is an addictive chemical.",
 };
 
 export default function CheckoutPage() {
-  return (
-    <>
-      <AgeGate />
-      <Header />
-      <main className="flex-1 bg-umx-cream">
-        <CheckoutView />
-      </main>
-      <Footer />
-    </>
-  );
+  return <CheckoutShell />;
 }

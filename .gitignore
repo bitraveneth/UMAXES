@@ -31,7 +31,7 @@
 /Hero/
 /brand-guide/
 /assets/
-/scripts/
+# /scripts/ ships with the repo (db seeds + ops reset for client/server)
 
 # loose root media (canonical files live in /public)
 /*.png
@@ -47,12 +47,21 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — keep .env.example for deploy docs
 .env*
+!.env.example
 
 # local databases
 *.db
 *.db-journal
+
+# CMS product uploads (keep folder via .gitkeep)
+/public/uploads/products/*
+!/public/uploads/products/.gitkeep
+/public/uploads/avatars/*
+!/public/uploads/avatars/.gitkeep
+/public/uploads/staff/*
+!/public/uploads/staff/.gitkeep
 
 # vercel
 .vercel
@@ -60,13 +69,7 @@ yarn-error.log*
 # typescript
 next-env.d.ts
 
-.vercel
-.env*
-
-# prisma generated client (regenerate with prisma generate)
-# keep in repo for simpler installs — or generate in postinstall
-
-
+# prisma generated client (regenerate with prisma generate / postinstall)
 /src/generated/prisma
 
 # local agent / audit caches

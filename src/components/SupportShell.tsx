@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import StoreTopPad from "@/components/StoreTopPad";
 
 export function SupportShell({
   children,
@@ -19,7 +20,7 @@ export function SupportShell({
     <>
       <Header />
       <main className="flex-1 bg-umx-cream">
-        <div className="px-4 pb-20 pt-[8.5rem] sm:px-6 sm:pb-28 sm:pt-[9rem]">
+        <StoreTopPad className="px-4 pb-20 sm:px-6 sm:pb-28">
           <div className="mx-auto max-w-[900px]">
             <Link
               href="/support"
@@ -43,7 +44,7 @@ export function SupportShell({
             </header>
             <div className="mt-12">{children}</div>
           </div>
-        </div>
+        </StoreTopPad>
       </main>
       <Footer />
     </>

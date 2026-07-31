@@ -26,6 +26,11 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import {
+  storeTopPadClass,
+  useCompactMobileStoreChrome,
+} from "@/hooks/useStoreChrome";
+import { useSession } from "next-auth/react";
+import {
   flavorProfiles,
   flavors,
   product,
@@ -314,6 +319,7 @@ function FilterPanel({
   favoritesOnly,
   setFavoritesOnly,
   onClear,
+  showSearch = true,
 }: {
   query: string;
   setQuery: (value: string) => void;
@@ -326,6 +332,7 @@ function FilterPanel({
   favoritesOnly: boolean;
   setFavoritesOnly: (value: boolean) => void;
   onClear: () => void;
+  showSearch?: boolean;
 }) {
   function toggleProfile(profile: FlavorProfile) {
     if (profiles.includes(profile)) {
@@ -351,6 +358,7 @@ function FilterPanel({
         </button>
       </div>
 
+      {showSearch ? (
       <label className="block">
         <span className="inline-flex items-center gap-2 font-display text-sm font-bold text-black">
           <Search className="h-4 w-4 text-umx-orange" strokeWidth={2.2} aria-hidden />
@@ -371,6 +379,7 @@ function FilterPanel({
           />
         </div>
       </label>
+      ) : null}
 
       <fieldset>
         <legend className="inline-flex items-center gap-2 font-display text-sm font-bold text-black">
@@ -633,6 +642,8 @@ function ShopAside({
 
 export default function ShopCatalog() {
   const { quantity, total, setOpen } = useCart();
+  const { data: session, status: authStatus } = useSession();
+  const compactChrome = useCompactMobileStoreChrome();
   const [query, setQuery] = useState("");
   const [profiles, setProfiles] = useState<FlavorProfile[]>([]);
   const [priceRange, setPriceRange] = useState<PriceRangeId>("all");
@@ -642,25 +653,61 @@ export default function ShopCatalog() {
   const [view, setView] = useState<ViewMode>("grid");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [favoritesReady, setFavoritesReady] = useState(false);
+
+  const syncFavoritesToApi =
+    authStatus === "authenticated" && session?.user?.role === "CUSTOMER";
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FAVORITES_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as string[];
-      if (Array.isArray(parsed)) setFavorites(parsed);
-    } catch {
-      /* ignore */
+    let cancelled = false;
+
+    async function loadFavorites() {
+      if (authStatus === "loading") return;
+
+      if (syncFavoritesToApi) {
+        try {
+          const res = await fetch("/api/account/favorites");
+          const data = await res.json();
+          if (!cancelled && res.ok && Array.isArray(data.favorites)) {
+            setFavorites(
+              data.favorites
+                .map((f: { sku?: string }) => f.sku)
+                .filter(Boolean) as string[],
+            );
+          }
+        } catch {
+          /* keep empty */
+        }
+        if (!cancelled) setFavoritesReady(true);
+        return;
+      }
+
+      try {
+        const raw = localStorage.getItem(FAVORITES_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as string[];
+          if (!cancelled && Array.isArray(parsed)) setFavorites(parsed);
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) setFavoritesReady(true);
     }
-  }, []);
+
+    loadFavorites();
+    return () => {
+      cancelled = true;
+    };
+  }, [authStatus, syncFavoritesToApi]);
 
   useEffect(() => {
+    if (!favoritesReady || syncFavoritesToApi) return;
     try {
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
     } catch {
       /* ignore */
     }
-  }, [favorites]);
+  }, [favorites, favoritesReady, syncFavoritesToApi]);
 
   const activePrice = priceRanges.find((r) => r.id === priceRange) ?? priceRanges[0];
 
@@ -710,14 +757,38 @@ export default function ShopCatalog() {
     setFavoritesOnly(false);
   }
 
-  function toggleFavorite(id: string) {
+  async function toggleFavorite(id: string) {
+    const wasFavorited = favorites.includes(id);
     setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      wasFavorited ? prev.filter((x) => x !== id) : [...prev, id],
     );
+
+    if (!syncFavoritesToApi) return;
+
+    try {
+      const res = await fetch("/api/account/favorites", {
+        method: wasFavorited ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sku: id }),
+      });
+      if (!res.ok) {
+        setFavorites((prev) =>
+          wasFavorited
+            ? [...prev, id]
+            : prev.filter((x) => x !== id),
+        );
+      }
+    } catch {
+      setFavorites((prev) =>
+        wasFavorited ? [...prev, id] : prev.filter((x) => x !== id),
+      );
+    }
   }
 
   return (
-    <div className="bg-white pb-28 pt-[7.75rem] sm:pb-28 sm:pt-[9rem]">
+    <div
+      className={`bg-white pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:pb-16 ${storeTopPadClass(compactChrome)}`}
+    >
       <div className="border-b border-black/8 bg-umx-cream">
         <div className="mx-auto max-w-[1680px] px-4 py-8 text-center sm:px-6 sm:py-12 lg:px-6 xl:px-8">
           <h1 className="font-display text-[clamp(2.25rem,8vw,4.25rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black">
@@ -727,7 +798,22 @@ export default function ShopCatalog() {
       </div>
 
       <div className="mx-auto max-w-[1680px] px-4 sm:px-5 lg:px-6 xl:px-8">
-        <div className="flex flex-wrap items-center justify-end gap-3 border-b border-black/8 py-4">
+        <div className="flex flex-col gap-3 border-b border-black/8 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+          <div className="relative w-full sm:min-w-[200px] sm:max-w-xs sm:flex-1 lg:min-w-[240px] lg:flex-none">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-black/35"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search flavors"
+              className="w-full border border-black/15 bg-white py-2.5 pr-3 pl-10 font-display text-sm font-semibold text-black outline-none focus:border-umx-orange"
+            />
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -742,21 +828,6 @@ export default function ShopCatalog() {
                 </span>
               )}
             </button>
-
-            <div className="relative hidden min-w-[200px] sm:block lg:min-w-[240px]">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-black/35"
-                strokeWidth={2}
-                aria-hidden
-              />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search flavors"
-                className="w-full border border-black/15 bg-white py-2.5 pr-3 pl-10 font-display text-sm font-semibold text-black outline-none focus:border-umx-orange"
-              />
-            </div>
 
             <label className="inline-flex items-center gap-2 border border-black/15 bg-white px-3 py-2.5">
               <ArrowUpDown className="h-4 w-4 text-black/45" strokeWidth={2} aria-hidden />
@@ -925,6 +996,7 @@ export default function ShopCatalog() {
                 favoritesOnly={favoritesOnly}
                 setFavoritesOnly={setFavoritesOnly}
                 onClear={clearFilters}
+                showSearch={false}
               />
             </div>
             <div className="border-t border-black/8 p-4">
@@ -941,7 +1013,7 @@ export default function ShopCatalog() {
       )}
 
       {quantity > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/8 bg-white/95 px-4 py-3 backdrop-blur-md sm:px-6 xl:hidden">
+        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-40 border-t border-black/8 bg-white/95 px-4 py-3 backdrop-blur-md sm:px-6 lg:bottom-0 xl:hidden">
           <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-4">
             <div>
               <p className="font-display text-sm font-semibold text-black">

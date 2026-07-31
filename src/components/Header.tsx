@@ -4,9 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import CartDrawer from "@/components/CartDrawer";
+import BuyerAccountMenu from "@/components/BuyerAccountMenu";
 import LegalTicker from "@/components/LegalTicker";
 import { useCart } from "@/context/CartContext";
+import { useCompactMobileStoreChrome } from "@/hooks/useStoreChrome";
 import { logos } from "@/lib/assets";
 
 const sectionNav = [
@@ -108,6 +111,17 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("");
   const { quantity, setOpen: setCartOpen } = useCart();
+  const { data: session } = useSession();
+  const hideMobileHeader = useCompactMobileStoreChrome();
+  const accountHref =
+    session?.user?.role &&
+    ["SUPER_ADMIN", "ADMIN", "SALES", "WAREHOUSE", "LOGISTICS"].includes(
+      session.user.role,
+    )
+      ? "/admin"
+      : session?.user?.status === "PENDING"
+        ? "/account/pending"
+        : "/account";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -146,6 +160,12 @@ export default function Header() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!hideMobileHeader) return;
+    setOpen(false);
+    setSupportOpen(false);
+  }, [hideMobileHeader]);
+
   function closeMenu() {
     setOpen(false);
     setSupportOpen(false);
@@ -153,7 +173,11 @@ export default function Header() {
 
   return (
     <>
-      <div className="fixed inset-x-0 top-0 z-50">
+      <div
+        className={`fixed inset-x-0 top-0 z-50 ${
+          hideMobileHeader ? "hidden lg:block" : ""
+        }`}
+      >
         <LegalTicker />
         <header
           className={`transition-[background,box-shadow,backdrop-filter] duration-300 ${
@@ -233,6 +257,26 @@ export default function Header() {
                 )}
               </button>
 
+              {session?.user ? (
+                session.user.role === "CUSTOMER" ? (
+                  <BuyerAccountMenu />
+                ) : (
+                  <Link
+                    href={accountHref}
+                    className="hidden rounded-full border border-black/15 px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange sm:inline-flex"
+                  >
+                    Account
+                  </Link>
+                )
+              ) : (
+                <Link
+                  href="/login"
+                  className="hidden rounded-full border border-black/15 px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange sm:inline-flex"
+                >
+                  Sign in
+                </Link>
+              )}
+
               <button
                 type="button"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:text-umx-orange hover:ring-umx-orange lg:hidden"
@@ -264,6 +308,7 @@ export default function Header() {
         </header>
       </div>
 
+      {!hideMobileHeader ? (
       <div
         id="mobile-nav"
         className={`fixed inset-0 z-40 lg:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
@@ -342,15 +387,23 @@ export default function Header() {
             )}
 
             <Link
+              href={session?.user ? accountHref : "/login"}
+              onClick={closeMenu}
+              className="mt-4 rounded-full border border-black/15 px-5 py-4 text-center font-display text-base font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange"
+            >
+              {session?.user ? "Account" : "Sign in"}
+            </Link>
+            <Link
               href="/shop"
               onClick={closeMenu}
-              className="mt-4 rounded-full border border-black px-5 py-4 text-center font-display text-base font-semibold text-black transition hover:border-umx-orange hover:bg-umx-orange hover:!text-white"
+              className="mt-2 rounded-full border border-black px-5 py-4 text-center font-display text-base font-semibold text-black transition hover:border-umx-orange hover:bg-umx-orange hover:!text-white"
             >
               Shop now
             </Link>
           </nav>
         </div>
       </div>
+      ) : null}
 
       <CartDrawer />
     </>

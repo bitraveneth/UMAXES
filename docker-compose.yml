@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: umaxes-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: umaxes
+      POSTGRES_PASSWORD: UmaxesDev2026!
+      POSTGRES_DB: umaxes
+    volumes:
+      - umaxes_pg_data:/var/lib/postgresql/data
+
+volumes:
+  umaxes_pg_data:

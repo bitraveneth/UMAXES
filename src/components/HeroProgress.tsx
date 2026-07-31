@@ -3,6 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  storeTopPadClass,
+  useCompactMobileStoreChrome,
+} from "@/hooks/useStoreChrome";
 import { heroImages } from "@/lib/assets";
 
 const DURATION = 5500;
@@ -86,15 +90,20 @@ export default function HeroProgress() {
   }
 
   const active = slides[index];
+  const compactChrome = useCompactMobileStoreChrome();
 
   return (
     <section
       id="top"
-      className="bg-umx-cream px-3 pb-4 pt-[7.75rem] sm:px-4 sm:pb-5 sm:pt-[9rem] md:px-5 md:pb-6"
+      className={`bg-umx-cream px-3 pb-4 sm:px-4 sm:pb-5 md:px-5 md:pb-6 ${storeTopPadClass(compactChrome)}`}
       aria-label="UMAXES hero"
     >
       <div
-        className="relative mx-auto h-[calc(100svh-8.75rem)] min-h-[420px] w-full max-w-[1680px] overflow-hidden rounded-[1.5rem] bg-umx-orange-ink shadow-[0_22px_55px_rgba(61,22,5,0.16)] touch-pan-y select-none sm:min-h-[520px] sm:rounded-[2.15rem] md:h-[calc(100svh-10.5rem)] md:rounded-[2.5rem]"
+        className={`relative mx-auto min-h-[420px] w-full max-w-[1680px] overflow-hidden rounded-[1.5rem] bg-umx-orange-ink shadow-[0_22px_55px_rgba(61,22,5,0.16)] touch-pan-y select-none sm:min-h-[520px] sm:rounded-[2.15rem] md:rounded-[2.5rem] ${
+          compactChrome
+            ? "h-[calc(100svh-3.5rem)] lg:h-[calc(100svh-10.5rem)]"
+            : "h-[calc(100svh-8.75rem)] md:h-[calc(100svh-10.5rem)]"
+        }`}
         aria-roledescription="carousel"
         onPointerEnter={() => setPaused(true)}
         onPointerLeave={() => setPaused(false)}

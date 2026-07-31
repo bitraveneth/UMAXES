@@ -1,0 +1,509 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CUSTOMER
+  SALES
+  WAREHOUSE
+  LOGISTICS
+  ADMIN
+  /// Dev / owner — full access including staff management
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DISABLED
+}
+
+enum CustomerLevel {
+  DISTRO
+  WHOLESALER
+  SHOP
+}
+
+enum PaymentMethod {
+  TT
+  CHECK
+  ONLINE
+  CREDIT
+}
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  PAYMENT_PENDING
+  CONFIRMED
+  /// @deprecated Prefer SENT_TO_SUPPLIER (kept for existing rows)
+  PICKING
+  SENT_TO_SUPPLIER
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+enum CompanyMemberRole {
+  OWNER
+  BUYER
+  FINANCE
+}
+
+enum RmaStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RECEIVED
+  CREDITED
+  CLOSED
+}
+
+/// Why the return was opened — drives ops / replacement decisions
+enum RmaReasonType {
+  RETURN
+  DAMAGE
+  DEFECT
+  OTHER
+}
+
+/// How the case was (or will be) resolved
+enum RmaResolution {
+  PENDING
+  CREDIT
+  REPLACEMENT
+  REJECTED
+  CLOSED
+}
+
+model Company {
+  id                String         @id @default(cuid())
+  name              String
+  level             CustomerLevel  @default(SHOP)
+  creditLimit       Float          @default(0)
+  paymentTermsDays  Int            @default(0)
+  creditUsed        Float          @default(0)
+  taxId             String?
+  status            UserStatus     @default(PENDING)
+  salesRepId        String?
+  salesRep          User?          @relation("SalesRepCompanies", fields: [salesRepId], references: [id], onDelete: SetNull)
+  /// Preferred dropship supplier for one-click assign
+  defaultSupplierId String?
+  defaultSupplier   Supplier?      @relation("CompanyDefaultSupplier", fields: [defaultSupplierId], references: [id], onDelete: SetNull)
+  commissionRate    Float          @default(5)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  users             User[]         @relation("CompanyUsers")
+  addresses         Address[]
+  orders            Order[]
+  creditLedgers     CreditLedger[]
+  rmas              Rma[]
+
+  @@index([defaultSupplierId])
+}
+
+model User {
+  id           String             @id @default(cuid())
+  name         String?
+  email        String?            @unique
+  phone        String?            @unique
+  image        String?
+  jobTitle     String?
+  passwordHash String
+  role         UserRole           @default(CUSTOMER)
+  companyRole  CompanyMemberRole?
+  status       UserStatus         @default(PENDING)
+  companyId    String?
+  company      Company?           @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: SetNull)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  orders       Order[]
+  auditLogs    AuditLog[]
+  rmas         Rma[]
+  notifications Notification[]
+  salesCompanies Company[]        @relation("SalesRepCompanies")
+  favorites    Favorite[]
+  ordersPlacedOnBehalf Order[] @relation("OrdersPlacedByStaff")
+  staffProfile StaffProfile?
+}
+
+/// Ops staff profile (avatar, company card, address) — not buyer company
+model StaffProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  avatarUrl      String?
+  jobTitle       String?
+  department     String?
+  companyName    String?  @default("UMAXES")
+  companyLogoUrl String?
+  line1          String?
+  line2          String?
+  city           String?
+  region         String?
+  postalCode     String?
+  country        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  label      String?
+  line1      String
+  line2      String?
+  city       String
+  region     String?
+  postalCode String
+  country    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
+}
+
+model Product {
+  id            String         @id @default(cuid())
+  sku           String         @unique
+  name          String
+  description   String?
+  image         String?
+  active        Boolean        @default(true)
+  visibleLevels CustomerLevel[]
+  /// Preferred supplier when this SKU is ordered
+  defaultSupplierId String?
+  defaultSupplier   Supplier?  @relation("ProductDefaultSupplier", fields: [defaultSupplierId], references: [id], onDelete: SetNull)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  prices        PriceByLevel[]
+  inventory     Inventory?
+  orderItems    OrderItem[]
+  warehouseStocks WarehouseStock[]
+  favorites     Favorite[]
+  options       ProductOption[]
+
+  @@index([defaultSupplierId])
+}
+
+/// Attribute groups for a product (e.g. Nicotine, Pack size, Color) — TailAdmin-style product options
+model ProductOption {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  values    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model PriceByLevel {
+  id        String        @id @default(cuid())
+  productId String
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  level     CustomerLevel
+  unitPrice Float
+  moq       Int           @default(1)
+
+  @@unique([productId, level])
+}
+
+model Inventory {
+  id        String   @id @default(cuid())
+  productId String   @unique
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(0)
+  reserved  Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+model Coupon {
+  id           String          @id @default(cuid())
+  code         String          @unique
+  type         String
+  value        Float
+  minOrder     Float           @default(0)
+  allowedLevels CustomerLevel[]
+  active       Boolean         @default(true)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  createdAt    DateTime        @default(now())
+  orders       Order[]
+}
+
+model Order {
+  id             String        @id @default(cuid())
+  orderNumber    String        @unique
+  piNumber       String?       @unique
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  /// Staff user who placed the order on behalf of the customer (null = self-serve)
+  placedByStaffId String?
+  placedByStaff   User?        @relation("OrdersPlacedByStaff", fields: [placedByStaffId], references: [id], onDelete: SetNull)
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  supplierId     String?
+  supplier       Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  status         OrderStatus   @default(SUBMITTED)
+  paymentMethod  PaymentMethod
+  email          String?
+  phone          String?
+  addressSnap    String
+  subtotal       Float
+  shipping       Float         @default(0)
+  discount       Float         @default(0)
+  total          Float
+  couponId       String?
+  coupon         Coupon?       @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponCode     String?
+  paymentRef     String?
+  notes          String?
+  supplierNote   String?
+  sentToSupplierAt DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  items          OrderItem[]
+  payments       Payment[]
+  shipments      Shipment[]
+  creditLedgers  CreditLedger[]
+  rmas           Rma[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([supplierId])
+  @@index([placedByStaffId])
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  notes       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+  defaultForCompanies Company[] @relation("CompanyDefaultSupplier")
+  defaultForProducts  Product[] @relation("ProductDefaultSupplier")
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  sku        String
+  name       String
+  quantity   Int
+  unitPrice  Float
+  image      String?
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  orderId   String
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method    PaymentMethod
+  amount    Float
+  reference String?
+  status    String        @default("pending")
+  paidAt    DateTime?
+  createdAt DateTime      @default(now())
+}
+
+model CreditLedger {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type        String
+  amount      Float
+  dueDate     DateTime?
+  note        String?
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
+}
+
+model Shipment {
+  id             String    @id @default(cuid())
+  orderId        String
+  order          Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  carrier        String?
+  trackingNumber String?
+  /// pending = packing created · shipped = tracking entered · delivered
+  status         String    @default("pending")
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  /// Packing / logistics ops (no commercial $)
+  boxCount       Int?
+  cbm            Float?
+  weightKg       Float?
+  packingNote    String?
+  /// When logistics first created the packing record
+  packedAt       DateTime?
+  lastTrackedAt  DateTime?
+  trackingStatus String?
+  trackingMeta   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lines          ShipmentLine[]
+
+  @@index([orderId])
+  @@index([status])
+}
+
+/// Packing lines for logistics (flavor / size / boxes) — qty only, no prices
+model ShipmentLine {
+  id         String   @id @default(cuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  orderItemId String?
+  sku        String
+  name       String
+  quantity   Int
+  flavor     String?
+  size       String?
+  boxes      Int?
+  createdAt  DateTime @default(now())
+
+  @@index([shipmentId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String?
+  entityId  String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Rma {
+  id                 String         @id @default(cuid())
+  rmaNumber          String         @unique
+  orderId            String
+  order              Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  companyId          String
+  company            Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  userId             String
+  user               User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  /// Free-text detail from customer / ops
+  reason             String
+  reasonType         RmaReasonType  @default(RETURN)
+  status             RmaStatus      @default(REQUESTED)
+  resolution         RmaResolution  @default(PENDING)
+  creditAmount       Float?
+  adminNote          String?
+  /// Snapshot of original ship-to (from order.addressSnap) for history
+  addressSnap        String?
+  /// True when returned/damaged units should be sent again
+  replacementNeeded  Boolean        @default(false)
+  replacementNote    String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  items              RmaItem[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([reasonType])
+  @@index([createdAt])
+}
+
+model RmaItem {
+  id           String  @id @default(cuid())
+  rmaId        String
+  rma          Rma     @relation(fields: [rmaId], references: [id], onDelete: Cascade)
+  orderItemId  String?
+  productId    String?
+  sku          String
+  name         String
+  /// Flavor / variant label kept for reship records (often same as name)
+  flavor       String?
+  /// Extra options snapshot, e.g. "Nicotine: 5% · Pack: 10"
+  optionsLabel String?
+  quantity     Int
+  unitPrice    Float   @default(0)
+  image        String?
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  channel   String    @default("email")
+  type      String    @default("general")
+  to        String
+  subject   String
+  body      String
+  /// Deep link into admin (or account) when the user opens this notification
+  href      String?
+  status    String    @default("logged")
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([userId, readAt])
+  @@index([type])
+}
+
+model BrandAsset {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String
+  category    String   @default("general")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Warehouse {
+  id        String           @id @default(cuid())
+  code      String           @unique
+  name      String
+  active    Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  stocks    WarehouseStock[]
+}
+
+model WarehouseStock {
+  id          String    @id @default(cuid())
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity    Int       @default(0)
+  reserved    Int       @default(0)
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([warehouseId, productId])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}

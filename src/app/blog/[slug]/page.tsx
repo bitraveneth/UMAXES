@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import StoreTopPad from "@/components/StoreTopPad";
 import { blogPosts, getPost } from "@/lib/blog";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -30,7 +31,8 @@ export default async function BlogPostPage({ params }: Props) {
     <>
       <Header />
       <main className="flex-1 bg-umx-cream">
-        <article className="px-4 pb-20 pt-[8.5rem] sm:px-6 sm:pb-28 sm:pt-[9rem]">
+        <StoreTopPad className="px-4 pb-20 sm:px-6 sm:pb-28">
+        <article>
           <div className="mx-auto max-w-[720px]">
             <Link
               href="/#news"
@@ -81,6 +83,7 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           </div>
         </article>
+        </StoreTopPad>
       </main>
       <Footer />
     </>
