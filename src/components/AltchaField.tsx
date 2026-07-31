@@ -15,6 +15,8 @@ type AltchaFieldProps = {
   className?: string;
 };
 
+const CHALLENGE_URL = "/api/altcha/challenge";
+
 export default function AltchaField({
   value,
   onChange,
@@ -29,6 +31,15 @@ export default function AltchaField({
     () => true,
     () => false,
   );
+
+  // React often drops unknown attrs on custom elements — set them imperatively.
+  useEffect(() => {
+    if (!isClient) return;
+    const el = ref.current;
+    if (!el) return;
+    el.setAttribute("challenge", CHALLENGE_URL);
+    el.setAttribute("name", "altcha");
+  }, [isClient]);
 
   useEffect(() => {
     const el = ref.current;
@@ -81,7 +92,8 @@ export default function AltchaField({
     <div className={`altcha-field ${className}`}>
       <altcha-widget
         ref={ref as never}
-        challenge="/api/altcha/challenge"
+        // Also keep JSX attrs for environments that forward them
+        challenge={CHALLENGE_URL}
         name="altcha"
         style={
           {
