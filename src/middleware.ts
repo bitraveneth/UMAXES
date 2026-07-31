@@ -36,9 +36,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Production HTTPS cookies are `__Secure-authjs.session-token`.
+  // Force secureCookie so Edge doesn't look up the wrong name when AUTH_URL
+  // is unavailable to middleware (e.g. sensitive env).
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
+    secureCookie:
+      process.env.VERCEL === "1" ||
+      request.nextUrl.protocol === "https:",
   });
 
   if (!token) {
