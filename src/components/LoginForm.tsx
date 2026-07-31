@@ -135,7 +135,7 @@ export default function LoginForm() {
     setLoading(false);
     setAltcha("");
 
-    if (result?.error) {
+    if (!result || result.error || result.ok === false) {
       setError(
         "Invalid login details or captcha expired. Check your details and try again.",
       );

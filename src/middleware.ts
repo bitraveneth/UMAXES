@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { canAccessAdminPath, isStaffRole } from "@/lib/admin-access";
 
+/**
+ * Keep middleware Edge-light. Auth is enforced in Node layouts via `auth()`
+ * (admin/account) so we don't depend on Edge reading Auth.js cookies.
+ */
 function countryFromRequest(request: NextRequest) {
   return (
     request.headers.get("cf-ipcountry") ||
@@ -29,54 +31,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 
-  const isProtected =
-    pathname.startsWith("/account") || pathname.startsWith("/admin");
-
-  if (!isProtected) {
-    return NextResponse.next();
-  }
-
-  // Production HTTPS cookies are `__Secure-authjs.session-token`.
-  // Force secureCookie so Edge doesn't look up the wrong name when AUTH_URL
-  // is unavailable to middleware (e.g. sensitive env).
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET,
-    secureCookie:
-      process.env.VERCEL === "1" ||
-      request.nextUrl.protocol === "https:",
-  });
-
-  if (!token) {
-    const login = new URL("/login", request.url);
-    login.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(login);
-  }
-
-  if (pathname.startsWith("/admin")) {
-    const role = String(token.role ?? "");
-
-    if (!isStaffRole(role)) {
-      return NextResponse.redirect(new URL("/account", request.url));
-    }
-
-    if (pathname !== "/admin" && pathname !== "/admin/") {
-      if (!canAccessAdminPath(role, pathname)) {
-        const denied = new URL("/admin", request.url);
-        denied.searchParams.set("denied", pathname);
-        return NextResponse.redirect(denied);
-      }
-    }
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    "/account/:path*",
-    "/admin",
-    "/admin/:path*",
     "/((?!_next/static|_next/image|favicon.ico|images/|videos/|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4)$).*)",
   ],
 };

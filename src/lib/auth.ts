@@ -52,48 +52,53 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         altcha: { label: "Captcha", type: "text" },
       },
       async authorize(credentials) {
-        const { verifyAltchaPayload } = await import("@/lib/altcha");
-        const captcha = await verifyAltchaPayload(credentials?.altcha);
-        if (!captcha.ok) return null;
+        try {
+          const { verifyAltchaPayload } = await import("@/lib/altcha");
+          const captcha = await verifyAltchaPayload(credentials?.altcha);
+          if (!captcha.ok) return null;
 
-        const raw = String(credentials?.identifier ?? "").trim();
-        const password = String(credentials?.password ?? "");
-        if (!raw || !password) return null;
+          const raw = String(credentials?.identifier ?? "").trim();
+          const password = String(credentials?.password ?? "");
+          if (!raw || !password) return null;
 
-        const { toE164 } = await import("@/lib/twilio");
-        const asPhone = toE164(raw);
-        const identifier = raw.includes("@")
-          ? raw.toLowerCase()
-          : (asPhone ?? raw.toLowerCase());
+          const { toE164 } = await import("@/lib/twilio");
+          const asPhone = toE164(raw);
+          const identifier = raw.includes("@")
+            ? raw.toLowerCase()
+            : (asPhone ?? raw.toLowerCase());
 
-        const user = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { email: identifier },
-              { phone: identifier },
-              ...(asPhone && asPhone !== identifier ? [{ phone: asPhone }] : []),
-            ],
-          },
-          include: { company: true },
-        });
+          const user = await prisma.user.findFirst({
+            where: {
+              OR: [
+                { email: identifier },
+                { phone: identifier },
+                ...(asPhone && asPhone !== identifier ? [{ phone: asPhone }] : []),
+              ],
+            },
+            include: { company: true },
+          });
 
-        if (!user || user.status === "DISABLED" || user.status === "REJECTED") {
+          if (!user || user.status === "DISABLED" || user.status === "REJECTED") {
+            return null;
+          }
+
+          const valid = await bcrypt.compare(password, user.passwordHash);
+          if (!valid) return null;
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            companyId: user.companyId,
+            companyLevel: user.company?.level ?? null,
+            companyRole: user.companyRole,
+          };
+        } catch (err) {
+          console.error("[auth.authorize]", err);
           return null;
         }
-
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          status: user.status,
-          companyId: user.companyId,
-          companyLevel: user.company?.level ?? null,
-          companyRole: user.companyRole,
-        };
       },
     }),
   ],

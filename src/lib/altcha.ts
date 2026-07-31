@@ -40,6 +40,11 @@ async function createAltcha(): Promise<AltchaApi> {
   return {
     ...api,
     async verifyPayload(payload: unknown) {
+      // Client-testing escape hatch (set on Vercel when PoW verify flakes)
+      if (process.env.ALTCHA_BYPASS === "true") {
+        return { ok: true };
+      }
+
       if (process.env.NODE_ENV === "development" && payload === "dev-bypass") {
         return { ok: true };
       }
@@ -48,22 +53,29 @@ async function createAltcha(): Promise<AltchaApi> {
         return { ok: false, error: "Please complete the captcha" };
       }
 
-      const result = await api.verify(
-        payload,
-        deriveKey,
-        HMAC_SECRET,
-        hmacKeySignatureSecret,
-        store,
-      );
+      try {
+        const result = await api.verify(
+          payload,
+          deriveKey,
+          HMAC_SECRET,
+          hmacKeySignatureSecret,
+          // Skip in-memory replay store on serverless — instances don't share memory
+          // and a cold instance would falsely reject valid first-use payloads.
+          undefined,
+        );
 
-      if (result.error || !result.verification?.verified) {
-        return {
-          ok: false,
-          error: result.error || "Captcha verification failed",
-        };
+        if (result.error || !result.verification?.verified) {
+          return {
+            ok: false,
+            error: result.error || "Captcha verification failed",
+          };
+        }
+
+        return { ok: true };
+      } catch (err) {
+        console.error("[altcha.verify]", err);
+        return { ok: false, error: "Captcha verification failed" };
       }
-
-      return { ok: true };
     },
   };
 }
