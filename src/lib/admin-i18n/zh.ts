@@ -517,8 +517,6 @@ const zh: AdminMessages = {
     title: "物流发货",
     description: "跟踪配送、装箱单与送达状态——不显示价格与发票。",
     workspaceHint:
-      "订单页 → 创建发货 · 发货页 → 运单跟踪。右侧资料栏——不显示价格。",
-    workspaceHint:
       "订单 → 创建装箱 · 发货 → 进度、运单、客户——不显示价格。",
     tabOrders: "订单",
     tabShipments: "发货",
@@ -566,7 +564,6 @@ const zh: AdminMessages = {
     colCompany: "公司",
     colArrival: "更新时间",
     colRoute: "路线",
-    colQty: "件数",
     colStatus: "状态",
     colDocs: "单据",
     listedHint: "共 {count} 单 · 点击行可查看详情并编辑",

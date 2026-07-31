@@ -582,7 +582,6 @@ const en: AdminMessages = {
     colCompany: "Company",
     colArrival: "Updated",
     colRoute: "Route",
-    colQty: "Units",
     colStatus: "Status",
     colDocs: "Docs",
     listedHint: "{count} shipments · click a row for details & edit",

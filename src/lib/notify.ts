@@ -172,7 +172,7 @@ export async function notifyOrderPlaced(opts: {
     if (rep) {
       await notify({
         userId: rep.id,
-        to: rep.email,
+        to: rep.email || `staff:${rep.id}`,
         subject: `Your account ordered ${opts.orderNumber}`,
         body: `${opts.companyName || "Customer"} placed ${opts.orderNumber} for $${opts.total.toFixed(2)}${opts.paymentMethod ? ` (${opts.paymentMethod})` : ""}${opts.placedByStaff ? " (staff-assisted)" : ""}.`,
         type: "order",
