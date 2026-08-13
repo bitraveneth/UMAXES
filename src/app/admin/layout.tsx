@@ -41,7 +41,7 @@ export default async function AdminLayout({
   const cookieLocale = cookieStore.get(ADMIN_LOCALE_COOKIE)?.value;
   const initialLocale: AdminLocale = isAdminLocale(cookieLocale)
     ? cookieLocale
-    : "zh";
+    : "en";
 
   const items = navForRole(session.user.role);
   const email = session.user.email || session.user.name || "Staff";
