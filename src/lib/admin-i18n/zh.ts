@@ -27,6 +27,7 @@ const zh: AdminMessages = {
   nav: {
     "/admin": "工作台",
     "/admin/activity": "操作记录",
+    "/admin/learn": "学习中心",
     "/admin/approvals": "审批管理",
     "/admin/customers": "客户总览",
     "/admin/distributors": "分销商",
@@ -750,6 +751,18 @@ const zh: AdminMessages = {
   audit: {
     title: "操作审计",
     description: "用户、价格、授信与订单等关键变更记录。",
+  },
+  learn: {
+    title: "学习中心",
+    description: "各后台模块的简短教程 — 了解 UMAXES 如何运作。",
+    start: "开始学习",
+    openModule: "打开模块",
+    previous: "上一篇",
+    next: "下一篇",
+    outline: "教程目录",
+    lessonOf: "第 {n} / {total} 篇",
+    tip: "提示",
+    backToHub: "全部教程",
   },
 };
 

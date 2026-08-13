@@ -26,6 +26,7 @@ const en: AdminMessages = {
   nav: {
     "/admin": "Dashboard",
     "/admin/activity": "Activity",
+    "/admin/learn": "Learning",
     "/admin/approvals": "Approvals",
     "/admin/customers": "Customers",
     "/admin/distributors": "Distributors",
@@ -774,6 +775,18 @@ const en: AdminMessages = {
   audit: {
     title: "Audit log",
     description: "Critical changes to users, prices, credit, and orders.",
+  },
+  learn: {
+    title: "Learning Hub",
+    description: "Short tutorials for each admin module — how UMAXES works.",
+    start: "Start",
+    openModule: "Open module",
+    previous: "Previous",
+    next: "Next",
+    outline: "Tutorials",
+    lessonOf: "Tutorial {n} of {total}",
+    tip: "Tip",
+    backToHub: "All tutorials",
   },
 };
 

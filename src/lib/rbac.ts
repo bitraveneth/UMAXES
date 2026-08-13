@@ -67,6 +67,11 @@ export const adminNav: AdminNavItem[] = [
     label: "Activity",
     roles: [SA, AD],
   },
+  {
+    href: "/admin/learn",
+    label: "Learning",
+    roles: [SA, AD],
+  },
   { href: "/admin/approvals", label: "Approvals", roles: [SA, AD, "SALES"] },
   {
     href: "/admin/distributors",

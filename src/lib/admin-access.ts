@@ -50,6 +50,7 @@ const ADMIN_PATH_RULES: PathRule[] = [
   { href: "/admin/commissions", roles: ["ADMIN", "SALES", "SUPER_ADMIN"] },
   { href: "/admin/reports", roles: ["ADMIN", "SALES", "SUPER_ADMIN"] },
   { href: "/admin/activity", roles: ["ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/learn", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/audit", roles: ["ADMIN", "SUPER_ADMIN"] },
   /** Staff accounts — super admin (devs) only */
   { href: "/admin/staff", roles: ["SUPER_ADMIN"] },
