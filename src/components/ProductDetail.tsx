@@ -8,7 +8,7 @@ import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
-import { flavors, product, type Flavor } from "@/lib/assets";
+import { flavors, product, PUFF_OPTIONS, type Flavor } from "@/lib/assets";
 
 export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const { add } = useCart();
@@ -23,9 +23,11 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   }
 
   return (
-        <div className={`px-4 pb-20 sm:px-6 sm:pb-28 ${storeTopPadClass(compactChrome)}`}>
+    <div
+      className={`px-4 pb-20 sm:px-6 sm:pb-28 ${storeTopPadClass(compactChrome)}`}
+    >
       <div className="mx-auto max-w-[1200px]">
-        <nav className="mb-8 font-display text-xs tracking-wide text-black/50 sm:mb-10">
+        <nav className="mb-8 font-display text-xs tracking-wide text-black/55 sm:mb-10">
           <Link href="/" className="transition hover:text-umx-orange">
             Home
           </Link>
@@ -68,11 +70,35 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               {flavor.description}
             </p>
 
-            <div className="mt-8">
-              <p className="font-display text-xs font-semibold tracking-[0.12em] text-black/50 uppercase">
-                Choose flavor
+            {/* Product feature — display only, not a chooser */}
+            <div className="mt-6">
+              <p className="font-display text-sm font-bold tracking-[0.08em] text-black uppercase">
+                Variants
               </p>
-              <div className="mt-3 grid grid-cols-3 gap-2.5 sm:grid-cols-5 sm:gap-3">
+              <div className="mt-3 flex flex-wrap gap-2">
+                {PUFF_OPTIONS.map((option) => (
+                  <span
+                    key={option}
+                    className="inline-flex items-center rounded-full bg-white px-3.5 py-2 font-display text-[13px] font-semibold tracking-[0.04em] text-black ring-1 ring-black/12"
+                  >
+                    {option}
+                    <span className="ml-1.5 font-body text-xs font-medium text-black/45">
+                      puffs
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <p className="font-display text-sm font-bold tracking-[0.08em] text-black uppercase">
+                HOOKAMAX flavors
+              </p>
+              <div
+                className="mt-3 flex flex-wrap gap-2"
+                role="list"
+                aria-label="Flavors"
+              >
                 {flavors.map((f) => {
                   const active = f.id === flavor.id;
                   return (
@@ -80,75 +106,84 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                       key={f.id}
                       href={`/product/${f.id}`}
                       scroll={false}
-                      className={`group/thumb relative aspect-square overflow-hidden rounded-xl transition duration-300 ${
-                        active
-                          ? "ring-2 ring-umx-orange ring-offset-2 ring-offset-umx-cream"
-                          : "ring-1 ring-black/10 hover:ring-umx-orange/60"
-                      }`}
-                      aria-label={f.name}
+                      role="listitem"
                       aria-current={active ? "page" : undefined}
+                      className={`inline-flex items-center rounded-full px-3.5 py-2 font-display text-[13px] font-semibold tracking-[0.02em] transition duration-200 ${
+                        active
+                          ? "bg-umx-orange text-white shadow-[0_6px_16px_rgba(255,91,4,0.28)]"
+                          : "bg-white text-black ring-1 ring-black/12 hover:text-umx-orange hover:ring-umx-orange/55"
+                      }`}
                     >
-                      <Image
-                        src={f.image}
-                        alt={f.name}
-                        fill
-                        className="object-cover transition duration-500 group-hover/thumb:scale-105"
-                        sizes="120px"
-                      />
-                      {active && (
-                        <span className="absolute inset-x-0 bottom-0 bg-black/55 py-1 text-center font-display text-[0.55rem] font-semibold tracking-wide text-white uppercase">
-                          Selected
-                        </span>
-                      )}
+                      {f.name}
                     </Link>
                   );
                 })}
               </div>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <div className="inline-flex items-center rounded-full border border-black/15 bg-umx-cream-bright">
+            <div className="mt-7">
+              <p className="font-display text-sm font-bold tracking-[0.08em] text-black uppercase">
+                Quantity
+              </p>
+              <div className="mt-3 flex flex-wrap items-stretch gap-3">
+                <div className="inline-flex h-12 items-center overflow-hidden rounded-full border border-black/15 bg-white">
+                  <button
+                    type="button"
+                    aria-label="Decrease quantity"
+                    className="flex h-full w-11 items-center justify-center font-display text-xl text-black transition hover:bg-umx-cream hover:text-umx-orange"
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={99999}
+                    value={qty}
+                    aria-label="Quantity"
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^\d]/g, "");
+                      if (raw === "") {
+                        setQty(1);
+                        return;
+                      }
+                      const next = Math.min(
+                        99999,
+                        Math.max(1, parseInt(raw, 10) || 1),
+                      );
+                      setQty(next);
+                    }}
+                    onBlur={() => setQty((q) => Math.max(1, q || 1))}
+                    className="h-full w-16 border-x border-black/10 bg-transparent text-center font-display text-base font-bold text-black outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Increase quantity"
+                    className="flex h-full w-11 items-center justify-center font-display text-xl text-black transition hover:bg-umx-cream hover:text-umx-orange"
+                    onClick={() => setQty((q) => Math.min(99999, q + 1))}
+                  >
+                    +
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  aria-label="Decrease quantity"
-                  className="flex h-12 w-11 items-center justify-center font-display text-lg text-black transition hover:text-umx-orange"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  onClick={handleAdd}
+                  className={`inline-flex h-12 min-w-[11rem] flex-1 items-center justify-center gap-2 rounded-full px-7 font-display text-sm font-semibold tracking-wide text-white transition duration-300 sm:flex-none sm:text-base ${
+                    added ? "bg-umx-orange" : "bg-black hover:bg-umx-orange"
+                  }`}
                 >
-                  −
-                </button>
-                <span className="min-w-10 text-center font-display text-sm font-semibold text-black">
-                  {qty}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Increase quantity"
-                  className="flex h-12 w-11 items-center justify-center font-display text-lg text-black transition hover:text-umx-orange"
-                  onClick={() => setQty((q) => q + 1)}
-                >
-                  +
+                  {added ? "Added to cart" : "Add to cart"}
+                  <span aria-hidden className="text-white">
+                    {added ? "✓" : "→"}
+                  </span>
                 </button>
               </div>
-
-              <button
-                type="button"
-                onClick={handleAdd}
-                className={`inline-flex min-w-[11rem] flex-1 items-center justify-center gap-2 rounded-full px-7 py-3.5 font-display text-sm font-semibold tracking-wide transition duration-300 sm:flex-none sm:text-base ${
-                  added
-                    ? "bg-umx-orange text-white"
-                    : "bg-black text-umx-cream hover:bg-umx-orange hover:text-white"
-                }`}
-              >
-                {added ? "Added to cart" : "Add to cart"}
-                <span aria-hidden>{added ? "✓" : "→"}</span>
-              </button>
+              <p className="mt-2 font-body text-xs text-black/45">
+                Type any amount — e.g. 100
+              </p>
             </div>
-
-            <a
-              href="#key-features"
-              className="mt-6 inline-flex font-display text-sm font-semibold text-black/55 transition hover:text-umx-orange"
-            >
-              View key features ↓
-            </a>
           </div>
         </div>
       </div>

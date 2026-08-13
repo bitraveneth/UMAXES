@@ -152,6 +152,7 @@ export async function POST(request: Request) {
     companyId: company.id,
     customerUserId: contact.id,
     customerEmail: contact.email,
+    customerPhone: contact.phone,
     addressId: String(body.addressId ?? ""),
     paymentMethod: String(
       body.paymentMethod ?? "",

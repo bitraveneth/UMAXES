@@ -45,6 +45,7 @@ function RegisterFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const methodFromUrl = searchParams.get("method");
+  const callbackUrl = searchParams.get("callbackUrl") || "/account";
 
   const [method, setMethod] = useState<AuthMethod | null>(
     methodFromUrl === "phone" || methodFromUrl === "email"
@@ -233,7 +234,14 @@ function RegisterFormInner() {
       return;
     }
 
-    router.push(`/login?registered=1&method=${method}`);
+    const loginQs = new URLSearchParams({
+      registered: "1",
+      method: method || "email",
+    });
+    if (callbackUrl && callbackUrl !== "/account") {
+      loginQs.set("callbackUrl", callbackUrl);
+    }
+    router.push(`/login?${loginQs.toString()}`);
   }
 
   useEffect(() => {
@@ -512,7 +520,11 @@ function RegisterFormInner() {
       <p className="text-center font-body text-sm text-black/60">
         Already registered?{" "}
         <Link
-          href={method ? `/login?method=${method}` : "/login"}
+          href={
+            method
+              ? `/login?method=${method}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+              : `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
+          }
           className="font-semibold text-umx-orange underline-offset-2 hover:underline"
         >
           Sign in

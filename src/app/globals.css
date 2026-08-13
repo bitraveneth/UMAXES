@@ -288,3 +288,110 @@ a {
     transition: none !important;
   }
 }
+
+/* Brand film — fill the viewport in fullscreen (aspect box otherwise leaves orange gaps) */
+#film .film-stage:fullscreen,
+#film .film-stage:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 0 !important;
+  background: #000;
+}
+#film .film-stage:fullscreen .film-viewport,
+#film .film-stage:-webkit-full-screen .film-viewport {
+  aspect-ratio: auto !important;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+/* Google Translate — hide banner + native chrome; custom picker drives it */
+.goog-te-banner-frame.skiptranslate,
+body > .skiptranslate,
+.goog-te-balloon-frame {
+  display: none !important;
+}
+body {
+  top: 0 !important;
+}
+.goog-tooltip,
+.goog-tooltip:hover,
+#goog-gt-tt {
+  display: none !important;
+}
+.umx-lang-picker__widget,
+.umx-google-translate {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.umx-lang-picker {
+  position: relative;
+}
+.umx-lang-picker__list {
+  margin: 0;
+  max-height: 17.5rem;
+  list-style: none;
+  overflow-y: auto;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+.umx-lang-picker__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 0.75rem;
+  width: 100%;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  cursor: pointer;
+}
+.umx-lang-picker__item:hover {
+  background: var(--umx-cream, #fdf6e3);
+}
+.umx-lang-picker__item.is-active {
+  background: var(--umx-orange-wash, #ffe8d6);
+}
+.umx-lang-picker__native {
+  grid-column: 1;
+  grid-row: 1;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #111;
+}
+.umx-lang-picker__label {
+  grid-column: 1;
+  grid-row: 2;
+  margin-top: 0.1rem;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(0, 0, 0, 0.45);
+}
+.umx-lang-picker__check {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ff5b04;
+}
+.umx-lang-picker__item.is-active .umx-lang-picker__native {
+  color: #ff5b04;
+}

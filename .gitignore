@@ -79,3 +79,5 @@ next-env.d.ts
 .lighthouse/
 .lh-chrome*/
 skills-lock.json
+
+.env*

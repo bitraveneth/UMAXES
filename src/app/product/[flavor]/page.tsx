@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ProductDetail from "@/components/ProductDetail";
 import ProductKeyFeatures from "@/components/ProductKeyFeatures";
+import ProductStoryImages from "@/components/ProductStoryImages";
 import { flavors, getFlavor, product } from "@/lib/assets";
 
 type Props = {
@@ -37,6 +38,7 @@ export default async function ProductPage({ params }: Props) {
       <main className="flex-1">
         <ProductDetail flavor={flavor} />
         <ProductKeyFeatures />
+        <ProductStoryImages />
       </main>
       <Footer />
     </>

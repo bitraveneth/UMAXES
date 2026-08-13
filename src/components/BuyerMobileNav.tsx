@@ -19,7 +19,7 @@ function isHidden(pathname: string) {
 
 export default function BuyerMobileNav() {
   const pathname = usePathname() || "/";
-  const { quantity, open, setOpen } = useCart();
+  const { quantity } = useCart();
 
   if (isHidden(pathname)) return null;
 
@@ -28,7 +28,7 @@ export default function BuyerMobileNav() {
     pathname.startsWith("/shop/") ||
     pathname.startsWith("/product");
   const accountActive = pathname.startsWith("/account");
-  const cartActive = open || pathname.startsWith("/checkout");
+  const cartActive = pathname.startsWith("/cart");
 
   const itemClass = (active: boolean) =>
     `relative flex flex-col items-center justify-center gap-0.5 font-display text-[10px] font-semibold tracking-wide transition ${
@@ -46,11 +46,11 @@ export default function BuyerMobileNav() {
           Shop
         </Link>
 
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
+        <Link
+          href="/cart"
           className={itemClass(cartActive)}
           aria-label={quantity ? `Cart, ${quantity} items` : "Cart"}
+          aria-current={cartActive ? "page" : undefined}
         >
           <span className="relative">
             <ShoppingBag className="h-5 w-5" strokeWidth={activeStroke(cartActive)} aria-hidden />
@@ -61,7 +61,7 @@ export default function BuyerMobileNav() {
             ) : null}
           </span>
           Cart
-        </button>
+        </Link>
 
         <Link
           href="/account"

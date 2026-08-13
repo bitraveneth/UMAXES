@@ -12,7 +12,7 @@ const en: BuyerMessages = {
     wishlist: "Wishlist",
     shop: "Shop",
     profile: "Profile",
-    addresses: "Addresses",
+    addresses: "Shipping address",
     returns: "Returns",
     mediaKit: "Media kit",
     signOut: "Sign out",
@@ -39,7 +39,7 @@ const en: BuyerMessages = {
     paymentPendingHint: "Awaiting TT / check",
     wishlist: "Wishlist",
     wishlistHint: "Saved SKUs",
-    availableCredit: "Available credit",
+    availableCredit: "Credit limit",
     recentOrders: "Recent orders",
     recentOrdersHint: "Totals, payment, and status at a glance",
     activity: "Activity",
@@ -94,8 +94,8 @@ const en: BuyerMessages = {
   },
   addresses: {
     eyebrow: "Shipping",
-    title: "Addresses",
-    description: "Save warehouse, store, or HQ locations for checkout — up to 10 per company.",
+    title: "Shipping address",
+    description: "Save delivery locations for checkout — up to 10 per company.",
   },
   returns: {
     eyebrow: "After sales",

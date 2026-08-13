@@ -27,7 +27,7 @@ type RmaRow = {
 };
 
 export default function RmaManager() {
-  const { add, clear, setOpen } = useCart();
+  const { add, clear } = useCart();
   const [orders, setOrders] = useState<OrderOption[]>([]);
   const [rmas, setRmas] = useState<RmaRow[]>([]);
   const [orderId, setOrderId] = useState("");
@@ -140,8 +140,7 @@ export default function RmaManager() {
     for (const item of data.items as { flavorId: string; quantity: number }[]) {
       add(item.flavorId as FlavorId, item.quantity);
     }
-    setOpen(true);
-    setMsg(`Cart filled from ${data.orderNumber}`);
+    setMsg(`Cart filled from ${data.orderNumber} — open Cart to checkout`);
   }
 
   return (

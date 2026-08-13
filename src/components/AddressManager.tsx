@@ -72,7 +72,7 @@ export default function AddressManager() {
     const res = await fetch("/api/addresses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, line2: null }),
     });
     const data = await res.json();
     setLoading(false);
@@ -115,10 +115,10 @@ export default function AddressManager() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-display text-sm font-semibold text-black">
-            Saved locations
+            Shipping addresses
           </p>
           <p className="mt-1 font-body text-sm text-black">
-            Used at checkout for warehouse, store, or HQ delivery.
+            Used at checkout for delivery.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -220,13 +220,10 @@ export default function AddressManager() {
                     </div>
 
                     <p className="mt-4 font-display text-base font-bold text-black">
-                      {a.label || "Ship-to location"}
+                      {a.label || "Shipping address"}
                     </p>
                     <div className="mt-2 space-y-0.5 font-body text-sm leading-relaxed text-black">
-                      <p>
-                        {a.line1}
-                        {a.line2 ? `, ${a.line2}` : ""}
-                      </p>
+                      <p>{a.line1}</p>
                       <p>
                         {a.city}
                         {a.region ? `, ${a.region}` : ""} {a.postalCode}
@@ -269,10 +266,10 @@ export default function AddressManager() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-display text-lg font-bold text-black">
-                    Add ship-to
+                    Add shipping address
                   </p>
                   <p className="mt-1 font-body text-sm text-black">
-                    Label helps your team pick the right stop at checkout.
+                    Used at checkout for delivery.
                   </p>
                 </div>
                 {addresses.length > 0 ? (
@@ -307,26 +304,13 @@ export default function AddressManager() {
 
                 <label className="block">
                   <span className="font-display text-xs font-semibold tracking-wide text-black uppercase">
-                    Address line 1 *
+                    Address *
                   </span>
                   <input
                     required
                     value={form.line1}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, line1: e.target.value }))
-                    }
-                    className={FIELD_CLASS}
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="font-display text-xs font-semibold tracking-wide text-black uppercase">
-                    Address line 2
-                  </span>
-                  <input
-                    value={form.line2}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, line2: e.target.value }))
                     }
                     className={FIELD_CLASS}
                   />

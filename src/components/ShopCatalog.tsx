@@ -507,12 +507,10 @@ function FilterPanel({
 function ShopAside({
   quantity,
   total,
-  onOpenCart,
   favoritesCount,
 }: {
   quantity: number;
   total: number;
-  onOpenCart: () => void;
   favoritesCount: number;
 }) {
   return (
@@ -546,21 +544,12 @@ function ShopAside({
                 : `${quantity} item${quantity === 1 ? "" : "s"} ready to checkout.`}
             </p>
 
-            <button
-              type="button"
-              onClick={onOpenCart}
-              className="mt-5 w-full bg-black py-3.5 font-display text-sm font-semibold text-umx-cream transition hover:bg-umx-orange hover:text-white"
+            <Link
+              href="/cart"
+              className="mt-5 block w-full bg-black py-3.5 text-center font-display text-sm font-semibold text-white transition hover:bg-umx-orange"
             >
-              {quantity > 0 ? "View cart" : "Open cart"}
-            </button>
-            {quantity > 0 && (
-              <Link
-                href="/checkout"
-                className="mt-2 block w-full border border-black/15 py-3 text-center font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange"
-              >
-                Checkout
-              </Link>
-            )}
+              View cart
+            </Link>
 
             <div className="mt-4 flex items-center justify-between border-t border-black/8 pt-4">
               <span className="inline-flex items-center gap-1.5 font-display text-xs font-semibold text-black/45">
@@ -641,7 +630,7 @@ function ShopAside({
 }
 
 export default function ShopCatalog() {
-  const { quantity, total, setOpen } = useCart();
+  const { quantity, total } = useCart();
   const { data: session, status: authStatus } = useSession();
   const compactChrome = useCompactMobileStoreChrome();
   const [query, setQuery] = useState("");
@@ -874,9 +863,8 @@ export default function ShopCatalog() {
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
+            <Link
+              href="/cart"
               className="inline-flex h-11 items-center gap-2 border border-black/15 bg-white px-3.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange"
             >
               <ShoppingBag className="h-4 w-4" strokeWidth={2.1} aria-hidden />
@@ -886,7 +874,7 @@ export default function ShopCatalog() {
                   {quantity}
                 </span>
               )}
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -957,7 +945,6 @@ export default function ShopCatalog() {
           <ShopAside
             quantity={quantity}
             total={total}
-            onOpenCart={() => setOpen(true)}
             favoritesCount={favorites.length}
           />
         </div>
@@ -1020,14 +1007,13 @@ export default function ShopCatalog() {
                 {quantity} {quantity === 1 ? "item" : "items"} · ${total.toFixed(2)}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
+            <Link
+              href="/cart"
               className="inline-flex items-center gap-2 bg-umx-orange px-5 py-3 font-display text-sm font-semibold text-white"
             >
               <ShoppingBag className="h-4 w-4" strokeWidth={2.1} aria-hidden />
               View cart
-            </button>
+            </Link>
           </div>
         </div>
       )}

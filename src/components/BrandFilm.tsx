@@ -1,16 +1,36 @@
 "use client";
 
-import { Pause, Play, Volume2, VolumeX } from "lucide-react";
+import BrandFilmShareSheet from "@/components/BrandFilmShareSheet";
+import {
+  Maximize2,
+  Minimize2,
+  Pause,
+  Play,
+  Share2,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+
+const controlBtn =
+  "group/btn relative flex h-11 w-11 items-center justify-center rounded-full text-white transition-[transform,background-color,box-shadow,color] duration-300 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95 sm:h-12 sm:w-12";
+
+const SHARE_TITLE = "UMAXES — In motion";
+const SHARE_TEXT = "Watch the draw — UMAXES brand film";
 
 export default function BrandFilm() {
   const sectionRef = useRef<HTMLElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [inView, setInView] = useState(false);
   const [mediaReady, setMediaReady] = useState(false);
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("#film");
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const syncPlayback = useEffectEvent((visible: boolean, shouldPlay: boolean) => {
     const video = videoRef.current;
@@ -55,6 +75,21 @@ export default function BrandFilm() {
     syncPlayback(inView && mediaReady, playing);
   }, [inView, playing, reducedMotion, mediaReady]);
 
+  useEffect(() => {
+    const onFs = () => {
+      const node = frameRef.current;
+      setIsFullscreen(Boolean(node && document.fullscreenElement === node));
+    };
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  useEffect(() => {
+    if (!linkCopied) return;
+    const t = window.setTimeout(() => setLinkCopied(false), 1800);
+    return () => window.clearTimeout(t);
+  }, [linkCopied]);
+
   const togglePlay = () => {
     setPlaying((prev) => !prev);
   };
@@ -65,6 +100,28 @@ export default function BrandFilm() {
     const next = !muted;
     video.muted = next;
     setMuted(next);
+  };
+
+  const toggleFullscreen = async () => {
+    const node = frameRef.current;
+    if (!node) return;
+    try {
+      if (document.fullscreenElement === node) {
+        await document.exitFullscreen();
+      } else {
+        await node.requestFullscreen();
+      }
+    } catch {
+      /* fullscreen may be blocked by the browser */
+    }
+  };
+
+  const openShare = () => {
+    setShareUrl(
+      `${window.location.origin}${window.location.pathname}#film`,
+    );
+    setLinkCopied(false);
+    setShareOpen(true);
   };
 
   return (
@@ -91,8 +148,17 @@ export default function BrandFilm() {
         {/* Mobile: cream matte frame like a device/screen. Desktop: larger cinema frame. */}
         <div className="group/film relative mx-auto mt-8 w-full max-w-[1680px] sm:mt-12">
           <div className="rounded-[1.65rem] bg-white p-2 shadow-[0_18px_50px_rgba(61,22,5,0.12)] ring-1 ring-black/8 sm:rounded-[2.25rem] sm:p-2.5 md:rounded-[2.75rem] md:p-3">
-            <div className="relative overflow-hidden rounded-[1.25rem] bg-umx-orange-ink sm:rounded-[1.85rem] md:rounded-[2.25rem]">
-              <div className="relative aspect-[4/5] w-full sm:aspect-[16/10] md:aspect-[21/9]">
+            <div
+              ref={frameRef}
+              className="film-stage relative overflow-hidden rounded-[1.25rem] bg-umx-orange-ink sm:rounded-[1.85rem] md:rounded-[2.25rem]"
+            >
+              <div
+                className={`film-viewport relative w-full ${
+                  isFullscreen
+                    ? "h-full min-h-full aspect-auto"
+                    : "aspect-[4/5] sm:aspect-[16/10] md:aspect-[21/9]"
+                }`}
+              >
                 <video
                   ref={videoRef}
                   className={`absolute inset-0 h-full w-full object-cover transition duration-[1.1s] ease-out ${
@@ -112,57 +178,123 @@ export default function BrandFilm() {
                   className="pointer-events-none absolute inset-0 bg-gradient-to-t from-umx-orange-ink/50 via-transparent to-black/10"
                 />
 
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center px-4 pb-4 sm:pb-6">
-                  <div
-                    className={`pointer-events-auto flex items-center gap-1 rounded-2xl border border-white/20 bg-umx-orange-ink/65 p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-md transition duration-300 ease-out ${
-                      playing
-                        ? "translate-y-0 opacity-100 sm:translate-y-2 sm:opacity-0 sm:group-hover/film:translate-y-0 sm:group-hover/film:opacity-100 sm:group-focus-within/film:translate-y-0 sm:group-focus-within/film:opacity-100"
-                        : "translate-y-0 opacity-100"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={togglePlay}
-                      className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-umx-orange text-white transition duration-300 hover:bg-umx-orange-mid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95 sm:h-14 sm:w-14"
-                      aria-label={playing ? "Pause film" : "Play film"}
-                    >
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-white/25 to-transparent opacity-80"
-                      />
-                      {playing ? (
-                        <Pause
-                          className="relative h-5 w-5"
-                          strokeWidth={2.4}
-                          fill="currentColor"
+                {shareOpen ? (
+                  <button
+                    type="button"
+                    className="absolute inset-0 z-[15] bg-black/20"
+                    aria-label="Close share sheet"
+                    onClick={() => setShareOpen(false)}
+                  />
+                ) : null}
+
+                <div
+                  className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-end justify-end px-3 pb-3 sm:px-5 sm:pb-5 ${
+                    isFullscreen || !playing || shareOpen
+                      ? "opacity-100"
+                      : "opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-300 sm:group-hover/film:opacity-100 sm:group-focus-within/film:opacity-100"
+                  }`}
+                >
+                  <div className="pointer-events-auto relative">
+                    <BrandFilmShareSheet
+                      open={shareOpen}
+                      onClose={() => setShareOpen(false)}
+                      url={shareUrl}
+                      title={SHARE_TITLE}
+                      text={SHARE_TEXT}
+                      copied={linkCopied}
+                      onCopied={() => setLinkCopied(true)}
+                    />
+                    <div className="flex items-center gap-1.5 rounded-full border border-white/15 bg-black/45 p-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur-md sm:gap-2 sm:p-2">
+                      <button
+                        type="button"
+                        onClick={togglePlay}
+                        className={`${controlBtn} bg-umx-orange shadow-[0_8px_20px_rgba(255,91,4,0.35)] hover:scale-105 hover:bg-umx-orange-mid hover:shadow-[0_10px_28px_rgba(255,91,4,0.5)]`}
+                        aria-label={playing ? "Pause film" : "Play film"}
+                      >
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-b from-white/30 to-transparent opacity-70 transition-opacity duration-300 group-hover/btn:opacity-100"
+                        />
+                        {playing ? (
+                          <Pause
+                            className="relative h-[18px] w-[18px] sm:h-5 sm:w-5"
+                            strokeWidth={2.4}
+                            fill="currentColor"
+                            aria-hidden
+                          />
+                        ) : (
+                          <Play
+                            className="relative ml-0.5 h-[18px] w-[18px] sm:h-5 sm:w-5"
+                            strokeWidth={2.4}
+                            fill="currentColor"
+                            aria-hidden
+                          />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={toggleMute}
+                        className={`${controlBtn} bg-white/10 hover:scale-105 hover:bg-white/22 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.35)]`}
+                        aria-label={muted ? "Unmute film" : "Mute film"}
+                        aria-pressed={!muted}
+                      >
+                        {muted ? (
+                          <VolumeX
+                            className="h-[18px] w-[18px] transition-transform duration-300 group-hover/btn:scale-110 sm:h-5 sm:w-5"
+                            strokeWidth={2.1}
+                            aria-hidden
+                          />
+                        ) : (
+                          <Volume2
+                            className="h-[18px] w-[18px] transition-transform duration-300 group-hover/btn:scale-110 sm:h-5 sm:w-5"
+                            strokeWidth={2.1}
+                            aria-hidden
+                          />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={openShare}
+                        className={`${controlBtn} bg-white/10 hover:scale-105 hover:bg-white/22 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.35)] ${
+                          shareOpen ? "bg-white/22 ring-1 ring-white/35" : ""
+                        }`}
+                        aria-label="Share film"
+                        aria-haspopup="dialog"
+                        aria-expanded={shareOpen}
+                      >
+                        <Share2
+                          className="h-[17px] w-[17px] transition-transform duration-300 group-hover/btn:scale-110 sm:h-[18px] sm:w-[18px]"
+                          strokeWidth={2.1}
                           aria-hidden
                         />
-                      ) : (
-                        <Play
-                          className="relative ml-0.5 h-5 w-5"
-                          strokeWidth={2.4}
-                          fill="currentColor"
-                          aria-hidden
-                        />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={toggleMute}
-                      className={`flex h-11 w-11 items-center justify-center rounded-xl text-white transition duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-95 sm:h-14 sm:w-14 ${
-                        muted
-                          ? "bg-white/10 hover:bg-white/18"
-                          : "bg-white/20 hover:bg-white/28"
-                      }`}
-                      aria-label={muted ? "Unmute film" : "Mute film"}
-                      aria-pressed={!muted}
-                    >
-                      {muted ? (
-                        <VolumeX className="h-5 w-5" strokeWidth={2.1} aria-hidden />
-                      ) : (
-                        <Volume2 className="h-5 w-5" strokeWidth={2.1} aria-hidden />
-                      )}
-                    </button>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void toggleFullscreen()}
+                        className={`${controlBtn} bg-white/10 hover:scale-105 hover:bg-white/22 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.35)]`}
+                        aria-label={
+                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                        }
+                        aria-pressed={isFullscreen}
+                      >
+                        {isFullscreen ? (
+                          <Minimize2
+                            className="h-[17px] w-[17px] transition-transform duration-300 group-hover/btn:scale-110 sm:h-[18px] sm:w-[18px]"
+                            strokeWidth={2.1}
+                            aria-hidden
+                          />
+                        ) : (
+                          <Maximize2
+                            className="h-[17px] w-[17px] transition-transform duration-300 group-hover/btn:scale-110 sm:h-[18px] sm:w-[18px]"
+                            strokeWidth={2.1}
+                            aria-hidden
+                          />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

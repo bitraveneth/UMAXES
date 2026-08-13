@@ -36,6 +36,10 @@ export const testimonialImages = [
   "/images/testimonials/02.webp",
   "/images/testimonials/03.webp",
   "/images/testimonials/04.webp",
+  "/images/testimonials/05.webp",
+  "/images/testimonials/06.webp",
+  "/images/testimonials/07.webp",
+  "/images/testimonials/08.webp",
 ] as const;
 
 export const logos = {
@@ -58,10 +62,29 @@ export const product = {
   featuresHero: "/images/product/features-hero.webp",
 } as const;
 
+/** Full-bleed detail panels after Specs (shared on every flavor page) */
+export const productStoryImages = [
+  "/images/product/story/01.webp",
+  "/images/product/story/02.webp",
+  "/images/product/story/03.webp",
+  "/images/product/story/04.webp",
+  "/images/product/story/05.webp",
+  "/images/product/story/06.webp",
+] as const;
+
+/** Puff count options available on every flavor when ordering */
+export const PUFF_OPTIONS = ["80K", "50K"] as const;
+export type PuffOption = (typeof PUFF_OPTIONS)[number];
+export const DEFAULT_PUFF_OPTION: PuffOption = "80K";
+
+export function isPuffOption(value: unknown): value is PuffOption {
+  return PUFF_OPTIONS.includes(value as PuffOption);
+}
+
 export const productSpecs = [
   {
     id: "puffs",
-    value: "40K(MTL)/20K(DL)",
+    value: "50K / 80K",
     label: "Puffs",
     icon: "puffs",
   },

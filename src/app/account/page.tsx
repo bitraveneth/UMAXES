@@ -58,7 +58,7 @@ export default async function AccountPage() {
     );
   }
 
-  const [company, openOrders, paymentPending, wishlistCount, recentOrders] =
+  const [company, openOrders, paymentPending, wishlistCount, recentOrders, addresses] =
     await Promise.all([
       companyId
         ? prisma.company.findUnique({
@@ -67,8 +67,6 @@ export default async function AccountPage() {
               name: true,
               level: true,
               creditLimit: true,
-              creditUsed: true,
-              paymentTermsDays: true,
             },
           })
         : null,
@@ -114,13 +112,27 @@ export default async function AccountPage() {
             take: 5,
           })
         : [],
+      companyId
+        ? prisma.address.findMany({
+            where: { companyId },
+            orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+            take: 3,
+            select: {
+              id: true,
+              label: true,
+              line1: true,
+              city: true,
+              region: true,
+              postalCode: true,
+              country: true,
+              isDefault: true,
+            },
+          })
+        : [],
     ]);
 
-  const creditLeft = company
-    ? Math.max(0, company.creditLimit - company.creditUsed)
-    : 0;
   const isRetail = company?.level === "SHOP";
-  const showCredit = Boolean(company && !isRetail);
+  const showCredit = Boolean(company && !isRetail && company.creditLimit > 0);
 
   return (
     <div>
@@ -130,14 +142,74 @@ export default async function AccountPage() {
         openOrders={openOrders}
         paymentPending={paymentPending}
         wishlistCount={wishlistCount}
-        creditLeft={creditLeft}
-        creditHint={
-          company
-            ? `${company.paymentTermsDays}d terms · $${Math.round(company.creditLimit).toLocaleString()} limit`
-            : ""
-        }
+        creditLimit={company?.creditLimit ?? 0}
         showCredit={showCredit}
       />
+
+      <section className="mt-10">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="font-display text-[10px] font-semibold tracking-[0.16em] text-umx-orange uppercase">
+              Delivery
+            </p>
+            <h2 className="mt-1 font-display text-xl font-extrabold text-black sm:text-2xl">
+              Shipping address
+            </h2>
+            <p className="mt-1 font-body text-sm text-black">
+              Used at checkout for delivery
+            </p>
+          </div>
+          <Link
+            href="/account/addresses"
+            className="font-display text-sm font-semibold text-umx-orange"
+          >
+            {addresses.length === 0 ? "Add address →" : "Manage →"}
+          </Link>
+        </div>
+
+        {addresses.length === 0 ? (
+          <div className="border border-dashed border-black/15 bg-white px-6 py-10 text-center shadow-[0_10px_28px_rgba(61,22,5,0.04)]">
+            <p className="font-display text-base font-semibold text-black">
+              No shipping address yet
+            </p>
+            <p className="mt-2 font-body text-sm text-black/65">
+              Add one so you can place orders at checkout.
+            </p>
+            <Link
+              href="/account/addresses"
+              className="mt-4 inline-flex rounded-full bg-umx-orange px-5 py-2.5 font-display text-sm font-semibold text-white"
+            >
+              Add shipping address
+            </Link>
+          </div>
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {addresses.map((a) => (
+              <li
+                key={a.id}
+                className="border border-black/10 bg-white p-4 shadow-[0_8px_24px_rgba(61,22,5,0.04)]"
+              >
+                {a.isDefault ? (
+                  <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-umx-orange uppercase">
+                    Default
+                  </p>
+                ) : null}
+                <p className="mt-1 font-display text-sm font-bold text-black">
+                  {a.label || "Shipping address"}
+                </p>
+                <div className="mt-2 space-y-0.5 font-body text-sm leading-relaxed text-black/75">
+                  <p>{a.line1}</p>
+                  <p>
+                    {a.city}
+                    {a.region ? `, ${a.region}` : ""} {a.postalCode}
+                  </p>
+                  <p>{a.country}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="mt-10">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">

@@ -5,23 +5,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import CartDrawer from "@/components/CartDrawer";
 import BuyerAccountMenu from "@/components/BuyerAccountMenu";
+import GoogleTranslate from "@/components/GoogleTranslate";
+import LanguagePicker from "@/components/LanguagePicker";
 import LegalTicker from "@/components/LegalTicker";
 import { useCart } from "@/context/CartContext";
 import { useCompactMobileStoreChrome } from "@/hooks/useStoreChrome";
 import { logos } from "@/lib/assets";
 
-const sectionNav = [
-  { href: "/shop", label: "Shop", id: "shop" },
-  { href: "/#news", label: "News", id: "news" },
-  { href: "/#features", label: "Why UMAXES", id: "features" },
+/** Public site nav — keep lean */
+const primaryNav = [
+  { href: "/", label: "Home", match: "home" as const },
+  { href: "/shop", label: "Products", match: "shop" as const },
+  {
+    href: "/support/verify",
+    label: "Verify product",
+    match: "verify" as const,
+  },
+  { href: "/#news", label: "Info center", match: "news" as const },
+  { href: "/login", label: "Wholesale", match: "wholesale" as const },
 ] as const;
 
 const supportLinks = [
   { href: "/support", label: "Support hub" },
   { href: "/faq", label: "FAQ" },
-  { href: "/support/verify", label: "Product verify" },
   { href: "/contact", label: "Contact us" },
 ] as const;
 
@@ -45,10 +52,44 @@ function CartIcon({ className }: { className?: string }) {
   );
 }
 
+/** Shared nav type — one size for every menu item */
+const NAV_TYPE =
+  "font-display text-[13px] font-semibold leading-none tracking-[0.08em] uppercase";
+
+const navLinkBase = `inline-flex h-9 items-center whitespace-nowrap rounded-full px-3.5 ${NAV_TYPE} transition-colors duration-200`;
+
 function navLinkClass(active: boolean) {
-  return `rounded-full px-3 py-2 font-display text-[0.7rem] font-semibold tracking-[0.06em] uppercase transition-colors duration-200 xl:px-3.5 ${
-    active ? "text-umx-orange" : "text-black hover:text-umx-orange"
+  return `${navLinkBase} ${
+    active ? "text-umx-orange" : "text-black/85 hover:text-umx-orange"
   }`;
+}
+
+function isNavActive(
+  match: (typeof primaryNav)[number]["match"],
+  pathname: string,
+  activeSection: string,
+) {
+  switch (match) {
+    case "home":
+      return pathname === "/" && activeSection !== "news";
+    case "shop":
+      return pathname === "/shop" || pathname.startsWith("/product");
+    case "verify":
+      return pathname.startsWith("/support/verify");
+    case "news":
+      return (
+        pathname.startsWith("/blog") ||
+        (pathname === "/" && activeSection === "news")
+      );
+    case "wholesale":
+      return (
+        pathname.startsWith("/login") ||
+        pathname.startsWith("/register") ||
+        pathname.startsWith("/account")
+      );
+    default:
+      return false;
+  }
 }
 
 function SupportDropdown({
@@ -67,13 +108,14 @@ function SupportDropdown({
     <div className="group relative">
       <Link
         href="/support"
-        className={navLinkClass(supportActive)}
+        className={navLinkClass(
+          supportActive && !pathname.startsWith("/support/verify"),
+        )}
         aria-haspopup="menu"
       >
         Support
       </Link>
 
-      {/* Invisible bridge so hover doesn't drop when moving to menu */}
       <div
         role="menu"
         className="invisible absolute top-full left-1/2 z-50 w-52 -translate-x-1/2 pt-2 opacity-0 transition duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
@@ -90,8 +132,8 @@ function SupportDropdown({
                 href={item.href}
                 role="menuitem"
                 onClick={() => onNavigate?.()}
-                className={`block px-4 py-3 font-display text-sm font-semibold transition hover:bg-umx-cream hover:text-umx-orange ${
-                  active ? "bg-umx-cream text-umx-orange" : "text-black"
+                className={`block px-4 py-3 font-display text-[13px] font-semibold tracking-[0.04em] transition hover:bg-umx-cream hover:text-umx-orange ${
+                  active ? "bg-umx-cream text-umx-orange" : "text-black/85"
                 }`}
               >
                 {item.label}
@@ -104,13 +146,50 @@ function SupportDropdown({
   );
 }
 
+function LanguageDropdown() {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        className={`${navLinkClass(false)} gap-1.5`}
+        aria-haspopup="menu"
+        aria-label="Language"
+      >
+        Language
+        <svg
+          aria-hidden
+          viewBox="0 0 12 12"
+          className="h-2.5 w-2.5 shrink-0 opacity-55"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M2.5 4.5 6 8l3.5-3.5" />
+        </svg>
+      </button>
+      <div
+        role="menu"
+        className="invisible absolute top-full right-0 z-50 w-[17.5rem] pt-2 opacity-0 transition duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+      >
+        <div className="rounded-2xl bg-white p-3 shadow-[0_16px_40px_rgba(61,22,5,0.14)] ring-1 ring-black/8">
+          <LanguagePicker mountWidget={false} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("");
-  const { quantity, setOpen: setCartOpen } = useCart();
+  const [isXl, setIsXl] = useState(false);
+  const { quantity } = useCart();
   const { data: session } = useSession();
   const hideMobileHeader = useCompactMobileStoreChrome();
   const accountHref =
@@ -124,18 +203,22 @@ export default function Header() {
         : "/account";
 
   useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1280px)");
+    const sync = () => setIsXl(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
   useEffect(() => {
-    const elements = sectionNav
-      .map((n) => document.getElementById(n.id))
-      .filter((el): el is HTMLElement => Boolean(el));
-
-    if (!elements.length) return;
+    const el = document.getElementById("news");
+    if (!el) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -144,12 +227,14 @@ export default function Header() {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
         if (visible[0]?.target.id) {
           setActiveSection(visible[0].target.id);
+        } else if (pathname === "/") {
+          setActiveSection("");
         }
       },
-      { rootMargin: "-35% 0px -45% 0px", threshold: [0.1, 0.35, 0.6] }
+      { rootMargin: "-35% 0px -45% 0px", threshold: [0.1, 0.35, 0.6] },
     );
 
-    elements.forEach((el) => observer.observe(el));
+    observer.observe(el);
     return () => observer.disconnect();
   }, [pathname]);
 
@@ -164,11 +249,13 @@ export default function Header() {
     if (!hideMobileHeader) return;
     setOpen(false);
     setSupportOpen(false);
+    setLangOpen(false);
   }, [hideMobileHeader]);
 
   function closeMenu() {
     setOpen(false);
     setSupportOpen(false);
+    setLangOpen(false);
   }
 
   return (
@@ -187,38 +274,37 @@ export default function Header() {
           }`}
         >
           <div
-            className={`mx-auto flex max-w-[1280px] items-center justify-between gap-3 px-4 transition-[height] duration-300 sm:px-6 ${
-              scrolled ? "h-14" : "h-16 sm:h-[4.25rem]"
+            className={`mx-auto flex w-full max-w-[1600px] items-center gap-4 transition-[height] duration-300 sm:gap-6 lg:gap-8 ${
+              scrolled
+                ? "h-14 px-4 sm:px-6 lg:px-8 xl:px-10"
+                : "h-16 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8 xl:px-10"
             }`}
           >
             <Link
               href="/"
-              className="relative z-50 block h-7 w-[7.5rem] shrink-0 sm:h-8 sm:w-40"
+              className="relative z-50 -ml-0.5 block h-8 w-[8.5rem] shrink-0 sm:h-9 sm:w-44 lg:h-10 lg:w-48"
               onClick={closeMenu}
             >
               <Image
                 src={logos.orangeTransparent}
                 alt="UMAXES"
                 fill
-                className="object-contain object-left"
-                sizes="160px"
+                className="object-contain object-left brightness-0"
+                sizes="192px"
                 quality={70}
                 priority
               />
             </Link>
 
             <nav
-              className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 lg:flex"
+              className="ml-2 hidden min-w-0 flex-1 items-center justify-center gap-x-1 xl:flex"
               aria-label="Primary"
             >
-              {sectionNav.map((item) => {
-                const active =
-                  item.id === "shop"
-                    ? pathname === "/shop" || pathname.startsWith("/product")
-                    : pathname === "/" && activeSection === item.id;
+              {primaryNav.map((item) => {
+                const active = isNavActive(item.match, pathname, activeSection);
                 return (
                   <Link
-                    key={item.href}
+                    key={item.href + item.label}
                     href={item.href}
                     className={navLinkClass(active)}
                   >
@@ -226,28 +312,23 @@ export default function Header() {
                   </Link>
                 );
               })}
-              <span aria-hidden className="mx-1.5 h-4 w-px bg-black/15" />
               <SupportDropdown pathname={pathname} />
+              {/* Language always last in the navbar */}
+              {isXl ? (
+                <div className="order-last">
+                  <LanguageDropdown />
+                </div>
+              ) : null}
             </nav>
 
-            <div className="relative z-50 flex items-center gap-2 sm:gap-3">
+            <div className="relative z-50 ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
               <Link
-                href="/shop"
-                className="hidden rounded-full border border-black bg-transparent px-5 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:bg-umx-orange hover:!text-white sm:inline-flex"
-              >
-                Shop now
-              </Link>
-
-              <button
-                type="button"
+                href="/cart"
                 aria-label={
-                  quantity > 0 ? `Open cart, ${quantity} items` : "Open cart"
+                  quantity > 0 ? `Cart, ${quantity} items` : "Cart"
                 }
                 className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:text-umx-orange hover:ring-umx-orange"
-                onClick={() => {
-                  closeMenu();
-                  setCartOpen(true);
-                }}
+                onClick={closeMenu}
               >
                 <CartIcon className="h-[1.15rem] w-[1.15rem]" />
                 {quantity > 0 && (
@@ -255,7 +336,7 @@ export default function Header() {
                     {quantity > 99 ? "99+" : quantity}
                   </span>
                 )}
-              </button>
+              </Link>
 
               {session?.user ? (
                 session.user.role === "CUSTOMER" ? (
@@ -263,7 +344,7 @@ export default function Header() {
                 ) : (
                   <Link
                     href={accountHref}
-                    className="hidden rounded-full border border-black/15 px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange sm:inline-flex"
+                    className={`hidden h-9 items-center rounded-full border border-black/15 px-4 text-black/85 transition hover:border-umx-orange hover:text-umx-orange sm:inline-flex ${NAV_TYPE}`}
                   >
                     Account
                   </Link>
@@ -271,7 +352,7 @@ export default function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="hidden rounded-full border border-black/15 px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange sm:inline-flex"
+                  className={`hidden h-9 items-center rounded-full border border-black/15 px-4 text-black/85 transition hover:border-umx-orange hover:text-umx-orange sm:inline-flex ${NAV_TYPE}`}
                 >
                   Sign in
                 </Link>
@@ -279,7 +360,7 @@ export default function Header() {
 
               <button
                 type="button"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:text-umx-orange hover:ring-umx-orange lg:hidden"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:text-umx-orange hover:ring-umx-orange xl:hidden"
                 aria-expanded={open}
                 aria-controls="mobile-nav"
                 aria-label={open ? "Close menu" : "Open menu"}
@@ -309,103 +390,114 @@ export default function Header() {
       </div>
 
       {!hideMobileHeader ? (
-      <div
-        id="mobile-nav"
-        className={`fixed inset-0 z-40 lg:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
-        aria-hidden={!open}
-      >
         <div
-          className={`absolute inset-0 bg-umx-orange-ink/40 transition-opacity duration-300 ${
-            open ? "opacity-100" : "opacity-0"
-          }`}
-          onClick={closeMenu}
-        />
-        <div
-          className={`absolute inset-x-0 top-0 origin-top bg-umx-cream px-4 pb-8 pt-32 shadow-[0_20px_60px_rgba(61,22,5,0.12)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-6 ${
-            open ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
-          }`}
+          id="mobile-nav"
+          className={`fixed inset-0 z-40 xl:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+          aria-hidden={!open}
         >
-          <nav
-            className="mx-auto flex max-w-[1200px] flex-col gap-1"
-            aria-label="Mobile"
+          <div
+            className={`absolute inset-0 bg-umx-orange-ink/40 transition-opacity duration-300 ${
+              open ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={closeMenu}
+          />
+          <div
+            className={`absolute inset-x-0 top-0 origin-top bg-umx-cream px-4 pb-8 pt-32 shadow-[0_20px_60px_rgba(61,22,5,0.12)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-6 ${
+              open ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"
+            }`}
           >
-            {sectionNav.map((item, i) => {
-              const active =
-                item.id === "shop"
-                  ? pathname === "/shop" || pathname.startsWith("/product")
-                  : pathname === "/" && activeSection === item.id;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className="flex items-center justify-between rounded-xl px-4 py-3.5 font-display text-lg font-semibold tracking-[0.04em] text-black uppercase transition hover:text-umx-orange"
-                  style={{
-                    transitionDelay: open ? `${80 + i * 30}ms` : "0ms",
-                  }}
-                >
-                  {item.label}
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      active ? "bg-umx-orange" : "bg-umx-cream-deep"
-                    }`}
-                  />
-                </Link>
-              );
-            })}
-
-            <button
-              type="button"
-              onClick={() => setSupportOpen((v) => !v)}
-              className="mt-2 flex w-full items-center justify-between rounded-xl px-4 py-3.5 font-display text-lg font-semibold tracking-[0.04em] text-black uppercase"
-              aria-expanded={supportOpen}
+            <nav
+              className="mx-auto flex max-w-[1200px] flex-col gap-1"
+              aria-label="Mobile"
             >
-              Support
-            </button>
-
-            {supportOpen && (
-              <div className="mb-1 ml-3 border-l-2 border-umx-orange/30 pl-2">
-                {supportLinks.map((item) => {
-                  const active =
-                    item.href === "/support"
-                      ? pathname === "/support"
-                      : pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeMenu}
-                      className={`block rounded-xl px-4 py-3 font-display text-base font-semibold transition hover:text-umx-orange ${
-                        active ? "text-umx-orange" : "text-black/75"
+              {primaryNav.map((item, i) => {
+                const active = isNavActive(item.match, pathname, activeSection);
+                return (
+                  <Link
+                    key={item.href + item.label}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className={`flex items-center justify-between rounded-xl px-4 py-3.5 text-black/85 transition hover:text-umx-orange ${NAV_TYPE} !text-base !tracking-[0.06em]`}
+                    style={{
+                      transitionDelay: open ? `${80 + i * 30}ms` : "0ms",
+                    }}
+                  >
+                    {item.label}
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        active ? "bg-umx-orange" : "bg-umx-cream-deep"
                       }`}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+                    />
+                  </Link>
+                );
+              })}
 
-            <Link
-              href={session?.user ? accountHref : "/login"}
-              onClick={closeMenu}
-              className="mt-4 rounded-full border border-black/15 px-5 py-4 text-center font-display text-base font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange"
-            >
-              {session?.user ? "Account" : "Sign in"}
-            </Link>
-            <Link
-              href="/shop"
-              onClick={closeMenu}
-              className="mt-2 rounded-full border border-black px-5 py-4 text-center font-display text-base font-semibold text-black transition hover:border-umx-orange hover:bg-umx-orange hover:!text-white"
-            >
-              Shop now
-            </Link>
-          </nav>
+              <button
+                type="button"
+                onClick={() => setSupportOpen((v) => !v)}
+                className={`mt-2 flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-black/85 ${NAV_TYPE} !text-base !tracking-[0.06em]`}
+                aria-expanded={supportOpen}
+              >
+                Support
+              </button>
+
+              {supportOpen && (
+                <div className="mb-1 ml-3 border-l-2 border-umx-orange/30 pl-2">
+                  {supportLinks.map((item) => {
+                    const active =
+                      item.href === "/support"
+                        ? pathname === "/support"
+                        : pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={closeMenu}
+                        className={`block rounded-xl px-4 py-3 font-display text-[15px] font-semibold tracking-[0.04em] transition hover:text-umx-orange ${
+                          active ? "text-umx-orange" : "text-black/70"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setLangOpen((v) => !v)}
+                className={`mt-1 flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-black/85 ${NAV_TYPE} !text-base !tracking-[0.06em]`}
+                aria-expanded={langOpen}
+              >
+                Language
+              </button>
+
+              {langOpen && !isXl && (
+                <div className="mb-1 ml-3 rounded-2xl border border-umx-cream-deep bg-white p-3">
+                  <LanguagePicker
+                    mountWidget={false}
+                    onPicked={closeMenu}
+                  />
+                </div>
+              )}
+
+              <Link
+                href={session?.user ? accountHref : "/login"}
+                onClick={closeMenu}
+                className={`mt-4 rounded-full border border-black/15 px-5 py-4 text-center text-black transition hover:border-umx-orange hover:text-umx-orange ${NAV_TYPE} !text-base !tracking-[0.06em]`}
+              >
+                {session?.user ? "Account" : "Sign in"}
+              </Link>
+            </nav>
+          </div>
         </div>
-      </div>
       ) : null}
 
-      <CartDrawer />
+      {/* Single Google Translate host — custom LanguagePicker drives it */}
+      <div className="umx-lang-picker__widget" aria-hidden>
+        <GoogleTranslate />
+      </div>
     </>
   );
 }

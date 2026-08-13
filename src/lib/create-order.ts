@@ -11,6 +11,8 @@ export type CreateOrderLineInput = {
   sku?: string;
   flavorId?: string;
   quantity: number;
+  /** e.g. "80K" / "50K" — stored on the line name for ops */
+  optionsLabel?: string;
 };
 
 export type CreateOrderInput = {
@@ -18,6 +20,7 @@ export type CreateOrderInput = {
   /** Customer user that owns the order (account notification target). */
   customerUserId: string;
   customerEmail?: string | null;
+  customerPhone?: string | null;
   addressId: string;
   paymentMethod: PaymentMethod;
   items: CreateOrderLineInput[];
@@ -64,6 +67,15 @@ export async function createOrder(
   if (!company || company.status !== "APPROVED") {
     return { ok: false, status: 403, error: "Company not approved" };
   }
+
+  const customerUser = await prisma.user.findUnique({
+    where: { id: input.customerUserId },
+    select: { email: true, phone: true },
+  });
+  const orderEmail =
+    input.customerEmail?.trim() || customerUser?.email || null;
+  const orderPhone =
+    input.customerPhone?.trim() || customerUser?.phone || null;
 
   const address = await prisma.address.findFirst({
     where: { id: input.addressId, companyId: company.id },
@@ -127,10 +139,11 @@ export async function createOrder(
 
     const unitPrice = price.unitPrice;
     subtotal = roundMoney(subtotal + unitPrice * quantity);
+    const optionsLabel = String(line.optionsLabel || "").trim();
     orderItems.push({
       productId: product.id,
       sku: product.sku,
-      name: product.name,
+      name: optionsLabel ? `${product.name} · ${optionsLabel}` : product.name,
       quantity,
       unitPrice,
       image: product.image,
@@ -213,8 +226,8 @@ export async function createOrder(
         companyId: company.id,
         status: paymentMethod === "CREDIT" ? "CONFIRMED" : "PAYMENT_PENDING",
         paymentMethod,
-        email: input.customerEmail ?? null,
-        phone: null,
+        email: orderEmail,
+        phone: orderPhone,
         addressSnap,
         subtotal,
         shipping,

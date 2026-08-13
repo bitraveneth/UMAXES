@@ -10,7 +10,7 @@ import {
 } from "react";
 import { flavors, getFlavor, type FlavorId } from "@/lib/assets";
 
-const STORAGE_KEY = "umaxes-cart-v2";
+const STORAGE_KEY = "umaxes-cart-v4";
 
 export type CartLine = {
   flavorId: FlavorId;
@@ -35,6 +35,18 @@ function isFlavorId(id: string): id is FlavorId {
   return flavors.some((f) => f.id === id);
 }
 
+function normalizeLine(raw: unknown): CartLine | null {
+  if (!raw || typeof raw !== "object") return null;
+  const line = raw as Record<string, unknown>;
+  if (!isFlavorId(String(line.flavorId))) return null;
+  const quantity = Number(line.quantity);
+  if (!Number.isFinite(quantity) || quantity < 1) return null;
+  return {
+    flavorId: line.flavorId as FlavorId,
+    quantity: Math.floor(quantity),
+  };
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartLine[]>([]);
   const [open, setOpen] = useState(false);
@@ -42,18 +54,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw =
+        localStorage.getItem(STORAGE_KEY) ||
+        localStorage.getItem("umaxes-cart-v3") ||
+        localStorage.getItem("umaxes-cart-v2");
       if (raw) {
-        const parsed = JSON.parse(raw) as CartLine[];
+        const parsed = JSON.parse(raw) as unknown[];
         if (Array.isArray(parsed)) {
+          const merged = new Map<FlavorId, number>();
+          for (const entry of parsed) {
+            const line = normalizeLine(entry);
+            if (!line) continue;
+            merged.set(
+              line.flavorId,
+              (merged.get(line.flavorId) ?? 0) + line.quantity,
+            );
+          }
           setItems(
-            parsed.filter(
-              (line) =>
-                line &&
-                isFlavorId(line.flavorId) &&
-                Number.isFinite(line.quantity) &&
-                line.quantity > 0
-            )
+            [...merged.entries()].map(([flavorId, quantity]) => ({
+              flavorId,
+              quantity,
+            })),
           );
         }
       }
@@ -68,6 +89,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       if (items.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
       else localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem("umaxes-cart-v3");
+      localStorage.removeItem("umaxes-cart-v2");
     } catch {
       /* ignore */
     }
@@ -79,12 +102,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existing = prev.find((l) => l.flavorId === flavorId);
       if (existing) {
         return prev.map((l) =>
-          l.flavorId === flavorId ? { ...l, quantity: l.quantity + n } : l
+          l.flavorId === flavorId ? { ...l, quantity: l.quantity + n } : l,
         );
       }
       return [...prev, { flavorId, quantity: n }];
     });
-    setOpen(true);
   }, []);
 
   const setQuantity = useCallback((flavorId: FlavorId, qty: number) => {
@@ -92,7 +114,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => {
       if (next === 0) return prev.filter((l) => l.flavorId !== flavorId);
       return prev.map((l) =>
-        l.flavorId === flavorId ? { ...l, quantity: next } : l
+        l.flavorId === flavorId ? { ...l, quantity: next } : l,
       );
     });
   }, []);
@@ -105,7 +127,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const quantity = useMemo(
     () => items.reduce((sum, l) => sum + l.quantity, 0),
-    [items]
+    [items],
   );
 
   const total = useMemo(
@@ -114,7 +136,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const flavor = getFlavor(l.flavorId);
         return sum + (flavor?.price ?? 0) * l.quantity;
       }, 0),
-    [items]
+    [items],
   );
 
   const value = useMemo(
@@ -129,7 +151,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clear,
       total,
     }),
-    [items, quantity, open, add, setQuantity, remove, clear, total]
+    [items, quantity, open, add, setQuantity, remove, clear, total],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

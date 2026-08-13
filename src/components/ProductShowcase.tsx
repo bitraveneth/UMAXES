@@ -36,15 +36,7 @@ function FlavorMarquee() {
   );
 }
 
-function FlavorCard({
-  flavor,
-  index,
-  featured = false,
-}: {
-  flavor: Flavor;
-  index: number;
-  featured?: boolean;
-}) {
+function FlavorCard({ flavor, index }: { flavor: Flavor; index: number }) {
   const { add } = useCart();
   const cardRef = useRef<HTMLElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -77,9 +69,7 @@ function FlavorCard({
       ref={cardRef}
       onPointerMove={onMove}
       onPointerLeave={onLeave}
-      className={`flavor-card-enter group relative isolate ${
-        featured ? "sm:col-span-2 sm:row-span-2" : ""
-      }`}
+      className="flavor-card-enter group relative isolate h-full"
       style={
         {
           "--flavor-accent": flavor.accent,
@@ -90,36 +80,23 @@ function FlavorCard({
       }
     >
       <div className="relative flex h-full flex-col overflow-hidden rounded-[1.5rem] bg-umx-cream-bright shadow-[0_16px_44px_rgba(61,22,5,0.08)] ring-1 ring-black/6 transition duration-500 group-hover:shadow-[0_30px_70px_rgba(61,22,5,0.16)] group-hover:ring-[var(--flavor-accent)]/45">
-        {/* Accent rail on hover */}
         <span
           aria-hidden
           className="absolute inset-x-0 top-0 z-20 h-1 origin-left scale-x-0 bg-[var(--flavor-accent)] transition duration-500 group-hover:scale-x-100"
         />
 
-        {/* Image — full, unobstructed; click opens product page */}
-        <div
-          className={`relative overflow-hidden ${
-            featured
-              ? "aspect-[4/5] sm:aspect-auto sm:min-h-[420px] sm:flex-1"
-              : "aspect-square"
-          }`}
-        >
+        <div className="relative aspect-square overflow-hidden">
           <Link href={`/product/${flavor.id}`} className="absolute inset-0 block">
             <Image
               src={flavor.image}
               alt={flavor.name}
               fill
               className="object-cover transition duration-700 ease-out group-hover:scale-[1.06]"
-              sizes={
-                featured
-                  ? "(max-width: 640px) 100vw, 66vw"
-                  : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              }
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               quality={70}
-              priority={index === 0}
+              priority={index < 3}
             />
 
-            {/* Shine sweep */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 z-[1] overflow-hidden opacity-0 transition duration-300 group-hover:opacity-100"
@@ -138,7 +115,6 @@ function FlavorCard({
             </span>
           </Link>
 
-          {/* Cart icon — appears on hover only */}
           <button
             type="button"
             onClick={handleAdd}
@@ -182,15 +158,10 @@ function FlavorCard({
           </button>
         </div>
 
-        {/* Info below image */}
         <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5 sm:py-5">
           <div className="min-w-0">
             <Link href={`/product/${flavor.id}`}>
-              <h3
-                className={`truncate font-display font-bold tracking-tight text-black transition hover:text-umx-orange ${
-                  featured ? "text-xl sm:text-2xl" : "text-base sm:text-lg"
-                }`}
-              >
+              <h3 className="truncate font-display text-base font-bold tracking-tight text-black transition hover:text-umx-orange sm:text-lg">
                 {flavor.name}
               </h3>
             </Link>
@@ -203,10 +174,10 @@ function FlavorCard({
           <button
             type="button"
             onClick={handleAdd}
-            className={`shrink-0 rounded-full px-4 py-2.5 font-display text-xs font-semibold tracking-wide transition duration-300 sm:px-5 sm:text-sm ${
+            className={`shrink-0 rounded-full px-4 py-2.5 font-display text-xs font-semibold tracking-wide text-white transition duration-300 sm:px-5 sm:text-sm ${
               added
-                ? "bg-umx-orange text-white"
-                : "bg-black text-umx-cream hover:bg-umx-orange hover:text-white"
+                ? "bg-umx-orange"
+                : "bg-black hover:bg-umx-orange"
             }`}
           >
             {added ? "Added" : "Add"}
@@ -233,27 +204,41 @@ export default function ProductShowcase() {
       />
       <p
         aria-hidden
-        className="pointer-events-none absolute top-[8%] left-1/2 -translate-x-1/2 font-display text-[clamp(5rem,18vw,14rem)] font-extrabold tracking-[-0.06em] text-black/[0.035] uppercase select-none"
+        className="pointer-events-none absolute top-[6%] left-1/2 -translate-x-1/2 font-display text-[clamp(5.5rem,20vw,16rem)] font-extrabold tracking-[-0.06em] text-black/[0.04] uppercase select-none"
       >
-        Flavors
+        HOOKAMAX
       </p>
 
       <div className="relative mx-auto max-w-[1200px]">
-        <header className="mx-auto max-w-3xl text-center">
-          <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase sm:text-sm">
+        <header className="mx-auto max-w-4xl text-center">
+          <p className="font-display text-xs font-semibold tracking-[0.22em] text-umx-orange uppercase sm:text-sm">
             Shop the collection
           </p>
-          <h2 className="mt-4 font-display text-[clamp(2.4rem,6.5vw,4.5rem)] font-extrabold leading-[0.95] tracking-[-0.035em] text-black">
-            Choose your{" "}
-            <span className="relative inline-block text-umx-orange">
-              flavor
-              <span
-                aria-hidden
-                className="absolute -bottom-1 left-0 h-[0.18em] w-full rounded-full bg-umx-orange/25"
-              />
+
+          <h2 className="mt-5 sm:mt-6">
+            <span className="sr-only">HOOKAMAX</span>
+            <span
+              aria-hidden
+              className="flex flex-wrap items-baseline justify-center gap-x-[0.18em] font-display text-[clamp(3.5rem,12vw,7.5rem)] font-extrabold leading-none tracking-[-0.045em]"
+            >
+              <span className="text-black">HOOKA</span>
+              <span className="relative text-umx-orange">
+                MAX
+                <span className="absolute -bottom-[0.12em] left-0 h-[0.09em] w-full rounded-full bg-umx-orange/35" />
+              </span>
             </span>
           </h2>
-          <p className="mx-auto mt-5 max-w-xl font-body text-base leading-relaxed text-black/70 sm:text-lg">
+
+          <div
+            aria-hidden
+            className="mx-auto mt-6 flex items-center justify-center gap-3 sm:mt-7"
+          >
+            <span className="h-px w-10 bg-black/15 sm:w-14" />
+            <span className="h-1.5 w-1.5 rotate-45 bg-umx-orange" />
+            <span className="h-px w-10 bg-black/15 sm:w-14" />
+          </div>
+
+          <p className="mx-auto mt-5 max-w-2xl font-body text-lg leading-relaxed text-black/70 sm:mt-6 sm:text-xl">
             Hookah-inspired profiles. One premium device. Pick the taste that
             fits your mood — then add it to your cart.
           </p>
@@ -261,14 +246,10 @@ export default function ProductShowcase() {
 
         <FlavorMarquee />
 
+        {/* 9 products · 3 columns · equal cards */}
         <div className="mt-14 grid grid-cols-1 gap-5 sm:mt-16 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-6">
           {flavors.map((flavor, index) => (
-            <FlavorCard
-              key={flavor.id}
-              flavor={flavor}
-              index={index}
-              featured={index === 0}
-            />
+            <FlavorCard key={flavor.id} flavor={flavor} index={index} />
           ))}
         </div>
       </div>

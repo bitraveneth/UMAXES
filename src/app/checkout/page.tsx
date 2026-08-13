@@ -3,7 +3,7 @@ import CheckoutShell from "@/components/CheckoutShell";
 export const metadata = {
   title: "Checkout · UMAXES",
   description:
-    "Wholesale checkout for UMAXES HOOKAMAX. Adults 21+ only. Nicotine is an addictive chemical.",
+    "Checkout for UMAXES HOOKAMAX. Adults 21+ only. Nicotine is an addictive chemical.",
 };
 
 export default function CheckoutPage() {

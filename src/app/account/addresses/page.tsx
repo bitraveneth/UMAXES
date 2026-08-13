@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import AddressManager from "@/components/AddressManager";
 import AccountHeaderI18n from "@/components/account/AccountHeaderI18n";
 
-export const metadata = { title: "Ship-to addresses · UMAXES" };
+export const metadata = { title: "Shipping address · UMAXES" };
 
 export default async function AddressesPage() {
   const session = await auth();

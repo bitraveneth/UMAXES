@@ -39,7 +39,7 @@ const zh: BuyerMessages = {
     paymentPendingHint: "等待电汇 / 支票",
     wishlist: "收藏",
     wishlistHint: "已保存 SKU",
-    availableCredit: "可用额度",
+    availableCredit: "信用额度",
     recentOrders: "最近订单",
     recentOrdersHint: "金额、付款方式与状态一览",
     activity: "动态",
@@ -89,7 +89,7 @@ const zh: BuyerMessages = {
   addresses: {
     eyebrow: "配送",
     title: "收货地址",
-    description: "保存仓库、门店或总部地址用于结账 — 每个公司最多 10 个。",
+    description: "保存收货地址用于结账 — 每个公司最多 10 个。",
   },
   returns: {
     eyebrow: "售后",

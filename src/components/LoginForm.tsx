@@ -269,7 +269,11 @@ export default function LoginForm() {
         <p className="text-center font-body text-sm text-black/70">
           No account yet?{" "}
           <Link
-            href={method ? `/register?method=${method}` : "/register"}
+            href={
+              method
+                ? `/register?method=${method}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+                : `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
+            }
             className="font-display font-bold text-umx-orange underline decoration-umx-orange/40 underline-offset-4 transition hover:text-umx-orange-deep hover:decoration-umx-orange"
           >
             Create an account

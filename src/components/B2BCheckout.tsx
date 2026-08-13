@@ -30,6 +30,13 @@ type CatalogProduct = {
 
 type PayMethod = "TT" | "CHECK" | "ONLINE" | "CREDIT";
 
+type CreditInfo = {
+  allowed: boolean;
+  available: number;
+  limit: number;
+  paymentTermsDays: number;
+};
+
 export default function B2BCheckout() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -37,7 +44,12 @@ export default function B2BCheckout() {
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
-  const [creditAllowed, setCreditAllowed] = useState(false);
+  const [credit, setCredit] = useState<CreditInfo>({
+    allowed: false,
+    available: 0,
+    limit: 0,
+    paymentTermsDays: 0,
+  });
   const [canPlaceOrder, setCanPlaceOrder] = useState(true);
   const [addressId, setAddressId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PayMethod>("TT");
@@ -51,12 +63,6 @@ export default function B2BCheckout() {
   const [loading, setLoading] = useState(false);
   const [doneOrderId, setDoneOrderId] = useState<string | null>(null);
   const [piNumber, setPiNumber] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login?callbackUrl=/checkout");
-    }
-  }, [status, router]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -75,6 +81,19 @@ export default function B2BCheckout() {
         if (def) setAddressId(def.id);
       }
       if (cat.products) setCatalog(cat.products);
+      if (cat.credit) {
+        const nextCredit = {
+          allowed: Boolean(cat.credit.allowed),
+          available: Number(cat.credit.available) || 0,
+          limit: Number(cat.credit.limit) || 0,
+          paymentTermsDays: Number(cat.credit.paymentTermsDays) || 0,
+        };
+        setCredit(nextCredit);
+        if (!nextCredit.allowed) {
+          setPaymentMethod((m) => (m === "CREDIT" ? "TT" : m));
+        }
+      }
+      if (typeof cat.canOrder === "boolean") setCanPlaceOrder(cat.canOrder);
     });
   }, [status, session, router]);
 
@@ -137,7 +156,10 @@ export default function B2BCheckout() {
         paymentRef,
         couponCode: appliedCoupon || undefined,
         notes,
-        items: lines.map((l) => ({ sku: l.sku, quantity: l.quantity })),
+        items: lines.map((l) => ({
+          sku: l.sku,
+          quantity: l.quantity,
+        })),
       }),
     });
     const data = await res.json();
@@ -155,6 +177,10 @@ export default function B2BCheckout() {
     return <p className="py-20 text-center font-body">Loading checkout…</p>;
   }
 
+  if (status === "unauthenticated") {
+    return null;
+  }
+
   if (doneOrderId) {
     return (
       <div className="mx-auto max-w-lg py-16 text-center">
@@ -163,7 +189,7 @@ export default function B2BCheckout() {
         </p>
         <h1 className="mt-3 font-display text-3xl font-bold">Thank you</h1>
         <p className="mt-3 font-body text-black/65">
-          Your wholesale order is recorded
+          Your order is recorded
           {piNumber ? ` · ${piNumber}` : ""}.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -200,18 +226,28 @@ export default function B2BCheckout() {
       <div className="space-y-8">
         <section className="border border-black/10 bg-white p-6">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-lg font-semibold">Shipping address</h2>
-            <Link href="/account/addresses" className="text-sm text-umx-orange">
-              Manage
+            <h2 className="font-display text-lg font-semibold">
+              Shipping address
+            </h2>
+            <Link
+              href="/account/addresses"
+              className="font-display text-sm font-semibold text-umx-orange"
+            >
+              {addresses.length === 0 ? "Add address" : "Manage"}
             </Link>
           </div>
           {addresses.length === 0 ? (
-            <p className="mt-4 font-body text-sm text-black/60">
-              Add an address first (max 5).{" "}
-              <Link href="/account/addresses" className="text-umx-orange">
-                Add address
+            <div className="mt-4 rounded-xl border border-dashed border-black/15 bg-umx-cream/60 px-4 py-6 text-center">
+              <p className="font-body text-sm text-black/65">
+                Add a shipping address to place your order.
+              </p>
+              <Link
+                href="/account/addresses"
+                className="mt-3 inline-flex rounded-full bg-umx-orange px-5 py-2.5 font-display text-sm font-semibold text-white"
+              >
+                Add shipping address
               </Link>
-            </p>
+            </div>
           ) : (
             <div className="mt-4 space-y-3">
               {addresses.map((a) => (
@@ -229,9 +265,16 @@ export default function B2BCheckout() {
                     checked={addressId === a.id}
                     onChange={() => setAddressId(a.id)}
                   />
-                  <span className="font-body text-sm">
-                    {a.label ? <strong>{a.label} · </strong> : null}
-                    {a.line1}, {a.city} {a.postalCode}, {a.country}
+                  <span className="font-body text-sm leading-relaxed">
+                    {a.label ? (
+                      <strong className="block font-display">{a.label}</strong>
+                    ) : null}
+                    {a.line1}
+                    <br />
+                    {a.city}
+                    {a.region ? `, ${a.region}` : ""} {a.postalCode}
+                    <br />
+                    {a.country}
                   </span>
                 </label>
               ))}
@@ -246,28 +289,47 @@ export default function B2BCheckout() {
               [
                 ["TT", "Telegraphic transfer"],
                 ["CHECK", "Check"],
-                ["CREDIT", "Credit (1–30 days)"],
+                [
+                  "CREDIT",
+                  "Credit",
+                ],
                 ["ONLINE", "Online (gateway later)"],
               ] as const
-            ).map(([id, label]) => (
-              <label
-                key={id}
-                className={`flex cursor-pointer gap-3 border p-4 ${
-                  paymentMethod === id
-                    ? "border-umx-orange bg-umx-orange-wash/40"
-                    : "border-black/10"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="pay"
-                  checked={paymentMethod === id}
-                  onChange={() => setPaymentMethod(id)}
-                />
-                <span className="font-display text-sm font-semibold">{label}</span>
-              </label>
-            ))}
+            )
+              .filter(([id]) => id !== "CREDIT" || credit.allowed)
+              .map(([id, label]) => (
+                <label
+                  key={id}
+                  className={`flex cursor-pointer gap-3 border p-4 ${
+                    paymentMethod === id
+                      ? "border-umx-orange bg-umx-orange-wash/40"
+                      : "border-black/10"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="pay"
+                    checked={paymentMethod === id}
+                    onChange={() => setPaymentMethod(id)}
+                  />
+                  <span className="font-display text-sm font-semibold">
+                    {label}
+                  </span>
+                </label>
+              ))}
           </div>
+
+          {paymentMethod === "CREDIT" && credit.allowed ? (
+            <div className="mt-4 rounded-xl bg-umx-cream px-4 py-4 ring-1 ring-black/8">
+              <p className="font-display text-[0.65rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
+                Credit limit
+              </p>
+              <p className="mt-1 font-display text-2xl font-bold text-black">
+                ${credit.limit.toFixed(2)}
+              </p>
+            </div>
+          ) : null}
+
           {paymentMethod === "ONLINE" && (
             <p className="mt-3 font-body text-xs text-black/55">
               Stripe/online gateway is not configured yet. Order will be saved as
@@ -384,7 +446,7 @@ export default function B2BCheckout() {
           onClick={placeOrder}
           className="mt-6 hidden w-full border border-black bg-black py-3.5 font-display text-sm font-semibold text-umx-cream transition hover:border-umx-orange hover:bg-umx-orange disabled:opacity-50 lg:block"
         >
-          {loading ? "Placing order…" : "Place wholesale order"}
+          {loading ? "Placing order…" : "Place order"}
         </button>
       </aside>
 

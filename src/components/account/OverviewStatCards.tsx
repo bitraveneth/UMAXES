@@ -11,15 +11,13 @@ export default function OverviewStatCards({
   openOrders,
   paymentPending,
   wishlistCount,
-  creditLeft,
-  creditHint,
+  creditLimit,
   showCredit,
 }: {
   openOrders: number;
   paymentPending: number;
   wishlistCount: number;
-  creditLeft: number;
-  creditHint: string;
+  creditLimit: number;
   showCredit: boolean;
 }) {
   const { t } = useBuyerI18n();
@@ -48,8 +46,7 @@ export default function OverviewStatCards({
       {showCredit ? (
         <AccountStat
           label={t("overview.availableCredit")}
-          value={`$${Math.round(creditLeft).toLocaleString()}`}
-          hint={creditHint}
+          value={`$${Math.round(creditLimit).toLocaleString()}`}
           icon={FileText}
         />
       ) : null}

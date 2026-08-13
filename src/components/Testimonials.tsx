@@ -1,7 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { testimonialImages } from "@/lib/assets";
 
 const reviews = [
@@ -25,69 +31,143 @@ const reviews = [
     name: "Riley",
     quote: "Hookah vibe without the setup. Clean and strong.",
   },
+  {
+    src: testimonialImages[4],
+    name: "Chen",
+    quote: "The look turns heads. Sessions feel intentional.",
+  },
+  {
+    src: testimonialImages[5],
+    name: "Sofia",
+    quote: "Rich taste from first hit to last. My go-to now.",
+  },
+  {
+    src: testimonialImages[6],
+    name: "Noah",
+    quote: "Solid build, bold flavor. Feels like a step up.",
+  },
+  {
+    src: testimonialImages[7],
+    name: "Mia",
+    quote: "Everyday carry that still feels special.",
+  },
 ] as const;
 
 const AUTO_MS = 4200;
+const N = reviews.length;
+const LOOP = [...reviews, ...reviews, ...reviews];
+const BASE = N; // middle copy
 
-function ReviewCard({
-  review,
-  sizes,
-  className = "",
-}: {
-  review: (typeof reviews)[number];
-  sizes: string;
-  className?: string;
-}) {
-  return (
-    <article
-      className={`overflow-hidden rounded-[1.5rem] bg-umx-cream shadow-[0_14px_40px_rgba(61,22,5,0.06)] ring-1 ring-black/5 ${className}`}
-    >
-      <div className="relative aspect-[2/3] overflow-hidden bg-umx-cream-warm">
-        <Image
-          src={review.src}
-          alt={`Review by ${review.name}`}
-          fill
-          className="object-contain object-center"
-          sizes={sizes}
-        />
-      </div>
-      <div className="border-t border-black/5 px-4 py-4 text-center sm:px-5 sm:py-5">
-        <p className="font-display text-sm font-bold tracking-tight text-black">
-          {review.name}
-        </p>
-        <p className="mt-1.5 font-body text-sm leading-relaxed text-black/60">
-          “{review.quote}”
-        </p>
-      </div>
-    </article>
-  );
+function wrap(i: number) {
+  return ((i % N) + N) % N;
+}
+
+function useVisibleCount() {
+  const [count, setCount] = useState(4);
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      if (w >= 1024) setCount(4);
+      else if (w >= 640) setCount(2);
+      else setCount(1);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  return count;
 }
 
 export default function Testimonials() {
-  const [index, setIndex] = useState(0);
-  const n = reviews.length;
+  const visible = useVisibleCount();
+  const [index, setIndex] = useState<number>(BASE);
+  const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(false);
+  const [animate, setAnimate] = useState(true);
+  const sectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragX = useRef(0);
+  const dragging = useRef(false);
+  const startX = useRef(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const next = useCallback(() => setIndex((i) => i + 1), []);
+  const prev = useCallback(() => setIndex((i) => i - 1), []);
+
+  // Autoplay only while this section is on screen
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting && entry.intersectionRatio >= 0.3);
+      },
+      { threshold: [0, 0.3, 0.55] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
-    const id = window.setTimeout(() => {
-      setIndex((prev) => (prev + 1) % n);
-    }, AUTO_MS);
+    if (!inView || paused || isDragging) return;
+    const id = window.setTimeout(next, AUTO_MS);
     return () => window.clearTimeout(id);
-  }, [index, n]);
+  }, [index, inView, paused, isDragging, next]);
 
-  function go(next: number) {
-    setIndex(((next % n) + n) % n);
+  // Seamless loop: after slide lands outside middle copy, snap back
+  useEffect(() => {
+    if (index >= BASE && index < BASE + N) return;
+
+    const id = window.setTimeout(() => {
+      setAnimate(false);
+      setIndex(BASE + wrap(index));
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setAnimate(true));
+      });
+    }, 620);
+
+    return () => window.clearTimeout(id);
+  }, [index]);
+
+  function onPointerDown(e: ReactPointerEvent) {
+    dragging.current = true;
+    setIsDragging(true);
+    startX.current = e.clientX;
+    dragX.current = 0;
+    setPaused(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }
+
+  function onPointerMove(e: ReactPointerEvent) {
+    if (!dragging.current) return;
+    dragX.current = e.clientX - startX.current;
+    setDragOffset(dragX.current);
+  }
+
+  function onPointerUp() {
+    if (!dragging.current) return;
+    dragging.current = false;
+    setIsDragging(false);
+    if (dragX.current < -56) next();
+    else if (dragX.current > 56) prev();
+    setDragOffset(0);
+    setPaused(false);
+  }
+
+  const slidePct = 100 / visible;
+  const trackWidth = trackRef.current?.offsetWidth ?? 1;
+  const dragPct = (dragOffset / trackWidth) * 100;
+  const activeDot = wrap(index);
 
   return (
     <section
+      ref={sectionRef}
       id="community"
-      className="relative overflow-hidden bg-white px-4 py-20 sm:px-6 sm:py-28"
+      className="relative overflow-hidden bg-umx-cream px-4 py-20 sm:px-6 sm:py-28"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-20 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-umx-orange/10 blur-3xl"
-      />
-
       <div className="relative mx-auto max-w-[1200px]">
         <header className="mx-auto max-w-2xl text-center">
           <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase">
@@ -102,75 +182,122 @@ export default function Testimonials() {
           </p>
         </header>
 
-        {/* Desktop grid */}
-        <div className="mt-14 hidden gap-5 md:mt-16 md:grid md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-          {reviews.map((review) => (
-            <ReviewCard
-              key={review.src}
-              review={review}
-              sizes="(max-width: 1024px) 50vw, 280px"
-              className="group transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_24px_55px_rgba(61,22,5,0.12)]"
-            />
-          ))}
-        </div>
-
-        {/* Mobile — auto one-by-one with progress bars */}
-        <div className="mt-12 md:hidden">
-          <div className="relative mx-auto w-full max-w-[22rem]">
-            {/* Story-style progress tracks */}
-            <div className="mb-4 flex gap-1.5" aria-hidden>
-              {reviews.map((_, i) => (
-                <div
-                  key={i}
-                  className="relative h-1 flex-1 overflow-hidden rounded-full bg-black/10"
+        <div
+          className="relative mt-12 sm:mt-16"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          <div
+            ref={trackRef}
+            className="cursor-grab overflow-hidden touch-pan-y active:cursor-grabbing"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            <div
+              className="flex will-change-transform"
+              style={{
+                transform: `translateX(calc(-${index * slidePct}% + ${dragPct}%))`,
+                transition:
+                  isDragging || !animate
+                    ? "none"
+                    : "transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
+            >
+              {LOOP.map((review, i) => (
+                <article
+                  key={`${review.src}-${i}`}
+                  className="shrink-0 px-1.5 sm:px-2"
+                  style={{ width: `${slidePct}%` }}
+                  aria-roledescription="slide"
+                  aria-label={`${wrap(i) + 1} of ${N}`}
                 >
-                  <span
-                    key={i === index ? `${index}-fill` : `${i}-static`}
-                    className={`absolute inset-y-0 left-0 block rounded-full bg-umx-orange ${
-                      i < index ? "w-full" : i > index ? "w-0" : ""
-                    }`}
-                    style={
-                      i === index
-                        ? {
-                            width: "0%",
-                            animation: `hero-progress ${AUTO_MS}ms linear forwards`,
-                          }
-                        : undefined
-                    }
-                  />
-                </div>
+                  <div className="group relative aspect-[3/4] overflow-hidden rounded-2xl bg-black/5">
+                    <Image
+                      src={review.src}
+                      alt={`Review by ${review.name}`}
+                      fill
+                      className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.03]"
+                      sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 25vw"
+                      quality={75}
+                      priority={i >= BASE && i < BASE + 4}
+                      draggable={false}
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pt-14 pb-4 sm:px-5 sm:pb-5">
+                      <p className="font-display text-sm font-bold text-white">
+                        {review.name}
+                      </p>
+                      <p className="mt-1 line-clamp-2 font-body text-xs leading-relaxed text-white/85 sm:text-sm">
+                        “{review.quote}”
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-8 flex items-center justify-center gap-4 sm:mt-10">
+            <button
+              type="button"
+              aria-label="Previous reviews"
+              onClick={prev}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 text-black transition hover:border-umx-orange hover:text-umx-orange"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+
+            <div className="flex items-center gap-1.5">
+              {reviews.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Go to review ${i + 1}`}
+                  aria-current={i === activeDot ? "true" : undefined}
+                  onClick={() => {
+                    setAnimate(true);
+                    setIndex(BASE + i);
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === activeDot
+                      ? "w-7 bg-umx-orange"
+                      : "w-1.5 bg-black/20 hover:bg-black/40"
+                  }`}
+                />
               ))}
             </div>
 
-            <div className="relative aspect-[2/3] w-full">
-              {reviews.map((review, i) => {
-                const active = i === index;
-                return (
-                  <button
-                    key={review.src}
-                    type="button"
-                    className={`absolute inset-0 text-left transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                      active
-                        ? "z-[1] translate-y-0 scale-100 opacity-100"
-                        : "z-0 pointer-events-none translate-y-4 scale-[0.96] opacity-0"
-                    }`}
-                    aria-hidden={!active}
-                    tabIndex={active ? 0 : -1}
-                    onClick={() => go(index + 1)}
-                  >
-                    <ReviewCard
-                      review={review}
-                      sizes="90vw"
-                      className="h-full shadow-[0_22px_55px_rgba(61,22,5,0.12)]"
-                    />
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="mt-4 text-center font-display text-[0.65rem] font-semibold tracking-[0.14em] text-black/35 uppercase">
-              {String(index + 1).padStart(2, "0")} / {String(n).padStart(2, "0")} · Auto
-            </p>
+            <button
+              type="button"
+              aria-label="Next reviews"
+              onClick={next}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 text-black transition hover:border-umx-orange hover:text-umx-orange"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
