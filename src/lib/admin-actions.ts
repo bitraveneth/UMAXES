@@ -502,6 +502,12 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     throw new Error("Status not allowed for role");
   }
 
+  const before = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { status: true, orderNumber: true },
+  });
+  if (!before) throw new Error("Order not found");
+
   await prisma.$transaction([
     prisma.order.update({ where: { id: orderId }, data: { status } }),
     prisma.auditLog.create({
@@ -510,7 +516,11 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
         action: "ORDER_STATUS",
         entity: "Order",
         entityId: orderId,
-        meta: JSON.stringify({ status }),
+        meta: JSON.stringify({
+          orderNumber: before.orderNumber,
+          previousStatus: before.status,
+          status,
+        }),
       },
     }),
   ]);
@@ -695,7 +705,15 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
         action: "PAYMENT_RECEIVED",
         entity: "Order",
         entityId: orderId,
-        meta: JSON.stringify({ reference }),
+        meta: JSON.stringify({
+          orderNumber: order.orderNumber,
+          reference: reference || order.paymentRef || null,
+          previousStatus: order.status,
+          status: "CONFIRMED",
+          amount: order.total,
+          paymentMethod: order.paymentMethod,
+          companyId: order.companyId,
+        }),
       },
     });
   });
@@ -723,6 +741,12 @@ export async function upsertShipment(
   trackingNumber: string,
 ) {
   const session = await requireRoles(["ADMIN", "LOGISTICS"]);
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { user: true, company: true },
+  });
+  if (!order) throw new Error("Order not found");
 
   const existing = await prisma.shipment.findFirst({ where: { orderId } });
   if (existing) {
@@ -759,25 +783,25 @@ export async function upsertShipment(
       action: "TRACKING_UPLOADED",
       entity: "Order",
       entityId: orderId,
-      meta: JSON.stringify({ carrier, trackingNumber }),
+      meta: JSON.stringify({
+        carrier,
+        trackingNumber,
+        orderNumber: order.orderNumber,
+        companyName: order.company.name,
+        status: "SHIPPED",
+      }),
     },
   });
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { user: true, company: true },
+  const { notifyShipped } = await import("@/lib/notify");
+  await notifyShipped({
+    email: order.user.email || order.email,
+    userId: order.userId,
+    orderNumber: order.orderNumber,
+    carrier,
+    trackingNumber,
+    companyName: order.company.name,
   });
-  if (order) {
-    const { notifyShipped } = await import("@/lib/notify");
-    await notifyShipped({
-      email: order.user.email || order.email,
-      userId: order.userId,
-      orderNumber: order.orderNumber,
-      carrier,
-      trackingNumber,
-      companyName: order.company.name,
-    });
-  }
 
   revalidatePath("/admin/logistics");
   revalidatePath(`/admin/logistics/${orderId}`);
@@ -1147,7 +1171,7 @@ export async function recordCreditPayment(companyId: string, amount: number, not
         action: "CREDIT_PAYMENT",
         entity: "Company",
         entityId: companyId,
-        meta: JSON.stringify({ amount: amt, note }),
+        meta: JSON.stringify({ amount: amt, note: note || null }),
       },
     }),
   ]);
@@ -1218,7 +1242,7 @@ export async function updateCompanyCredit(
     type: "credit",
     includeSales: true,
     subject: `Credit updated: ${before.name}`,
-    body: `${before.name}: limit $${before.creditLimit.toFixed(2)} → $${limit.toFixed(2)}, terms ${before.paymentTermsDays}d → ${days}d${note ? ` · ${note}` : ""}.`,
+    body: `${before.name}: credit terms updated${note ? ` · ${note}` : ""}.`,
   });
 
   revalidatePath("/admin/credit");

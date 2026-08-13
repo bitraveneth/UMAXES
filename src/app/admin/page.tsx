@@ -327,11 +327,10 @@ export default async function AdminDashboard({
     isSales
       ? prisma.user.count({ where: { status: "PENDING", role: "CUSTOMER" } })
       : Promise.resolve(0),
-    canSeeMoney
+    isOps
       ? prisma.company.aggregate({
           where: {
             status: "APPROVED",
-            ...(role === "SALES" ? { salesRepId: session.user.id } : {}),
           },
           _sum: { creditUsed: true, creditLimit: true },
         })
@@ -579,10 +578,16 @@ export default async function AdminDashboard({
                   className="text-[var(--admin-muted)]"
                 />
                 <p className="mt-1 font-semibold text-[var(--admin-text)]">
-                  ${(creditUsed / 1000).toFixed(1)}K
-                  <span className="block text-[10px] font-normal text-[var(--admin-muted)]">
-                    / ${(creditLimit / 1000).toFixed(0)}K
-                  </span>
+                  {isOps ? (
+                    <>
+                      ${(creditUsed / 1000).toFixed(1)}K
+                      <span className="block text-[10px] font-normal text-[var(--admin-muted)]">
+                        / ${(creditLimit / 1000).toFixed(0)}K
+                      </span>
+                    </>
+                  ) : (
+                    "Confidential"
+                  )}
                 </p>
               </div>
             </div>

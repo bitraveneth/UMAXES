@@ -39,7 +39,7 @@ const en: BuyerMessages = {
     paymentPendingHint: "Awaiting TT / check",
     wishlist: "Wishlist",
     wishlistHint: "Saved SKUs",
-    availableCredit: "Credit limit",
+    availableCredit: "Credit",
     recentOrders: "Recent orders",
     recentOrdersHint: "Totals, payment, and status at a glance",
     activity: "Activity",

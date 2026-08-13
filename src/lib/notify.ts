@@ -201,7 +201,7 @@ export async function notifyCreditLimitCrossed(opts: {
   customerEmail?: string | null;
   customerUserId?: string | null;
 }) {
-  const body = `${opts.companyName} credit used $${opts.creditUsed.toFixed(2)} / limit $${opts.creditLimit.toFixed(2)}${opts.orderNumber ? ` after order ${opts.orderNumber}` : ""}.`;
+  const body = `${opts.companyName} has reached its credit limit${opts.orderNumber ? ` after order ${opts.orderNumber}` : ""}. Review in Credit.`;
 
   await notifyStaff({
     type: "credit",
@@ -215,8 +215,8 @@ export async function notifyCreditLimitCrossed(opts: {
     await notify({
       userId: opts.customerUserId,
       to: opts.customerEmail,
-      subject: "Credit limit reached",
-      body: `Your available credit is fully used ($${opts.creditUsed.toFixed(2)} of $${opts.creditLimit.toFixed(2)}). Contact your sales rep to continue ordering on terms.`,
+      subject: "Credit unavailable",
+      body: "Your trade credit is currently unavailable. Contact your sales rep to continue ordering on terms.",
       type: "credit",
       href: "/account",
     });

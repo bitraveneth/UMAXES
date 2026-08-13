@@ -96,13 +96,13 @@ export default async function CreditPage() {
     ...changeCompanies.map((c) => [c.id, c.name] as const),
   ]);
 
-  const totalLimit = companies.reduce((s, c) => s + c.creditLimit, 0);
-  const totalUsed = companies.reduce((s, c) => s + c.creditUsed, 0);
-  const totalAvailable = Math.max(0, totalLimit - totalUsed);
   const nearLimit = companies.filter((c) => {
     if (c.creditLimit <= 0) return false;
     return c.creditUsed / c.creditLimit >= 0.8;
   }).length;
+  const totalLimit = companies.reduce((s, c) => s + c.creditLimit, 0);
+  const totalUsed = companies.reduce((s, c) => s + c.creditUsed, 0);
+  const totalAvailable = Math.max(0, totalLimit - totalUsed);
 
   return (
     <div className="space-y-8">
@@ -120,36 +120,65 @@ export default async function CreditPage() {
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminStat
-          label={<AdminText id="credit.exposure" />}
-          value={money(totalUsed)}
-          icon={CreditCard}
-        />
-        <AdminStat
-          label={<AdminText id="credit.totalLimit" />}
-          value={money(totalLimit)}
-          icon={CircleDollarSign}
-        />
-        <AdminStat
-          label={<AdminText id="credit.available" />}
-          value={money(totalAvailable)}
-          icon={Wallet}
-        />
-        <AdminStat
-          label={<AdminText id="credit.nearLimit" />}
-          value={String(nearLimit)}
-          icon={AlertTriangle}
-          trend={
-            nearLimit > 0 ? (
-              <AdminText id="credit.companiesNear" values={{ count: nearLimit }} />
-            ) : (
-              <AdminText id="credit.allHealthy" />
-            )
-          }
-          trendUp={nearLimit === 0}
-        />
-      </div>
+      {isAdmin ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <AdminStat
+            label={<AdminText id="credit.exposure" />}
+            value={money(totalUsed)}
+            icon={CreditCard}
+          />
+          <AdminStat
+            label={<AdminText id="credit.totalLimit" />}
+            value={money(totalLimit)}
+            icon={CircleDollarSign}
+          />
+          <AdminStat
+            label={<AdminText id="credit.available" />}
+            value={money(totalAvailable)}
+            icon={Wallet}
+          />
+          <AdminStat
+            label={<AdminText id="credit.nearLimit" />}
+            value={String(nearLimit)}
+            icon={AlertTriangle}
+            trend={
+              nearLimit > 0 ? (
+                <AdminText
+                  id="credit.companiesNear"
+                  values={{ count: nearLimit }}
+                />
+              ) : (
+                <AdminText id="credit.allHealthy" />
+              )
+            }
+            trendUp={nearLimit === 0}
+          />
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+          <AdminStat
+            label={<AdminText id="credit.nearLimit" />}
+            value={String(nearLimit)}
+            icon={AlertTriangle}
+            trend={
+              nearLimit > 0 ? (
+                <AdminText
+                  id="credit.companiesNear"
+                  values={{ count: nearLimit }}
+                />
+              ) : (
+                <AdminText id="credit.allHealthy" />
+              )
+            }
+            trendUp={nearLimit === 0}
+          />
+          <AdminStat
+            label="Credit accounts"
+            value={String(companies.length)}
+            icon={CreditCard}
+          />
+        </div>
+      )}
 
       <section className="space-y-4">
         <div className="flex items-end justify-between gap-3">
@@ -164,14 +193,35 @@ export default async function CreditPage() {
 
         <CreditCompaniesPanel
           isAdmin={isAdmin}
-          companies={companies.map((c) => ({
-            id: c.id,
-            name: c.name,
-            level: c.level,
-            creditUsed: c.creditUsed,
-            creditLimit: c.creditLimit,
-            paymentTermsDays: c.paymentTermsDays,
-          }))}
+          companies={companies.map((c) => {
+            const enabled = c.creditLimit > 0;
+            const pct =
+              enabled
+                ? Math.min(100, Math.round((c.creditUsed / c.creditLimit) * 100))
+                : c.creditUsed > 0
+                  ? 100
+                  : 0;
+            let status: "none" | "clear" | "ok" | "near" | "at" = "none";
+            if (!enabled) status = "none";
+            else if (pct >= 100) status = "at";
+            else if (pct >= 80) status = "near";
+            else if (pct <= 0) status = "clear";
+            else status = "ok";
+            return {
+              id: c.id,
+              name: c.name,
+              level: c.level,
+              creditEnabled: enabled,
+              status,
+              ...(isAdmin
+                ? {
+                    creditUsed: c.creditUsed,
+                    creditLimit: c.creditLimit,
+                    paymentTermsDays: c.paymentTermsDays,
+                  }
+                : {}),
+            };
+          })}
         />
       </section>
 
@@ -208,7 +258,11 @@ export default async function CreditPage() {
               if (row.action === "CREDIT_PAYMENT") {
                 const amount = Number(meta.amount ?? 0);
                 const note = typeof meta.note === "string" ? meta.note : "";
-                details = `${money(amount)}${note ? ` · ${note}` : ""}`;
+                details = isAdmin
+                  ? `${amount ? money(amount) : "Payment recorded"}${note ? ` · ${note}` : ""}`
+                  : note
+                    ? `Payment recorded · ${note}`
+                    : "Payment recorded";
               } else if (row.action === "CREDIT_TERMS_UPDATED") {
                 const before = meta.before as
                   | { creditLimit?: number; paymentTermsDays?: number }
@@ -217,7 +271,9 @@ export default async function CreditPage() {
                   | { creditLimit?: number; paymentTermsDays?: number }
                   | undefined;
                 const note = typeof meta.note === "string" ? meta.note : "";
-                details = `Limit ${money(Number(before?.creditLimit ?? 0))} → ${money(Number(after?.creditLimit ?? 0))} · ${Number(before?.paymentTermsDays ?? 0)}d → ${Number(after?.paymentTermsDays ?? 0)}d${note ? ` · ${note}` : ""}`;
+                details = isAdmin
+                  ? `Limit ${money(Number(before?.creditLimit ?? 0))} → ${money(Number(after?.creditLimit ?? 0))} · ${Number(before?.paymentTermsDays ?? 0)}d → ${Number(after?.paymentTermsDays ?? 0)}d${note ? ` · ${note}` : ""}`
+                  : "Credit terms updated";
               }
 
               return (
@@ -287,16 +343,22 @@ export default async function CreditPage() {
                         : ""}
                     </p>
                   </div>
-                  <span
-                    className={`shrink-0 font-semibold tabular-nums ${
-                      row.amount < 0
-                        ? "text-emerald-600"
-                        : "text-[var(--admin-text)]"
-                    }`}
-                  >
-                    {row.amount >= 0 ? "+" : ""}
-                    {money(row.amount)}
-                  </span>
+                  {isAdmin ? (
+                    <span
+                      className={`shrink-0 font-semibold tabular-nums ${
+                        row.amount < 0
+                          ? "text-emerald-600"
+                          : "text-[var(--admin-text)]"
+                      }`}
+                    >
+                      {row.amount >= 0 ? "+" : ""}
+                      {money(row.amount)}
+                    </span>
+                  ) : (
+                    <span className="shrink-0 text-xs font-medium text-[var(--admin-muted)]">
+                      Amount confidential
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

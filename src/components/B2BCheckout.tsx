@@ -32,9 +32,6 @@ type PayMethod = "TT" | "CHECK" | "ONLINE" | "CREDIT";
 
 type CreditInfo = {
   allowed: boolean;
-  available: number;
-  limit: number;
-  paymentTermsDays: number;
 };
 
 export default function B2BCheckout() {
@@ -46,9 +43,6 @@ export default function B2BCheckout() {
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [credit, setCredit] = useState<CreditInfo>({
     allowed: false,
-    available: 0,
-    limit: 0,
-    paymentTermsDays: 0,
   });
   const [canPlaceOrder, setCanPlaceOrder] = useState(true);
   const [addressId, setAddressId] = useState("");
@@ -84,9 +78,6 @@ export default function B2BCheckout() {
       if (cat.credit) {
         const nextCredit = {
           allowed: Boolean(cat.credit.allowed),
-          available: Number(cat.credit.available) || 0,
-          limit: Number(cat.credit.limit) || 0,
-          paymentTermsDays: Number(cat.credit.paymentTermsDays) || 0,
         };
         setCredit(nextCredit);
         if (!nextCredit.allowed) {
@@ -318,17 +309,6 @@ export default function B2BCheckout() {
                 </label>
               ))}
           </div>
-
-          {paymentMethod === "CREDIT" && credit.allowed ? (
-            <div className="mt-4 rounded-xl bg-umx-cream px-4 py-4 ring-1 ring-black/8">
-              <p className="font-display text-[0.65rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
-                Credit limit
-              </p>
-              <p className="mt-1 font-display text-2xl font-bold text-black">
-                ${credit.limit.toFixed(2)}
-              </p>
-            </div>
-          ) : null}
 
           {paymentMethod === "ONLINE" && (
             <p className="mt-3 font-body text-xs text-black/55">

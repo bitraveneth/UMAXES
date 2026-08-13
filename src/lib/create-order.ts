@@ -190,7 +190,7 @@ export async function createOrder(
       return {
         ok: false,
         status: 400,
-        error: `Insufficient credit. Available: $${availableCredit.toFixed(2)}`,
+        error: "Insufficient credit. Contact your sales rep.",
       };
     }
   }

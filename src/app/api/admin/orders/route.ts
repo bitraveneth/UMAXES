@@ -74,10 +74,6 @@ export async function GET(request: Request) {
   }
 
   const catalog = await getCatalogForLevel(company.level);
-  const creditAvailable = Math.max(
-    0,
-    company.creditLimit - company.creditUsed,
-  );
   const creditAllowed =
     company.level !== "SHOP" &&
     company.paymentTermsDays >= 1 &&
@@ -88,10 +84,6 @@ export async function GET(request: Request) {
       id: company.id,
       name: company.name,
       level: company.level,
-      creditLimit: company.creditLimit,
-      creditUsed: company.creditUsed,
-      creditAvailable,
-      paymentTermsDays: company.paymentTermsDays,
       creditAllowed,
     },
     addresses: company.addresses,

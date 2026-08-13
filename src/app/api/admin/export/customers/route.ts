@@ -8,6 +8,9 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const canSeeCreditAmounts =
+    session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN";
+
   const companies = await prisma.company.findMany({
     include: {
       salesRep: true,
@@ -16,30 +19,51 @@ export async function GET() {
     orderBy: { name: "asc" },
   });
 
-  const header = [
-    "company",
-    "level",
-    "status",
-    "creditUsed",
-    "creditLimit",
-    "termsDays",
-    "orders",
-    "salesRep",
-    "commissionRate",
-  ];
+  const header = canSeeCreditAmounts
+    ? [
+        "company",
+        "level",
+        "status",
+        "creditUsed",
+        "creditLimit",
+        "termsDays",
+        "orders",
+        "salesRep",
+        "commissionRate",
+      ]
+    : [
+        "company",
+        "level",
+        "status",
+        "creditEnabled",
+        "orders",
+        "salesRep",
+        "commissionRate",
+      ];
 
   const lines = companies.map((c) =>
-    [
-      c.name,
-      c.level,
-      c.status,
-      c.creditUsed,
-      c.creditLimit,
-      c.paymentTermsDays,
-      c._count.orders,
-      c.salesRep?.email || "",
-      c.commissionRate,
-    ]
+    (canSeeCreditAmounts
+      ? [
+          c.name,
+          c.level,
+          c.status,
+          c.creditUsed,
+          c.creditLimit,
+          c.paymentTermsDays,
+          c._count.orders,
+          c.salesRep?.email || "",
+          c.commissionRate,
+        ]
+      : [
+          c.name,
+          c.level,
+          c.status,
+          c.creditLimit > 0 ? "yes" : "no",
+          c._count.orders,
+          c.salesRep?.email || "",
+          c.commissionRate,
+        ]
+    )
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(","),
   );

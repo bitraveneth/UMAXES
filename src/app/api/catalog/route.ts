@@ -12,19 +12,18 @@ export async function GET() {
 
   let level: CustomerLevel = "SHOP";
   let creditAllowed = false;
-  let creditAvailable = 0;
-  let creditLimit = 0;
-  let paymentTermsDays = 0;
 
   if (session.user.companyId) {
     const company = await prisma.company.findUnique({
       where: { id: session.user.companyId },
+      select: {
+        level: true,
+        paymentTermsDays: true,
+        creditLimit: true,
+      },
     });
     if (company) {
       level = company.level;
-      creditLimit = company.creditLimit;
-      paymentTermsDays = company.paymentTermsDays;
-      creditAvailable = Math.max(0, company.creditLimit - company.creditUsed);
       creditAllowed =
         company.level !== "SHOP" &&
         company.paymentTermsDays >= 1 &&
@@ -40,9 +39,6 @@ export async function GET() {
     products,
     credit: {
       allowed: creditAllowed,
-      available: creditAvailable,
-      limit: creditLimit,
-      paymentTermsDays,
     },
     companyRole: session.user.companyRole,
     canOrder:

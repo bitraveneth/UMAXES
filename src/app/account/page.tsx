@@ -66,7 +66,6 @@ export default async function AccountPage() {
             select: {
               name: true,
               level: true,
-              creditLimit: true,
             },
           })
         : null,
@@ -131,9 +130,6 @@ export default async function AccountPage() {
         : [],
     ]);
 
-  const isRetail = company?.level === "SHOP";
-  const showCredit = Boolean(company && !isRetail && company.creditLimit > 0);
-
   return (
     <div>
       <OverviewHeader name={name} companyName={company?.name} />
@@ -142,8 +138,6 @@ export default async function AccountPage() {
         openOrders={openOrders}
         paymentPending={paymentPending}
         wishlistCount={wishlistCount}
-        creditLimit={company?.creditLimit ?? 0}
-        showCredit={showCredit}
       />
 
       <section className="mt-10">

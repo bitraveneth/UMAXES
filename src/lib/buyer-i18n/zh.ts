@@ -39,7 +39,7 @@ const zh: BuyerMessages = {
     paymentPendingHint: "等待电汇 / 支票",
     wishlist: "收藏",
     wishlistHint: "已保存 SKU",
-    availableCredit: "信用额度",
+    availableCredit: "授信",
     recentOrders: "最近订单",
     recentOrdersHint: "金额、付款方式与状态一览",
     activity: "动态",

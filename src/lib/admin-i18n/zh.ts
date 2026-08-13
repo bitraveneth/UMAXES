@@ -26,6 +26,7 @@ const zh: AdminMessages = {
   },
   nav: {
     "/admin": "工作台",
+    "/admin/activity": "操作记录",
     "/admin/approvals": "审批管理",
     "/admin/customers": "客户总览",
     "/admin/distributors": "分销商",
@@ -46,6 +47,7 @@ const zh: AdminMessages = {
     "/admin/commissions": "销售佣金",
     "/admin/reports": "数据报表",
     "/admin/staff": "员工账号",
+    "/admin/system": "系统工具",
     "/admin/audit": "操作审计",
     "/admin/profile": "个人资料",
     "/admin/notifications": "消息中心",
@@ -735,6 +737,15 @@ const zh: AdminMessages = {
   staff: {
     title: "员工账号",
     description: "创建与查看内部运营账号。",
+  },
+  system: {
+    title: "系统工具",
+    description: "仅超级管理员：数据库备份、导入与重置 — 无需登录服务器。",
+  },
+  activity: {
+    title: "操作记录",
+    description:
+      "运营操作日志 — 标记付款、发货、订单状态、授信等。可查看何人何时做了何种变更。",
   },
   audit: {
     title: "操作审计",

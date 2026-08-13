@@ -12,11 +12,18 @@ function daysBetween(a: Date, b: Date) {
   return Math.floor((b.getTime() - a.getTime()) / (24 * 60 * 60 * 1000));
 }
 
+function money(n: number) {
+  return `$${n.toFixed(2)}`;
+}
+
 export default async function AgingPage() {
   const session = await auth();
   if (!session?.user || !canAccessPath(session.user.role, "/admin/aging")) {
     redirect("/admin");
   }
+
+  const canSeeAmounts =
+    session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN";
 
   const now = new Date();
   const openCharges = await prisma.creditLedger.findMany({
@@ -55,6 +62,12 @@ export default async function AgingPage() {
         descriptionKey="aging.description"
       />
 
+      {!canSeeAmounts ? (
+        <p className="mb-4 text-sm text-[var(--admin-muted)]">
+          Credit dollar amounts are visible to Admin / Super Admin only.
+        </p>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {(
           [
@@ -73,7 +86,9 @@ export default async function AgingPage() {
                 <AdminText id="aging.entries" values={{ count: rows.length }} />
               </>
             }
-            value={`$${sum(rows).toFixed(0)}`}
+            value={
+              canSeeAmounts ? `$${sum(rows).toFixed(0)}` : String(rows.length)
+            }
           />
         ))}
       </div>
@@ -93,9 +108,15 @@ export default async function AgingPage() {
               {row.company.name} · {row.order?.orderNumber || "—"} · due{" "}
               {row.dueDate?.toISOString().slice(0, 10) || "n/a"}
             </span>
-            <span className="font-semibold text-[var(--admin-gray-800)]">
-              ${row.amount.toFixed(2)}
-            </span>
+            {canSeeAmounts ? (
+              <span className="font-semibold text-[var(--admin-gray-800)]">
+                {money(row.amount)}
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-[var(--admin-muted)]">
+                Amount confidential
+              </span>
+            )}
           </li>
         ))}
       </ul>

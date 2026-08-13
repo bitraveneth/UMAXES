@@ -10,9 +10,10 @@ export type CreateOrderCompanyOption = {
   id: string;
   name: string;
   level: CustomerLevel;
-  creditLimit: number;
-  creditUsed: number;
-  paymentTermsDays: number;
+  creditAllowed: boolean;
+  creditLimit?: number;
+  creditUsed?: number;
+  paymentTermsDays?: number;
   addressCount: number;
   contactName: string | null;
 };
@@ -44,10 +45,6 @@ type CompanyContext = {
     id: string;
     name: string;
     level: CustomerLevel;
-    creditLimit: number;
-    creditUsed: number;
-    creditAvailable: number;
-    paymentTermsDays: number;
     creditAllowed: boolean;
   };
   addresses: Address[];
@@ -127,6 +124,11 @@ export default function CreateOrderPanel({
         p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
     );
   }, [ctx, catalogQuery]);
+
+  const selectedCompany = useMemo(
+    () => companies.find((c) => c.id === companyId) || null,
+    [companies, companyId],
+  );
 
   async function selectCompany(id: string) {
     setCompanyId(id);
@@ -323,15 +325,16 @@ export default function CreateOrderPanel({
                 Credit
               </p>
               {ctx.company.creditAllowed ? (
-                <>
-                  <p className="mt-2 font-semibold tabular-nums">
-                    {money(ctx.company.creditAvailable)} available
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                    {ctx.company.paymentTermsDays}d terms · limit{" "}
-                    {money(ctx.company.creditLimit)}
-                  </p>
-                </>
+                <p className="mt-2 font-semibold">
+                  {typeof selectedCompany?.creditLimit === "number" ? (
+                    <span className="tabular-nums">
+                      {money(selectedCompany.creditUsed ?? 0)} /{" "}
+                      {money(selectedCompany.creditLimit)}
+                    </span>
+                  ) : (
+                    "Enabled"
+                  )}
+                </p>
               ) : (
                 <p className="mt-2 text-sm text-[var(--admin-muted)]">
                   No trade credit (pay TT / check)
@@ -455,9 +458,7 @@ export default function CreateOrderPanel({
                   <option value="CHECK">Check</option>
                   <option value="ONLINE">Online (pending gateway)</option>
                   {ctx.company.creditAllowed ? (
-                    <option value="CREDIT">
-                      Credit ({money(ctx.company.creditAvailable)} available)
-                    </option>
+                    <option value="CREDIT">Credit</option>
                   ) : null}
                 </select>
               </label>

@@ -25,6 +25,7 @@ const en: AdminMessages = {
   },
   nav: {
     "/admin": "Dashboard",
+    "/admin/activity": "Activity",
     "/admin/approvals": "Approvals",
     "/admin/customers": "Customers",
     "/admin/distributors": "Distributors",
@@ -45,6 +46,7 @@ const en: AdminMessages = {
     "/admin/commissions": "Commissions",
     "/admin/reports": "Reports",
     "/admin/staff": "Staff",
+    "/admin/system": "System",
     "/admin/audit": "Audit",
     "/admin/profile": "Profile",
     "/admin/notifications": "Notifications",
@@ -758,6 +760,16 @@ const en: AdminMessages = {
   staff: {
     title: "Staff accounts",
     description: "Create and review internal ops users.",
+  },
+  system: {
+    title: "System tools",
+    description:
+      "Super-admin only: database backup, import, and reset — no server SSH required.",
+  },
+  activity: {
+    title: "Activity",
+    description:
+      "Operations log — payments marked paid, shipments, order status, credit, and more. See who changed what and when.",
   },
   audit: {
     title: "Audit log",

@@ -62,6 +62,11 @@ export const adminNav: AdminNavItem[] = [
     label: "Dashboard",
     roles: [SA, AD, "SALES", "WAREHOUSE", "LOGISTICS"],
   },
+  {
+    href: "/admin/activity",
+    label: "Activity",
+    roles: [SA, AD],
+  },
   { href: "/admin/approvals", label: "Approvals", roles: [SA, AD, "SALES"] },
   {
     href: "/admin/distributors",
@@ -120,7 +125,7 @@ export const adminNav: AdminNavItem[] = [
   { href: "/admin/commissions", label: "Commissions", roles: [SA, AD, "SALES"] },
   { href: "/admin/reports", label: "Reports", roles: [SA, AD, "SALES"] },
   { href: "/admin/staff", label: "Staff", roles: [SA] },
-  { href: "/admin/audit", label: "Audit", roles: [SA, AD] },
+  { href: "/admin/system", label: "System", roles: [SA] },
   {
     href: "/admin/profile",
     label: "Profile",

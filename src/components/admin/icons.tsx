@@ -24,6 +24,8 @@ import {
   Factory,
   Warehouse,
   Network,
+  Activity,
+  Database,
   Boxes,
   Store,
   ClipboardList,
@@ -32,6 +34,7 @@ import type { LucideIcon } from "lucide-react";
 
 export const adminNavIcons: Record<string, LucideIcon> = {
   "/admin": LayoutDashboard,
+  "/admin/activity": Activity,
   "/admin/approvals": UserCheck,
   "/admin/customers": Building2,
   "/admin/distributors": Network,
@@ -53,6 +56,7 @@ export const adminNavIcons: Record<string, LucideIcon> = {
   "/admin/commissions": Percent,
   "/admin/reports": BarChart3,
   "/admin/staff": Users,
+  "/admin/system": Database,
   "/admin/audit": ScrollText,
 };
 

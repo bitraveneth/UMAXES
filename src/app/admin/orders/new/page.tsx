@@ -38,13 +38,20 @@ export default async function AdminCreateOrderPage() {
   const options = companies.map((c) => {
     const owner =
       c.users.find((u) => u.companyRole === "OWNER") || c.users[0];
+    const canSeeCredit =
+      session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN";
     return {
       id: c.id,
       name: c.name,
       level: c.level,
-      creditLimit: c.creditLimit,
-      creditUsed: c.creditUsed,
-      paymentTermsDays: c.paymentTermsDays,
+      creditAllowed: c.creditLimit > 0,
+      ...(canSeeCredit
+        ? {
+            creditLimit: c.creditLimit,
+            creditUsed: c.creditUsed,
+            paymentTermsDays: c.paymentTermsDays,
+          }
+        : {}),
       addressCount: c._count.addresses,
       contactName: owner?.name || null,
     };

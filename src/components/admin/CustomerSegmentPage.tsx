@@ -27,6 +27,9 @@ export async function CustomerSegmentPage({
     redirect("/admin");
   }
 
+  const canSeeCreditAmounts =
+    session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN";
+
   const companies = await prisma.company.findMany({
     where: {
       level,
@@ -47,7 +50,9 @@ export async function CustomerSegmentPage({
 
   const approved = companies.filter((c) => c.status === "APPROVED").length;
   const pending = companies.filter((c) => c.status === "PENDING").length;
-  const creditExposure = companies.reduce((s, c) => s + c.creditUsed, 0);
+  const creditExposure = canSeeCreditAmounts
+    ? companies.reduce((s, c) => s + c.creditUsed, 0)
+    : companies.filter((c) => c.creditLimit > 0).length;
 
   const rows = companies.map((c) => ({
     id: c.id,
@@ -55,9 +60,14 @@ export async function CustomerSegmentPage({
     level: c.level,
     status: c.status,
     taxId: c.taxId,
-    creditLimit: c.creditLimit,
-    creditUsed: c.creditUsed,
-    paymentTermsDays: c.paymentTermsDays,
+    creditEnabled: c.creditLimit > 0,
+    ...(canSeeCreditAmounts
+      ? {
+          creditLimit: c.creditLimit,
+          creditUsed: c.creditUsed,
+          paymentTermsDays: c.paymentTermsDays,
+        }
+      : {}),
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
     orderCount: c._count.orders,
@@ -116,13 +126,21 @@ export async function CustomerSegmentPage({
         {level !== "SHOP" ? (
           <AdminStat
             label={<AdminText id="customers.statExposure" />}
-            value={`$${Math.round(creditExposure).toLocaleString()}`}
+            value={
+              canSeeCreditAmounts
+                ? `$${Math.round(creditExposure).toLocaleString()}`
+                : `${creditExposure} on`
+            }
             icon={CreditCard}
           />
         ) : null}
       </div>
 
-      <CustomersDirectory level={level} rows={rows} />
+      <CustomersDirectory
+        level={level}
+        rows={rows}
+        canSeeCreditAmounts={canSeeCreditAmounts}
+      />
     </div>
   );
 }

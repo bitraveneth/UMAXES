@@ -13,6 +13,9 @@ export default async function ReportsPage() {
     redirect("/admin");
   }
 
+  const canSeeCreditAmounts =
+    session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN";
+
   const [byStatus, byLevel, topSkus, creditExposure] = await Promise.all([
     prisma.order.groupBy({
       by: ["status"],
@@ -30,10 +33,12 @@ export default async function ReportsPage() {
       orderBy: { _sum: { quantity: "desc" } },
       take: 8,
     }),
-    prisma.company.aggregate({
-      where: { status: "APPROVED" },
-      _sum: { creditUsed: true, creditLimit: true },
-    }),
+    canSeeCreditAmounts
+      ? prisma.company.aggregate({
+          where: { status: "APPROVED" },
+          _sum: { creditUsed: true, creditLimit: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   return (
@@ -68,14 +73,20 @@ export default async function ReportsPage() {
           ))}
         </Panel>
         <Panel title="Credit exposure">
-          <Row
-            label="Used"
-            value={`$${(creditExposure._sum.creditUsed || 0).toFixed(2)}`}
-          />
-          <Row
-            label="Total limits"
-            value={`$${(creditExposure._sum.creditLimit || 0).toFixed(2)}`}
-          />
+          {canSeeCreditAmounts && creditExposure ? (
+            <>
+              <Row
+                label="Used"
+                value={`$${(creditExposure._sum.creditUsed || 0).toFixed(2)}`}
+              />
+              <Row
+                label="Total limits"
+                value={`$${(creditExposure._sum.creditLimit || 0).toFixed(2)}`}
+              />
+            </>
+          ) : (
+            <Row label="Status" value="Amounts visible to Admin only" />
+          )}
         </Panel>
       </div>
     </div>

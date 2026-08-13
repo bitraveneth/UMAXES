@@ -20,9 +20,11 @@ export type CustomerDirectoryRow = {
   level: CustomerLevel;
   status: UserStatus;
   taxId: string | null;
-  creditLimit: number;
-  creditUsed: number;
-  paymentTermsDays: number;
+  creditEnabled: boolean;
+  /** Present only for ADMIN / SUPER_ADMIN */
+  creditLimit?: number;
+  creditUsed?: number;
+  paymentTermsDays?: number;
   createdAt: string;
   updatedAt: string;
   orderCount: number;
@@ -68,9 +70,12 @@ function statusTone(status: string) {
 export default function CustomersDirectory({
   level,
   rows,
+  canSeeCreditAmounts = false,
 }: {
   level: CustomerLevel;
   rows: CustomerDirectoryRow[];
+  /** ADMIN / SUPER_ADMIN only — never buyers or sales UI */
+  canSeeCreditAmounts?: boolean;
 }) {
   const { t, locale } = useAdminI18n();
   const router = useRouter();
@@ -211,7 +216,6 @@ export default function CustomersDirectory({
                 <tr>
                   <th>{t("customers.company")}</th>
                   <th>{t("customers.contacts")}</th>
-                  <th>{t("customers.location")}</th>
                   {!isRetail ? <th>{t("customers.credit")}</th> : null}
                   <th>{t("customers.orders")}</th>
                   <th>{t("common.status")}</th>
@@ -222,7 +226,6 @@ export default function CustomersDirectory({
                 {filtered.map((row) => {
                   const open = openId === row.id;
                   const primary = row.contacts[0];
-                  const ship = row.addresses.find((a) => a.isDefault) || row.addresses[0];
                   return (
                     <Fragment key={row.id}>
                       <tr
@@ -257,17 +260,21 @@ export default function CustomersDirectory({
                               .join(" · ") || t("customers.noContact")}
                           </p>
                         </td>
-                        <td className="max-w-[12rem] truncate text-sm text-[var(--admin-muted)]">
-                          {ship
-                            ? [ship.city, ship.country].filter(Boolean).join(", ")
-                            : "—"}
-                        </td>
                         {!isRetail ? (
                           <td className="text-sm tabular-nums">
-                            {money(row.creditUsed)} / {money(row.creditLimit)}
-                            <span className="block text-xs text-[var(--admin-muted)]">
-                              {row.paymentTermsDays}d
-                            </span>
+                            {canSeeCreditAmounts ? (
+                              <>
+                                {money(row.creditUsed ?? 0)} /{" "}
+                                {money(row.creditLimit ?? 0)}
+                                <span className="block text-xs text-[var(--admin-muted)]">
+                                  {(row.paymentTermsDays ?? 0)}d
+                                </span>
+                              </>
+                            ) : row.creditEnabled ? (
+                              "Credit on"
+                            ) : (
+                              "Credit off"
+                            )}
                           </td>
                         ) : null}
                         <td className="tabular-nums">{row.orderCount}</td>
@@ -293,12 +300,13 @@ export default function CustomersDirectory({
                       {open ? (
                         <tr className="bg-[var(--admin-brand-50)]/25">
                           <td
-                            colSpan={isRetail ? 6 : 7}
+                            colSpan={isRetail ? 5 : 6}
                             className="!p-0 !align-top"
                           >
                             <CustomerExpand
                               row={row}
                               isRetail={isRetail}
+                              canSeeCreditAmounts={canSeeCreditAmounts}
                               formatDate={formatDate}
                               onClose={() => setOpenId(null)}
                             />
@@ -392,7 +400,7 @@ export default function CustomersDirectory({
                 placeholder={t("customers.tempPasswordHint")}
               />
             </label>
-            {!isRetail ? (
+            {!isRetail && canSeeCreditAmounts ? (
               <>
                 <label className="block text-xs font-medium text-[var(--admin-muted)]">
                   {t("customers.creditLimit")}
@@ -483,11 +491,13 @@ export default function CustomersDirectory({
 function CustomerExpand({
   row,
   isRetail,
+  canSeeCreditAmounts,
   formatDate,
   onClose,
 }: {
   row: CustomerDirectoryRow;
   isRetail: boolean;
+  canSeeCreditAmounts: boolean;
   formatDate: (iso: string) => string;
   onClose: () => void;
 }) {
@@ -567,15 +577,23 @@ function CustomerExpand({
                     {t("customers.credit")}
                   </dt>
                   <dd className="font-medium tabular-nums">
-                    {money(row.creditUsed)} / {money(row.creditLimit)}
+                    {canSeeCreditAmounts
+                      ? `${money(row.creditUsed ?? 0)} / ${money(row.creditLimit ?? 0)}`
+                      : row.creditEnabled
+                        ? "On"
+                        : "Off"}
                   </dd>
                 </div>
-                <div className="flex justify-between gap-3">
-                  <dt className="text-[var(--admin-muted)]">
-                    {t("customers.terms")}
-                  </dt>
-                  <dd className="font-medium">{row.paymentTermsDays}d</dd>
-                </div>
+                {canSeeCreditAmounts ? (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-[var(--admin-muted)]">
+                      {t("customers.terms")}
+                    </dt>
+                    <dd className="font-medium">
+                      {row.paymentTermsDays ?? 0}d
+                    </dd>
+                  </div>
+                ) : null}
               </>
             ) : null}
             <div className="flex justify-between gap-3">
