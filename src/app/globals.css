@@ -49,9 +49,16 @@ body {
   overflow-x: clip;
 }
 
-a {
-  color: inherit;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+/* Keep default link color inherited, but stay under Tailwind utilities
+   so classes like text-white on <Link> are visible on dark buttons. */
+@layer base {
+  a {
+    color: inherit;
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+  }
 }
 
 ::selection {

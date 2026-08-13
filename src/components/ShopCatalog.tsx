@@ -546,7 +546,7 @@ function ShopAside({
 
             <Link
               href="/cart"
-              className="mt-5 block w-full bg-black py-3.5 text-center font-display text-sm font-semibold text-white transition hover:bg-umx-orange"
+              className="mt-5 block w-full bg-black py-3.5 text-center font-display text-sm font-semibold !text-white transition hover:bg-umx-orange hover:!text-white"
             >
               View cart
             </Link>
@@ -1009,7 +1009,7 @@ export default function ShopCatalog() {
             </div>
             <Link
               href="/cart"
-              className="inline-flex items-center gap-2 bg-umx-orange px-5 py-3 font-display text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 bg-umx-orange px-5 py-3 font-display text-sm font-semibold !text-white"
             >
               <ShoppingBag className="h-4 w-4" strokeWidth={2.1} aria-hidden />
               View cart

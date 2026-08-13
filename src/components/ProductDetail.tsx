@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { QtyStepper } from "@/components/QtyStepper";
 import { useCart } from "@/context/CartContext";
 import {
   storeTopPadClass,
@@ -126,56 +127,21 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 Quantity
               </p>
               <div className="mt-3 flex flex-wrap items-stretch gap-3">
-                <div className="inline-flex h-12 items-center overflow-hidden rounded-full border border-black/15 bg-white">
-                  <button
-                    type="button"
-                    aria-label="Decrease quantity"
-                    className="flex h-full w-11 items-center justify-center font-display text-xl text-black transition hover:bg-umx-cream hover:text-umx-orange"
-                    onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={99999}
-                    value={qty}
-                    aria-label="Quantity"
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/[^\d]/g, "");
-                      if (raw === "") {
-                        setQty(1);
-                        return;
-                      }
-                      const next = Math.min(
-                        99999,
-                        Math.max(1, parseInt(raw, 10) || 1),
-                      );
-                      setQty(next);
-                    }}
-                    onBlur={() => setQty((q) => Math.max(1, q || 1))}
-                    className="h-full w-16 border-x border-black/10 bg-transparent text-center font-display text-base font-bold text-black outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  />
-                  <button
-                    type="button"
-                    aria-label="Increase quantity"
-                    className="flex h-full w-11 items-center justify-center font-display text-xl text-black transition hover:bg-umx-cream hover:text-umx-orange"
-                    onClick={() => setQty((q) => Math.min(99999, q + 1))}
-                  >
-                    +
-                  </button>
-                </div>
+                <QtyStepper
+                  value={qty}
+                  onChange={setQty}
+                  ariaLabel="Quantity"
+                />
 
                 <button
                   type="button"
                   onClick={handleAdd}
-                  className={`inline-flex h-12 min-w-[11rem] flex-1 items-center justify-center gap-2 rounded-full px-7 font-display text-sm font-semibold tracking-wide text-white transition duration-300 sm:flex-none sm:text-base ${
+                  className={`inline-flex h-12 min-w-[11rem] flex-1 items-center justify-center gap-2 rounded-full px-7 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 sm:flex-none sm:text-base ${
                     added ? "bg-umx-orange" : "bg-black hover:bg-umx-orange"
                   }`}
                 >
                   {added ? "Added to cart" : "Add to cart"}
-                  <span aria-hidden className="text-white">
+                  <span aria-hidden className="!text-white">
                     {added ? "✓" : "→"}
                   </span>
                 </button>

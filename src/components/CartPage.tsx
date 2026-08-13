@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { QtyStepper } from "@/components/QtyStepper";
 import { useCart } from "@/context/CartContext";
 import {
   storeTopPadClass,
@@ -46,7 +47,7 @@ export default function CartPage() {
               </p>
               <Link
                 href="/shop"
-                className="mt-8 inline-flex rounded-full bg-umx-orange px-7 py-3.5 font-display text-sm font-semibold text-white transition hover:bg-umx-orange-deep"
+                className="mt-8 inline-flex rounded-full bg-umx-orange px-7 py-3.5 font-display text-sm font-semibold !text-white transition hover:bg-umx-orange-deep"
               >
                 Shop UMAXES
               </Link>
@@ -104,31 +105,14 @@ export default function CartPage() {
                         </div>
 
                         <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-                          <div className="inline-flex items-center overflow-hidden rounded-full border border-black/15">
-                            <button
-                              type="button"
-                              aria-label={`Decrease ${flavor.name}`}
-                              className="flex h-10 w-10 items-center justify-center font-display text-lg text-black transition hover:text-umx-orange"
-                              onClick={() =>
-                                setQuantity(line.flavorId, line.quantity - 1)
-                              }
-                            >
-                              −
-                            </button>
-                            <span className="min-w-9 text-center font-display text-sm font-semibold text-black">
-                              {line.quantity}
-                            </span>
-                            <button
-                              type="button"
-                              aria-label={`Increase ${flavor.name}`}
-                              className="flex h-10 w-10 items-center justify-center font-display text-lg text-black transition hover:text-umx-orange"
-                              onClick={() =>
-                                setQuantity(line.flavorId, line.quantity + 1)
-                              }
-                            >
-                              +
-                            </button>
-                          </div>
+                          <QtyStepper
+                            value={line.quantity}
+                            ariaLabel={flavor.name}
+                            allowRemove
+                            onChange={(qty) =>
+                              setQuantity(line.flavorId, qty)
+                            }
+                          />
                           <button
                             type="button"
                             className="font-display text-xs font-semibold tracking-wide text-black/45 uppercase transition hover:text-umx-orange"
@@ -157,7 +141,7 @@ export default function CartPage() {
                 </p>
                 <Link
                   href="/checkout"
-                  className="mt-5 block w-full rounded-full bg-umx-orange py-3.5 text-center font-display text-sm font-semibold text-white transition hover:bg-umx-orange-deep sm:text-base"
+                  className="mt-5 block w-full rounded-full bg-umx-orange py-3.5 text-center font-display text-sm font-semibold !text-white transition hover:bg-umx-orange-deep sm:text-base"
                 >
                   Checkout
                 </Link>
