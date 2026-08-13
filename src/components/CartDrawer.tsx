@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
+import { EmptyCart } from "@/components/EmptyCart";
 import { QtyStepper } from "@/components/QtyStepper";
 import { useCart } from "@/context/CartContext";
 import { getFlavor, product } from "@/lib/assets";
@@ -55,21 +56,7 @@ export default function CartDrawer() {
 
         <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-6">
           {quantity === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className="font-display text-base font-semibold text-black">
-                Cart is empty
-              </p>
-              <p className="mt-2 max-w-xs font-body text-sm text-black/65">
-                Pick a flavor and add it to your cart.
-              </p>
-              <Link
-                href="/shop"
-                onClick={() => setOpen(false)}
-                className="mt-6 rounded-full bg-umx-orange px-6 py-3 font-display text-sm font-semibold !text-white transition hover:bg-umx-orange-deep"
-              >
-                Shop UMAXES
-              </Link>
-            </div>
+            <EmptyCart compact onShopClick={() => setOpen(false)} />
           ) : (
             <ul className="space-y-4">
               {items.map((line) => {

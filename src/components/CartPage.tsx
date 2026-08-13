@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { EmptyCart } from "@/components/EmptyCart";
 import { QtyStepper } from "@/components/QtyStepper";
 import { useCart } from "@/context/CartContext";
 import {
@@ -22,7 +23,9 @@ export default function CartPage() {
       <main
         className={`flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
       >
-        <div className="mx-auto max-w-3xl">
+        <div
+          className={`mx-auto ${quantity === 0 ? "max-w-5xl" : "max-w-3xl"}`}
+        >
           <header className="mb-8 sm:mb-10">
             <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase">
               Your bag
@@ -32,26 +35,13 @@ export default function CartPage() {
             </h1>
             <p className="mt-2 font-body text-black/65">
               {quantity === 0
-                ? "No items yet — browse the collection and add flavors."
+                ? "No items yet — start with a flavor below or open the full shop."
                 : `${quantity} item${quantity === 1 ? "" : "s"} ready when you are.`}
             </p>
           </header>
 
           {quantity === 0 ? (
-            <div className="rounded-2xl border border-black/10 bg-white px-6 py-16 text-center">
-              <p className="font-display text-lg font-semibold text-black">
-                Cart is empty
-              </p>
-              <p className="mx-auto mt-2 max-w-sm font-body text-sm text-black/60">
-                Pick a HOOKAMAX flavor and add it to your cart.
-              </p>
-              <Link
-                href="/shop"
-                className="mt-8 inline-flex rounded-full bg-umx-orange px-7 py-3.5 font-display text-sm font-semibold !text-white transition hover:bg-umx-orange-deep"
-              >
-                Shop UMAXES
-              </Link>
-            </div>
+            <EmptyCart />
           ) : (
             <div className="space-y-6">
               <ul className="space-y-3">
