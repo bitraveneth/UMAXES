@@ -28,7 +28,7 @@ type CatalogProduct = {
   image: string | null;
 };
 
-type PayMethod = "TT" | "CHECK" | "ONLINE" | "CREDIT";
+type PayMethod = "TT" | "CREDIT";
 
 type CreditInfo = {
   allowed: boolean;
@@ -44,6 +44,7 @@ export default function B2BCheckout() {
   const [credit, setCredit] = useState<CreditInfo>({
     allowed: false,
   });
+  const [creditReady, setCreditReady] = useState(false);
   const [canPlaceOrder, setCanPlaceOrder] = useState(true);
   const [addressId, setAddressId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PayMethod>("TT");
@@ -85,6 +86,7 @@ export default function B2BCheckout() {
         }
       }
       if (typeof cat.canOrder === "boolean") setCanPlaceOrder(cat.canOrder);
+      setCreditReady(true);
     });
   }, [status, session, router]);
 
@@ -135,6 +137,10 @@ export default function B2BCheckout() {
     setError(null);
     if (!ageConfirmed) {
       setError("Confirm you are 21+ to place this order.");
+      return;
+    }
+    if (paymentMethod === "CREDIT" && !credit.allowed) {
+      setError("Credit is not available on this account.");
       return;
     }
     setLoading(true);
@@ -278,44 +284,93 @@ export default function B2BCheckout() {
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {(
               [
-                ["TT", "Telegraphic transfer"],
-                ["CHECK", "Check"],
-                [
-                  "CREDIT",
-                  "Credit",
-                ],
-                ["ONLINE", "Online (gateway later)"],
+                {
+                  id: "TT" as const,
+                  label: "Telegraphic transfer",
+                  enabled: true,
+                  hint: null as string | null,
+                },
+                {
+                  id: "CREDIT" as const,
+                  label: "Credit",
+                  enabled: creditReady && credit.allowed,
+                  hint: !creditReady
+                    ? "Checking credit…"
+                    : credit.allowed
+                      ? null
+                      : "Not available on this account",
+                },
               ] as const
-            )
-              .filter(([id]) => id !== "CREDIT" || credit.allowed)
-              .map(([id, label]) => (
+            ).map((opt) => {
+              const selected = paymentMethod === opt.id;
+              const disabled = !opt.enabled;
+              return (
                 <label
-                  key={id}
-                  className={`flex cursor-pointer gap-3 border p-4 ${
-                    paymentMethod === id
-                      ? "border-umx-orange bg-umx-orange-wash/40"
-                      : "border-black/10"
+                  key={opt.id}
+                  className={`relative flex gap-3 border p-4 transition ${
+                    disabled
+                      ? "cursor-not-allowed border-black/8 bg-black/[0.03] opacity-55 grayscale"
+                      : selected
+                        ? "cursor-pointer border-umx-orange bg-umx-orange-wash/40"
+                        : "cursor-pointer border-black/10 hover:border-black/25"
                   }`}
                 >
                   <input
                     type="radio"
                     name="pay"
-                    checked={paymentMethod === id}
-                    onChange={() => setPaymentMethod(id)}
+                    disabled={disabled}
+                    checked={selected}
+                    onChange={() => {
+                      if (!disabled) setPaymentMethod(opt.id);
+                    }}
                   />
-                  <span className="font-display text-sm font-semibold">
-                    {label}
+                  <span className="min-w-0">
+                    <span className="block font-display text-sm font-semibold">
+                      {opt.label}
+                    </span>
+                    {opt.hint ? (
+                      <span className="mt-0.5 block font-body text-xs text-black/50">
+                        {opt.hint}
+                      </span>
+                    ) : null}
                   </span>
                 </label>
-              ))}
+              );
+            })}
+
+            {(
+              [
+                { id: "paypal", label: "PayPal", sub: "Coming soon" },
+                { id: "stripe", label: "Stripe", sub: "Coming soon" },
+              ] as const
+            ).map((gw) => (
+              <div
+                key={gw.id}
+                aria-disabled="true"
+                title="Payment gateway not configured yet"
+                className="relative flex cursor-not-allowed items-center gap-3 border border-black/8 bg-black/[0.03] p-4 opacity-50 grayscale select-none"
+              >
+                <span
+                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-black/25 bg-white"
+                  aria-hidden
+                />
+                <span className="min-w-0">
+                  <span className="block font-display text-sm font-semibold blur-[0.3px]">
+                    {gw.label}
+                  </span>
+                  <span className="mt-0.5 block font-body text-xs text-black/50">
+                    {gw.sub}
+                  </span>
+                </span>
+              </div>
+            ))}
           </div>
 
-          {paymentMethod === "ONLINE" && (
-            <p className="mt-3 font-body text-xs text-black/55">
-              Stripe/online gateway is not configured yet. Order will be saved as
-              payment pending until the gateway is connected later.
-            </p>
-          )}
+          <p className="mt-3 font-body text-xs text-black/50">
+            PayPal and Stripe will unlock here once the payment gateways are
+            connected.
+          </p>
+
           <label className="mt-4 block">
             <span className="font-display text-sm font-semibold">
               Payment reference (optional)
@@ -324,7 +379,7 @@ export default function B2BCheckout() {
               value={paymentRef}
               onChange={(e) => setPaymentRef(e.target.value)}
               className="mt-2 w-full border border-black/15 px-4 py-3"
-              placeholder="TT ref / check number"
+              placeholder="TT / wire reference"
             />
           </label>
         </section>
