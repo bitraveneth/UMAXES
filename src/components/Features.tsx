@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import {
   BatteryCharging,
@@ -10,106 +9,6 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { statementIcons } from "@/components/StatementIcons";
-import { logos } from "@/lib/assets";
-
-type Token = { type: "text"; value: string } | { type: "icon"; index: number };
-
-/** One statement line — each icon once */
-function buildStatementLine(words: string[]): Token[] {
-  if (words.length > statementIcons.length) {
-    throw new Error("Need more unique statement icons than words");
-  }
-  const tokens: Token[] = [];
-  words.forEach((word, i) => {
-    tokens.push({ type: "text", value: word });
-    tokens.push({ type: "icon", index: i });
-  });
-  return tokens;
-}
-
-const statementLine = buildStatementLine([
-  "ELEVATE",
-  "EVERY",
-  "PUFF",
-  "MAX",
-  "FLAVOR",
-  "SMOOTH",
-  "CLOUD",
-  "DRAW",
-]);
-
-function Orb({ index, delay }: { index: number; delay: string }) {
-  const Icon = statementIcons[index];
-  return (
-    <span
-      className="animate-icon-bob relative mx-0.5 inline-flex h-[1em] w-[1em] shrink-0 align-middle drop-shadow-[0_10px_24px_rgba(0,0,0,0.16)] sm:mx-1.5"
-      style={{ animationDelay: delay }}
-      aria-hidden
-    >
-      <Icon className="h-full w-full" />
-    </span>
-  );
-}
-
-function StatementMarquee({ tokens }: { tokens: Token[] }) {
-  const loop = [...tokens, ...tokens];
-  return (
-    <div className="relative overflow-hidden py-1">
-      <div className="animate-icon-marquee flex w-max items-center gap-2 pr-2 font-display text-[clamp(2.75rem,9vw,6.5rem)] font-extrabold leading-none tracking-[-0.045em] uppercase sm:gap-4 sm:pr-4">
-        {loop.map((token, i) =>
-          token.type === "text" ? (
-            <span
-              key={`t-${i}`}
-              className="inline-flex items-center text-black select-none"
-            >
-              {token.value}
-            </span>
-          ) : (
-            <Orb
-              key={`i-${i}`}
-              index={token.index}
-              delay={`${(token.index % 5) * 0.15}s`}
-            />
-          )
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** Second line — UMAXES logo + unique icons between */
-function BrandMarquee() {
-  // Icons not used on the statement line (statement uses 0–7)
-  const items = [8, 9, 10, 11].map((iconIndex, i) => ({
-    logoKey: i,
-    iconIndex,
-  }));
-
-  return (
-    <div className="relative mt-3 overflow-hidden py-1 sm:mt-4">
-      <div className="animate-icon-marquee-rev flex w-max items-center gap-3 pr-3 font-display text-[clamp(2.75rem,9vw,6.5rem)] font-extrabold leading-none sm:gap-5 sm:pr-5">
-        {[...items, ...items].map((item, i) => (
-          <span key={i} className="inline-flex items-center gap-3 sm:gap-5">
-            <span className="relative inline-block h-[1em] w-[calc(1em*5.2)] shrink-0">
-              <Image
-                src={logos.orangeTransparent}
-                alt="UMAXES"
-                fill
-                className="object-contain object-left"
-                sizes="(max-width: 768px) 200px, 420px"
-              />
-            </span>
-            <Orb
-              index={item.iconIndex}
-              delay={`${(item.iconIndex % 4) * 0.15}s`}
-            />
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const reasons: {
   title: string;
@@ -210,15 +109,6 @@ function WhyUmaxes() {
 export default function Features() {
   return (
     <section id="features" className="relative overflow-hidden bg-white">
-      <div className="border-b border-black/6 bg-white px-4 py-20 sm:px-6 sm:py-28">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-white to-transparent sm:w-24" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-white to-transparent sm:w-24" />
-          <StatementMarquee tokens={statementLine} />
-          <BrandMarquee />
-        </div>
-      </div>
-
       <WhyUmaxes />
     </section>
   );
