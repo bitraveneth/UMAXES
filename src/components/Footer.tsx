@@ -69,9 +69,6 @@ export default function Footer() {
                 <p className="font-display text-sm font-semibold tracking-[0.08em] text-white">
                   © {year} UMAXES
                 </p>
-                <p className="mt-1.5 font-body text-[0.7rem] leading-relaxed text-white/50">
-                  Adults 21+ only. Nicotine is an addictive chemical.
-                </p>
               </div>
             </div>
 
@@ -127,25 +124,6 @@ export default function Footer() {
             . This product is not intended for sale or use by individuals under
             21 years of age. Nicotine is an addictive chemical.
           </p>
-        </div>
-
-        <div className="footer-brand-band" aria-hidden>
-          <svg
-            className="footer-hollow-brand"
-            viewBox="0 0 1000 110"
-            preserveAspectRatio="none"
-            role="presentation"
-          >
-            <text
-              x="0"
-              y="100"
-              textLength="1000"
-              lengthAdjust="spacingAndGlyphs"
-              className="footer-hollow-brand__text"
-            >
-              UMAXES
-            </text>
-          </svg>
         </div>
       </footer>
     </div>
