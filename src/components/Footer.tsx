@@ -108,6 +108,27 @@ export default function Footer() {
           </div>
         </div>
 
+        <div className="border-t border-black/15 bg-black px-5 py-5 sm:px-8">
+          <p className="mx-auto max-w-[1200px] font-body text-[0.7rem] leading-relaxed text-white/70 sm:text-xs">
+            <span className="font-display font-semibold tracking-wide text-umx-orange">
+              WARNING:{" "}
+            </span>
+            This product contains chemicals, including nicotine, which is known
+            to the State of California to cause cancer and reproductive harm.
+            For more information, visit{" "}
+            <a
+              href="https://www.p65warnings.ca.gov"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-white/30 underline-offset-2 transition hover:text-white hover:decoration-white"
+            >
+              p65warnings.ca.gov
+            </a>
+            . This product is not intended for sale or use by individuals under
+            21 years of age. Nicotine is an addictive chemical.
+          </p>
+        </div>
+
         <div className="footer-brand-band" aria-hidden>
           <svg
             className="footer-hollow-brand"

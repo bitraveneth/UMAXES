@@ -8,7 +8,6 @@ import { useSession } from "next-auth/react";
 import BuyerAccountMenu from "@/components/BuyerAccountMenu";
 import GoogleTranslate from "@/components/GoogleTranslate";
 import LanguagePicker from "@/components/LanguagePicker";
-import LegalTicker from "@/components/LegalTicker";
 import { useCart } from "@/context/CartContext";
 import { useCompactMobileStoreChrome } from "@/hooks/useStoreChrome";
 import { logos } from "@/lib/assets";
@@ -265,7 +264,6 @@ export default function Header() {
           hideMobileHeader ? "hidden lg:block" : ""
         }`}
       >
-        <LegalTicker />
         <header
           className={`transition-[background,box-shadow,backdrop-filter] duration-300 ${
             scrolled || open

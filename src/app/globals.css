@@ -109,19 +109,6 @@ body {
   }
 }
 
-@keyframes legal-ticker {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-.animate-legal-ticker {
-  animation: legal-ticker 55s linear infinite;
-}
-
 @keyframes flavor-marquee {
   from {
     transform: translateX(0);
@@ -279,7 +266,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-legal-ticker,
   .animate-flavor-marquee,
   .animate-icon-marquee,
   .animate-icon-marquee-rev,
