@@ -105,9 +105,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-black/15 bg-black px-5 py-5 sm:px-8">
-          <p className="mx-auto max-w-[1200px] font-body text-[0.7rem] leading-relaxed text-white/70 sm:text-xs">
-            <span className="font-display font-semibold tracking-wide text-umx-orange">
+        <div className="border-t border-black/20 bg-black px-5 py-8 sm:px-8 sm:py-10">
+          <p className="mx-auto max-w-[1200px] font-body text-base leading-relaxed text-white sm:text-lg sm:leading-relaxed">
+            <span className="font-display text-lg font-bold tracking-wide text-umx-orange sm:text-xl">
               WARNING:{" "}
             </span>
             This product contains chemicals, including nicotine, which is known
@@ -117,7 +117,7 @@ export default function Footer() {
               href="https://www.p65warnings.ca.gov"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline decoration-white/30 underline-offset-2 transition hover:text-white hover:decoration-white"
+              className="font-semibold text-umx-orange underline decoration-umx-orange/50 underline-offset-4 transition hover:text-white hover:decoration-white"
             >
               p65warnings.ca.gov
             </a>
@@ -125,6 +125,27 @@ export default function Footer() {
             21 years of age. Nicotine is an addictive chemical.
           </p>
         </div>
+
+        {/* Hidden for now — uncomment to show the large UMAXES footer wordmark
+        <div className="footer-brand-band" aria-hidden>
+          <svg
+            className="footer-hollow-brand"
+            viewBox="0 0 1000 110"
+            preserveAspectRatio="none"
+            role="presentation"
+          >
+            <text
+              x="0"
+              y="100"
+              textLength="1000"
+              lengthAdjust="spacingAndGlyphs"
+              className="footer-hollow-brand__text"
+            >
+              UMAXES
+            </text>
+          </svg>
+        </div>
+        */}
       </footer>
     </div>
   );
