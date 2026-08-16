@@ -56,11 +56,13 @@ function CartIcon({ className }: { className?: string }) {
 const NAV_TYPE =
   "font-display text-[15px] font-semibold leading-none tracking-[0.08em] uppercase";
 
-const navLinkBase = `inline-flex h-11 items-center whitespace-nowrap rounded-full px-4 ${NAV_TYPE} transition-colors duration-200`;
+const navLinkBase = `inline-flex h-10 items-center whitespace-nowrap rounded-full px-3.5 ${NAV_TYPE} transition duration-200`;
 
 function navLinkClass(active: boolean) {
   return `${navLinkBase} ${
-    active ? "text-umx-orange" : "text-black/85 hover:text-umx-orange"
+    active
+      ? "text-black"
+      : "text-black/55 hover:bg-black/[0.06] hover:text-black"
   }`;
 }
 
@@ -134,8 +136,8 @@ function SupportDropdown({
                 href={item.href}
                 role="menuitem"
                 onClick={() => onNavigate?.()}
-                className={`block px-4 py-3 font-display text-[13px] font-semibold tracking-[0.04em] transition hover:bg-umx-cream hover:text-umx-orange ${
-                  active ? "bg-umx-cream text-umx-orange" : "text-black/85"
+                className={`block px-4 py-3 font-display text-[13px] font-semibold tracking-[0.04em] transition hover:bg-umx-cream hover:text-black ${
+                  active ? "bg-umx-cream text-black" : "text-black/85"
                 }`}
               >
                 {item.label}
@@ -278,15 +280,15 @@ export default function Header() {
           }`}
         >
           <div
-            className={`mx-auto flex w-full max-w-[1600px] items-center gap-4 transition-[height] duration-300 sm:gap-6 lg:gap-8 ${
+            className={`mx-auto flex w-full max-w-[1680px] items-center gap-4 transition-[height] duration-300 sm:gap-6 lg:gap-8 ${
               scrolled
-                ? "h-16 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8 xl:px-10"
-                : "h-[4.75rem] px-4 sm:h-20 sm:px-6 lg:px-8 xl:px-10"
+                ? "h-16 px-2.5 sm:h-[4.5rem] sm:px-4 md:px-5"
+                : "h-[4.75rem] px-2.5 sm:h-20 sm:px-4 md:px-5"
             }`}
           >
             <Link
               href="/"
-              className="relative z-50 -ml-0.5 block h-10 w-44 shrink-0 sm:h-11 sm:w-52 lg:h-12 lg:w-56"
+              className="relative z-50 block h-10 w-44 shrink-0 sm:h-11 sm:w-52 lg:h-12 lg:w-56"
               onClick={closeMenu}
             >
               <Image
@@ -331,7 +333,7 @@ export default function Header() {
                 aria-label={
                   quantity > 0 ? `Cart, ${quantity} items` : "Cart"
                 }
-                className="relative inline-flex h-12 w-12 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:text-umx-orange hover:ring-umx-orange"
+                className="relative inline-flex h-12 w-12 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:bg-black hover:text-white hover:ring-black"
                 onClick={closeMenu}
               >
                 <CartIcon className="h-[1.15rem] w-[1.15rem]" />
@@ -348,7 +350,7 @@ export default function Header() {
                 ) : (
                   <Link
                     href={accountHref}
-                    className={`hidden h-9 items-center rounded-full border border-black/15 px-4 text-black/85 transition hover:border-umx-orange hover:text-umx-orange sm:inline-flex ${NAV_TYPE}`}
+                    className={`hidden h-9 items-center rounded-full border border-black/15 px-4 text-black/85 transition hover:border-black hover:bg-black hover:text-white sm:inline-flex ${NAV_TYPE}`}
                   >
                     Account
                   </Link>
@@ -356,7 +358,7 @@ export default function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className={`hidden h-9 items-center rounded-full border border-black/15 px-4 text-black/85 transition hover:border-umx-orange hover:text-umx-orange sm:inline-flex ${NAV_TYPE}`}
+                  className={`hidden h-9 items-center rounded-full border border-black/15 px-4 text-black/85 transition hover:border-black hover:bg-black hover:text-white sm:inline-flex ${NAV_TYPE}`}
                 >
                   Sign in
                 </Link>
@@ -364,7 +366,7 @@ export default function Header() {
 
               <button
                 type="button"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:text-umx-orange hover:ring-umx-orange xl:hidden"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:bg-black hover:text-white hover:ring-black xl:hidden"
                 aria-expanded={open}
                 aria-controls="mobile-nav"
                 aria-label={open ? "Close menu" : "Open menu"}
@@ -421,7 +423,7 @@ export default function Header() {
                     key={item.href + item.label}
                     href={item.href}
                     onClick={closeMenu}
-                    className={`flex items-center justify-between rounded-xl px-4 py-3.5 text-black/85 transition hover:text-umx-orange ${NAV_TYPE} !text-base !tracking-[0.06em]`}
+                    className={`flex items-center justify-between rounded-xl px-4 py-3.5 text-black/85 transition hover:bg-black/[0.06] hover:text-black ${NAV_TYPE} !text-base !tracking-[0.06em]`}
                     style={{
                       transitionDelay: open ? `${80 + i * 30}ms` : "0ms",
                     }}
@@ -457,8 +459,8 @@ export default function Header() {
                         key={item.href}
                         href={item.href}
                         onClick={closeMenu}
-                        className={`block rounded-xl px-4 py-3 font-display text-[15px] font-semibold tracking-[0.04em] transition hover:text-umx-orange ${
-                          active ? "text-umx-orange" : "text-black/70"
+                        className={`block rounded-xl px-4 py-3 font-display text-[15px] font-semibold tracking-[0.04em] transition hover:bg-black/[0.06] hover:text-black ${
+                          active ? "text-black" : "text-black/70"
                         }`}
                       >
                         {item.label}
@@ -489,7 +491,7 @@ export default function Header() {
               <Link
                 href={session?.user ? accountHref : "/login"}
                 onClick={closeMenu}
-                className={`mt-4 rounded-full border border-black/15 px-5 py-4 text-center text-black transition hover:border-umx-orange hover:text-umx-orange ${NAV_TYPE} !text-base !tracking-[0.06em]`}
+                className={`mt-4 rounded-full border border-black/15 px-5 py-4 text-center text-black transition hover:border-black hover:bg-black hover:text-white ${NAV_TYPE} !text-base !tracking-[0.06em]`}
               >
                 {session?.user ? "Account" : "Sign in"}
               </Link>

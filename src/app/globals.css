@@ -36,14 +36,10 @@
   --font-body: var(--font-lora);
 }
 
-/* Same black/cream — hover is just easier to see (underline, lift, stronger edge). */
+/* Same black/cream — hover darkens; no underline (nav and text links). */
 @media (hover: hover) {
   [class*="hover:text-umx-orange"]:hover {
     color: #000;
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 0.22em;
-    text-decoration-color: currentColor;
   }
 
   [class*="hover:bg-umx-orange"]:hover,
