@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import B2BCheckout from "@/components/B2BCheckout";
+import { StorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
 import {
   storeTopPadClass,
@@ -46,7 +47,7 @@ function CheckoutAuthGate() {
                 </p>
               </div>
               <p className="font-display text-lg font-bold text-black">
-                ${total.toFixed(2)}
+                <StorePrice amount={total} />
               </p>
             </div>
           ) : null}

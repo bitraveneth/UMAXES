@@ -104,7 +104,7 @@ export default function AltchaField({
             "--altcha-color-base": "rgba(255,255,255,0.72)",
             "--altcha-color-base-content": "#111111",
             "--altcha-color-neutral": "rgba(17,17,17,0.18)",
-            "--altcha-color-primary": "#FF5B04",
+            "--altcha-color-primary": "#111111",
             "--altcha-color-primary-content": "#ffffff",
             "--altcha-border-color": "rgba(255,255,255,0.32)",
             "--altcha-input-background-color": "rgba(255,255,255,0.62)",

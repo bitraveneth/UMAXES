@@ -5,6 +5,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { EmptyCart } from "@/components/EmptyCart";
+import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { QtyStepper } from "@/components/QtyStepper";
 import { useCart } from "@/context/CartContext";
 import {
@@ -16,6 +17,7 @@ import { getFlavor, product } from "@/lib/assets";
 export default function CartPage() {
   const { items, quantity, setQuantity, remove, total } = useCart();
   const compactChrome = useCompactMobileStoreChrome();
+  const showPrices = useShowStorePrices();
 
   return (
     <>
@@ -86,11 +88,15 @@ export default function CartPage() {
                               {flavor.name}
                             </Link>
                             <p className="mt-0.5 font-display text-sm text-black/55">
-                              ${flavor.price}.00 each
+                              {showPrices ? (
+                                <>${flavor.price}.00 each</>
+                              ) : (
+                                "On request"
+                              )}
                             </p>
                           </div>
                           <p className="shrink-0 font-display text-base font-bold text-black">
-                            ${(flavor.price * line.quantity).toFixed(2)}
+                            <StorePrice amount={flavor.price * line.quantity} />
                           </p>
                         </div>
 
@@ -123,7 +129,7 @@ export default function CartPage() {
                     Subtotal
                   </span>
                   <span className="font-display text-2xl font-bold text-black">
-                    ${total.toFixed(2)}
+                    <StorePrice amount={total} />
                   </span>
                 </div>
                 <p className="mt-2 font-body text-sm text-black/50">

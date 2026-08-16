@@ -1,14 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import {
-  BatteryCharging,
-  Droplets,
-  Flame,
-  Grid3x3,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { Cloud, Grid3x3, Sparkles, Target, Thermometer, Wind } from "lucide-react";
 
 const reasons: {
   title: string;
@@ -16,34 +9,34 @@ const reasons: {
   icon: LucideIcon;
 }[] = [
   {
-    title: "Hookah soul",
-    body: "Rich, ritual-worthy flavor depth — built for adults who want more than a thin disposable hit.",
-    icon: Flame,
-  },
-  {
-    title: "Lit Mesh coil",
-    body: "Even heat. Cleaner taste. A smoother draw from first puff to last.",
+    title: "MaxCore™",
+    body: "Proprietary mesh coil technology at the heart of every UMAXES experience — smoother, richer, and more consistent from first puff to last.",
     icon: Grid3x3,
   },
   {
-    title: "Flavor library",
-    body: "Nine profiles. One HOOKAMAX device. Pick the mood — peach, ice, mint, and more.",
+    title: "Consistent heating",
+    body: "The mesh heating structure distributes heat more evenly across the coil surface for a stable, consistent vaping experience.",
+    icon: Thermometer,
+  },
+  {
+    title: "Richer flavor",
+    body: "A more consistent heating process helps preserve the character of carefully developed e-liquid flavors — fuller taste, every draw.",
     icon: Sparkles,
   },
   {
-    title: "All-day power",
-    body: "1300mAh rechargeable endurance with Type-C — ready whenever you are.",
-    icon: BatteryCharging,
+    title: "Dense vapor",
+    body: "Engineered for efficient vapor production — the satisfying cloud experience UMAXES users expect.",
+    icon: Cloud,
   },
   {
-    title: "Adult-first",
-    body: "Clear age gates, honest nicotine facts, and no youth cues. Ever.",
-    icon: ShieldCheck,
+    title: "Smooth experience",
+    body: "Balanced heating and airflow work together for a smoother draw and a more refined overall vaping experience.",
+    icon: Wind,
   },
   {
-    title: "Capacity that lasts",
-    body: "40ML e-liquid and dual MTL/DL airflow — sessions without constant restarts.",
-    icon: Droplets,
+    title: "80K puffs",
+    body: "Rated up to 80K puffs. Flavor. Vapor. Consistency — MaxCore™ is built so every puff counts.",
+    icon: Target,
   },
 ];
 
@@ -78,7 +71,6 @@ function WhyUmaxes() {
                 key={item.title}
                 className="group relative flex flex-col items-center overflow-hidden rounded-[1.5rem] border border-white/90 bg-gradient-to-b from-white via-white to-[#fffaf0] px-6 py-8 text-center shadow-[0_1px_0_rgba(255,255,255,1)_inset,0_12px_36px_rgba(61,22,5,0.08)] ring-1 ring-black/6 transition duration-500 hover:-translate-y-1.5 hover:border-umx-orange/35 hover:shadow-[0_1px_0_rgba(255,255,255,1)_inset,0_22px_50px_rgba(61,22,5,0.12)] hover:ring-umx-orange/25 sm:px-7 sm:py-9"
               >
-                {/* Gloss sheen — always visible */}
                 <span
                   aria-hidden
                   className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white to-transparent"

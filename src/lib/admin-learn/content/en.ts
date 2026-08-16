@@ -48,13 +48,14 @@ export const learnEn: Record<LearnSlug, LearnTutorial> = {
   catalog: {
     title: "Catalog",
     summary: "Products, SKUs, options, and images buyers can order.",
-    what: "Catalog is the product master. Active products with prices for each customer level show in the storefront and when staff create orders.",
+    what: "Catalog is the product master. Active products with prices for each customer level can be ordered. Retail (shop) prices stay in the database but are hidden on the public website. Approved wholesalers and distributors see their contracted rate after login.",
     steps: [
       "Open Catalog to list or search products.",
-      "Add a product with name, SKU, options, images, and level prices.",
-      "Activate products so buyers can purchase them.",
-      "Keep options and images accurate so packing and sales stay clear.",
+      "Add a product with name, SKU, options, images, and Distro / Wholesaler / Shop prices.",
+      "Keep Shop prices filled in — they are used internally, not displayed on the storefront.",
+      "Activate products so approved trade accounts can purchase them.",
     ],
+    tip: "Do not delete retail prices to hide them. Leave them in Catalog; the website simply does not show dollar amounts to guests or retail shop accounts.",
   },
   coupons: {
     title: "Coupons",

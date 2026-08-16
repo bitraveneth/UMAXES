@@ -51,6 +51,15 @@ export default async function CatalogPage() {
         }
       />
 
+      <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 sm:p-5">
+        <p className="text-sm font-semibold text-[var(--admin-text)]">
+          <AdminText id="catalog.pricingGuideTitle" />
+        </p>
+        <p className="mt-1.5 text-sm leading-relaxed admin-muted">
+          <AdminText id="catalog.pricingGuide" />
+        </p>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <AdminStat
           label={<AdminText id="catalog.totalProducts" />}

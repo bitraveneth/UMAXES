@@ -7,7 +7,7 @@ import ShopCatalog from "@/components/ShopCatalog";
 export const metadata: Metadata = {
   title: "UMAXES Shop",
   description:
-    "Shop HOOKAMAX flavors online. Filter by profile and price. For adults 21+. Nicotine is an addictive chemical.",
+    "HOOKAMAX flavors — browse the catalog. Adults 21+. Nicotine is an addictive chemical.",
 };
 
 export default function ShopPage() {

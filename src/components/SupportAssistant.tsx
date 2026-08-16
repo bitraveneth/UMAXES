@@ -309,7 +309,7 @@ export default function SupportAssistant() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label={open ? "Close UMAXES support" : "Open UMAXES help desk"}
-        className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-umx-orange text-white shadow-[0_16px_40px_rgba(255,91,4,0.42)] transition duration-300 hover:scale-105 hover:bg-umx-orange-mid hover:shadow-[0_18px_44px_rgba(255,91,4,0.5)] sm:h-14 sm:w-14"
+        className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-umx-orange text-white shadow-[0_16px_40px_rgba(0,0,0,0.4)] transition duration-300 hover:scale-105 hover:bg-umx-orange-mid hover:shadow-[0_18px_44px_rgba(0,0,0,0.48)] sm:h-14 sm:w-14"
       >
         {open ? (
           <X className="h-6 w-6" strokeWidth={2.3} aria-hidden />

@@ -13,7 +13,7 @@ export const faqs = [
   },
   {
     q: "What flavors are available?",
-    a: `Available HOOKAMAX flavors: ${flavors.map((f) => `${f.name} ($${f.price})`).join("; ")}. Open the UMAXES Shop to filter by Tropical, Ice, Berry, Mint, or Candy.`,
+    a: `Available HOOKAMAX flavors: ${flavors.map((f) => f.name).join("; ")}. Open the UMAXES Shop to filter by Tropical, Ice, Berry, Mint, or Candy. Pricing is set by the brand and shown after wholesale/distributor approval.`,
     keys: ["what flavor", "list flavor", "available flavor", "which flavor", "menu"],
   },
   {
@@ -43,11 +43,7 @@ export const faqs = [
   },
   {
     q: "How much does HOOKAMAX cost?",
-    a: (() => {
-      const min = Math.min(...flavors.map((f) => f.price));
-      const max = Math.max(...flavors.map((f) => f.price));
-      return `HOOKAMAX flavors start at $${min} and go up to $${max}, depending on the flavor. Browse UMAXES Shop for current prices.`;
-    })(),
+    a: "Retail list prices are not published on the website. Wholesale and distributor accounts see contracted rates after approval. Contact UMAXES or register for trade pricing.",
     keys: ["price", "pricing", "cost", "how much", "expensive", "cheap", "dollar"],
   },
   {
@@ -77,7 +73,7 @@ export const faqs = [
   },
   {
     q: "How do I contact support?",
-    a: "Email support@umaxes.com or use the Contact Us form. Include your order number and, if relevant, your product verification code so we can help faster. We usually reply within 1–2 business days.",
+    a: "Email info@umaxesvape.com or use the Contact Us form. Include your order number and, if relevant, your product verification code so we can help faster. We usually reply within 1–2 business days.",
     keys: ["contact", "email", "support", "help", "reach", "message"],
   },
   {
@@ -129,5 +125,5 @@ export function findSupportAnswer(query: string): string {
 
   if (best && best.score >= 3) return best.a;
 
-  return `I can help with how many flavors we have (${flavors.length}), HOOKAMAX features, pricing, shipping, coupons, authenticity checks, returns, and contact info. Try asking “How many flavors?” or tap a topic below — or email support@umaxes.com.`;
+  return `I can help with how many flavors we have (${flavors.length}), HOOKAMAX features, pricing, shipping, coupons, authenticity checks, returns, and contact info. Try asking “How many flavors?” or tap a topic below — or email info@umaxesvape.com.`;
 }

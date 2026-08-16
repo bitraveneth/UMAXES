@@ -263,7 +263,10 @@ const zh: AdminMessages = {
   catalog: {
     title: "商品目录",
     description:
-      "下方为已上架商品列表。新增商品请进入独立页面；点击「编辑」可维护详情、价格与规格。",
+      "下方为已上架商品列表。新增商品请进入独立页面；点击「编辑」可维护详情、价格与规格。零售价保存在目录中，但不会在网站前台展示。",
+    pricingGuideTitle: "如何设定价格",
+    pricingGuide:
+      "请保留门店/零售价，不要删除——仅在前台隐藏。分销价与批发价仅对已审批的批发/分销账户登录后可见。新增或编辑 SKU 时请同时设定三个等级的价格。",
     addProduct: "新增商品",
     totalProducts: "商品总数",
     active: "上架中",
@@ -298,7 +301,7 @@ const zh: AdminMessages = {
     unitPrice: "单价",
     moq: "起订量 MOQ",
     newTitle: "新增商品",
-    newDescription: "创建新 SKU，可设置图片、库存与分级价格。规格可在创建后补充。",
+    newDescription: "创建新 SKU，可设置图片、库存与分级价格。门店/零售价会保存，但不会在网站前台显示。规格可在创建后补充。",
     backToCatalog: "返回商品目录",
     imageGuidelines: "图片规范",
     newProduct: "新建商品",

@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --umx-orange: #ff5b04;
-  --umx-cream: #fdf6e3;
-  --umx-orange-deep: #c44503;
-  --umx-orange-ink: #3d1605;
-  --umx-orange-mid: #ff7a33;
-  --umx-orange-soft: #ffb888;
-  --umx-orange-wash: #ffe8d6;
-  --umx-cream-bright: #fffef8;
-  --umx-cream-warm: #f5ebd0;
-  --umx-cream-deep: #e8d9b8;
+  /* Adult / compliance palette — black + cream (no youth-facing orange) */
+  --umx-orange: #111111;
+  --umx-cream: #f7f4ee;
+  --umx-orange-deep: #000000;
+  --umx-orange-ink: #000000;
+  --umx-orange-mid: #333333;
+  --umx-orange-soft: #c8c8c8;
+  --umx-orange-wash: #ececec;
+  --umx-cream-bright: #fbfbfb;
+  --umx-cream-warm: #f0eee8;
+  --umx-cream-deep: #d9d6cf;
   --umx-black: #000000;
 
   --background: var(--umx-cream);
@@ -35,6 +36,44 @@
   --font-body: var(--font-lora);
 }
 
+/* Same black/cream — hover is just easier to see (underline, lift, stronger edge). */
+@media (hover: hover) {
+  [class*="hover:text-umx-orange"]:hover {
+    color: #000;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.22em;
+    text-decoration-color: currentColor;
+  }
+
+  [class*="hover:bg-umx-orange"]:hover,
+  [class*="hover:bg-umx-orange-deep"]:hover,
+  [class*="hover:bg-umx-orange-mid"]:hover {
+    background-color: #000;
+    box-shadow: inset 0 0 0 999px rgb(255 255 255 / 0.18);
+  }
+
+  [class*="hover:bg-umx-orange/"]:hover {
+    background-color: rgb(0 0 0 / 0.1);
+    box-shadow: none;
+  }
+
+  [class*="hover:border-umx-orange"]:hover {
+    border-color: #000;
+    box-shadow: inset 0 0 0 1px #000;
+  }
+
+  [class*="hover:ring-umx-orange"]:hover {
+    --tw-ring-color: #000;
+    --tw-ring-opacity: 1;
+    box-shadow: 0 0 0 2px #000;
+  }
+}
+
+.group:hover [class*="group-hover:text-umx-orange"] {
+  color: #000;
+}
+
 html {
   scroll-behavior: smooth;
   /* clip avoids the overflow-x:hidden → overflow-y:auto trap that causes double scrollbars */
@@ -43,10 +82,15 @@ html {
 
 body {
   background: var(--umx-cream);
-  color: var(--umx-black);
-  font-family: var(--font-lora), serif;
+  color: #1c1b18;
+  font-family: var(--font-lora), Georgia, "Times New Roman", serif;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  line-height: 1.7;
   max-width: 100%;
   overflow-x: clip;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
 }
 
 /* Keep default link color inherited, but stay under Tailwind utilities
@@ -58,6 +102,10 @@ body {
       color 0.2s ease,
       background-color 0.2s ease,
       border-color 0.2s ease;
+  }
+
+  p {
+    color: #2a2824;
   }
 }
 
@@ -120,6 +168,14 @@ body {
 
 .animate-flavor-marquee {
   animation: flavor-marquee 40s linear infinite;
+}
+
+.animate-word-marquee {
+  animation: flavor-marquee 28s linear infinite;
+}
+
+.animate-word-marquee-rev {
+  animation: flavor-marquee 34s linear infinite reverse;
 }
 
 @keyframes icon-marquee {
@@ -249,6 +305,8 @@ body {
   .animate-flavor-marquee,
   .animate-icon-marquee,
   .animate-icon-marquee-rev,
+  .animate-word-marquee,
+  .animate-word-marquee-rev,
   .animate-icon-bob {
     animation: none;
   }
@@ -276,6 +334,26 @@ body {
   width: 100%;
   height: 100%;
   min-height: 100%;
+}
+
+/* Body copy was too faint (black/50–70 on cream + thin serif).
+   Do not target all text-black/* — watermarks use text-black/[0.03]. */
+p.font-body[class*="text-black/"] {
+  color: rgb(28 26 22 / 0.92);
+}
+
+/* Google Translate wraps sentences in <font> and can wipe color/size. */
+font {
+  color: inherit !important;
+  background: none !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  line-height: inherit !important;
+}
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
 }
 
 /* Google Translate — hide banner + native chrome; custom picker drives it */
@@ -336,7 +414,7 @@ body {
   background: var(--umx-cream, #fdf6e3);
 }
 .umx-lang-picker__item.is-active {
-  background: var(--umx-orange-wash, #ffe8d6);
+  background: var(--umx-orange-wash, #ececec);
 }
 .umx-lang-picker__native {
   grid-column: 1;
@@ -363,8 +441,8 @@ body {
   align-self: center;
   font-size: 12px;
   font-weight: 700;
-  color: #ff5b04;
+  color: #111;
 }
 .umx-lang-picker__item.is-active .umx-lang-picker__native {
-  color: #ff5b04;
+  color: #111;
 }

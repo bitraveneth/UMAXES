@@ -1,14 +1,14 @@
-/* UMAXES brand colors — orange + cream only */
+/* UMAXES brand colors — black + cream (adult / compliance) */
 :root {
-  --umx-orange: #ff5b04;
-  --umx-cream: #fdf6e3;
-  --umx-orange-deep: #c44503;
-  --umx-orange-ink: #3d1605;
-  --umx-orange-mid: #ff7a33;
-  --umx-orange-soft: #ffb888;
-  --umx-orange-wash: #ffe8d6;
-  --umx-cream-bright: #fffef8;
-  --umx-cream-warm: #f5ebd0;
-  --umx-cream-deep: #e8d9b8;
+  --umx-orange: #111111;
+  --umx-cream: #f7f4ee;
+  --umx-orange-deep: #000000;
+  --umx-orange-ink: #000000;
+  --umx-orange-mid: #333333;
+  --umx-orange-soft: #c8c8c8;
+  --umx-orange-wash: #ececec;
+  --umx-cream-bright: #fbfbfb;
+  --umx-cream-warm: #f0eee8;
+  --umx-cream-deep: #d9d6cf;
   --umx-black: #000000;
 }

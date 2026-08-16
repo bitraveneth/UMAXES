@@ -40,7 +40,7 @@ export default function FloatingShopBadge() {
         type="button"
         onClick={dismiss}
         aria-label="Dismiss community badge"
-        className="absolute -top-1 -left-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-[0_6px_18px_rgba(61,22,5,0.18)] ring-1 ring-black/10 transition hover:text-umx-orange"
+        className="absolute -top-1 -left-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white text-black shadow-[0_6px_18px_rgba(0,0,0,0.18)] ring-1 ring-black/10 transition hover:text-black"
       >
         <span className="text-lg leading-none" aria-hidden>
           ×
@@ -53,7 +53,7 @@ export default function FloatingShopBadge() {
         {...(COMMUNITY_URL !== "#"
           ? { target: "_blank", rel: "noopener noreferrer" }
           : { onClick: (e: React.MouseEvent) => e.preventDefault() })}
-        className="group relative flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full bg-umx-orange text-umx-cream shadow-[0_16px_36px_rgba(255,91,4,0.38)] transition duration-300 hover:scale-[1.04] hover:bg-umx-orange-mid hover:shadow-[0_20px_44px_rgba(255,91,4,0.45)] sm:h-[6.5rem] sm:w-[6.5rem]"
+        className="group relative flex h-[4.75rem] w-[4.75rem] items-center justify-center rounded-full bg-umx-orange text-umx-cream shadow-[0_16px_36px_rgba(0,0,0,0.35)] transition duration-300 hover:scale-[1.04] hover:bg-umx-orange-mid hover:shadow-[0_20px_44px_rgba(0,0,0,0.42)] sm:h-[6.5rem] sm:w-[6.5rem]"
       >
         <svg
           viewBox="0 0 100 100"

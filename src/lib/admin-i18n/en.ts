@@ -267,7 +267,10 @@ const en: AdminMessages = {
   catalog: {
     title: "Catalog",
     description:
-      "Listed products below. Add a product on a separate page, then Edit here to manage details, prices, and options.",
+      "Listed products below. Add a product on a separate page, then Edit here to manage details, prices, and options. Retail list prices are stored but not shown on the public website.",
+    pricingGuideTitle: "How to set prices",
+    pricingGuide:
+      "Keep Shop (retail) prices in the catalog — do not delete them. They stay hidden on the website. Distro and Wholesaler prices appear only for approved wholesale/distributor accounts after login. Set all three tiers when you add or edit a SKU.",
     addProduct: "Add product",
     totalProducts: "Total products",
     active: "Active",
@@ -304,7 +307,7 @@ const en: AdminMessages = {
     moq: "MOQ",
     newTitle: "Add product",
     newDescription:
-      "Create a new SKU with image, stock, and tier prices. You can add options after creation.",
+      "Create a new SKU with image, stock, and tier prices. Shop (retail) prices are stored for ops and invoices but are not shown on the public website.",
     backToCatalog: "Back to catalog",
     imageGuidelines: "Image guidelines",
     newProduct: "New product",

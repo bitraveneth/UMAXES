@@ -8,6 +8,7 @@ import {
   Headphones,
   Mail,
 } from "lucide-react";
+import { SITE_CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata = {
   title: "Support · UMAXES",
@@ -34,9 +35,9 @@ const cards = [
     icon: CircleHelp,
   },
   {
-    href: "mailto:support@umaxes.com",
+    href: `mailto:${SITE_CONTACT_EMAIL}`,
     title: "Email support",
-    body: "Prefer email? Reach the team at support@umaxes.com.",
+    body: `Prefer email? Reach the team at ${SITE_CONTACT_EMAIL}.`,
     icon: Headphones,
   },
 ] as const;

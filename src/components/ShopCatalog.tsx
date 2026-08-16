@@ -30,6 +30,7 @@ import {
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
 import { useSession } from "next-auth/react";
+import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import {
   flavorProfiles,
   flavors,
@@ -177,7 +178,9 @@ function ShopCard({
         </div>
 
         <div className="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end sm:justify-center">
-          <p className="font-display text-3xl font-bold text-black">${flavor.price}</p>
+          <p className="font-display text-3xl font-bold text-black">
+            <StorePrice amount={flavor.price} />
+          </p>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -273,7 +276,7 @@ function ShopCard({
             </p>
           </div>
           <p className="shrink-0 pt-0.5 font-display text-2xl font-bold text-black">
-            ${flavor.price}
+            <StorePrice amount={flavor.price} />
           </p>
         </div>
 
@@ -334,6 +337,8 @@ function FilterPanel({
   onClear: () => void;
   showSearch?: boolean;
 }) {
+  const showPrices = useShowStorePrices();
+
   function toggleProfile(profile: FlavorProfile) {
     if (profiles.includes(profile)) {
       setProfiles(profiles.filter((p) => p !== profile));
@@ -451,6 +456,7 @@ function FilterPanel({
         </div>
       </fieldset>
 
+      {showPrices ? (
       <fieldset>
         <legend className="inline-flex items-center gap-2 font-display text-sm font-bold text-black">
           <Tag className="h-4 w-4 text-umx-orange" strokeWidth={2.2} aria-hidden />
@@ -476,6 +482,13 @@ function FilterPanel({
           ))}
         </div>
       </fieldset>
+      ) : (
+        <p className="font-body text-sm leading-relaxed text-black/55">
+          Retail list prices are not shown. Wholesale and distributor accounts
+          see contracted rates after approval. Brand sets pricing in Admin →
+          Catalog.
+        </p>
+      )}
 
       <label
         className={`flex cursor-pointer items-center gap-3 px-3 py-3 ring-1 transition ${
@@ -513,6 +526,7 @@ function ShopAside({
   total: number;
   favoritesCount: number;
 }) {
+  const showPrices = useShowStorePrices();
   return (
     <aside className="hidden space-y-4 xl:block">
       <div className="sticky top-28 space-y-4">
@@ -536,7 +550,7 @@ function ShopAside({
               Subtotal
             </p>
             <p className="mt-1 font-display text-3xl font-extrabold tracking-tight text-black">
-              ${total.toFixed(2)}
+              {showPrices ? `$${total.toFixed(2)}` : "On request"}
             </p>
             <p className="mt-2 font-body text-sm text-black/55">
               {quantity === 0
@@ -632,6 +646,7 @@ function ShopAside({
 export default function ShopCatalog() {
   const { quantity, total } = useCart();
   const { data: session, status: authStatus } = useSession();
+  const showPrices = useShowStorePrices();
   const compactChrome = useCompactMobileStoreChrome();
   const [query, setQuery] = useState("");
   const [profiles, setProfiles] = useState<FlavorProfile[]>([]);
@@ -706,7 +721,8 @@ export default function ShopCatalog() {
       const profileOk =
         profiles.length === 0 || profiles.includes(flavor.profile);
       const priceOk =
-        flavor.price >= activePrice.min && flavor.price <= activePrice.max;
+        !showPrices ||
+        (flavor.price >= activePrice.min && flavor.price <= activePrice.max);
       const finishOk =
         finish === "all" ||
         (finish === "iced" ? isIced(flavor) : !isIced(flavor));
@@ -726,10 +742,12 @@ export default function ShopCatalog() {
       );
     }
     if (sort === "name-asc") next.sort((a, b) => a.name.localeCompare(b.name));
-    if (sort === "price-asc") next.sort((a, b) => a.price - b.price);
-    if (sort === "price-desc") next.sort((a, b) => b.price - a.price);
+    if (showPrices && sort === "price-asc")
+      next.sort((a, b) => a.price - b.price);
+    if (showPrices && sort === "price-desc")
+      next.sort((a, b) => b.price - a.price);
     return next;
-  }, [query, profiles, activePrice, finish, favoritesOnly, favorites, sort]);
+  }, [query, profiles, activePrice, finish, favoritesOnly, favorites, sort, showPrices]);
 
   const activeFilterCount =
     profiles.length +
@@ -826,7 +844,9 @@ export default function ShopCatalog() {
                 className="bg-transparent font-display text-sm font-semibold text-black outline-none"
                 aria-label="Sort products"
               >
-                {sortOptions.map((option) => (
+                {sortOptions
+                  .filter((option) => showPrices || !option.id.startsWith("price"))
+                  .map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
@@ -1004,7 +1024,8 @@ export default function ShopCatalog() {
           <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-4">
             <div>
               <p className="font-display text-sm font-semibold text-black">
-                {quantity} {quantity === 1 ? "item" : "items"} · ${total.toFixed(2)}
+                {quantity} {quantity === 1 ? "item" : "items"}
+                {showPrices ? ` · $${total.toFixed(2)}` : ""}
               </p>
             </div>
             <Link

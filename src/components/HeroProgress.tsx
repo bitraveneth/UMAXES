@@ -3,25 +3,22 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  storeTopPadClass,
-  useCompactMobileStoreChrome,
-} from "@/hooks/useStoreChrome";
 import { heroImages } from "@/lib/assets";
 
 const DURATION = 5500;
 
+/** Slide 1 = client-requested “Luxury in Every Draw” still (hero/02). */
 const slides = [
-  {
-    src: heroImages[0],
-    title: "Elevate Every Puff",
-    subtitle: "Rich Hookah Flavors. Modern Vaping Experience.",
-    cta: "Buy now",
-  },
   {
     src: heroImages[1],
     title: "Luxury in Every Draw",
     subtitle: "Crafted for Smooth Flavor & Lasting Satisfaction.",
+    cta: "Buy now",
+  },
+  {
+    src: heroImages[0],
+    title: "Elevate Every Puff",
+    subtitle: "Rich Hookah Flavors. Modern Vaping Experience.",
     cta: "Buy now",
   },
   {
@@ -90,20 +87,15 @@ export default function HeroProgress() {
   }
 
   const active = slides[index];
-  const compactChrome = useCompactMobileStoreChrome();
 
   return (
     <section
       id="top"
-      className={`bg-umx-cream px-3 pb-4 sm:px-4 sm:pb-5 md:px-5 md:pb-6 ${storeTopPadClass(compactChrome)}`}
-      aria-label="UMAXES hero"
+      className="bg-umx-cream px-3 py-4 sm:px-4 sm:py-5 md:px-5 md:py-6"
+      aria-label="UMAXES banner"
     >
       <div
-        className={`relative mx-auto min-h-[420px] w-full max-w-[1680px] overflow-hidden rounded-[1.5rem] bg-umx-orange-ink shadow-[0_22px_55px_rgba(61,22,5,0.16)] touch-pan-y select-none sm:min-h-[520px] sm:rounded-[2.15rem] md:rounded-[2.5rem] ${
-          compactChrome
-            ? "h-[calc(100svh-3.5rem)] lg:h-[calc(100svh-10.5rem)]"
-            : "h-[calc(100svh-8.75rem)] md:h-[calc(100svh-10.5rem)]"
-        }`}
+        className="relative mx-auto min-h-[420px] h-[min(72svh,36rem)] w-full max-w-[1680px] overflow-hidden rounded-[1.5rem] bg-black shadow-[0_22px_55px_rgba(0,0,0,0.18)] touch-pan-y select-none sm:min-h-[480px] sm:h-[min(70svh,40rem)] sm:rounded-[2.15rem] md:rounded-[2.5rem]"
         aria-roledescription="carousel"
         onPointerEnter={() => setPaused(true)}
         onPointerLeave={() => setPaused(false)}
@@ -129,37 +121,37 @@ export default function HeroProgress() {
                 priority={i === 0}
                 fetchPriority={i === 0 ? "high" : "auto"}
                 quality={70}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
+                sizes="(max-width: 640px) 100vw, 1200px"
                 className="object-cover object-center"
               />
             )}
           </div>
         ))}
 
-        <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-r from-umx-orange-ink/65 via-umx-orange-ink/20 to-transparent max-md:from-umx-orange-ink/60 max-md:via-umx-orange-ink/35" />
+        <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-r from-black/65 via-black/20 to-transparent max-md:from-black/60 max-md:via-black/35" />
 
         <div className="absolute inset-y-0 left-0 z-[3] flex w-full max-w-2xl flex-col justify-end px-5 pb-16 sm:justify-center sm:px-10 sm:pb-0 md:px-14 lg:px-20">
           <h1
             key={active.title}
-            className="max-w-[14ch] font-display text-[clamp(2.1rem,8.5vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.03em] text-umx-cream animate-[hero-copy-in_0.55s_ease-out] sm:max-w-none"
+            className="max-w-[14ch] font-display text-[clamp(2.1rem,8.5vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.03em] text-white animate-[hero-copy-in_0.55s_ease-out] sm:max-w-none"
           >
             {active.title}
           </h1>
           <p
             key={active.subtitle}
-            className="mt-3 max-w-sm font-body text-[0.95rem] leading-snug text-umx-cream/90 sm:mt-4 sm:max-w-md sm:text-xl animate-[hero-copy-in_0.55s_ease-out]"
+            className="mt-3 max-w-sm font-body text-[0.95rem] leading-snug text-white/90 sm:mt-4 sm:max-w-md sm:text-xl animate-[hero-copy-in_0.55s_ease-out]"
           >
             {active.subtitle}
           </p>
           <Link
             href="/shop"
-            className="group mt-6 inline-flex w-fit items-center gap-3 rounded-full bg-umx-cream px-5 py-3 font-display text-sm font-semibold tracking-[0.04em] text-black shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition duration-300 hover:bg-umx-orange hover:text-white hover:shadow-[0_12px_32px_rgba(255,91,4,0.35)] sm:mt-10 sm:gap-3.5 sm:px-8 sm:py-4 sm:text-base"
+            className="group mt-6 inline-flex w-fit items-center gap-3 rounded-full bg-white px-5 py-3 font-display text-sm font-semibold tracking-[0.04em] text-black shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition duration-300 hover:bg-black hover:text-white sm:mt-10 sm:gap-3.5 sm:px-8 sm:py-4 sm:text-base"
             onPointerDown={(e) => e.stopPropagation()}
           >
             <span>{active.cta}</span>
             <span
               aria-hidden
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-umx-cream transition duration-300 group-hover:bg-white group-hover:text-umx-orange sm:h-9 sm:w-9"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white transition duration-300 group-hover:bg-white group-hover:text-black sm:h-9 sm:w-9"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -180,7 +172,7 @@ export default function HeroProgress() {
         <button
           type="button"
           aria-label="Previous slide"
-          className="absolute top-1/2 left-3 z-[4] hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-umx-cream/15 font-display text-xl text-umx-cream backdrop-blur-md transition hover:bg-umx-cream/25 sm:left-5 sm:flex sm:h-11 sm:w-11"
+          className="absolute top-1/2 left-3 z-[4] hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 font-display text-xl text-white backdrop-blur-md transition hover:bg-white/25 sm:left-5 sm:flex sm:h-11 sm:w-11"
           onClick={() => goTo(index - 1)}
           onPointerDown={(e) => e.stopPropagation()}
         >
@@ -189,7 +181,7 @@ export default function HeroProgress() {
         <button
           type="button"
           aria-label="Next slide"
-          className="absolute top-1/2 right-3 z-[4] hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-umx-cream/15 font-display text-xl text-umx-cream backdrop-blur-md transition hover:bg-umx-cream/25 sm:right-5 sm:flex sm:h-11 sm:w-11"
+          className="absolute top-1/2 right-3 z-[4] hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 font-display text-xl text-white backdrop-blur-md transition hover:bg-white/25 sm:right-5 sm:flex sm:h-11 sm:w-11"
           onClick={() => goTo(index + 1)}
           onPointerDown={(e) => e.stopPropagation()}
         >
@@ -211,8 +203,8 @@ export default function HeroProgress() {
               aria-label={`Go to slide ${i + 1}`}
               className={`relative h-2 overflow-hidden rounded-full transition-all duration-300 sm:h-2.5 ${
                 i === index
-                  ? "w-9 bg-umx-cream/25 ring-1 ring-umx-cream/40 sm:w-12"
-                  : "w-2 bg-umx-cream/50 hover:scale-110 hover:bg-umx-cream sm:w-2.5"
+                  ? "w-9 bg-white/25 ring-1 ring-white/40 sm:w-12"
+                  : "w-2 bg-white/50 hover:scale-110 hover:bg-white sm:w-2.5"
               }`}
               onClick={(e) => {
                 e.stopPropagation();
@@ -222,14 +214,14 @@ export default function HeroProgress() {
               {i === index && !paused && (
                 <span
                   key={`${index}-run`}
-                  className="absolute inset-y-0 left-0 block rounded-full bg-umx-cream"
+                  className="absolute inset-y-0 left-0 block rounded-full bg-white"
                   style={{
                     animation: `hero-progress ${DURATION}ms linear forwards`,
                   }}
                 />
               )}
               {i === index && paused && (
-                <span className="absolute inset-y-0 left-0 block w-2/5 rounded-full bg-umx-cream" />
+                <span className="absolute inset-y-0 left-0 block w-2/5 rounded-full bg-white" />
               )}
             </button>
           ))}

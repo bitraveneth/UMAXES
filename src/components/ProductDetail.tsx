@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { StorePrice } from "@/components/StorePrice";
 import { QtyStepper } from "@/components/QtyStepper";
 import { useCart } from "@/context/CartContext";
 import {
@@ -64,8 +65,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               {flavor.name}
             </h1>
             <p className="mt-3 font-display text-2xl font-semibold text-black">
-              ${flavor.price}
-              <span className="text-base font-medium text-black/40">.00</span>
+              <StorePrice amount={flavor.price} suffix=".00" />
             </p>
             <p className="mt-4 max-w-md font-body text-base leading-relaxed text-black/70 sm:text-lg">
               {flavor.description}

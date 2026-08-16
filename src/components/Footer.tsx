@@ -2,9 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import FooterSubscribe from "@/components/FooterSubscribe";
 import { logos } from "@/lib/assets";
+import { SITE_CONTACT_EMAIL } from "@/lib/site";
 
 const shopLinks = [
   { href: "/shop", label: "Shop" },
+  { href: "/maxcore", label: "MaxCore™" },
   { href: "/#news", label: "News" },
   { href: "/#features", label: "Why UMAXES" },
 ] as const;
@@ -65,6 +67,12 @@ export default function Footer() {
                 Adult vape brand behind HOOKAMAX — bold flavor, clean design,
                 and a ritual built for 21+.
               </p>
+              <a
+                href={`mailto:${SITE_CONTACT_EMAIL}`}
+                className="mt-4 inline-block font-display text-sm font-semibold text-white/90 transition hover:text-white"
+              >
+                {SITE_CONTACT_EMAIL}
+              </a>
               <div className="mt-6 max-w-[22rem] border-t border-white/15 pt-5">
                 <p className="font-display text-sm font-semibold tracking-[0.08em] text-white">
                   © {year} UMAXES
@@ -105,9 +113,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-black/20 bg-black px-5 py-8 sm:px-8 sm:py-10">
-          <p className="mx-auto max-w-[1200px] font-body text-base leading-relaxed text-white sm:text-lg sm:leading-relaxed">
-            <span className="font-display text-lg font-bold tracking-wide text-umx-orange sm:text-xl">
+        <div className="border-t border-white/20 bg-umx-cream px-5 py-8 sm:px-8 sm:py-10">
+          <p className="mx-auto max-w-[1200px] font-body text-base leading-relaxed text-black sm:text-lg sm:leading-relaxed">
+            <span className="font-display text-lg font-bold tracking-wide text-black sm:text-xl">
               WARNING:{" "}
             </span>
             This product contains chemicals, including nicotine, which is known
@@ -117,7 +125,7 @@ export default function Footer() {
               href="https://www.p65warnings.ca.gov"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-umx-orange underline decoration-umx-orange/50 underline-offset-4 transition hover:text-white hover:decoration-white"
+              className="font-semibold text-black underline decoration-black/40 underline-offset-4 transition hover:decoration-black"
             >
               p65warnings.ca.gov
             </a>

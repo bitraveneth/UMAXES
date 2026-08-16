@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
+import { StorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
 import { getFlavor, product, type FlavorId } from "@/lib/assets";
 
@@ -145,7 +146,7 @@ export default function FavoritesManager() {
               </Link>
               {price != null ? (
                 <p className="mt-2 font-display text-xl font-bold text-umx-orange">
-                  ${price}
+                  <StorePrice amount={price} />
                 </p>
               ) : (
                 <p className="mt-2 font-body text-sm text-black">{f.sku}</p>

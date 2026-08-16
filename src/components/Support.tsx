@@ -16,7 +16,7 @@ export default function Support() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a
-            href="mailto:support@umaxes.com"
+            href="mailto:info@umaxesvape.com"
             className="rounded-full border border-black bg-black px-6 py-3 font-display text-sm font-semibold text-umx-cream transition hover:border-umx-orange hover:bg-umx-orange hover:text-umx-cream"
           >
             Email support

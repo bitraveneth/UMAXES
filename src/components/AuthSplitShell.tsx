@@ -35,7 +35,7 @@ export default function AuthSplitShell({
         />
       </aside>
 
-      <section className="relative flex min-h-dvh flex-col overflow-hidden bg-[#d94a00]">
+      <section className="relative flex min-h-dvh flex-col overflow-hidden bg-black">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_0%,rgba(255,255,255,0.22),transparent_42%),radial-gradient(ellipse_at_10%_100%,rgba(253,246,227,0.18),transparent_48%),linear-gradient(180deg,rgba(61,22,5,0.12)_0%,transparent_28%,rgba(61,22,5,0.18)_100%)]"

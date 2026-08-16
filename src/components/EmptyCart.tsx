@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
+import { StorePrice } from "@/components/StorePrice";
 import { flavors, product } from "@/lib/assets";
 
 const SUGGESTED = flavors.slice(0, 4);
@@ -184,7 +185,7 @@ export function EmptyCart({ compact = false, onShopClick }: EmptyCartProps) {
                     {f.tagline}
                   </span>
                   <span className="mt-1 block font-display text-sm font-bold text-black">
-                    ${f.price}.00
+                    <StorePrice amount={f.price} suffix=".00" />
                   </span>
                 </span>
               </Link>

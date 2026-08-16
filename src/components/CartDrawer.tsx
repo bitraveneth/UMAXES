@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { EmptyCart } from "@/components/EmptyCart";
+import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { QtyStepper } from "@/components/QtyStepper";
 import { useCart } from "@/context/CartContext";
 import { getFlavor, product } from "@/lib/assets";
@@ -11,6 +12,7 @@ import { getFlavor, product } from "@/lib/assets";
 export default function CartDrawer() {
   const { items, quantity, open, setOpen, setQuantity, remove, total } =
     useCart();
+  const showPrices = useShowStorePrices();
 
   useEffect(() => {
     if (!open) return;
@@ -91,7 +93,11 @@ export default function CartDrawer() {
                         {flavor.name}
                       </p>
                       <p className="mt-0.5 font-display text-sm text-black/60">
-                        ${flavor.price}.00 each
+                        {showPrices ? (
+                          <>${flavor.price}.00 each</>
+                        ) : (
+                          "On request"
+                        )}
                       </p>
                       <div className="mt-auto flex items-center justify-between gap-3 pt-3">
                         <QtyStepper
@@ -124,7 +130,7 @@ export default function CartDrawer() {
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-sm text-black/60">Subtotal</span>
               <span className="font-display text-lg font-semibold text-black">
-                ${total}.00
+                <StorePrice amount={total} suffix=".00" />
               </span>
             </div>
             <Link

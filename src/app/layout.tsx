@@ -25,7 +25,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#FF5B04",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${lora.variable} antialiased`}
+      className={`${poppins.variable} ${lora.variable}`}
     >
       <body className="flex min-h-dvh flex-col bg-umx-cream font-body text-black">
         <Providers>{children}</Providers>

@@ -9,6 +9,7 @@ import {
   type CSSProperties,
   type PointerEvent,
 } from "react";
+import { StorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
 import { flavors, type Flavor } from "@/lib/assets";
 
@@ -166,8 +167,7 @@ function FlavorCard({ flavor, index }: { flavor: Flavor; index: number }) {
               </h3>
             </Link>
             <p className="mt-0.5 font-display text-sm font-semibold text-black/70">
-              ${flavor.price}
-              <span className="text-black/35">.00</span>
+              <StorePrice amount={flavor.price} suffix=".00" />
             </p>
           </div>
 
@@ -204,41 +204,21 @@ export default function ProductShowcase() {
       />
       <p
         aria-hidden
-        className="pointer-events-none absolute top-[6%] left-1/2 -translate-x-1/2 font-display text-[clamp(5.5rem,20vw,16rem)] font-extrabold tracking-[-0.06em] text-black/[0.04] uppercase select-none"
+        className="pointer-events-none absolute top-[6%] left-1/2 -translate-x-1/2 font-display text-[clamp(5rem,16vw,12rem)] font-extrabold tracking-[-0.06em] text-black/[0.035] uppercase select-none"
       >
         HOOKAMAX
       </p>
 
       <div className="relative mx-auto max-w-[1200px]">
-        <header className="mx-auto max-w-4xl text-center">
-          <p className="font-display text-xs font-semibold tracking-[0.22em] text-umx-orange uppercase sm:text-sm">
+        <header className="mx-auto max-w-2xl text-center">
+          <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase">
             Shop the collection
           </p>
-
-          <h2 className="mt-5 sm:mt-6">
-            <span className="sr-only">HOOKAMAX</span>
-            <span
-              aria-hidden
-              className="flex flex-wrap items-baseline justify-center gap-x-[0.18em] font-display text-[clamp(3.5rem,12vw,7.5rem)] font-extrabold leading-none tracking-[-0.045em]"
-            >
-              <span className="text-black">HOOKA</span>
-              <span className="relative text-umx-orange">
-                MAX
-                <span className="absolute -bottom-[0.12em] left-0 h-[0.09em] w-full rounded-full bg-umx-orange/35" />
-              </span>
-            </span>
+          <h2 className="mt-4 font-display text-[clamp(2.5rem,6vw,4.25rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black">
+            HOOKA
+            <span className="text-umx-orange">MAX</span>
           </h2>
-
-          <div
-            aria-hidden
-            className="mx-auto mt-6 flex items-center justify-center gap-3 sm:mt-7"
-          >
-            <span className="h-px w-10 bg-black/15 sm:w-14" />
-            <span className="h-1.5 w-1.5 rotate-45 bg-umx-orange" />
-            <span className="h-px w-10 bg-black/15 sm:w-14" />
-          </div>
-
-          <p className="mx-auto mt-5 max-w-2xl font-body text-lg leading-relaxed text-black/70 sm:mt-6 sm:text-xl">
+          <p className="mx-auto mt-5 max-w-xl font-body text-base leading-relaxed text-black/65 sm:text-lg">
             Hookah-inspired profiles. One premium device. Pick the taste that
             fits your mood — then add it to your cart.
           </p>

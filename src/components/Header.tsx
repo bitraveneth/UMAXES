@@ -16,6 +16,7 @@ import { logos } from "@/lib/assets";
 const primaryNav = [
   { href: "/", label: "Home", match: "home" as const },
   { href: "/shop", label: "Products", match: "shop" as const },
+  { href: "/maxcore", label: "MAXCORE", match: "maxcore" as const },
   {
     href: "/support/verify",
     label: "Verify product",
@@ -53,9 +54,9 @@ function CartIcon({ className }: { className?: string }) {
 
 /** Shared nav type — one size for every menu item */
 const NAV_TYPE =
-  "font-display text-[13px] font-semibold leading-none tracking-[0.08em] uppercase";
+  "font-display text-[15px] font-semibold leading-none tracking-[0.08em] uppercase";
 
-const navLinkBase = `inline-flex h-9 items-center whitespace-nowrap rounded-full px-3.5 ${NAV_TYPE} transition-colors duration-200`;
+const navLinkBase = `inline-flex h-11 items-center whitespace-nowrap rounded-full px-4 ${NAV_TYPE} transition-colors duration-200`;
 
 function navLinkClass(active: boolean) {
   return `${navLinkBase} ${
@@ -73,6 +74,8 @@ function isNavActive(
       return pathname === "/" && activeSection !== "news";
     case "shop":
       return pathname === "/shop" || pathname.startsWith("/product");
+    case "maxcore":
+      return pathname.startsWith("/maxcore");
     case "verify":
       return pathname.startsWith("/support/verify");
     case "news":
@@ -257,15 +260,18 @@ export default function Header() {
     setLangOpen(false);
   }
 
+  const pinNav = pathname !== "/";
+
   return (
     <>
       <div
-        className={`fixed inset-x-0 top-0 z-50 ${
+        id="site-menu"
+        className={`${pinNav ? "fixed inset-x-0 top-0" : "sticky top-0"} z-50 ${
           hideMobileHeader ? "hidden lg:block" : ""
         }`}
       >
         <header
-          className={`transition-[background,box-shadow,backdrop-filter] duration-300 ${
+          className={`pt-5 sm:pt-7 transition-[background,box-shadow,backdrop-filter,padding] duration-300 ${
             scrolled || open
               ? "border-b border-umx-cream-deep/70 bg-umx-cream/90 shadow-[0_8px_30px_rgba(61,22,5,0.06)] backdrop-blur-xl"
               : "border-b border-transparent bg-umx-cream/80 backdrop-blur-md"
@@ -274,13 +280,13 @@ export default function Header() {
           <div
             className={`mx-auto flex w-full max-w-[1600px] items-center gap-4 transition-[height] duration-300 sm:gap-6 lg:gap-8 ${
               scrolled
-                ? "h-14 px-4 sm:px-6 lg:px-8 xl:px-10"
-                : "h-16 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8 xl:px-10"
+                ? "h-16 px-4 sm:h-[4.5rem] sm:px-6 lg:px-8 xl:px-10"
+                : "h-[4.75rem] px-4 sm:h-20 sm:px-6 lg:px-8 xl:px-10"
             }`}
           >
             <Link
               href="/"
-              className="relative z-50 -ml-0.5 block h-8 w-[8.5rem] shrink-0 sm:h-9 sm:w-44 lg:h-10 lg:w-48"
+              className="relative z-50 -ml-0.5 block h-10 w-44 shrink-0 sm:h-11 sm:w-52 lg:h-12 lg:w-56"
               onClick={closeMenu}
             >
               <Image
@@ -325,7 +331,7 @@ export default function Header() {
                 aria-label={
                   quantity > 0 ? `Cart, ${quantity} items` : "Cart"
                 }
-                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:text-umx-orange hover:ring-umx-orange"
+                className="relative inline-flex h-12 w-12 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:text-umx-orange hover:ring-umx-orange"
                 onClick={closeMenu}
               >
                 <CartIcon className="h-[1.15rem] w-[1.15rem]" />

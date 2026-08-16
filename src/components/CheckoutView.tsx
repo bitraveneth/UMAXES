@@ -21,6 +21,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { getFlavor, type FlavorId } from "@/lib/assets";
 
 type FormState = {
@@ -212,6 +213,7 @@ function CartSummary({
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
+  const showPrices = useShowStorePrices();
 
   function handleApply() {
     const result = onApplyCoupon(code);
@@ -272,7 +274,9 @@ function CartSummary({
                         {flavor.name}
                       </p>
                       <p className="mt-1 font-body text-sm text-black">
-                        ${flavor.price.toFixed(2)} each
+                        {showPrices
+                          ? `$${flavor.price.toFixed(2)} each`
+                          : "On request"}
                       </p>
                     </div>
                     <button
@@ -311,7 +315,7 @@ function CartSummary({
                       </button>
                     </div>
                     <p className="font-display text-base font-bold text-umx-orange">
-                      ${(flavor.price * line.quantity).toFixed(2)}
+                      <StorePrice amount={flavor.price * line.quantity} />
                     </p>
                   </div>
                 </div>
@@ -409,30 +413,38 @@ function CartSummary({
             <div className="flex justify-between font-body text-sm text-black">
               <span>Subtotal</span>
               <span className="font-display font-semibold text-black">
-                ${total.toFixed(2)}
+                <StorePrice amount={total} />
               </span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between font-body text-sm text-umx-orange">
                 <span>Discount{coupon ? ` (${coupon.code})` : ""}</span>
                 <span className="font-display font-semibold">
-                  −${discount.toFixed(2)}
+                  {showPrices ? `−$${discount.toFixed(2)}` : "On request"}
                 </span>
               </div>
             )}
             <div className="flex justify-between font-body text-sm text-black">
               <span>Shipping</span>
               <span className="font-display font-semibold text-black">
-                {shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}
+                {showPrices
+                  ? shipping === 0
+                    ? "Free"
+                    : `$${shipping.toFixed(2)}`
+                  : "On request"}
               </span>
             </div>
             <div className="flex justify-between font-body text-sm text-black">
               <span>Tax</span>
-              <span className="font-display font-semibold text-black">$0.00</span>
+              <span className="font-display font-semibold text-black">
+                {showPrices ? "$0.00" : "On request"}
+              </span>
             </div>
             <div className="flex justify-between border-t border-black/8 pt-3 font-display text-2xl font-extrabold text-black">
               <span>Total</span>
-              <span className="text-umx-orange">${grandTotal.toFixed(2)}</span>
+              <span className="text-umx-orange">
+                <StorePrice amount={grandTotal} />
+              </span>
             </div>
           </div>
         </div>
@@ -472,6 +484,7 @@ function CartSummary({
 
 export default function CheckoutView() {
   const router = useRouter();
+  const showPrices = useShowStorePrices();
   const { items, quantity, total, clear, setOpen, setQuantity, remove } =
     useCart();
   const [step, setStep] = useState<Step>(1);
@@ -1027,7 +1040,9 @@ export default function CheckoutView() {
                   >
                     {submitting
                       ? "Processing…"
-                      : `Pay | $${grandTotal.toFixed(2)}`}
+                      : showPrices
+                        ? `Pay | $${grandTotal.toFixed(2)}`
+                        : "Place order"}
                   </button>
 
                   <label className="mt-4 flex items-start gap-3">

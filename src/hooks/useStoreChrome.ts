@@ -16,11 +16,11 @@ export function useCompactMobileStoreChrome() {
 /** Page top padding under the fixed store header. */
 export function storeTopPadClass(compact: boolean) {
   return compact
-    ? "pt-3 sm:pt-4 lg:pt-[5.25rem]"
-    : "pt-[4.75rem] sm:pt-[5.25rem]";
+    ? "pt-3 sm:pt-4 lg:pt-[8.25rem]"
+    : "pt-[7.5rem] sm:pt-[8.5rem]";
 }
 
 /** Sticky offset for bars that sit under the fixed store header. */
 export function storeStickyTopClass(compact: boolean) {
-  return compact ? "top-0 lg:top-[5.25rem]" : "top-[4.75rem] sm:top-[5.25rem]";
+  return compact ? "top-0 lg:top-[8.25rem]" : "top-[7.5rem] sm:top-[8.5rem]";
 }

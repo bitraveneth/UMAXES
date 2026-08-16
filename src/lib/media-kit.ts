@@ -18,37 +18,37 @@ export type MediaKitFile = {
 
 export const BRAND_COLORS = [
   {
-    name: "Orange",
+    name: "Black",
     role: "Primary · CTAs & accents",
-    hex: "#FF5B04",
+    hex: "#111111",
     css: "--umx-orange",
   },
   {
     name: "Ivory cream",
     role: "Canvas · backgrounds",
-    hex: "#FDF6E3",
+    hex: "#F7F4EE",
     css: "--umx-cream",
   },
   {
-    name: "Orange deep",
+    name: "Ink",
     role: "Hover / pressed",
-    hex: "#C44503",
+    hex: "#000000",
     css: "--umx-orange-deep",
   },
   {
-    name: "Orange ink",
-    role: "Dark surfaces (logo only)",
-    hex: "#3D1605",
+    name: "Charcoal",
+    role: "Dark surfaces",
+    hex: "#000000",
     css: "--umx-orange-ink",
   },
   {
     name: "Cream bright",
     role: "Cards · light UI",
-    hex: "#FFFEF8",
+    hex: "#FBFBFB",
     css: "--umx-cream-bright",
   },
   {
-    name: "Black",
+    name: "Body black",
     role: "Body text",
     hex: "#000000",
     css: "--umx-black",

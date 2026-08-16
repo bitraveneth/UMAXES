@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
+import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 
 type Address = {
   id: string;
@@ -37,6 +38,7 @@ type CreditInfo = {
 export default function B2BCheckout() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const showPrices = useShowStorePrices();
   const { items, clear, quantity } = useCart();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -403,7 +405,8 @@ export default function B2BCheckout() {
           </div>
           {appliedCoupon && (
             <p className="mt-2 font-body text-sm text-umx-orange">
-              Applied {appliedCoupon} (−${discount.toFixed(2)})
+              Applied {appliedCoupon}
+              {showPrices ? ` (−$${discount.toFixed(2)})` : ""}
             </p>
           )}
           <label className="mt-4 block">
@@ -435,7 +438,7 @@ export default function B2BCheckout() {
                   {l.quantity < l.moq ? ` · MOQ ${l.moq}` : ""}
                 </p>
                 <p className="font-display text-sm">
-                  ${(l.unitPrice * l.quantity).toFixed(2)}
+                  <StorePrice amount={l.unitPrice * l.quantity} />
                 </p>
               </div>
             </li>
@@ -444,15 +447,21 @@ export default function B2BCheckout() {
         <div className="mt-6 space-y-2 border-t border-black/10 pt-4 font-body text-sm">
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+            <span>
+              <StorePrice amount={subtotal} />
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Discount</span>
-            <span>−${discount.toFixed(2)}</span>
+            <span>
+              {showPrices ? `−$${discount.toFixed(2)}` : "On request"}
+            </span>
           </div>
           <div className="flex justify-between font-display text-base font-semibold">
             <span>Total</span>
-            <span>${total.toFixed(2)}</span>
+            <span>
+              <StorePrice amount={total} />
+            </span>
           </div>
         </div>
 
@@ -491,7 +500,7 @@ export default function B2BCheckout() {
           <div className="min-w-0 flex-1">
             <p className="font-body text-xs text-black/55">Total</p>
             <p className="font-display text-lg font-bold tracking-tight text-black">
-              ${total.toFixed(2)}
+              <StorePrice amount={total} />
             </p>
           </div>
           <button

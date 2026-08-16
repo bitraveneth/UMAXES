@@ -220,7 +220,7 @@ body{
   appearance:none;border:0;border-radius:999px;padding:10px 16px;
   font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;color:#111;background:#fff;
 }
-.toolbar .primary{background:#ff5b04;color:#fff}
+.toolbar .primary{background:#111;color:#fff}
 .sheet{
   max-width:880px;margin:28px auto;padding:0;
   background:#fffef8;border:1px solid rgba(0,0,0,.08);
@@ -228,7 +228,7 @@ body{
 }
 .hero{
   padding:28px 36px 24px;
-  background:linear-gradient(135deg,#ff5b04 0%,#c44503 100%);
+  background:linear-gradient(135deg,#111 0%,#000 100%);
   color:#fff;
 }
 .hero-top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
@@ -284,7 +284,7 @@ td{border-bottom:1px solid rgba(0,0,0,.07)}
   font-weight:800;
   letter-spacing:.16em;
   text-transform:uppercase;
-  color:#ff5b04;
+  color:#111;
 }
 .muted{color:#666}
 @media (max-width:720px){
