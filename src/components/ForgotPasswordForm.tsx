@@ -2,14 +2,16 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import AltchaField from "@/components/AltchaField";
 import AuthMessage from "@/components/auth/AuthMessage";
+import AuthMethodPicker from "@/components/auth/AuthMethodPicker";
 import PhoneFields from "@/components/auth/PhoneFields";
 import {
   AUTH_FIELD_CLASS,
+  SUBMIT_BTN_CLASS,
   type AuthMethod,
 } from "@/components/auth/auth-shared";
-import { useSearchParams, useRouter } from "next/navigation";
 
 function getPasswordChecks(pw: string) {
   const lenOk = pw.length >= 6;
@@ -58,35 +60,15 @@ function toE164Local(phone: string, defaultCountryCode = "1"): string | null {
   return `+${cc}${local}`;
 }
 
-function SecurityBlock({
-  title,
-  helper,
-  value,
-  onChange,
-}: {
-  title: string;
-  helper: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="rounded-[1.35rem] border border-white/35 bg-white/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-sm">
-      <p className="font-display text-sm font-semibold text-black">{title}</p>
-      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-        {helper}
-      </p>
-      <div className="mt-3">
-        <AltchaField value={value} onChange={onChange} />
-      </div>
-    </div>
-  );
-}
-
 export default function ForgotPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const method = searchParams.get("method") as AuthMethod | null;
+  const methodFromUrl = searchParams.get("method");
 
+  const [method, setMethod] = useState<AuthMethod>(
+    methodFromUrl === "phone" ? "phone" : "email",
+  );
+  const [email, setEmail] = useState("");
   const [countryCode, setCountryCode] = useState("1");
   const [phone, setPhone] = useState("");
 
@@ -100,11 +82,12 @@ export default function ForgotPasswordForm() {
   const [codeSent, setCodeSent] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendInfo, setSendInfo] = useState<string | null>(null);
+  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const pwChecks = useMemo(
-    () => getPasswordChecks(newPassword),
+    () => (newPassword.length > 0 ? getPasswordChecks(newPassword) : null),
     [newPassword],
   );
 
@@ -113,30 +96,56 @@ export default function ForgotPasswordForm() {
     return toE164Local(phone.trim(), countryCode);
   }, [phone, countryCode]);
 
+  function chooseMethod(next: AuthMethod) {
+    setMethod(next);
+    setCodeSent(false);
+    setOtp("");
+    setNewPassword("");
+    setAltchaSend("");
+    setAltchaReset("");
+    setSendError(null);
+    setSendInfo(null);
+    setDevOtpHint(null);
+    setError(null);
+  }
+
   async function sendCode() {
     setError(null);
     setSendError(null);
     setSendInfo(null);
-    if (!phoneE164) {
-      setSendError("Enter a valid mobile number.");
-      return;
-    }
+    setDevOtpHint(null);
+
     if (!altchaSend) {
       setSendError("Please complete the security check to send the code.");
       return;
     }
 
+    if (method === "email") {
+      if (!email.trim() || !email.includes("@")) {
+        setSendError("Enter a valid email address.");
+        return;
+      }
+    } else if (!phoneE164) {
+      setSendError("Enter a valid mobile number.");
+      return;
+    }
+
     setSendingCode(true);
     try {
-      const res = await fetch("/api/auth/forgot-password/phone/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          countryCode,
-          phone,
-          altcha: altchaSend,
-        }),
-      });
+      const res = await fetch(
+        method === "email"
+          ? "/api/auth/forgot-password/email/send"
+          : "/api/auth/forgot-password/phone/send",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            method === "email"
+              ? { email, altcha: altchaSend }
+              : { countryCode, phone, altcha: altchaSend },
+          ),
+        },
+      );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setSendError(data.error || "Unable to send verification code");
@@ -145,7 +154,13 @@ export default function ForgotPasswordForm() {
       setCodeSent(true);
       setOtp("");
       setAltchaSend("");
-      setSendInfo(data.message || "Verification code sent. Enter it below.");
+      setSendInfo(
+        data.message ||
+          (method === "email"
+            ? "If an account exists for that email, a code will be sent."
+            : "Verification code sent."),
+      );
+      if (data.devCode) setDevOtpHint(String(data.devCode));
     } finally {
       setSendingCode(false);
     }
@@ -155,10 +170,15 @@ export default function ForgotPasswordForm() {
     setError(null);
     setSendError(null);
     if (!codeSent || !otp.trim()) {
-      setError("Enter the SMS verification code.");
+      setError(
+        method === "email"
+          ? "Enter the email verification code."
+          : "Enter the SMS verification code.",
+      );
       return;
     }
-    if (!pwChecks.ok) {
+    const checks = getPasswordChecks(newPassword);
+    if (!checks.ok) {
       setError(
         "Password must be at least 6 characters and include 2 uppercase, 2 lowercase, and 2 digits or symbols.",
       );
@@ -168,7 +188,12 @@ export default function ForgotPasswordForm() {
       setError("Please complete the security check to reset your password.");
       return;
     }
-    if (!phoneE164) {
+    if (method === "email") {
+      if (!email.trim()) {
+        setError("Enter a valid email address.");
+        return;
+      }
+    } else if (!phoneE164) {
       setError("Enter a valid mobile number.");
       return;
     }
@@ -176,17 +201,23 @@ export default function ForgotPasswordForm() {
     setLoading(true);
     try {
       const res = await fetch(
-        "/api/auth/forgot-password/phone/reset",
+        method === "email"
+          ? "/api/auth/forgot-password/email/reset"
+          : "/api/auth/forgot-password/phone/reset",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            countryCode,
-            phone,
-            otp,
-            newPassword,
-            altcha: altchaReset,
-          }),
+          body: JSON.stringify(
+            method === "email"
+              ? { email, otp, newPassword, altcha: altchaReset }
+              : {
+                  countryCode,
+                  phone,
+                  otp,
+                  newPassword,
+                  altcha: altchaReset,
+                },
+          ),
         },
       );
       const data = await res.json().catch(() => ({}));
@@ -195,157 +226,194 @@ export default function ForgotPasswordForm() {
         return;
       }
 
-      router.push("/login?method=phone&reset=1");
+      router.push(`/login?method=${method}&reset=1`);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="w-full space-y-5">
-      {method === "email" ? (
-        <p className="rounded-xl bg-white/40 px-4 py-3 font-body text-xs text-black/55">
-          Password reset is available via phone OTP for now.
+    <div className="w-full space-y-3.5">
+      {!codeSent ? (
+        <>
+          <AuthMethodPicker
+            value={method}
+            onChange={chooseMethod}
+            mode="signin"
+          />
+
+          {method === "email" ? (
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-1.5 block font-display text-sm font-semibold text-black"
+              >
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                className={AUTH_FIELD_CLASS}
+              />
+            </div>
+          ) : (
+            <PhoneFields
+              countryCode={countryCode}
+              phone={phone}
+              onCountryCodeChange={setCountryCode}
+              onPhoneChange={setPhone}
+            />
+          )}
+
+          <AltchaField value={altchaSend} onChange={setAltchaSend} />
+
+          {sendError ? <AuthMessage tone="error">{sendError}</AuthMessage> : null}
+
+          <button
+            type="button"
+            onClick={sendCode}
+            disabled={sendingCode}
+            className={SUBMIT_BTN_CLASS}
+          >
+            {sendingCode
+              ? "Sending…"
+              : method === "email"
+                ? "Send email code"
+                : "Send SMS code"}
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5">
+            <p className="font-body text-sm text-emerald-800">
+              {sendInfo ||
+                (method === "email"
+                  ? "Check your email for the verification code."
+                  : "Code sent. Enter it below to set a new password.")}
+            </p>
+            {devOtpHint ? (
+              <p className="mt-1 font-body text-sm text-emerald-900">
+                Local test code: <strong>{devOtpHint}</strong>
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => {
+                setCodeSent(false);
+                setOtp("");
+                setNewPassword("");
+                setAltchaReset("");
+                setSendInfo(null);
+                setSendError(null);
+                setDevOtpHint(null);
+                setError(null);
+              }}
+              className="mt-1.5 font-display text-xs font-semibold text-umx-orange hover:underline"
+            >
+              {method === "email"
+                ? "Change email / resend"
+                : "Change number / resend"}
+            </button>
+          </div>
+
+          <div>
+            <label
+              htmlFor="otp"
+              className="mb-1.5 block font-display text-sm font-semibold text-black"
+            >
+              Verification code
+            </label>
+            <input
+              id="otp"
+              name="otp"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="6-digit code"
+              className={AUTH_FIELD_CLASS}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="newPassword"
+              className="mb-1.5 block font-display text-sm font-semibold text-black"
+            >
+              New password
+            </label>
+            <input
+              id="newPassword"
+              name="newPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••"
+              className={AUTH_FIELD_CLASS}
+            />
+            {pwChecks ? (
+              <ul className="mt-2 space-y-1 font-body text-sm text-black/50">
+                <li className={pwChecks.lenOk ? "text-emerald-700" : undefined}>
+                  {pwChecks.lenOk ? "✓" : "○"} At least 6 characters
+                </li>
+                <li
+                  className={pwChecks.upperOk ? "text-emerald-700" : undefined}
+                >
+                  {pwChecks.upperOk ? "✓" : "○"} 2 uppercase letters
+                </li>
+                <li
+                  className={pwChecks.lowerOk ? "text-emerald-700" : undefined}
+                >
+                  {pwChecks.lowerOk ? "✓" : "○"} 2 lowercase letters
+                </li>
+                <li
+                  className={pwChecks.otherOk ? "text-emerald-700" : undefined}
+                >
+                  {pwChecks.otherOk ? "✓" : "○"} 2 digits or symbols
+                </li>
+              </ul>
+            ) : null}
+          </div>
+
+          <AltchaField value={altchaReset} onChange={setAltchaReset} />
+
+          {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
+
+          <button
+            type="button"
+            onClick={resetPassword}
+            disabled={loading}
+            className={SUBMIT_BTN_CLASS}
+          >
+            {loading ? "Resetting…" : "Reset password"}
+          </button>
+        </>
+      )}
+
+      <div className="flex items-center gap-3 pt-2">
+        <div className="h-px flex-1 bg-black/10" aria-hidden />
+        <p className="shrink-0 font-body text-xs text-black/40">
+          Remembered your password?
         </p>
-      ) : null}
-
-      <PhoneFields
-        countryCode={countryCode}
-        phone={phone}
-        onCountryCodeChange={setCountryCode}
-        onPhoneChange={setPhone}
-      />
-
-      <SecurityBlock
-        title="Send verification code"
-        helper="Complete the security check, then we will send an SMS code."
-        value={altchaSend}
-        onChange={setAltchaSend}
-      />
-
-      <button
-        type="button"
-        onClick={sendCode}
-        disabled={sendingCode}
-        className="w-full rounded-full bg-umx-orange py-3.5 font-display text-sm font-bold tracking-wide text-white shadow-[0_14px_32px_rgba(255,91,4,0.28)] transition hover:bg-umx-orange-mid disabled:opacity-60"
-      >
-        {sendingCode ? "Sending..." : "Send SMS code"}
-      </button>
-
-      {sendError ? <AuthMessage tone="error">{sendError}</AuthMessage> : null}
-      {sendInfo ? <AuthMessage tone="success">{sendInfo}</AuthMessage> : null}
-
-      <div>
-        <label
-          htmlFor="otp"
-          className="mb-2 block font-display text-sm font-semibold text-black"
-        >
-          SMS verification code
-        </label>
-        <input
-          id="otp"
-          name="otp"
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          required={codeSent}
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
-          placeholder="6-digit code"
-          className={AUTH_FIELD_CLASS}
-        />
+        <div className="h-px flex-1 bg-black/10" aria-hidden />
       </div>
-
-      <div>
-        <label
-          htmlFor="newPassword"
-          className="mb-2 block font-display text-sm font-semibold text-black"
-        >
-          New password
-        </label>
-        <input
-          id="newPassword"
-          name="newPassword"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={6}
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          placeholder="At least 6 characters"
-          className={AUTH_FIELD_CLASS}
-        />
-
-        <div className="mt-3 space-y-2 rounded-[1.15rem] border border-white/25 bg-white/35 px-4 py-3 backdrop-blur-sm">
-          <p className="font-display text-xs font-semibold text-black/50">
-            Password must contain:
-          </p>
-
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span
-              className={pwChecks.lenOk ? "text-emerald-800" : "text-black/40"}
-            >
-              {pwChecks.lenOk ? "[x]" : "[ ]"} At least 6 characters
-            </span>
-            <span className="text-black/35">
-              {newPassword.length}/6
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span
-              className={pwChecks.upperOk ? "text-emerald-800" : "text-black/40"}
-            >
-              {pwChecks.upperOk ? "[x]" : "[ ]"} 2 uppercase letters
-            </span>
-            <span className="text-black/35">{pwChecks.upper}/2</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span
-              className={pwChecks.lowerOk ? "text-emerald-800" : "text-black/40"}
-            >
-              {pwChecks.lowerOk ? "[x]" : "[ ]"} 2 lowercase letters
-            </span>
-            <span className="text-black/35">{pwChecks.lower}/2</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 text-xs">
-            <span
-              className={pwChecks.otherOk ? "text-emerald-800" : "text-black/40"}
-            >
-              {pwChecks.otherOk ? "[x]" : "[ ]"} 2 digits or symbols
-            </span>
-            <span className="text-black/35">{pwChecks.other}/2</span>
-          </div>
-        </div>
-      </div>
-
-      <SecurityBlock
-        title="Reset password"
-        helper="Complete the security check, then submit your new password."
-        value={altchaReset}
-        onChange={setAltchaReset}
-      />
-
-      {error ? <AuthMessage tone="error">{error}</AuthMessage> : null}
-
-      <button
-        type="button"
-        onClick={resetPassword}
-        disabled={loading}
-        className="w-full rounded-full bg-umx-orange py-3.5 font-display text-sm font-bold tracking-wide text-white shadow-[0_14px_32px_rgba(255,91,4,0.28)] transition hover:bg-umx-orange-mid disabled:opacity-60"
+      <Link
+        href={`/login?method=${method}`}
+        className="mt-1 inline-flex w-full items-center justify-center rounded-xl border border-black/12 bg-white px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:bg-umx-orange hover:text-white"
       >
-        {loading ? "Resetting..." : "Reset password"}
-      </button>
-
-      <p className="text-center font-body text-sm text-black/60">
-        Remembered your password?{" "}
-        <Link
-          href="/login"
-          className="font-semibold text-umx-orange underline-offset-2 hover:underline"
-        >
-          Sign in
-        </Link>
-      </p>
+        Sign in
+      </Link>
     </div>
   );
 }
-

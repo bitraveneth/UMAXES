@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Adult / compliance palette — black + cream (no youth-facing orange) */
+  /* Public storefront — black + cream (compliance; no youth-facing orange) */
   --umx-orange: #111111;
   --umx-cream: #f7f4ee;
   --umx-orange-deep: #000000;
@@ -16,6 +16,26 @@
 
   --background: var(--umx-cream);
   --foreground: var(--umx-black);
+}
+
+/*
+ * Buyer account + auth (login/register) keep classic UMAXES orange.
+ * Admin uses its own --admin-brand-* tokens in admin.css.
+ */
+.umx-account-theme,
+.umx-brand-orange {
+  --umx-orange: #ff5b04;
+  --umx-orange-deep: #c44503;
+  --umx-orange-ink: #3d1605;
+  --umx-orange-mid: #e04f03;
+  --umx-orange-soft: #ffb888;
+  --umx-orange-wash: #ffe8d6;
+  --color-umx-orange: #ff5b04;
+  --color-umx-orange-deep: #c44503;
+  --color-umx-orange-ink: #3d1605;
+  --color-umx-orange-mid: #e04f03;
+  --color-umx-orange-soft: #ffb888;
+  --color-umx-orange-wash: #ffe8d6;
 }
 
 @theme inline {
@@ -36,14 +56,23 @@
   --font-body: var(--font-lora);
 }
 
-/* Same black/cream — hover darkens; no underline (nav and text links). */
+/* Public storefront: remapped black hover (no orange on marketing pages). */
 @media (hover: hover) {
-  [class*="hover:text-umx-orange"]:hover {
+  [class*="hover:text-umx-orange"]:hover:not([class*="hover:text-umx-orange-"]) {
     color: #000;
   }
 
-  [class*="hover:bg-umx-orange"]:hover,
-  [class*="hover:bg-umx-orange-deep"]:hover,
+  /* Exact solid orange only — do NOT match -wash / -deep / -mid / opacity */
+  [class*="hover:bg-umx-orange"]:hover:not([class*="hover:bg-umx-orange-"]):not([class*="hover:bg-umx-orange/"]) {
+    background-color: #000;
+    box-shadow: inset 0 0 0 999px rgb(255 255 255 / 0.18);
+  }
+
+  [class*="hover:bg-umx-orange-deep"]:hover {
+    background-color: #000;
+    box-shadow: inset 0 0 0 999px rgb(255 255 255 / 0.18);
+  }
+
   [class*="hover:bg-umx-orange-mid"]:hover {
     background-color: #000;
     box-shadow: inset 0 0 0 999px rgb(255 255 255 / 0.18);
@@ -54,7 +83,7 @@
     box-shadow: none;
   }
 
-  [class*="hover:border-umx-orange"]:hover {
+  [class*="hover:border-umx-orange"]:hover:not([class*="hover:border-umx-orange/"]) {
     border-color: #000;
     box-shadow: inset 0 0 0 1px #000;
   }
@@ -66,8 +95,137 @@
   }
 }
 
-.group:hover [class*="group-hover:text-umx-orange"] {
+.group:hover [class*="group-hover:text-umx-orange"]:not([class*="group-hover:text-umx-orange-"]) {
   color: #000;
+}
+
+/*
+ * Account + auth: real orange fills/text (variables alone can still resolve
+ * to public black depending on Tailwind theme wiring).
+ */
+.umx-account-theme .text-umx-orange,
+.umx-brand-orange .text-umx-orange {
+  color: #ff5b04;
+}
+.umx-account-theme .bg-umx-orange,
+.umx-brand-orange .bg-umx-orange {
+  background-color: #ff5b04;
+}
+.umx-account-theme .bg-umx-orange-deep,
+.umx-brand-orange .bg-umx-orange-deep {
+  background-color: #c44503;
+}
+.umx-account-theme .bg-umx-orange-ink,
+.umx-brand-orange .bg-umx-orange-ink {
+  background-color: #3d1605;
+}
+.umx-account-theme .bg-umx-orange-wash,
+.umx-brand-orange .bg-umx-orange-wash {
+  background-color: #ffe8d6;
+}
+.umx-account-theme .text-umx-orange-ink,
+.umx-brand-orange .text-umx-orange-ink {
+  color: #3d1605;
+}
+.umx-account-theme .text-umx-orange-deep,
+.umx-brand-orange .text-umx-orange-deep {
+  color: #c44503;
+}
+.umx-account-theme .border-umx-orange,
+.umx-brand-orange .border-umx-orange {
+  border-color: #ff5b04;
+}
+.umx-account-theme .ring-umx-orange,
+.umx-brand-orange .ring-umx-orange {
+  --tw-ring-color: #ff5b04;
+}
+
+@media (hover: hover) {
+  .umx-account-theme [class*="hover:text-umx-orange"]:hover:not([class*="hover:text-umx-orange-"]),
+  .umx-brand-orange [class*="hover:text-umx-orange"]:hover:not([class*="hover:text-umx-orange-"]) {
+    color: #ff5b04;
+  }
+
+  .umx-account-theme [class*="hover:text-umx-orange-deep"]:hover,
+  .umx-brand-orange [class*="hover:text-umx-orange-deep"]:hover {
+    color: #c44503;
+  }
+
+  .umx-account-theme [class*="hover:text-white"]:hover,
+  .umx-brand-orange [class*="hover:text-white"]:hover {
+    color: #fff;
+  }
+
+  .umx-account-theme
+    [class*="hover:bg-umx-orange"]:hover:not([class*="hover:bg-umx-orange-"]):not(
+      [class*="hover:bg-umx-orange/"]
+    ),
+  .umx-brand-orange
+    [class*="hover:bg-umx-orange"]:hover:not([class*="hover:bg-umx-orange-"]):not(
+      [class*="hover:bg-umx-orange/"]
+    ) {
+    background-color: #ff5b04;
+    box-shadow: none;
+  }
+
+  .umx-account-theme [class*="hover:bg-umx-orange-wash"]:hover,
+  .umx-brand-orange [class*="hover:bg-umx-orange-wash"]:hover {
+    background-color: #ffe8d6;
+    box-shadow: none;
+  }
+
+  .umx-account-theme [class*="hover:bg-umx-orange-deep"]:hover,
+  .umx-brand-orange [class*="hover:bg-umx-orange-deep"]:hover {
+    background-color: #c44503;
+    box-shadow: none;
+  }
+
+  .umx-account-theme [class*="hover:bg-umx-orange-mid"]:hover,
+  .umx-brand-orange [class*="hover:bg-umx-orange-mid"]:hover {
+    background-color: #e04f03;
+    box-shadow: none;
+  }
+
+  .umx-account-theme [class*="hover:bg-umx-orange/"]:hover,
+  .umx-brand-orange [class*="hover:bg-umx-orange/"]:hover {
+    background-color: rgb(255 91 4 / 0.1);
+    box-shadow: none;
+  }
+
+  .umx-account-theme [class*="hover:border-umx-orange"]:hover:not([class*="hover:border-umx-orange/"]),
+  .umx-brand-orange [class*="hover:border-umx-orange"]:hover:not([class*="hover:border-umx-orange/"]) {
+    border-color: #ff5b04;
+    box-shadow: none;
+  }
+
+  .umx-account-theme [class*="hover:ring-umx-orange"]:hover,
+  .umx-brand-orange [class*="hover:ring-umx-orange"]:hover {
+    --tw-ring-color: #ff5b04;
+    --tw-ring-opacity: 1;
+    box-shadow: 0 0 0 2px #ff5b04;
+  }
+}
+
+.umx-account-theme .group:hover [class*="group-hover:text-umx-orange"]:not([class*="group-hover:text-umx-orange-"]),
+.umx-brand-orange .group:hover [class*="group-hover:text-umx-orange"]:not([class*="group-hover:text-umx-orange-"]) {
+  color: #ff5b04;
+}
+
+.umx-account-theme .group\/nav:hover [class*="group-hover\/nav:text-white"],
+.umx-brand-orange .group\/nav:hover [class*="group-hover\/nav:text-white"],
+.umx-account-theme .group\/out:hover [class*="group-hover\/out:text-white"],
+.umx-brand-orange .group\/out:hover [class*="group-hover\/out:text-white"] {
+  color: #fff;
+}
+
+.umx-account-theme .group:hover [class*="group-hover:bg-umx-orange"]:not([class*="group-hover:bg-umx-orange-"]),
+.umx-brand-orange .group:hover [class*="group-hover:bg-umx-orange"]:not([class*="group-hover:bg-umx-orange-"]) {
+  background-color: #ff5b04;
+}
+
+.umx-account-theme .group:hover [class*="group-hover:border-umx-orange"],
+.umx-brand-orange .group:hover [class*="group-hover:border-umx-orange"] {
+  border-color: #ff5b04;
 }
 
 html {

@@ -4,15 +4,15 @@ import RegisterForm from "@/components/RegisterForm";
 
 export const metadata = {
   title: "Register · UMAXES",
-  description: "Register for a UMAXES wholesale account.",
+  description: "Create a UMAXES shop account.",
 };
 
 export default function RegisterPage() {
   return (
     <AuthSplitShell
       title="Create account"
-      description="Choose email or phone to register. An admin will review your account before you can order."
-      leftDescription="Register for wholesale HOOKAMAX ordering — adults 21+ only. Approval required before first purchase."
+      description="Sign up with email or phone to start shopping."
+      leftDescription=""
     >
       <Suspense
         fallback={<p className="font-body text-sm text-black/50">Loading…</p>}

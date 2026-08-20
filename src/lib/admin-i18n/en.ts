@@ -525,7 +525,7 @@ const en: AdminMessages = {
   approvals: {
     title: "Approvals",
     description:
-      "Approve companies and assign Distro / Wholesaler / Shop + credit terms.",
+      "Review pending wholesale / distributor applications. Shop (retail) self-signups are auto-approved and do not appear here.",
   },
   warehouse: {
     title: "Warehouse",

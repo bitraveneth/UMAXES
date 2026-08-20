@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { verifyAltchaPayload } from "@/lib/altcha";
+import { verifySignupEmailOtp } from "@/lib/email-otp";
 import {
   checkPhoneVerification,
   isTwilioVerifyConfigured,
@@ -68,6 +69,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: captcha.error }, { status: 400 });
     }
 
+    if (email) {
+      if (!otp) {
+        return NextResponse.json(
+          { error: "Enter the email verification code" },
+          { status: 400 },
+        );
+      }
+      const verified = await verifySignupEmailOtp(email, otp);
+      if (!verified.ok) {
+        return NextResponse.json({ error: verified.error }, { status: 400 });
+      }
+    }
+
     if (phone) {
       if (!isTwilioVerifyConfigured()) {
         return NextResponse.json(
@@ -109,12 +123,16 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(password, 12);
 
+    // Public self-signup is always retail (SHOP) and auto-approved.
+    // Wholesale / distributor accounts are created by admin and may stay PENDING until approved.
     const result = await prisma.$transaction(async (tx) => {
       const company = await tx.company.create({
         data: {
           name,
-          status: "PENDING",
+          status: "APPROVED",
           level: "SHOP",
+          creditLimit: 0,
+          paymentTermsDays: 0,
         },
       });
 
@@ -126,7 +144,7 @@ export async function POST(request: Request) {
           passwordHash,
           role: "CUSTOMER",
           companyRole: "OWNER",
-          status: "PENDING",
+          status: "APPROVED",
           companyId: company.id,
         },
       });
@@ -139,6 +157,8 @@ export async function POST(request: Request) {
           entityId: user.id,
           meta: JSON.stringify({
             companyId: company.id,
+            level: "SHOP",
+            autoApproved: true,
             phoneVerified: Boolean(phone),
           }),
         },
@@ -149,8 +169,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      message:
-        "Registration received. An admin will review your account before you can place orders.",
+      message: "Account created. You can sign in and shop now.",
       ...result,
     });
   } catch (error) {

@@ -15,7 +15,7 @@ export default async function PendingPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 px-4 py-16 sm:px-6">
+      <main className="umx-account-theme flex-1 px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-lg">
           <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase">
             Under review
@@ -25,9 +25,10 @@ export default async function PendingPage() {
           </h1>
           <p className="mt-4 font-body text-black">
             Thanks for registering
-            {session.user.name ? `, ${session.user.name}` : ""}. An administrator
-            will review your company and assign your wholesale level before you
-            can place orders.
+            {session.user.name ? `, ${session.user.name}` : ""}. Shop (retail)
+            accounts are approved automatically. Wholesale and distributor
+            accounts need an administrator to review your company before you can
+            place B2B orders.
           </p>
           <form
             className="mt-10"

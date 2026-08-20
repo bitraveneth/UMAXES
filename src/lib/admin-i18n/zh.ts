@@ -509,7 +509,8 @@ const zh: AdminMessages = {
   },
   approvals: {
     title: "审批管理",
-    description: "审核开户申请，分配 Distro / 批发 / 门店等级及授信账期。",
+    description:
+      "审核批发 / 经销商开户申请。门店（零售）自助注册会自动通过，不会出现在此列表。",
   },
   warehouse: {
     title: "仓储作业",

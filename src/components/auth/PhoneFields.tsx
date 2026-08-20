@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { AUTH_FIELD_CLASS, COUNTRY_CODES } from "./auth-shared";
 
@@ -10,6 +10,8 @@ type PhoneFieldsProps = {
   onCountryCodeChange: (code: string) => void;
   onPhoneChange: (phone: string) => void;
   required?: boolean;
+  /** Optional control on the same row (e.g. Send code) */
+  endAction?: ReactNode;
 };
 
 export default function PhoneFields({
@@ -18,6 +20,7 @@ export default function PhoneFields({
   onCountryCodeChange,
   onPhoneChange,
   required = true,
+  endAction,
 }: PhoneFieldsProps) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -56,12 +59,15 @@ export default function PhoneFields({
     <div>
       <label
         htmlFor="phone"
-        className="mb-2 block font-display text-sm font-semibold text-black"
+        className="mb-1.5 block font-display text-sm font-semibold text-black"
       >
         Mobile phone
       </label>
       <div className="flex gap-2">
-        <div ref={rootRef} className="relative w-[12.5rem] shrink-0">
+        <div
+          ref={rootRef}
+          className="relative w-[7.25rem] shrink-0 sm:w-[8.5rem]"
+        >
           <button
             type="button"
             aria-label="Country code"
@@ -69,9 +75,9 @@ export default function PhoneFields({
             aria-expanded={open}
             aria-controls={listId}
             onClick={() => setOpen((v) => !v)}
-            className="flex w-full items-center justify-between gap-1 rounded-xl border border-black/12 bg-white/90 px-2.5 py-3.5 font-body text-left text-sm text-black outline-none focus:border-umx-orange focus:ring-2 focus:ring-umx-orange/20"
+            className="flex h-full w-full items-center justify-between gap-1 rounded-xl border border-black/10 bg-[#f8f6f2] px-2.5 py-2.5 font-body text-left text-sm text-black outline-none focus:border-umx-orange focus:ring-[3px] focus:ring-umx-orange/15"
           >
-            <span className="truncate">{selected.label}</span>
+            <span className="truncate">+{selected.code}</span>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-black/50 transition ${
                 open ? "rotate-180" : ""
@@ -121,8 +127,10 @@ export default function PhoneFields({
           value={phone}
           onChange={(e) => onPhoneChange(e.target.value)}
           placeholder="555 000 0000"
-          className={AUTH_FIELD_CLASS}
+          className={`min-w-0 flex-1 ${AUTH_FIELD_CLASS}`}
         />
+
+        {endAction}
       </div>
     </div>
   );

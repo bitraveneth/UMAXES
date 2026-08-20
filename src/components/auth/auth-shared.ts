@@ -1,7 +1,7 @@
 export type AuthMethod = "email" | "phone";
 
 export const AUTH_FIELD_CLASS =
-  "w-full rounded-2xl border border-umx-cream-deep bg-umx-cream-bright px-4 py-3.5 font-body text-[0.95rem] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] outline-none transition placeholder:text-black/45 focus:border-umx-orange/70 focus:bg-white focus:ring-4 focus:ring-umx-orange/12";
+  "w-full rounded-xl border border-black/10 bg-[#f8f6f2] px-3.5 py-2.5 font-body text-[0.9375rem] text-black outline-none transition placeholder:text-black/35 focus:border-umx-orange focus:bg-white focus:ring-2 focus:ring-umx-orange/15";
 
 /** Dial codes for register / login / forgot-password phone flows. */
 export const COUNTRY_CODES = [
@@ -63,4 +63,4 @@ export const COUNTRY_CODES = [
 ] as const;
 
 export const SUBMIT_BTN_CLASS =
-  "group relative w-full overflow-hidden rounded-full bg-umx-orange-ink py-4 font-display text-[0.8rem] font-bold tracking-[0.18em] text-white uppercase shadow-[0_18px_40px_rgba(61,22,5,0.28)] transition hover:bg-umx-orange hover:shadow-[0_22px_48px_rgba(255,91,4,0.35)] disabled:opacity-60";
+  "w-full rounded-xl bg-umx-orange py-3 font-display text-sm font-semibold tracking-wide text-white shadow-[0_10px_24px_rgba(255,91,4,0.26)] transition hover:bg-umx-orange-deep disabled:opacity-60";

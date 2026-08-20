@@ -465,6 +465,19 @@ model Notification {
   @@index([type])
 }
 
+/// One-time codes for email signup verification
+model EmailOtp {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
+
 model BrandAsset {
   id          String   @id @default(cuid())
   title       String

@@ -119,14 +119,14 @@ function NavItem({
       className={`group/nav flex items-center gap-3 px-3 py-2.5 font-display text-sm font-semibold transition duration-200 ${
         active
           ? "bg-umx-orange text-white"
-          : "text-black hover:translate-x-0.5 hover:bg-umx-orange-wash hover:text-umx-orange"
+          : "text-black hover:translate-x-0.5 hover:bg-umx-orange hover:text-white"
       }`}
     >
       <Icon
         className={`h-4 w-4 shrink-0 transition duration-200 ${
           active
             ? "text-white"
-            : "text-black group-hover/nav:scale-110 group-hover/nav:text-umx-orange"
+            : "text-black group-hover/nav:scale-110 group-hover/nav:text-white"
         }`}
         strokeWidth={active ? 2.1 : 1.85}
       />
@@ -201,10 +201,10 @@ export default function AccountShell({
             <form action={signOutAction}>
               <button
                 type="submit"
-                className="group/out flex w-full items-center gap-3 px-3 py-2.5 font-display text-sm font-semibold text-black transition duration-200 hover:translate-x-0.5 hover:bg-umx-orange-wash hover:text-umx-orange"
+                className="group/out flex w-full items-center gap-3 px-3 py-2.5 font-display text-sm font-semibold text-black transition duration-200 hover:translate-x-0.5 hover:bg-umx-orange hover:text-white"
               >
                 <LogOut
-                  className="h-4 w-4 transition duration-200 group-hover/out:scale-110 group-hover/out:text-umx-orange"
+                  className="h-4 w-4 transition duration-200 group-hover/out:scale-110 group-hover/out:text-white"
                   strokeWidth={1.85}
                 />
                 {t("nav.signOut")}
@@ -220,7 +220,7 @@ export default function AccountShell({
 
   return (
     <div
-      className={`flex flex-1 flex-col bg-umx-cream pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0 ${storeTopPadClass(compactChrome)}`}
+      className={`umx-account-theme flex flex-1 flex-col bg-umx-cream pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0 ${storeTopPadClass(compactChrome)}`}
     >
       <div
         className={`sticky z-20 flex items-center justify-between border-b border-black/10 bg-umx-cream-bright px-4 py-3 sm:px-6 lg:hidden ${stickyTop}`}

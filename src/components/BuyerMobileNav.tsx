@@ -37,7 +37,9 @@ export default function BuyerMobileNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-black/10 bg-umx-cream/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+      className={`fixed inset-x-0 bottom-0 z-50 border-t border-black/10 bg-umx-cream/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden ${
+        accountActive ? "umx-account-theme" : ""
+      }`}
       aria-label="Primary"
     >
       <div className="mx-auto grid h-14 max-w-lg grid-cols-3">
