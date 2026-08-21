@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import AgeGate from "@/components/AgeGate";
 import BrandFilm from "@/components/BrandFilm";
 import Features from "@/components/Features";
@@ -9,8 +10,14 @@ import HeroProgress from "@/components/HeroProgress";
 import NewsEvents from "@/components/NewsEvents";
 import ProductShowcase from "@/components/ProductShowcase";
 import Testimonials from "@/components/Testimonials";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export default function Home() {
+export default async function Home() {
+  const settings = await getSiteSettings();
+  if (settings.homepageAsLogin) {
+    redirect("/login");
+  }
+
   return (
     <>
       <AgeGate />

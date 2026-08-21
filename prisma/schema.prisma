@@ -520,3 +520,10 @@ model Favorite {
 
   @@unique([userId, productId])
 }
+
+/// Super-admin site flags (key/value)
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

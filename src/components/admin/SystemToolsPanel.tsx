@@ -156,8 +156,8 @@ export default function SystemToolsPanel({
         <div
           className={`rounded-xl border px-4 py-3 text-sm ${
             error
-              ? "border-red-200 bg-red-50 text-red-800"
-              : "border-emerald-200 bg-emerald-50 text-emerald-900"
+              ? "border-[var(--admin-error-500)]/35 bg-[var(--admin-error-50)] text-[var(--admin-error-700)]"
+              : "border-[var(--admin-success-500)]/35 bg-[var(--admin-success-50)] text-[var(--admin-success-700)]"
           }`}
         >
           {error || message}
@@ -166,7 +166,9 @@ export default function SystemToolsPanel({
 
       <AdminCard>
         <div className="flex items-start gap-3">
-          <Database className="mt-0.5 h-5 w-5 text-[var(--admin-brand-500)]" />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
+            <Database className="h-5 w-5" aria-hidden />
+          </span>
           <div className="min-w-0 flex-1">
             <h2 className="admin-section-title mb-1">Database snapshot</h2>
             <p className="text-sm text-[var(--admin-muted)]">
@@ -181,7 +183,9 @@ export default function SystemToolsPanel({
                   <p className="text-[10px] font-semibold tracking-wide text-[var(--admin-muted)] uppercase">
                     {k}
                   </p>
-                  <p className="mt-0.5 font-semibold tabular-nums">{v}</p>
+                  <p className="mt-0.5 font-semibold tabular-nums text-[var(--admin-text)]">
+                    {v}
+                  </p>
                 </div>
               ))}
             </div>
@@ -210,10 +214,12 @@ export default function SystemToolsPanel({
                   name="scope"
                   checked={scope === s.id}
                   onChange={() => setScope(s.id)}
-                  className="mt-1"
+                  className="mt-1 accent-[var(--admin-brand-500)]"
                 />
                 <span>
-                  <span className="block text-sm font-semibold">{s.label}</span>
+                  <span className="block text-sm font-semibold text-[var(--admin-text)]">
+                    {s.label}
+                  </span>
                   <span className="block text-xs text-[var(--admin-muted)]">
                     {s.hint}
                   </span>
@@ -286,27 +292,27 @@ export default function SystemToolsPanel({
 
       <AdminCard>
         <div className="flex items-center gap-2">
-          <Trash2 className="h-4 w-4 text-red-500" />
+          <Trash2 className="h-4 w-4 text-[var(--admin-error-500)]" />
           <h2 className="admin-section-title mb-0">Reset database</h2>
         </div>
-        <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <div className="mt-2 flex items-start gap-2 rounded-lg border border-[var(--admin-warning-500)]/35 bg-[var(--admin-warning-50)] px-3 py-2 text-sm text-[var(--admin-warning-700)]">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--admin-warning-500)]" />
           <p>
             Destructive. Download a backup first. Catalog / product images are
             kept unless you use a full import that replaces catalog.
           </p>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-red-400">
+          <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-[var(--admin-error-500)] has-[:checked]:bg-[var(--admin-error-50)]">
             <input
               type="radio"
               name="resetMode"
               checked={resetMode === "ops"}
               onChange={() => setResetMode("ops")}
-              className="mt-1"
+              className="mt-1 accent-[var(--admin-error-500)]"
             />
             <span>
-              <span className="block text-sm font-semibold">
+              <span className="block text-sm font-semibold text-[var(--admin-text)]">
                 Reset ops only
               </span>
               <span className="block text-xs text-[var(--admin-muted)]">
@@ -315,16 +321,16 @@ export default function SystemToolsPanel({
               </span>
             </span>
           </label>
-          <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-red-400">
+          <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-[var(--admin-error-500)] has-[:checked]:bg-[var(--admin-error-50)]">
             <input
               type="radio"
               name="resetMode"
               checked={resetMode === "accounts"}
               onChange={() => setResetMode("accounts")}
-              className="mt-1"
+              className="mt-1 accent-[var(--admin-error-500)]"
             />
             <span>
-              <span className="block text-sm font-semibold">
+              <span className="block text-sm font-semibold text-[var(--admin-text)]">
                 Reset ops + customers
               </span>
               <span className="block text-xs text-[var(--admin-muted)]">

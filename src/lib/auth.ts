@@ -82,6 +82,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null;
           }
 
+          const { getSiteSettings, isStaffRole } = await import(
+            "@/lib/site-settings"
+          );
+          const settings = await getSiteSettings();
+          if (!settings.publicSignInEnabled && !isStaffRole(user.role)) {
+            return null;
+          }
+
           const valid = await bcrypt.compare(password, user.passwordHash);
           if (!valid) return null;
 

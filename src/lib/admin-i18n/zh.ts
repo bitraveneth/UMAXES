@@ -741,11 +741,11 @@ const zh: AdminMessages = {
   },
   staff: {
     title: "员工账号",
-    description: "创建与查看内部运营账号。",
+    description: "创建、编辑与删除内部运营账号。",
   },
   system: {
     title: "系统工具",
-    description: "仅超级管理员：数据库备份、导入与重置 — 无需登录服务器。",
+    description: "仅超级管理员：站点访问开关、数据库备份、导入与重置。",
   },
   activity: {
     title: "操作记录",

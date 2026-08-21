@@ -1622,6 +1622,131 @@ export async function createStaffUser(input: {
   revalidatePath("/admin/staff");
 }
 
+const STAFF_EDITABLE_ROLES: UserRole[] = [
+  "ADMIN",
+  "SALES",
+  "WAREHOUSE",
+  "LOGISTICS",
+];
+
+export async function updateStaffUser(input: {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: "APPROVED" | "DISABLED";
+  password?: string;
+}) {
+  const session = await requireRoles(["SUPER_ADMIN"]);
+  const target = await prisma.user.findUnique({ where: { id: input.id } });
+  if (!target) throw new Error("Staff user not found");
+  if (target.role === "SUPER_ADMIN") {
+    throw new Error("Super admin accounts cannot be edited here");
+  }
+  if (!STAFF_EDITABLE_ROLES.includes(input.role)) {
+    throw new Error("Invalid role");
+  }
+
+  const email = input.email.trim().toLowerCase();
+  const data: {
+    name: string;
+    email: string;
+    role: UserRole;
+    status: "APPROVED" | "DISABLED";
+    passwordHash?: string;
+  } = {
+    name: input.name.trim(),
+    email,
+    role: input.role,
+    status: input.status,
+  };
+
+  const nextPassword = input.password?.trim();
+  if (nextPassword) {
+    if (nextPassword.length < 8) {
+      throw new Error("Password must be at least 8 characters");
+    }
+    const bcrypt = await import("bcryptjs");
+    data.passwordHash = await bcrypt.hash(nextPassword, 12);
+  }
+
+  await prisma.user.update({
+    where: { id: input.id },
+    data,
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "STAFF_UPDATED",
+      entity: "User",
+      entityId: input.id,
+      meta: JSON.stringify({
+        email,
+        role: input.role,
+        status: input.status,
+        passwordChanged: Boolean(nextPassword),
+      }),
+    },
+  });
+  revalidatePath("/admin/staff");
+}
+
+export async function deleteStaffUser(id: string) {
+  const session = await requireRoles(["SUPER_ADMIN"]);
+  if (session.user.id === id) {
+    throw new Error("You cannot delete your own account");
+  }
+
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new Error("Staff user not found");
+  if (target.role === "SUPER_ADMIN") {
+    throw new Error("Super admin accounts cannot be deleted");
+  }
+  if (
+    !STAFF_EDITABLE_ROLES.includes(target.role) &&
+    target.role !== "CUSTOMER"
+  ) {
+    throw new Error("Not a staff account");
+  }
+
+  try {
+    await prisma.user.delete({ where: { id } });
+  } catch {
+    // Orders / RMA may still reference this user — disable instead
+    await prisma.user.update({
+      where: { id },
+      data: { status: "DISABLED" },
+    });
+    await prisma.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "STAFF_DISABLED",
+        entity: "User",
+        entityId: id,
+        meta: JSON.stringify({
+          email: target.email,
+          reason: "Linked records — disabled instead of deleted",
+        }),
+      },
+    });
+    revalidatePath("/admin/staff");
+    return { disabled: true as const };
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "STAFF_DELETED",
+      entity: "User",
+      entityId: id,
+      meta: JSON.stringify({ email: target.email, role: target.role }),
+    },
+  });
+  revalidatePath("/admin/staff");
+  return { deleted: true as const };
+}
+
 export async function setProductVisibility(
   productId: string,
   levels: CustomerLevel[],

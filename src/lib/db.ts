@@ -7,7 +7,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /** Bump when models are added so HMR does not keep a stale PrismaClient. */
-const PRISMA_SCHEMA_VERSION = 11;
+const PRISMA_SCHEMA_VERSION = 12;
 
 function withVerifyFullSsl(connectionString: string) {
   try {

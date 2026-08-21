@@ -763,12 +763,12 @@ const en: AdminMessages = {
   },
   staff: {
     title: "Staff accounts",
-    description: "Create and review internal ops users.",
+    description: "Create, edit, and remove internal ops users.",
   },
   system: {
     title: "System tools",
     description:
-      "Super-admin only: database backup, import, and reset — no server SSH required.",
+      "Super-admin only: site access toggles, database backup, import, and reset.",
   },
   activity: {
     title: "Activity",

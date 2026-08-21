@@ -130,6 +130,13 @@ const ACTION_META: Record<
     tone: "neutral",
   },
   STAFF_UPSERT: { label: "Staff account saved", category: "system", tone: "brand" },
+  STAFF_UPDATED: { label: "Staff account updated", category: "system", tone: "neutral" },
+  STAFF_DELETED: { label: "Staff account deleted", category: "system", tone: "error" },
+  STAFF_DISABLED: {
+    label: "Staff account disabled",
+    category: "system",
+    tone: "warning",
+  },
   STAFF_PROFILE_UPDATED: {
     label: "Staff profile updated",
     category: "system",
@@ -146,6 +153,11 @@ const ACTION_META: Record<
     tone: "warning",
   },
   SYSTEM_DB_RESET: { label: "Database reset", category: "system", tone: "error" },
+  SITE_ACCESS_UPDATED: {
+    label: "Site homepage mode changed",
+    category: "system",
+    tone: "warning",
+  },
   WAREHOUSE_UPSERT: { label: "Warehouse saved", category: "catalog", tone: "neutral" },
   WAREHOUSE_STOCK: { label: "Warehouse stock updated", category: "catalog", tone: "neutral" },
 };
@@ -195,7 +207,18 @@ export function formatActivityMeta(
     if (m.companyName) parts.push(String(m.companyName));
     if (m.supplierName) parts.push(`Supplier: ${m.supplierName}`);
     if (m.scope) parts.push(`Scope: ${m.scope}`);
-    if (m.mode) parts.push(`Mode: ${m.mode}`);
+    if (action === "SITE_ACCESS_UPDATED" && m.mode) {
+      const label = m.mode === "login" ? "Sign in page" : "Home page";
+      const prev =
+        m.previous === "login"
+          ? "Sign in page"
+          : m.previous === "home"
+            ? "Home page"
+            : null;
+      parts.push(prev ? `${prev} → ${label}` : label);
+    } else if (m.mode) {
+      parts.push(`Mode: ${m.mode}`);
+    }
     if (m.note && typeof m.note === "string") parts.push(m.note);
     if (m.levels && Array.isArray(m.levels)) {
       parts.push(`Levels: ${m.levels.join(", ")}`);

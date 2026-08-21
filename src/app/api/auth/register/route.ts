@@ -11,6 +11,15 @@ import {
 
 export async function POST(request: Request) {
   try {
+    const { getSiteSettings } = await import("@/lib/site-settings");
+    const site = await getSiteSettings();
+    if (!site.publicSignInEnabled) {
+      return NextResponse.json(
+        { error: "Registration is temporarily closed" },
+        { status: 403 },
+      );
+    }
+
     const body = await request.json();
     const name = String(body.name ?? "").trim();
     const email = String(body.email ?? "").trim().toLowerCase();
