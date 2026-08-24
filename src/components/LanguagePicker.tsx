@@ -6,65 +6,37 @@ import {
   SITE_LANGUAGES,
   type SiteLanguageCode,
 } from "@/lib/site-languages";
+import {
+  applyPreferredLangOnLoad,
+  readPreferredSiteLang,
+  resetToEnglish,
+  writePreferredSiteLang,
+} from "@/lib/google-translate-lang";
 
 export { SITE_LANGUAGES, type SiteLanguageCode };
-
-function readGoogTransLang(): string {
-  if (typeof document === "undefined") return "en";
-  const match = document.cookie.match(/(?:^|;\s*)googtrans=\/[^/]+\/([^;]+)/);
-  return match?.[1] || "en";
-}
-
-/** Google stores googtrans on path=/ and sometimes host / .host — clear all. */
-function clearGoogTransCookies() {
-  const host = location.hostname;
-  const expires = "Thu, 01 Jan 1970 00:00:00 GMT";
-  const paths = ["/", location.pathname];
-  const domains = ["", host, `.${host}`];
-
-  for (const path of paths) {
-    document.cookie = `googtrans=; expires=${expires}; path=${path}`;
-    for (const domain of domains) {
-      if (!domain) continue;
-      document.cookie = `googtrans=; expires=${expires}; path=${path}; domain=${domain}`;
-    }
-  }
-}
 
 function applyGoogleLanguage(code: string) {
   const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo");
   if (!combo) return false;
 
-  const target = code === "en" ? "" : code;
-  const hasOption = Array.from(combo.options).some((o) => o.value === target);
-  if (!hasOption && target !== "") return false;
+  const hasOption = Array.from(combo.options).some((o) => o.value === code);
+  if (!hasOption) return false;
 
-  combo.value = target;
+  combo.value = code;
   combo.dispatchEvent(new Event("change", { bubbles: true }));
   return true;
 }
 
-/**
- * English is the site’s source language. Google mutates the DOM in place,
- * so switching “back” via the combo alone often fails — clear cookie + reload.
- */
-function resetToEnglish() {
-  clearGoogTransCookies();
-  const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo");
-  if (combo) {
-    combo.value = "";
-    combo.dispatchEvent(new Event("change", { bubbles: true }));
-  }
-  location.reload();
-}
-
 type LanguagePickerProps = {
-  /** Mount the Google widget here (only one active instance) */
   mountWidget?: boolean;
   onPicked?: () => void;
   className?: string;
 };
 
+/**
+ * Language list for the public site.
+ * Default = English. User chooses any other language themselves.
+ */
 export default function LanguagePicker({
   mountWidget = true,
   onPicked,
@@ -73,25 +45,42 @@ export default function LanguagePicker({
   const [active, setActive] = useState("en");
 
   useEffect(() => {
-    setActive(readGoogTransLang());
+    applyPreferredLangOnLoad();
+    setActive(readPreferredSiteLang());
+
+    // Safari back-forward cache can restore a Chinese page after English was chosen
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      if (readPreferredSiteLang() === "en") {
+        applyPreferredLangOnLoad();
+        setActive("en");
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
   function pick(code: string) {
+    // Always go back to original English page
     if (code === "en") {
       setActive("en");
+      onPicked?.();
       resetToEnglish();
       return;
     }
 
+    writePreferredSiteLang(code);
+    setActive(code);
+
     const ok = applyGoogleLanguage(code);
     if (ok) {
-      setActive(code);
       onPicked?.();
       return;
     }
 
-    // Widget not ready yet — set cookie and reload (reliable fallback)
+    // Widget not ready (common on first open / Safari) — cookie + reload
     document.cookie = `googtrans=/en/${code};path=/`;
+    onPicked?.();
     location.reload();
   }
 
