@@ -7,7 +7,11 @@ import UsersPanel from "@/components/admin/UsersPanel";
 
 export const metadata = { title: "Users · UMAXES Ops" };
 
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ impersonate?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -16,6 +20,14 @@ export default async function UsersPage() {
   ) {
     redirect("/admin");
   }
+
+  const sp = await searchParams;
+  const impersonateError =
+    sp.impersonate === "failed"
+      ? "Could not open that customer account. Try Login as again."
+      : sp.impersonate === "missing"
+        ? "Login link was incomplete. Try Login as again."
+        : null;
 
   const users = await prisma.user.findMany({
     where: { role: "CUSTOMER" },
@@ -33,7 +45,8 @@ export default async function UsersPage() {
       lastLoginCountry: true,
       lastLoginDevice: true,
       lastLoginUserAgent: true,
-      company: { select: { name: true, level: true } },
+      companyId: true,
+      company: { select: { id: true, name: true, level: true } },
     },
   });
 
@@ -44,6 +57,8 @@ export default async function UsersPage() {
         descriptionKey="users.description"
       />
       <UsersPanel
+        canImpersonate={session.user.role === "SUPER_ADMIN"}
+        initialError={impersonateError}
         users={users.map((u) => ({
           id: u.id,
           name: u.name,
@@ -51,6 +66,7 @@ export default async function UsersPage() {
           phone: u.phone,
           role: u.role,
           status: u.status,
+          companyId: u.companyId,
           companyName: u.company?.name ?? null,
           companyLevel: u.company?.level ?? null,
           createdAt: u.createdAt.toISOString(),

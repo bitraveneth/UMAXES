@@ -157,6 +157,21 @@ const ACTION_META: Record<
     category: "system",
     tone: "warning",
   },
+  CUSTOMER_LEVEL_ASSIGNED: {
+    label: "Buyer type assigned",
+    category: "customers",
+    tone: "brand",
+  },
+  IMPERSONATION_STARTED: {
+    label: "Logged in as customer",
+    category: "system",
+    tone: "warning",
+  },
+  IMPERSONATION_ENDED: {
+    label: "Exited customer login",
+    category: "system",
+    tone: "neutral",
+  },
   SYSTEM_BACKUP_EXPORT: {
     label: "Database backup exported",
     category: "system",
@@ -263,6 +278,28 @@ export function formatActivityMeta(
       if (m.name) parts.push(String(m.name));
       if (m.email) parts.push(String(m.email));
       else if (m.phone) parts.push(String(m.phone));
+    }
+    if (
+      action === "CUSTOMER_LEVEL_ASSIGNED" &&
+      (m.level != null || m.previousLevel != null)
+    ) {
+      const from = m.previousLevel != null ? String(m.previousLevel) : "?";
+      const to = m.level != null ? String(m.level) : "?";
+      parts.push(`${from} → ${to}`);
+      if (m.companyName) parts.push(String(m.companyName));
+      if (m.name) parts.push(String(m.name));
+      if (m.email) parts.push(String(m.email));
+    }
+    if (
+      (action === "IMPERSONATION_STARTED" ||
+        action === "IMPERSONATION_ENDED") &&
+      (m.targetName || m.targetEmail || m.email || m.name)
+    ) {
+      if (m.targetName || m.name) parts.push(String(m.targetName || m.name));
+      if (m.targetEmail || m.email)
+        parts.push(String(m.targetEmail || m.email));
+      else if (m.targetPhone || m.phone)
+        parts.push(String(m.targetPhone || m.phone));
     }
     if (
       (action === "CUSTOMER_DELETED" ||

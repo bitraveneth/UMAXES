@@ -765,7 +765,7 @@ const en: AdminMessages = {
   users: {
     title: "Users",
     description:
-      "Customer accounts only — login IP, region, and device. Promote to Staff when needed.",
+      "Customer accounts — assign buyer type (Distributor / Wholesaler / Retail) or promote to staff (Sales, Logistics, …).",
   },
   staff: {
     title: "Staff",

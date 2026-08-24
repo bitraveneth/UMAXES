@@ -1726,6 +1726,103 @@ export async function updateStaffUser(input: {
   revalidatePath("/admin/users");
 }
 
+const BUYER_LEVELS: CustomerLevel[] = ["DISTRO", "WHOLESALER", "SHOP"];
+
+const CREDIT_BY_LEVEL: Record<
+  CustomerLevel,
+  { creditLimit: number; paymentTermsDays: number }
+> = {
+  DISTRO: { creditLimit: 20000, paymentTermsDays: 30 },
+  WHOLESALER: { creditLimit: 8000, paymentTermsDays: 15 },
+  SHOP: { creditLimit: 0, paymentTermsDays: 0 },
+};
+
+/**
+ * From /admin/users: assign buyer type (distro / wholesaler / retail)
+ * or promote to an internal staff role (sales / logistics / …).
+ */
+export async function assignUserAccess(input: {
+  id: string;
+  assignment:
+    | { type: "buyer"; level: CustomerLevel }
+    | { type: "staff"; role: UserRole };
+}) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const target = await prisma.user.findUnique({
+    where: { id: input.id },
+    include: { company: true },
+  });
+  if (!target) throw new Error("User not found");
+  if (target.role !== "CUSTOMER") {
+    throw new Error("Only customer accounts can be assigned here");
+  }
+  assertCanManageUser(session.user.role, target, session.user.id);
+
+  if (input.assignment.type === "staff") {
+    const role = input.assignment.role;
+    if (!STAFF_ASSIGNABLE_ROLES.includes(role) || role === "CUSTOMER") {
+      throw new Error("Invalid staff role");
+    }
+    await setUserRole({ id: input.id, role });
+    return { kind: "staff" as const, role };
+  }
+
+  const level = input.assignment.level;
+  if (!BUYER_LEVELS.includes(level)) {
+    throw new Error("Invalid buyer type");
+  }
+  if (!target.companyId || !target.company) {
+    throw new Error("This user has no company to assign a buyer type");
+  }
+
+  const credit = CREDIT_BY_LEVEL[level];
+  const previousLevel = target.company.level;
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: input.id },
+      data: {
+        status: "APPROVED",
+        role: "CUSTOMER",
+        companyRole: target.companyRole ?? "OWNER",
+      },
+    }),
+    prisma.company.update({
+      where: { id: target.companyId },
+      data: {
+        status: "APPROVED",
+        level,
+        creditLimit: credit.creditLimit,
+        paymentTermsDays: credit.paymentTermsDays,
+      },
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "CUSTOMER_LEVEL_ASSIGNED",
+        entity: "User",
+        entityId: input.id,
+        meta: JSON.stringify({
+          name: target.name,
+          email: target.email,
+          companyName: target.company.name,
+          previousLevel,
+          level,
+          ...credit,
+        }),
+      },
+    }),
+  ]);
+
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/approvals");
+  revalidatePath("/admin/distributors");
+  revalidatePath("/admin/wholesalers");
+  revalidatePath("/admin/retail");
+  revalidatePath("/admin/customers");
+  return { kind: "buyer" as const, level };
+}
+
 /** Promote / change role for any existing user (customer → staff, etc.). */
 export async function setUserRole(input: {
   id: string;
@@ -1889,6 +1986,79 @@ export async function deleteCustomerUser(id: string) {
   });
   revalidatePath("/admin/users");
   return { deleted: true as const };
+}
+
+/** Leave customer view — returns a one-time token for client `signIn`. */
+export async function prepareExitImpersonation() {
+  const session = await auth();
+  const adminId = session?.user?.impersonatedBy;
+  if (!session?.user || !adminId) {
+    throw new Error("Not impersonating");
+  }
+
+  const { createImpersonationToken } = await import("@/lib/impersonation");
+
+  await prisma.auditLog.create({
+    data: {
+      userId: adminId,
+      action: "IMPERSONATION_ENDED",
+      entity: "User",
+      entityId: session.user.id,
+      meta: JSON.stringify({
+        targetName: session.user.name ?? null,
+        targetEmail: session.user.email ?? null,
+      }),
+    },
+  });
+
+  const token = createImpersonationToken({
+    typ: "restore",
+    adminId,
+    targetId: adminId,
+  });
+
+  return { token };
+}
+
+/** Super admin: one-time token to open the site as this customer. */
+export async function prepareImpersonateCustomer(userId: string) {
+  const session = await requireRoles(["SUPER_ADMIN"]);
+  if (session.user.id === userId) {
+    throw new Error("You cannot impersonate yourself");
+  }
+
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target) throw new Error("User not found");
+  if (target.role !== "CUSTOMER") {
+    throw new Error("Only customer accounts can be opened this way");
+  }
+  if (target.status === "DISABLED" || target.status === "REJECTED") {
+    throw new Error("This account is disabled");
+  }
+
+  const { createImpersonationToken } = await import("@/lib/impersonation");
+
+  const token = createImpersonationToken({
+    typ: "start",
+    adminId: session.user.id,
+    targetId: target.id,
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "IMPERSONATION_STARTED",
+      entity: "User",
+      entityId: target.id,
+      meta: JSON.stringify({
+        targetName: target.name,
+        targetEmail: target.email,
+        targetPhone: target.phone,
+      }),
+    },
+  });
+
+  return { token, redirectTo: "/account" as const };
 }
 
 export async function setProductVisibility(

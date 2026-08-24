@@ -16,6 +16,8 @@ declare module "next-auth" {
     companyId: string | null;
     companyLevel: CustomerLevel | null;
     companyRole: CompanyMemberRole | null;
+    /** Super-admin id when this session is an impersonation */
+    impersonatedBy?: string | null;
   }
 
   interface Session {
@@ -28,6 +30,7 @@ declare module "next-auth" {
       companyId: string | null;
       companyLevel: CustomerLevel | null;
       companyRole: CompanyMemberRole | null;
+      impersonatedBy?: string | null;
     };
   }
 }
@@ -39,12 +42,37 @@ declare module "@auth/core/jwt" {
     companyId?: string | null;
     companyLevel?: CustomerLevel | null;
     companyRole?: CompanyMemberRole | null;
+    impersonatedBy?: string | null;
   }
+}
+
+function sessionUserFromDb(user: {
+  id: string;
+  name: string | null;
+  email: string | null;
+  role: UserRole;
+  status: UserStatus;
+  companyId: string | null;
+  companyRole: CompanyMemberRole | null;
+  company: { level: CustomerLevel } | null;
+}, impersonatedBy?: string | null) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    companyId: user.companyId,
+    companyLevel: user.company?.level ?? null,
+    companyRole: user.companyRole,
+    impersonatedBy: impersonatedBy ?? null,
+  };
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
+      id: "credentials",
       name: "credentials",
       credentials: {
         identifier: { label: "Email or phone", type: "text" },
@@ -94,21 +122,65 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (!valid) return null;
 
           const { recordUserLogin } = await import("@/lib/login-meta");
-          // Fire-and-forget so login is not delayed if DB write is slow
           void recordUserLogin(user.id);
 
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            status: user.status,
-            companyId: user.companyId,
-            companyLevel: user.company?.level ?? null,
-            companyRole: user.companyRole,
-          };
+          return sessionUserFromDb(user);
         } catch (err) {
           console.error("[auth.authorize]", err);
+          return null;
+        }
+      },
+    }),
+    Credentials({
+      id: "impersonate",
+      name: "Impersonate",
+      credentials: {
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        try {
+          const { verifyImpersonationToken } = await import(
+            "@/lib/impersonation"
+          );
+          const payload = verifyImpersonationToken(
+            String(credentials?.token ?? ""),
+          );
+          if (!payload) return null;
+
+          const admin = await prisma.user.findUnique({
+            where: { id: payload.adminId },
+            select: { id: true, role: true, status: true },
+          });
+          if (
+            !admin ||
+            admin.role !== "SUPER_ADMIN" ||
+            admin.status === "DISABLED"
+          ) {
+            return null;
+          }
+
+          if (payload.typ === "start") {
+            const target = await prisma.user.findUnique({
+              where: { id: payload.targetId },
+              include: { company: true },
+            });
+            if (!target || target.role !== "CUSTOMER") return null;
+            if (target.status === "DISABLED" || target.status === "REJECTED") {
+              return null;
+            }
+            return sessionUserFromDb(target, admin.id);
+          }
+
+          // restore → back to super admin
+          if (payload.targetId !== payload.adminId) return null;
+          const restored = await prisma.user.findUnique({
+            where: { id: payload.adminId },
+            include: { company: true },
+          });
+          if (!restored || restored.role !== "SUPER_ADMIN") return null;
+          return sessionUserFromDb(restored, null);
+        } catch (err) {
+          console.error("[auth.impersonate]", err);
           return null;
         }
       },
@@ -128,6 +200,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.companyLevel = user.companyLevel;
         token.companyRole = user.companyRole;
         token.sub = user.id;
+        // Must delete (not only null) so restore clears the banner claim
+        if (user.impersonatedBy) {
+          token.impersonatedBy = user.impersonatedBy;
+        } else {
+          delete token.impersonatedBy;
+        }
       }
       return token;
     },
@@ -141,6 +219,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           (token.companyLevel as CustomerLevel | null) ?? null;
         session.user.companyRole =
           (token.companyRole as CompanyMemberRole | null) ?? null;
+        session.user.impersonatedBy = token.impersonatedBy ?? null;
       }
       return session;
     },

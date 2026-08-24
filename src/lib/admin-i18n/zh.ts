@@ -742,7 +742,8 @@ const zh: AdminMessages = {
   },
   users: {
     title: "用户",
-    description: "仅客户账号 — 登录 IP、地区与设备。需要时可提升为员工。",
+    description:
+      "客户账号 — 可分配买家类型（经销商 / 批发商 / 零售）或提升为员工（销售、物流等）。",
   },
   staff: {
     title: "员工",
