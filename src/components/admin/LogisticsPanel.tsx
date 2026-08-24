@@ -140,7 +140,7 @@ export default function LogisticsPanel({
   };
 
   function openOrder(id: string) {
-    router.push(`/admin/logistics/${id}`);
+    router.push(`/admin/logistics/orders/${id}`);
   }
 
   return (

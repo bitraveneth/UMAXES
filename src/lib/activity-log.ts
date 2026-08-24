@@ -129,6 +129,11 @@ const ACTION_META: Record<
     category: "rma",
     tone: "neutral",
   },
+  USER_ROLE_CHANGED: {
+    label: "User role changed",
+    category: "system",
+    tone: "warning",
+  },
   STAFF_UPSERT: { label: "Staff account saved", category: "system", tone: "brand" },
   STAFF_UPDATED: { label: "Staff account updated", category: "system", tone: "neutral" },
   STAFF_DELETED: { label: "Staff account deleted", category: "system", tone: "error" },
@@ -141,6 +146,16 @@ const ACTION_META: Record<
     label: "Staff profile updated",
     category: "system",
     tone: "neutral",
+  },
+  CUSTOMER_DELETED: {
+    label: "Customer account deleted",
+    category: "system",
+    tone: "error",
+  },
+  CUSTOMER_DISABLED: {
+    label: "Customer account disabled",
+    category: "system",
+    tone: "warning",
   },
   SYSTEM_BACKUP_EXPORT: {
     label: "Database backup exported",
@@ -166,7 +181,26 @@ export function activityCategoryFor(action: string): ActivityCategory {
   return ACTION_META[action]?.category || "other";
 }
 
-export function activityLabel(action: string): string {
+export function activityLabel(action: string, meta?: string | null): string {
+  if (action === "USER_ROLE_CHANGED" && meta) {
+    try {
+      const m = JSON.parse(meta) as {
+        previousRole?: string;
+        role?: string;
+      };
+      if (m.previousRole === "CUSTOMER" && m.role && m.role !== "CUSTOMER") {
+        return "Promoted to staff";
+      }
+      if (m.previousRole && m.previousRole !== "CUSTOMER" && m.role === "CUSTOMER") {
+        return "Demoted to customer";
+      }
+      if (m.previousRole && m.role && m.previousRole !== m.role) {
+        return "Staff role changed";
+      }
+    } catch {
+      /* fall through */
+    }
+  }
   return ACTION_META[action]?.label || action.replace(/_/g, " ").toLowerCase();
 }
 
@@ -219,6 +253,29 @@ export function formatActivityMeta(
     } else if (m.mode) {
       parts.push(`Mode: ${m.mode}`);
     }
+    if (
+      action === "USER_ROLE_CHANGED" &&
+      (m.previousRole != null || m.role != null)
+    ) {
+      const from = String(m.previousRole ?? "?");
+      const to = String(m.role ?? "?");
+      parts.push(`${from.replace(/_/g, " ")} → ${to.replace(/_/g, " ")}`);
+      if (m.name) parts.push(String(m.name));
+      if (m.email) parts.push(String(m.email));
+      else if (m.phone) parts.push(String(m.phone));
+    }
+    if (
+      (action === "CUSTOMER_DELETED" ||
+        action === "CUSTOMER_DISABLED" ||
+        action === "STAFF_DELETED" ||
+        action === "STAFF_DISABLED") &&
+      (m.email || m.phone || m.name)
+    ) {
+      if (m.name) parts.push(String(m.name));
+      if (m.email) parts.push(String(m.email));
+      else if (m.phone) parts.push(String(m.phone));
+      if (m.reason) parts.push(String(m.reason));
+    }
     if (m.note && typeof m.note === "string") parts.push(m.note);
     if (m.levels && Array.isArray(m.levels)) {
       parts.push(`Levels: ${m.levels.join(", ")}`);
@@ -251,6 +308,7 @@ export function hrefForActivity(
   entity: string | null,
   entityId: string | null,
   action?: string,
+  meta?: string | null,
 ): string | null {
   if (!entity || !entityId) return null;
   if (entity === "Order") {
@@ -260,7 +318,7 @@ export function hrefForActivity(
       action === "SHIPMENT_PACKING_CREATED" ||
       action === "SHIPMENT_PACKING_UPDATED"
     ) {
-      return `/admin/logistics/${entityId}`;
+      return `/admin/logistics/orders/${entityId}`;
     }
     return `/admin/orders`;
   }
@@ -269,6 +327,18 @@ export function hrefForActivity(
   if (entity === "Rma" || entity === "RMA") return `/admin/rma`;
   if (entity === "Supplier") return `/admin/suppliers`;
   if (entity === "Database") return `/admin/system`;
+  if (entity === "User") {
+    if (action === "CUSTOMER_DELETED" || action === "CUSTOMER_DISABLED") {
+      return "/admin/users";
+    }
+    const m = parseActivityMeta(meta ?? null);
+    if (m.role === "CUSTOMER" || m.previousRole === "CUSTOMER") {
+      // Promote lands on Staff; demote / customer-side changes → Users
+      if (m.role && m.role !== "CUSTOMER") return "/admin/staff";
+      return "/admin/users";
+    }
+    return "/admin/staff";
+  }
   return null;
 }
 
@@ -290,6 +360,9 @@ export function activityTargetLabel(
   const m = parseActivityMeta(meta);
   if (typeof m.orderNumber === "string" && m.orderNumber) return m.orderNumber;
   if (typeof m.companyName === "string" && m.companyName) return m.companyName;
+  if (typeof m.name === "string" && m.name) return m.name;
+  if (typeof m.email === "string" && m.email) return m.email;
+  if (typeof m.phone === "string" && m.phone) return m.phone;
   if (entity && entityId) return `${entity} · ${entityId.slice(0, 8)}…`;
   if (entity) return entity;
   return "—";

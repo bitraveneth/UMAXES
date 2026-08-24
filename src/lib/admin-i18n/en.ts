@@ -46,6 +46,7 @@ const en: AdminMessages = {
     "/admin/rma": "RMA",
     "/admin/commissions": "Commissions",
     "/admin/reports": "Reports",
+    "/admin/users": "Users",
     "/admin/staff": "Staff",
     "/admin/system": "System",
     "/admin/audit": "Audit",
@@ -761,9 +762,15 @@ const en: AdminMessages = {
     description:
       "Place an order on behalf of an approved customer. Retail usually self-orders; use this for phone or assisted sales. Credit available for distributors and wholesalers with terms.",
   },
+  users: {
+    title: "Users",
+    description:
+      "Customer accounts only — login IP, region, and device. Promote to Staff when needed.",
+  },
   staff: {
-    title: "Staff accounts",
-    description: "Create, edit, and remove internal ops users.",
+    title: "Staff",
+    description:
+      "Internal team only — Admin, Sales, Warehouse, Logistics. Separate from customer Users.",
   },
   system: {
     title: "System tools",
@@ -773,7 +780,7 @@ const en: AdminMessages = {
   activity: {
     title: "Activity",
     description:
-      "Operations log — payments marked paid, shipments, order status, credit, and more. See who changed what and when.",
+      "Staff operations log — who changed what and when (orders, payments, shipping, users, credit, and more).",
   },
   audit: {
     title: "Audit log",

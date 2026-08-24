@@ -47,7 +47,8 @@ const zh: AdminMessages = {
     "/admin/rma": "退货 RMA",
     "/admin/commissions": "销售佣金",
     "/admin/reports": "数据报表",
-    "/admin/staff": "员工账号",
+    "/admin/users": "用户",
+    "/admin/staff": "员工",
     "/admin/system": "系统工具",
     "/admin/audit": "操作审计",
     "/admin/profile": "个人资料",
@@ -739,9 +740,13 @@ const zh: AdminMessages = {
     description:
       "为已审核客户代下订单。零售客户以自行下单为主；电话/协助销售可用此功能。分销商与批发商在有账期时可使用授信。",
   },
+  users: {
+    title: "用户",
+    description: "仅客户账号 — 登录 IP、地区与设备。需要时可提升为员工。",
+  },
   staff: {
-    title: "员工账号",
-    description: "创建、编辑与删除内部运营账号。",
+    title: "员工",
+    description: "仅内部团队 — 管理员、销售、仓库、物流。与客户用户分开。",
   },
   system: {
     title: "系统工具",
@@ -750,7 +755,7 @@ const zh: AdminMessages = {
   activity: {
     title: "操作记录",
     description:
-      "运营操作日志 — 标记付款、发货、订单状态、授信等。可查看何人何时做了何种变更。",
+      "员工操作日志 — 何人何时做了何种变更（订单、付款、物流、用户、授信等）。",
   },
   audit: {
     title: "操作审计",

@@ -43,7 +43,7 @@ function hrefFor(order: RecentFulfillmentOrder) {
   ) {
     return `/admin/logistics/shipments/${order.id}`;
   }
-  return `/admin/logistics/${order.id}`;
+  return `/admin/logistics/orders/${order.id}`;
 }
 
 function actionKey(order: RecentFulfillmentOrder) {

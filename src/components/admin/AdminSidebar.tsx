@@ -28,8 +28,8 @@ export function AdminSidebar({
       }
       if (pathname.startsWith("/admin/logistics/shipments")) return false;
       if (pathname.startsWith("/admin/logistics/packing-lists")) return false;
-      // Shipment desk detail: /admin/logistics/[id]
-      return /^\/admin\/logistics\/[^/]+$/.test(pathname);
+      // Order desk detail: /admin/logistics/orders/[id]
+      return pathname.startsWith("/admin/logistics/orders/");
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };

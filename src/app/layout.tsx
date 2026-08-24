@@ -36,6 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${poppins.variable} ${lora.variable}`}
     >
       <body className="flex min-h-dvh flex-col bg-umx-cream font-body text-black">

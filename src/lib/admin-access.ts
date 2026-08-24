@@ -52,8 +52,10 @@ const ADMIN_PATH_RULES: PathRule[] = [
   { href: "/admin/activity", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/learn", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/audit", roles: ["ADMIN", "SUPER_ADMIN"] },
-  /** Staff accounts — super admin (devs) only */
-  { href: "/admin/staff", roles: ["SUPER_ADMIN"] },
+  /** Customer users directory — admin + super admin */
+  { href: "/admin/users", roles: ["SUPER_ADMIN", "ADMIN"] },
+  /** Internal staff accounts — admin + super admin */
+  { href: "/admin/staff", roles: ["SUPER_ADMIN", "ADMIN"] },
   /** DB backup / reset / import — super admin only */
   { href: "/admin/system", roles: ["SUPER_ADMIN"] },
 ];
@@ -62,14 +64,22 @@ export function canAccessAdminPath(role: string, pathname: string): boolean {
   if (!isStaffRole(role)) return false;
   if (pathname === "/admin" || pathname === "/admin/") return true;
 
-  // Super-admin-only tools (even SA early-return below must respect these for ADMIN)
+  // System tools stay super-admin only
   if (
     pathname === "/admin/system" ||
-    pathname.startsWith("/admin/system/") ||
+    pathname.startsWith("/admin/system/")
+  ) {
+    return role === "SUPER_ADMIN";
+  }
+
+  // Users + Staff — admin + super admin
+  if (
+    pathname === "/admin/users" ||
+    pathname.startsWith("/admin/users/") ||
     pathname === "/admin/staff" ||
     pathname.startsWith("/admin/staff/")
   ) {
-    return role === "SUPER_ADMIN";
+    return role === "SUPER_ADMIN" || role === "ADMIN";
   }
 
   if (role === "SUPER_ADMIN") {
@@ -83,7 +93,7 @@ export function canAccessAdminPath(role: string, pathname: string): boolean {
     return true;
   }
 
-  // Regular ADMIN: almost everything except staff / system
+  // Regular ADMIN: almost everything except system / warehouse desk
   if (role === "ADMIN") {
     if (
       pathname.startsWith("/admin/warehouse") ||

@@ -9,7 +9,11 @@ export const metadata = { title: "Staff · UMAXES Ops" };
 
 export default async function StaffPage() {
   const session = await auth();
-  if (!session?.user || !canAccessPath(session.user.role, "/admin/staff")) {
+  if (
+    !session?.user ||
+    !canAccessPath(session.user.role, "/admin/staff") ||
+    (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN")
+  ) {
     redirect("/admin");
   }
 
@@ -22,9 +26,14 @@ export default async function StaffPage() {
       id: true,
       name: true,
       email: true,
+      phone: true,
       role: true,
       status: true,
       createdAt: true,
+      lastLoginAt: true,
+      lastLoginIp: true,
+      lastLoginCountry: true,
+      lastLoginDevice: true,
     },
   });
 
@@ -39,6 +48,7 @@ export default async function StaffPage() {
         staff={staff.map((u) => ({
           ...u,
           createdAt: u.createdAt.toISOString(),
+          lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
         }))}
       />
     </div>

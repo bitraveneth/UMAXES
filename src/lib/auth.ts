@@ -93,6 +93,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const valid = await bcrypt.compare(password, user.passwordHash);
           if (!valid) return null;
 
+          const { recordUserLogin } = await import("@/lib/login-meta");
+          // Fire-and-forget so login is not delayed if DB write is slow
+          void recordUserLogin(user.id);
+
           return {
             id: user.id,
             name: user.name,

@@ -161,7 +161,7 @@ export default function LogisticsWorkspace({
                       key={order.id}
                       className="cursor-pointer"
                       onClick={() =>
-                        router.push(`/admin/logistics/${order.id}`)
+                        router.push(`/admin/logistics/orders/${order.id}`)
                       }
                     >
                       <td>
@@ -216,7 +216,7 @@ export default function LogisticsWorkspace({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/admin/logistics/${order.id}`);
+                            router.push(`/admin/logistics/orders/${order.id}`);
                           }}
                           className="admin-btn admin-btn-primary admin-btn-sm"
                         >

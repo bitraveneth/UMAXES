@@ -9,13 +9,10 @@ import {
   ACTIVITY_FILTERS,
   actionsForCategory,
   activityLabel,
-  activityTargetLabel,
   activityTone,
   formatActivityMeta,
-  hrefForActivity,
   type ActivityCategory,
 } from "@/lib/activity-log";
-import { ArrowUpRight } from "lucide-react";
 
 export const metadata = { title: "Activity · UMAXES Ops" };
 
@@ -104,34 +101,15 @@ export default async function ActivityPage({
       <AdminCard padded={false}>
         {logs.length === 0 ? (
           <p className="px-5 py-12 text-center text-sm text-[var(--admin-muted)]">
-            No activity yet. Payments marked paid, shipments, and status changes
-            show up here.
+            No activity yet. Staff actions like promotions, payments, and
+            shipments will show up here.
           </p>
         ) : (
-          <AdminTable
-            headers={[
-              "When",
-              "Action",
-              "Target",
-              "Details",
-              "Edited by",
-              "",
-            ]}
-          >
+          <AdminTable headers={["When", "Action", "Summary", "By"]}>
             {logs.map((log) => {
-              const detail = formatActivityMeta(log.action, log.meta, {
+              const summary = formatActivityMeta(log.action, log.meta, {
                 canSeeCreditAmounts,
               });
-              const target = activityTargetLabel(
-                log.entity,
-                log.entityId,
-                log.meta,
-              );
-              const href = hrefForActivity(
-                log.entity,
-                log.entityId,
-                log.action,
-              );
               const who = log.user?.name || log.user?.email || "System";
 
               return (
@@ -141,22 +119,12 @@ export default async function ActivityPage({
                   </td>
                   <td>
                     <AdminBadge tone={activityTone(log.action)}>
-                      {activityLabel(log.action)}
+                      {activityLabel(log.action, log.meta)}
                     </AdminBadge>
                   </td>
-                  <td className="max-w-[11rem]">
-                    <p className="truncate font-semibold text-[var(--admin-text)]">
-                      {target}
-                    </p>
-                    {log.entity ? (
-                      <p className="mt-0.5 text-[11px] text-[var(--admin-muted)]">
-                        {log.entity}
-                      </p>
-                    ) : null}
-                  </td>
-                  <td className="max-w-sm">
-                    <p className="line-clamp-2 text-sm text-[var(--admin-gray-700)]">
-                      {detail || "—"}
+                  <td className="max-w-xl">
+                    <p className="line-clamp-2 text-sm text-[var(--admin-text)]">
+                      {summary || "—"}
                     </p>
                   </td>
                   <td className="whitespace-nowrap">
@@ -168,19 +136,6 @@ export default async function ActivityPage({
                         {log.user.role.replace(/_/g, " ")}
                       </p>
                     ) : null}
-                  </td>
-                  <td className="text-right">
-                    {href ? (
-                      <Link
-                        href={href}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--admin-brand-500)] hover:underline"
-                      >
-                        Open
-                        <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2} />
-                      </Link>
-                    ) : (
-                      <span className="text-xs text-[var(--admin-muted)]">—</span>
-                    )}
                   </td>
                 </tr>
               );

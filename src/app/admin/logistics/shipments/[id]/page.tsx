@@ -74,7 +74,7 @@ export default async function ShipmentViewPage({ params }: Params) {
   const shipment = order.shipments[0];
   const hasPacking = Boolean(shipment?.packedAt || shipment?.boxCount);
   if (!hasPacking && order.status !== "SHIPPED" && order.status !== "COMPLETED") {
-    redirect(`/admin/logistics/${order.id}`);
+    redirect(`/admin/logistics/orders/${order.id}`);
   }
 
   return (

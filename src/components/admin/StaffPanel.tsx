@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   createStaffUser,
   deleteStaffUser,
+  setUserRole,
   updateStaffUser,
 } from "@/lib/admin-actions";
 import { AdminBadge, AdminCard, AdminStat } from "@/components/admin/ui";
@@ -17,6 +18,7 @@ import {
   Warehouse,
   Truck,
   Briefcase,
+  ArrowUpCircle,
 } from "lucide-react";
 import type { UserRole, UserStatus } from "@/generated/prisma/enums";
 
@@ -24,9 +26,14 @@ export type StaffRow = {
   id: string;
   name: string | null;
   email: string | null;
+  phone: string | null;
   role: UserRole;
   status: UserStatus;
   createdAt: string;
+  lastLoginAt: string | null;
+  lastLoginIp: string | null;
+  lastLoginCountry: string | null;
+  lastLoginDevice: string | null;
 };
 
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
@@ -55,13 +62,18 @@ function roleLabel(role: UserRole) {
   return ROLE_OPTIONS.find((r) => r.value === role)?.label || role;
 }
 
-function initials(name: string | null, email: string | null) {
-  const src = (name || email || "?").trim();
-  const parts = src.split(/[\s@._-]+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
+function formatWhen(iso: string | null) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
   }
-  return src.slice(0, 2).toUpperCase();
 }
 
 type Props = {
@@ -75,21 +87,38 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<StaffRow | null>(null);
   const [creating, setCreating] = useState(false);
+  const [roleEdit, setRoleEdit] = useState<StaffRow | null>(null);
+  const [nextRole, setNextRole] = useState<UserRole>("SALES");
+  const [query, setQuery] = useState("");
 
   const counts = useMemo(() => {
     const active = staff.filter((s) => s.status === "APPROVED").length;
-    const disabled = staff.filter((s) => s.status === "DISABLED").length;
-    return { total: staff.length, active, disabled };
+    return { total: staff.length, active };
   }, [staff]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return staff;
+    return staff.filter(
+      (u) =>
+        (u.name || "").toLowerCase().includes(q) ||
+        (u.email || "").toLowerCase().includes(q) ||
+        (u.phone || "").toLowerCase().includes(q) ||
+        u.role.toLowerCase().includes(q),
+    );
+  }, [staff, query]);
 
   function flashOk(text: string) {
     setMessage(text);
     setError(null);
   }
-
   function flashErr(e: unknown) {
     setMessage(null);
     setError(e instanceof Error ? e.message : "Something went wrong");
+  }
+
+  function canManage(row: StaffRow) {
+    return row.role !== "SUPER_ADMIN";
   }
 
   function onCreate(fd: FormData) {
@@ -123,7 +152,20 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
           password: password || undefined,
         });
         setEditing(null);
-        flashOk("Staff account updated.");
+        flashOk("Staff updated.");
+      } catch (e) {
+        flashErr(e);
+      }
+    });
+  }
+
+  function onSaveRole() {
+    if (!roleEdit) return;
+    startTransition(async () => {
+      try {
+        await setUserRole({ id: roleEdit.id, role: nextRole });
+        setRoleEdit(null);
+        flashOk(`Role set to ${roleLabel(nextRole)}.`);
       } catch (e) {
         flashErr(e);
       }
@@ -131,26 +173,35 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
   }
 
   function onDelete(row: StaffRow) {
-    if (row.id === currentUserId) {
-      flashErr(new Error("You cannot delete your own account"));
-      return;
-    }
-    if (row.role === "SUPER_ADMIN") {
-      flashErr(new Error("Super admin accounts cannot be deleted"));
-      return;
-    }
-    const ok = window.confirm(
-      `Delete ${row.name || row.email}? This cannot be undone. If the account is linked to orders, it will be disabled instead.`,
-    );
-    if (!ok) return;
+    if (!canManage(row) || row.id === currentUserId) return;
+    if (!window.confirm(`Delete ${row.name || row.email}?`)) return;
     startTransition(async () => {
       try {
         const result = await deleteStaffUser(row.id);
-        if ("disabled" in result && result.disabled) {
-          flashOk("Account has linked records — disabled instead of deleted.");
-        } else {
-          flashOk("Staff account deleted.");
-        }
+        flashOk(
+          "disabled" in result && result.disabled
+            ? "Disabled (linked records)."
+            : "Staff deleted.",
+        );
+      } catch (e) {
+        flashErr(e);
+      }
+    });
+  }
+
+  function onDemote(row: StaffRow) {
+    if (!canManage(row) || row.id === currentUserId) return;
+    if (
+      !window.confirm(
+        `Move ${row.name || row.email} back to Customers? They will lose admin access.`,
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      try {
+        await setUserRole({ id: row.id, role: "CUSTOMER" });
+        flashOk("Moved to Customers.");
       } catch (e) {
         flashErr(e);
       }
@@ -171,23 +222,18 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <AdminStat label="Total staff" value={counts.total} icon={Users} />
-        <AdminStat
-          label="Active"
-          value={counts.active}
-          icon={Shield}
-          trendUp={counts.active > 0}
-        />
-        <AdminStat label="Disabled" value={counts.disabled} icon={Users} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <AdminStat label="Staff accounts" value={counts.total} icon={Users} />
+        <AdminStat label="Active" value={counts.active} icon={Shield} trendUp />
       </div>
 
       <AdminCard padded={false}>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
           <div>
-            <h2 className="admin-section-title mb-0">Team directory</h2>
+            <h2 className="admin-section-title mb-0">Staff team</h2>
             <p className="mt-1 text-sm text-[var(--admin-muted)]">
-              {counts.total} internal ops account{counts.total === 1 ? "" : "s"}
+              Internal ops only (Admin, Sales, Warehouse, Logistics). Customer
+              accounts live under Users.
             </p>
           </div>
           <button
@@ -205,98 +251,180 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
           </button>
         </div>
 
-        {staff.length === 0 ? (
+        <div className="border-b border-[var(--admin-border)] px-5 py-3">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search staff…"
+            className="admin-input w-full sm:max-w-xs"
+          />
+        </div>
+
+        {filtered.length === 0 ? (
           <p className="px-5 py-10 text-sm text-[var(--admin-muted)]">
-            No staff accounts yet. Add your first teammate.
+            No staff accounts yet.
           </p>
         ) : (
-          <ul className="divide-y divide-[var(--admin-border)]">
-            {staff.map((u) => {
-              const Icon = roleIcon(u.role);
-              const locked = u.role === "SUPER_ADMIN";
-              const isYou = u.id === currentUserId;
-              return (
-                <li
-                  key={u.id}
-                  className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--admin-brand-50)] text-sm font-bold text-[var(--admin-brand-500)]">
-                      {initials(u.name, u.email)}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate font-semibold text-[var(--admin-text)]">
+          <div className="overflow-x-auto">
+            <table className="admin-table min-w-[52rem]">
+              <thead>
+                <tr>
+                  <th>Staff</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Last login</th>
+                  <th>IP / Region / Device</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((u) => {
+                  const Icon = roleIcon(u.role);
+                  const locked = !canManage(u);
+                  const isYou = u.id === currentUserId;
+                  return (
+                    <tr key={u.id}>
+                      <td>
+                        <p className="font-semibold text-[var(--admin-text)]">
                           {u.name || "Unnamed"}
+                          {isYou ? (
+                            <span className="ml-2 text-[10px] font-bold text-[var(--admin-brand-500)] uppercase">
+                              You
+                            </span>
+                          ) : null}
                         </p>
-                        {isYou ? (
-                          <AdminBadge tone="brand">You</AdminBadge>
-                        ) : null}
+                        <p className="text-xs text-[var(--admin-muted)]">
+                          {[u.email, u.phone].filter(Boolean).join(" · ") || "—"}
+                        </p>
+                      </td>
+                      <td>
+                        <span className="inline-flex items-center gap-1.5 text-sm font-medium">
+                          <Icon className="h-3.5 w-3.5 text-[var(--admin-brand-500)]" />
+                          {roleLabel(u.role)}
+                        </span>
+                      </td>
+                      <td>
                         <AdminBadge
                           tone={u.status === "APPROVED" ? "success" : "warning"}
                         >
                           {u.status === "APPROVED" ? "Active" : u.status}
                         </AdminBadge>
-                      </div>
-                      <p className="mt-0.5 truncate text-sm text-[var(--admin-muted)]">
-                        {u.email || "—"}
-                      </p>
-                      <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--admin-muted)]">
-                        <Icon className="h-3.5 w-3.5 text-[var(--admin-brand-500)]" />
-                        {roleLabel(u.role)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={pending || locked}
-                      title={
-                        locked
-                          ? "Super admin is managed separately"
-                          : "Edit staff"
-                      }
-                      onClick={() => {
-                        setEditing(u);
-                        setCreating(false);
-                        setError(null);
-                        setMessage(null);
-                      }}
-                      className="admin-btn admin-btn-secondary admin-btn-sm"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      disabled={pending || locked || isYou}
-                      title={
-                        locked
-                          ? "Super admin cannot be deleted"
-                          : isYou
-                            ? "Cannot delete yourself"
-                            : "Delete staff"
-                      }
-                      onClick={() => onDelete(u)}
-                      className="admin-btn admin-btn-sm border border-[var(--admin-error-500)]/30 bg-[var(--admin-error-50)] text-[var(--admin-error-700)] hover:brightness-95"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                      </td>
+                      <td className="whitespace-nowrap text-sm text-[var(--admin-muted)]">
+                        {formatWhen(u.lastLoginAt)}
+                      </td>
+                      <td className="text-xs text-[var(--admin-muted)]">
+                        <p className="font-mono text-[var(--admin-text)]">
+                          {u.lastLoginIp || "—"}
+                        </p>
+                        <p>
+                          {[u.lastLoginCountry, u.lastLoginDevice]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}
+                        </p>
+                      </td>
+                      <td>
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          <button
+                            type="button"
+                            disabled={pending || locked}
+                            onClick={() => {
+                              setRoleEdit(u);
+                              setNextRole(
+                                u.role === "SUPER_ADMIN" ? "SALES" : u.role,
+                              );
+                            }}
+                            className="admin-btn admin-btn-primary admin-btn-sm"
+                          >
+                            <ArrowUpCircle className="h-3.5 w-3.5" />
+                            Role
+                          </button>
+                          <button
+                            type="button"
+                            disabled={pending || locked}
+                            onClick={() => setEditing(u)}
+                            className="admin-btn admin-btn-secondary admin-btn-sm"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={pending || locked || isYou}
+                            onClick={() => onDemote(u)}
+                            className="admin-btn admin-btn-secondary admin-btn-sm"
+                            title="Move to Customers"
+                          >
+                            To users
+                          </button>
+                          <button
+                            type="button"
+                            disabled={pending || locked || isYou}
+                            onClick={() => onDelete(u)}
+                            className="admin-btn admin-btn-sm border border-[var(--admin-error-500)]/30 bg-[var(--admin-error-50)] text-[var(--admin-error-700)]"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </AdminCard>
+
+      {roleEdit && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 sm:items-center"
+          onClick={() => !pending && setRoleEdit(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-[var(--admin-text)]">
+              Change staff role
+            </h3>
+            <label className="admin-label mt-4 text-xs">
+              Role
+              <select
+                value={nextRole}
+                onChange={(e) => setNextRole(e.target.value as UserRole)}
+                className="admin-input mt-1.5 w-full"
+              >
+                {ROLE_OPTIONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary"
+                onClick={() => setRoleEdit(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="admin-btn admin-btn-primary"
+                disabled={pending}
+                onClick={onSaveRole}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {(creating || editing) && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 sm:items-center"
-          role="dialog"
-          aria-modal="true"
           onClick={() => {
             if (!pending) {
               setCreating(false);
@@ -305,34 +433,24 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
           }}
         >
           <div
-            className="w-full max-w-lg rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-5 shadow-[var(--admin-shadow-theme)]"
+            className="w-full max-w-lg rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-base font-semibold text-[var(--admin-text)]">
-                  {editing ? "Edit staff" : "Add staff"}
-                </h3>
-                <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                  {editing
-                    ? "Update name, role, status, or set a new password."
-                    : "Create an approved ops account."}
-                </p>
-              </div>
+            <div className="mb-4 flex justify-between">
+              <h3 className="text-base font-semibold text-[var(--admin-text)]">
+                {editing ? "Edit staff" : "Add staff"}
+              </h3>
               <button
                 type="button"
                 className="admin-btn admin-btn-ghost admin-btn-sm"
-                disabled={pending}
                 onClick={() => {
                   setCreating(false);
                   setEditing(null);
                 }}
-                aria-label="Close"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-
             <form
               action={editing ? onUpdate : onCreate}
               className="grid gap-3 sm:grid-cols-2"
@@ -360,7 +478,11 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
                 Role
                 <select
                   name="role"
-                  defaultValue={editing?.role || "SALES"}
+                  defaultValue={
+                    editing?.role && editing.role !== "SUPER_ADMIN"
+                      ? editing.role
+                      : "SALES"
+                  }
                   className="admin-input mt-1.5 w-full"
                 >
                   {ROLE_OPTIONS.map((r) => (
@@ -385,16 +507,13 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
                   </select>
                 </label>
               ) : null}
-              <label
-                className={`admin-label text-xs ${editing ? "sm:col-span-2" : "sm:col-span-2"}`}
-              >
+              <label className="admin-label text-xs sm:col-span-2">
                 {editing ? "New password (optional)" : "Password"}
                 <input
                   name="password"
                   type="password"
                   minLength={editing ? undefined : 8}
                   required={!editing}
-                  placeholder={editing ? "Leave blank to keep current" : ""}
                   className="admin-input mt-1.5 w-full"
                   autoComplete="new-password"
                 />
@@ -403,7 +522,6 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
                 <button
                   type="button"
                   className="admin-btn admin-btn-secondary"
-                  disabled={pending}
                   onClick={() => {
                     setCreating(false);
                     setEditing(null);
@@ -416,7 +534,7 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
                   className="admin-btn admin-btn-primary"
                   disabled={pending}
                 >
-                  {pending ? "Saving…" : editing ? "Save changes" : "Create"}
+                  {pending ? "Saving…" : editing ? "Save" : "Create"}
                 </button>
               </div>
             </form>

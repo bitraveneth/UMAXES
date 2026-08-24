@@ -804,7 +804,7 @@ export async function upsertShipment(
   });
 
   revalidatePath("/admin/logistics");
-  revalidatePath(`/admin/logistics/${orderId}`);
+  revalidatePath(`/admin/logistics/orders/${orderId}`);
   revalidatePath("/admin/orders");
   revalidatePath("/admin/notifications");
 }
@@ -911,7 +911,7 @@ export async function createShipmentPacking(
   });
 
   revalidatePath("/admin/logistics");
-  revalidatePath(`/admin/logistics/${orderId}`);
+  revalidatePath(`/admin/logistics/orders/${orderId}`);
   revalidatePath("/admin/orders");
 }
 
@@ -1586,7 +1586,7 @@ export async function createStaffUser(input: {
   password: string;
   role: UserRole;
 }) {
-  const session = await requireRoles(["SUPER_ADMIN"]);
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
   const email = input.email.trim().toLowerCase();
   const bcrypt = await import("bcryptjs");
   const passwordHash = await bcrypt.hash(input.password, 12);
@@ -1601,12 +1601,16 @@ export async function createStaffUser(input: {
       passwordHash,
       role: input.role,
       status: "APPROVED",
+      companyId: null,
+      companyRole: null,
     },
     update: {
       name: input.name.trim(),
       passwordHash,
       role: input.role,
       status: "APPROVED",
+      companyId: null,
+      companyRole: null,
     },
   });
 
@@ -1620,46 +1624,74 @@ export async function createStaffUser(input: {
     },
   });
   revalidatePath("/admin/staff");
+  revalidatePath("/admin/users");
 }
 
-const STAFF_EDITABLE_ROLES: UserRole[] = [
+const STAFF_ASSIGNABLE_ROLES: UserRole[] = [
   "ADMIN",
   "SALES",
   "WAREHOUSE",
   "LOGISTICS",
+  "CUSTOMER",
 ];
+
+function assertCanManageUser(
+  actorRole: string,
+  target: { id: string; role: UserRole },
+  actorId: string,
+) {
+  if (target.role === "SUPER_ADMIN") {
+    throw new Error("Super admin accounts cannot be changed here");
+  }
+  if (actorRole === "ADMIN" && target.role === "ADMIN" && target.id !== actorId) {
+    // Admins may edit other admins' role/status (promote/demote team), OK
+  }
+  if (actorRole !== "SUPER_ADMIN" && actorRole !== "ADMIN") {
+    throw new Error("Forbidden");
+  }
+}
 
 export async function updateStaffUser(input: {
   id: string;
   name: string;
   email: string;
   role: UserRole;
-  status: "APPROVED" | "DISABLED";
+  status: "APPROVED" | "DISABLED" | "PENDING" | "REJECTED";
   password?: string;
 }) {
-  const session = await requireRoles(["SUPER_ADMIN"]);
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
   const target = await prisma.user.findUnique({ where: { id: input.id } });
-  if (!target) throw new Error("Staff user not found");
-  if (target.role === "SUPER_ADMIN") {
-    throw new Error("Super admin accounts cannot be edited here");
-  }
-  if (!STAFF_EDITABLE_ROLES.includes(input.role)) {
+  if (!target) throw new Error("User not found");
+  assertCanManageUser(session.user.role, target, session.user.id);
+
+  if (!STAFF_ASSIGNABLE_ROLES.includes(input.role)) {
     throw new Error("Invalid role");
   }
 
   const email = input.email.trim().toLowerCase();
+  const becomingStaff = input.role !== "CUSTOMER";
   const data: {
     name: string;
     email: string;
     role: UserRole;
-    status: "APPROVED" | "DISABLED";
+    status: "APPROVED" | "DISABLED" | "PENDING" | "REJECTED";
     passwordHash?: string;
+    companyId?: string | null;
+    companyRole?: null;
   } = {
     name: input.name.trim(),
     email,
     role: input.role,
-    status: input.status,
+    status: becomingStaff && input.status === "PENDING" ? "APPROVED" : input.status,
   };
+
+  if (becomingStaff) {
+    data.companyId = null;
+    data.companyRole = null;
+    if (data.status !== "DISABLED" && data.status !== "REJECTED") {
+      data.status = "APPROVED";
+    }
+  }
 
   const nextPassword = input.password?.trim();
   if (nextPassword) {
@@ -1683,37 +1715,86 @@ export async function updateStaffUser(input: {
       entityId: input.id,
       meta: JSON.stringify({
         email,
+        previousRole: target.role,
         role: input.role,
-        status: input.status,
+        status: data.status,
         passwordChanged: Boolean(nextPassword),
       }),
     },
   });
   revalidatePath("/admin/staff");
+  revalidatePath("/admin/users");
+}
+
+/** Promote / change role for any existing user (customer → staff, etc.). */
+export async function setUserRole(input: {
+  id: string;
+  role: UserRole;
+}) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const target = await prisma.user.findUnique({ where: { id: input.id } });
+  if (!target) throw new Error("User not found");
+  assertCanManageUser(session.user.role, target, session.user.id);
+
+  if (!STAFF_ASSIGNABLE_ROLES.includes(input.role)) {
+    throw new Error("Invalid role");
+  }
+  if (target.id === session.user.id && input.role === "CUSTOMER") {
+    throw new Error("You cannot demote your own account");
+  }
+
+  const becomingStaff = input.role !== "CUSTOMER";
+  await prisma.user.update({
+    where: { id: input.id },
+    data: {
+      role: input.role,
+      ...(becomingStaff
+        ? {
+            status: "APPROVED" as const,
+            companyId: null,
+            companyRole: null,
+          }
+        : {}),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "USER_ROLE_CHANGED",
+      entity: "User",
+      entityId: input.id,
+      meta: JSON.stringify({
+        name: target.name,
+        email: target.email,
+        phone: target.phone,
+        previousRole: target.role,
+        role: input.role,
+      }),
+    },
+  });
+  revalidatePath("/admin/staff");
+  revalidatePath("/admin/users");
 }
 
 export async function deleteStaffUser(id: string) {
-  const session = await requireRoles(["SUPER_ADMIN"]);
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
   if (session.user.id === id) {
     throw new Error("You cannot delete your own account");
   }
 
   const target = await prisma.user.findUnique({ where: { id } });
-  if (!target) throw new Error("Staff user not found");
+  if (!target) throw new Error("User not found");
   if (target.role === "SUPER_ADMIN") {
     throw new Error("Super admin accounts cannot be deleted");
   }
-  if (
-    !STAFF_EDITABLE_ROLES.includes(target.role) &&
-    target.role !== "CUSTOMER"
-  ) {
-    throw new Error("Not a staff account");
+  if (target.role === "CUSTOMER") {
+    throw new Error("Use Users to delete customer accounts");
   }
 
   try {
     await prisma.user.delete({ where: { id } });
   } catch {
-    // Orders / RMA may still reference this user — disable instead
     await prisma.user.update({
       where: { id },
       data: { status: "DISABLED" },
@@ -1725,12 +1806,14 @@ export async function deleteStaffUser(id: string) {
         entity: "User",
         entityId: id,
         meta: JSON.stringify({
+          name: target.name,
           email: target.email,
           reason: "Linked records — disabled instead of deleted",
         }),
       },
     });
     revalidatePath("/admin/staff");
+    revalidatePath("/admin/users");
     return { disabled: true as const };
   }
 
@@ -1740,10 +1823,71 @@ export async function deleteStaffUser(id: string) {
       action: "STAFF_DELETED",
       entity: "User",
       entityId: id,
-      meta: JSON.stringify({ email: target.email, role: target.role }),
+      meta: JSON.stringify({
+        name: target.name,
+        email: target.email,
+        role: target.role,
+      }),
     },
   });
   revalidatePath("/admin/staff");
+  revalidatePath("/admin/users");
+  return { deleted: true as const };
+}
+
+/** Delete (or disable if linked) a customer account from /admin/users. */
+export async function deleteCustomerUser(id: string) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  if (session.user.id === id) {
+    throw new Error("You cannot delete your own account");
+  }
+
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (!target) throw new Error("User not found");
+  if (target.role !== "CUSTOMER") {
+    throw new Error("Only customer accounts can be deleted here");
+  }
+
+  try {
+    await prisma.user.delete({ where: { id } });
+  } catch {
+    await prisma.user.update({
+      where: { id },
+      data: { status: "DISABLED" },
+    });
+    await prisma.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "CUSTOMER_DISABLED",
+        entity: "User",
+        entityId: id,
+        meta: JSON.stringify({
+          name: target.name,
+          email: target.email,
+          phone: target.phone,
+          reason: "Linked orders/RMA — disabled instead of deleted",
+        }),
+      },
+    });
+    revalidatePath("/admin/users");
+    return { disabled: true as const };
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CUSTOMER_DELETED",
+      entity: "User",
+      entityId: id,
+      meta: JSON.stringify({
+        name: target.name,
+        email: target.email,
+        phone: target.phone,
+        companyId: target.companyId,
+      }),
+    },
+  });
+  revalidatePath("/admin/users");
   return { deleted: true as const };
 }
 

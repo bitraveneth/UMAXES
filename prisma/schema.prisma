@@ -131,6 +131,12 @@ model User {
   favorites    Favorite[]
   ordersPlacedOnBehalf Order[] @relation("OrdersPlacedByStaff")
   staffProfile StaffProfile?
+  /// Last successful sign-in (for Users admin table)
+  lastLoginAt        DateTime?
+  lastLoginIp        String?
+  lastLoginCountry   String?
+  lastLoginUserAgent String?
+  lastLoginDevice    String?
 }
 
 /// Ops staff profile (avatar, company card, address) — not buyer company

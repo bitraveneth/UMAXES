@@ -29,6 +29,7 @@ import {
   Boxes,
   Store,
   ClipboardList,
+  Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -55,7 +56,8 @@ export const adminNavIcons: Record<string, LucideIcon> = {
   "/admin/rma": RotateCcw,
   "/admin/commissions": Percent,
   "/admin/reports": BarChart3,
-  "/admin/staff": Users,
+  "/admin/users": Users,
+  "/admin/staff": Shield,
   "/admin/system": Database,
   "/admin/audit": ScrollText,
 };
