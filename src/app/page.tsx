@@ -10,12 +10,18 @@ import HeroProgress from "@/components/HeroProgress";
 import NewsEvents from "@/components/NewsEvents";
 import ProductShowcase from "@/components/ProductShowcase";
 import Testimonials from "@/components/Testimonials";
+import { auth } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
 
 export default async function Home() {
   const settings = await getSiteSettings();
+  // Guests land on login when site access = "Sign in page".
+  // Logged-in members still see the marketing homepage (e.g. Visit website).
   if (settings.homepageAsLogin) {
-    redirect("/login");
+    const session = await auth();
+    if (!session?.user) {
+      redirect("/login");
+    }
   }
 
   return (

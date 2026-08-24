@@ -60,8 +60,8 @@ export default function SiteAccessPanel({ initial }: Props) {
         <div className="min-w-0 flex-1">
           <h2 className="admin-section-title mb-1">Site access</h2>
           <p className="text-sm text-[var(--admin-muted)]">
-            Choose what visitors see at <span className="font-mono">/</span>.
-            Pick one, then Save.
+            Choose what guests see at <span className="font-mono">/</span>.
+            Logged-in users always see the home page. Pick one, then Save.
           </p>
 
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -114,7 +114,7 @@ export default function SiteAccessPanel({ initial }: Props) {
                   Sign in page
                 </span>
                 <span className="mt-0.5 block text-xs text-[var(--admin-muted)]">
-                  Redirect `/` to login
+                  Guests go to login; members still see home
                 </span>
               </span>
             </label>
