@@ -1,46 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Cloud, Sparkles, Thermometer, Wind } from "lucide-react";
-
-const coreWords = [
-  "Flavor",
-  "Vapor",
-  "Consistency",
-  "Mesh",
-  "Heat",
-  "Smooth",
-  "Density",
-  "Draw",
-  "Balance",
-  "Experience",
-] as const;
-
-function WordMarquee({
-  words,
-  reverse = false,
-}: {
-  words: readonly string[];
-  reverse?: boolean;
-}) {
-  const loop = [...words, ...words];
-  return (
-    <div className="overflow-hidden" aria-hidden>
-      <div
-        className={`${reverse ? "animate-word-marquee-rev" : "animate-word-marquee"} flex w-max items-center gap-6 pr-6 sm:gap-10 sm:pr-10`}
-      >
-        {loop.map((word, i) => (
-          <span key={`${word}-${i}`} className="flex items-center gap-6 sm:gap-10">
-            <span className="font-display text-[clamp(2.75rem,8vw,6.5rem)] font-extrabold leading-none tracking-[-0.05em] text-black">
-              {word}
-            </span>
-            <span className="h-2 w-2 rotate-45 bg-black/25 sm:h-2.5 sm:w-2.5" />
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const pillars: {
   n: string;
@@ -134,52 +94,6 @@ export default function MaxCoreView() {
               );
             })}
           </ul>
-        </div>
-      </section>
-
-      <section className="pb-20 sm:pb-28">
-        <div className="relative overflow-hidden py-4 sm:py-6">
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-umx-cream to-transparent sm:w-24" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-umx-cream to-transparent sm:w-24" />
-          <div className="space-y-2 sm:space-y-3">
-            <WordMarquee words={coreWords} />
-            <WordMarquee
-              reverse
-              words={[
-                "Experience",
-                "Balance",
-                "Draw",
-                "Density",
-                "Smooth",
-                "Heat",
-                "Mesh",
-                "Consistency",
-                "Vapor",
-                "Flavor",
-              ]}
-            />
-          </div>
-        </div>
-
-        <div className="mx-auto mt-10 max-w-[1200px] px-5 sm:mt-12 sm:px-8">
-          <div className="flex flex-col justify-between gap-8 rounded-[1.5rem] bg-black px-8 py-10 text-umx-cream sm:px-10 sm:py-12 lg:flex-row lg:items-end lg:gap-12">
-            <div className="max-w-2xl">
-              <h2 className="font-display text-[clamp(1.5rem,3vw,2.35rem)] font-extrabold leading-[1.12] tracking-[-0.035em]">
-                MaxCore™ — powering the UMAXES experience.
-              </h2>
-              <p className="mt-4 font-body text-base leading-[1.75] text-umx-cream/75 sm:text-lg">
-                Every part of the mesh system is built so every puff counts —
-                even heat, richer flavor, and a smoother draw for adult
-                consumers 21+.
-              </p>
-            </div>
-            <Link
-              href="/shop"
-              className="inline-flex shrink-0 items-center rounded-full bg-umx-cream px-7 py-3.5 font-display text-sm font-semibold tracking-[0.12em] text-black uppercase transition hover:bg-white"
-            >
-              Explore products
-            </Link>
-          </div>
         </div>
       </section>
     </article>

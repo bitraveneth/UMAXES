@@ -35,7 +35,7 @@ export default async function BlogPostPage({ params }: Props) {
         <article>
           <div className="mx-auto max-w-[720px]">
             <Link
-              href="/#news"
+              href="/news"
               className="font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
             >
               ← News & Events

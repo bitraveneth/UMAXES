@@ -38,10 +38,10 @@ export default function AuthSplitShell({
           <div className="mb-4 flex flex-col items-center text-center sm:mb-5">
             <div className="relative h-8 w-40 sm:h-9 sm:w-44">
               <Image
-                src={logos.orangeTransparent}
+                src={logos.blueWordmark}
                 alt="UMAXES"
                 fill
-                className="object-contain brightness-0"
+                className="object-contain"
                 sizes="176px"
                 priority
               />

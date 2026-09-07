@@ -44,6 +44,7 @@ function FlavorCard({ flavor, index }: { flavor: Flavor; index: number }) {
   const [added, setAdded] = useState(false);
 
   const onMove = useCallback((e: PointerEvent<HTMLElement>) => {
+    if (e.pointerType !== "mouse") return;
     const el = cardRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -93,7 +94,7 @@ function FlavorCard({ flavor, index }: { flavor: Flavor; index: number }) {
               alt={flavor.name}
               fill
               className="object-cover transition duration-700 ease-out group-hover:scale-[1.06]"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              sizes="(max-width: 640px) 82vw, (max-width: 1024px) 50vw, 33vw"
               quality={70}
               priority={index < 3}
             />
@@ -226,11 +227,24 @@ export default function ProductShowcase() {
 
         <FlavorMarquee />
 
-        {/* 9 products · 3 columns · equal cards */}
-        <div className="mt-14 grid grid-cols-1 gap-5 sm:mt-16 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-6">
-          {flavors.map((flavor, index) => (
-            <FlavorCard key={flavor.id} flavor={flavor} index={index} />
-          ))}
+        {/* Mobile: horizontal swipe. sm+: stacked grid (2 / 3 columns). */}
+        <div className="-mx-4 mt-14 sm:mx-0 sm:mt-16">
+          <div
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-px-4 px-4 pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:overscroll-auto sm:scroll-px-0 sm:px-0 sm:pb-0 lg:grid-cols-3"
+            aria-label="HOOKAMAX flavors"
+          >
+            {flavors.map((flavor, index) => (
+              <div
+                key={flavor.id}
+                className="w-[min(82vw,20.5rem)] shrink-0 snap-start sm:w-auto sm:min-w-0 sm:shrink"
+              >
+                <FlavorCard flavor={flavor} index={index} />
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-center font-display text-xs tracking-[0.14em] text-black/40 uppercase sm:hidden">
+            Swipe for flavors
+          </p>
         </div>
       </div>
     </section>

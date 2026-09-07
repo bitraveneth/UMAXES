@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Lora, Poppins } from "next/font/google";
 import Providers from "@/components/Providers";
+import { siteSlogan } from "@/lib/assets";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -16,9 +17,12 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "UMAXES — One device. Done right.",
-  description:
-    "UMAXES single-product adult vape experience. For adults 21+. Nicotine is an addictive chemical.",
+  title: `UMAXES — ${siteSlogan}`,
+  description: `${siteSlogan}. HOOKAMAX adult vape experience for 21+. Nicotine is an addictive chemical.`,
+  openGraph: {
+    title: `UMAXES — ${siteSlogan}`,
+    description: `${siteSlogan}. HOOKAMAX for adults 21+.`,
+  },
 };
 
 export const viewport: Viewport = {

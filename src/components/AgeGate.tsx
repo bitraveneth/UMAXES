@@ -43,11 +43,11 @@ export default function AgeGate() {
     >
       <div className="w-full max-w-[36rem] rounded-[1.75rem] bg-umx-cream px-8 py-12 text-center text-black shadow-[0_24px_64px_rgba(0,0,0,0.35)] ring-1 ring-black/10 sm:px-14 sm:py-16">
         <Image
-          src={logos.orangeTransparent}
+          src={logos.blueWordmark}
           alt="UMAXES"
           width={220}
-          height={38}
-          className="mx-auto mb-8 h-auto w-48 object-contain brightness-0 sm:mb-10 sm:w-56"
+          height={64}
+          className="mx-auto mb-8 h-auto w-48 object-contain sm:mb-10 sm:w-56"
           sizes="224px"
           quality={70}
           priority

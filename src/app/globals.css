@@ -324,14 +324,6 @@ body {
   animation: flavor-marquee 40s linear infinite;
 }
 
-.animate-word-marquee {
-  animation: flavor-marquee 28s linear infinite;
-}
-
-.animate-word-marquee-rev {
-  animation: flavor-marquee 34s linear infinite reverse;
-}
-
 @keyframes icon-marquee {
   from {
     transform: translateX(0);
@@ -459,8 +451,6 @@ body {
   .animate-flavor-marquee,
   .animate-icon-marquee,
   .animate-icon-marquee-rev,
-  .animate-word-marquee,
-  .animate-word-marquee-rev,
   .animate-icon-bob {
     animation: none;
   }

@@ -26,10 +26,10 @@ export default function UnauthorizedPage() {
       <div className="relative z-[1] flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
         <div className="relative mb-8 h-9 w-44">
           <Image
-            src={logos.orangeTransparent}
+            src={logos.blueWordmarkOnDark}
             alt="UMAXES"
             fill
-            className="object-contain brightness-0 invert"
+            className="object-contain"
             sizes="176px"
             priority
           />

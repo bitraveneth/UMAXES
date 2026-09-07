@@ -13,8 +13,14 @@ function matchesFilter(post: BlogPost, filter: Filter) {
   return post.category === filter;
 }
 
-export default function NewsEvents() {
-  const [filter, setFilter] = useState<Filter>("All");
+export default function NewsEvents({
+  initialFilter = "All",
+  standalone = false,
+}: {
+  initialFilter?: Filter;
+  standalone?: boolean;
+}) {
+  const [filter, setFilter] = useState<Filter>(initialFilter);
 
   const posts = useMemo(
     () => blogPosts.filter((p) => matchesFilter(p, filter)),
@@ -24,7 +30,9 @@ export default function NewsEvents() {
   return (
     <section
       id="news"
-      className="relative overflow-hidden bg-umx-cream px-4 py-20 sm:px-6 sm:py-28"
+      className={`relative overflow-hidden bg-umx-cream px-4 sm:px-6 ${
+        standalone ? "pt-8 pb-20 sm:pt-10 sm:pb-28" : "py-20 sm:py-28"
+      }`}
     >
       <div
         aria-hidden

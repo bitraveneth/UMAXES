@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import BuyerAccountMenu from "@/components/BuyerAccountMenu";
 import GoogleTranslate from "@/components/GoogleTranslate";
@@ -22,8 +22,12 @@ const primaryNav = [
     label: "Verify product",
     match: "verify" as const,
   },
-  { href: "/#news", label: "Info center", match: "news" as const },
   { href: "/login", label: "Wholesale", match: "wholesale" as const },
+] as const;
+
+const infoCenterLinks = [
+  { href: "/news", label: "News" },
+  { href: "/news?filter=Events", label: "Events" },
 ] as const;
 
 const supportLinks = [
@@ -69,22 +73,16 @@ function navLinkClass(active: boolean) {
 function isNavActive(
   match: (typeof primaryNav)[number]["match"],
   pathname: string,
-  activeSection: string,
 ) {
   switch (match) {
     case "home":
-      return pathname === "/" && activeSection !== "news";
+      return pathname === "/";
     case "shop":
       return pathname === "/shop" || pathname.startsWith("/product");
     case "maxcore":
       return pathname.startsWith("/maxcore");
     case "verify":
       return pathname.startsWith("/support/verify");
-    case "news":
-      return (
-        pathname.startsWith("/blog") ||
-        (pathname === "/" && activeSection === "news")
-      );
     case "wholesale":
       return (
         pathname.startsWith("/login") ||
@@ -94,6 +92,71 @@ function isNavActive(
     default:
       return false;
   }
+}
+
+function infoCenterActive(pathname: string) {
+  return pathname === "/news" || pathname.startsWith("/blog");
+}
+
+function NavChevron() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 12 12"
+      className="h-2.5 w-2.5 shrink-0 opacity-55"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2.5 4.5 6 8l3.5-3.5" />
+    </svg>
+  );
+}
+
+function InfoCenterDropdown({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const active = infoCenterActive(pathname);
+
+  return (
+    <div className="group relative">
+      <Link
+        href="/news"
+        className={`${navLinkClass(active)} gap-1.5`}
+        aria-haspopup="menu"
+      >
+        Info center
+        <NavChevron />
+      </Link>
+
+      <div
+        role="menu"
+        className="invisible absolute top-full left-1/2 z-50 w-52 -translate-x-1/2 pt-2 opacity-0 transition duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+      >
+        <div className="overflow-hidden rounded-2xl bg-white shadow-[0_16px_40px_rgba(61,22,5,0.14)] ring-1 ring-black/8">
+          {infoCenterLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              onClick={() => onNavigate?.()}
+              className={`block px-4 py-3 font-display text-[13px] font-semibold tracking-[0.04em] transition hover:bg-umx-cream hover:text-black ${
+                pathname === "/news" ? "text-black" : "text-black/85"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function SupportDropdown({
@@ -189,9 +252,9 @@ export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState("");
   const [isXl, setIsXl] = useState(false);
   const { quantity } = useCart();
   const { data: session } = useSession();
@@ -220,27 +283,6 @@ export default function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  useEffect(() => {
-    const el = document.getElementById("news");
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]?.target.id) {
-          setActiveSection(visible[0].target.id);
-        } else if (pathname === "/") {
-          setActiveSection("");
-        }
-      },
-      { rootMargin: "-35% 0px -45% 0px", threshold: [0.1, 0.35, 0.6] },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -253,12 +295,14 @@ export default function Header() {
     if (!hideMobileHeader) return;
     setOpen(false);
     setSupportOpen(false);
+    setInfoOpen(false);
     setLangOpen(false);
   }, [hideMobileHeader]);
 
   function closeMenu() {
     setOpen(false);
     setSupportOpen(false);
+    setInfoOpen(false);
     setLangOpen(false);
   }
 
@@ -292,10 +336,10 @@ export default function Header() {
               onClick={closeMenu}
             >
               <Image
-                src={logos.orangeTransparent}
+                src={logos.blueWordmark}
                 alt="UMAXES"
                 fill
-                className="object-contain object-left brightness-0"
+                className="object-contain object-left"
                 sizes="192px"
                 quality={70}
                 priority
@@ -307,8 +351,8 @@ export default function Header() {
               aria-label="Primary"
             >
               {primaryNav.map((item) => {
-                const active = isNavActive(item.match, pathname, activeSection);
-                return (
+                const active = isNavActive(item.match, pathname);
+                const link = (
                   <Link
                     key={item.href + item.label}
                     href={item.href}
@@ -317,6 +361,15 @@ export default function Header() {
                     {item.label}
                   </Link>
                 );
+                if (item.match === "verify") {
+                  return (
+                    <Fragment key="verify-info">
+                      {link}
+                      <InfoCenterDropdown pathname={pathname} />
+                    </Fragment>
+                  );
+                }
+                return link;
               })}
               <SupportDropdown pathname={pathname} />
               {/* Language always last in the navbar */}
@@ -417,8 +470,8 @@ export default function Header() {
               aria-label="Mobile"
             >
               {primaryNav.map((item, i) => {
-                const active = isNavActive(item.match, pathname, activeSection);
-                return (
+                const active = isNavActive(item.match, pathname);
+                const link = (
                   <Link
                     key={item.href + item.label}
                     href={item.href}
@@ -436,6 +489,40 @@ export default function Header() {
                     />
                   </Link>
                 );
+                if (item.match === "verify") {
+                  return (
+                    <Fragment key="verify-info-mobile">
+                      {link}
+                      <button
+                        type="button"
+                        onClick={() => setInfoOpen((v) => !v)}
+                        className={`mt-2 flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-black/85 ${NAV_TYPE} !text-base !tracking-[0.06em]`}
+                        aria-expanded={infoOpen}
+                      >
+                        Info center
+                      </button>
+                      {infoOpen && (
+                        <div className="mb-1 ml-3 border-l-2 border-umx-orange/30 pl-2">
+                          {infoCenterLinks.map((sub) => (
+                            <Link
+                              key={sub.href}
+                              href={sub.href}
+                              onClick={closeMenu}
+                              className={`block rounded-xl px-4 py-3 font-display text-[15px] font-semibold tracking-[0.04em] transition hover:bg-black/[0.06] hover:text-black ${
+                                pathname === "/news"
+                                  ? "text-black"
+                                  : "text-black/70"
+                              }`}
+                            >
+                              {sub.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </Fragment>
+                  );
+                }
+                return link;
               })}
 
               <button

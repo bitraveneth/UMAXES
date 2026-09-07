@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import AgeGate from "@/components/AgeGate";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import Features from "@/components/Features";
 import ProductDetail from "@/components/ProductDetail";
 import ProductKeyFeatures from "@/components/ProductKeyFeatures";
 import ProductStoryImages from "@/components/ProductStoryImages";
@@ -38,6 +39,7 @@ export default async function ProductPage({ params }: Props) {
       <main className="flex-1">
         <ProductDetail flavor={flavor} />
         <ProductKeyFeatures />
+        <Features />
         <ProductStoryImages />
       </main>
       <Footer />

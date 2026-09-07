@@ -7,8 +7,8 @@ import { SITE_CONTACT_EMAIL } from "@/lib/site";
 const shopLinks = [
   { href: "/shop", label: "Shop" },
   { href: "/maxcore", label: "MaxCore™" },
-  { href: "/#news", label: "News" },
-  { href: "/#features", label: "Why UMAXES" },
+  { href: "/news", label: "News" },
+  { href: "/product/peach-mango#features", label: "Why UMAXES" },
 ] as const;
 
 const supportLinks = [
@@ -55,7 +55,7 @@ export default function Footer() {
               <Link href="/" className="inline-block">
                 <div className="relative h-9 w-40 sm:h-10 sm:w-48">
                   <Image
-                    src={logos.creamTransparent}
+                    src={logos.blueWordmarkOnDark}
                     alt="UMAXES"
                     fill
                     className="object-contain object-left"

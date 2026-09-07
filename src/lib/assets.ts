@@ -48,9 +48,14 @@ export const logos = {
   creamOnOrange: "/images/logo/cream-on-orange.png",
   orangeTransparent: "/images/logo/orange-transparent.png",
   creamTransparent: "/images/logo/cream-transparent.png",
+  blueWordmark: "/images/logo/umaxes-blue.png",
+  blueWordmarkOnDark: "/images/logo/umaxes-blue-on-dark.png",
   markOrange: "/images/logo/umaxes-mark-orange.png",
   markCream: "/images/logo/umaxes-mark-cream.png",
 } as const;
+
+/** Browser tab + primary homepage slogan */
+export const siteSlogan = "Luxury in Every Draw · Diamond Glow";
 
 export const product = {
   name: "HOOKAMAX",

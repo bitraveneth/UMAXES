@@ -3,15 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { heroImages } from "@/lib/assets";
+import { heroImages, siteSlogan } from "@/lib/assets";
 
 const DURATION = 5500;
 
-/** Slide 1 = client-requested “Luxury in Every Draw” still (hero/02). */
+/** Slide 1 = client slogan “Luxury in Every Draw · Diamond Glow”. */
 const slides = [
   {
     src: heroImages[1],
-    title: "Luxury in Every Draw",
+    title: siteSlogan,
     subtitle: "Crafted for Smooth Flavor & Lasting Satisfaction.",
     cta: "Buy now",
   },
