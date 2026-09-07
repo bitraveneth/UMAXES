@@ -45,7 +45,7 @@ export default function BuyerMobileNav() {
       <div className="mx-auto grid h-14 max-w-lg grid-cols-3">
         <Link href="/shop" className={itemClass(shopActive)} aria-current={shopActive ? "page" : undefined}>
           <Store className="h-5 w-5" strokeWidth={activeStroke(shopActive)} aria-hidden />
-          Shop
+          Store
         </Link>
 
         <Link

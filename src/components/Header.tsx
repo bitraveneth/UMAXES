@@ -15,7 +15,7 @@ import { logos } from "@/lib/assets";
 /** Public site nav — keep lean */
 const primaryNav = [
   { href: "/", label: "Home", match: "home" as const },
-  { href: "/shop", label: "Products", match: "shop" as const },
+  { href: "/shop", label: "Store", match: "shop" as const },
   { href: "/maxcore", label: "MAXCORE", match: "maxcore" as const },
   {
     href: "/support/verify",

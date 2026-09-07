@@ -19,6 +19,11 @@ const lora = Lora({
 export const metadata: Metadata = {
   title: `UMAXES — ${siteSlogan}`,
   description: `${siteSlogan}. HOOKAMAX adult vape experience for 21+. Nicotine is an addictive chemical.`,
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: [],
+  },
   openGraph: {
     title: `UMAXES — ${siteSlogan}`,
     description: `${siteSlogan}. HOOKAMAX for adults 21+.`,

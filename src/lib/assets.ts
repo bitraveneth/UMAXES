@@ -1,3 +1,5 @@
+export const heroBanner = "/images/hero/hookamax-banner.webp";
+
 export const heroImages = [
   "/images/hero/01.webp",
   "/images/hero/02.webp",
@@ -55,7 +57,7 @@ export const logos = {
 } as const;
 
 /** Browser tab + primary homepage slogan */
-export const siteSlogan = "Luxury in Every Draw · Diamond Glow";
+export const siteSlogan = "Luxury in Every Draw Diamond Glow";
 
 export const product = {
   name: "HOOKAMAX",
