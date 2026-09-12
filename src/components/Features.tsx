@@ -45,7 +45,7 @@ function WhyUmaxes() {
     <div className="relative overflow-hidden bg-umx-cream px-4 py-20 sm:px-6 sm:py-28">
       <div
         aria-hidden
-        className="pointer-events-none absolute top-16 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-umx-orange/10 blur-3xl"
+        className="pointer-events-none absolute top-16 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-umx-cream-deep/45 blur-3xl"
       />
 
       <div className="relative mx-auto max-w-[1100px]">
@@ -69,18 +69,9 @@ function WhyUmaxes() {
             return (
               <article
                 key={item.title}
-                className="group relative flex flex-col items-center overflow-hidden rounded-[1.5rem] border border-white/90 bg-gradient-to-b from-white via-white to-[#fffaf0] px-6 py-8 text-center shadow-[0_1px_0_rgba(255,255,255,1)_inset,0_12px_36px_rgba(61,22,5,0.08)] ring-1 ring-black/6 transition duration-500 hover:-translate-y-1.5 hover:border-umx-orange/35 hover:shadow-[0_1px_0_rgba(255,255,255,1)_inset,0_22px_50px_rgba(61,22,5,0.12)] hover:ring-umx-orange/25 sm:px-7 sm:py-9"
+                className="group relative flex flex-col items-center overflow-hidden rounded-[1.5rem] border border-black/8 bg-umx-cream-warm px-6 py-8 text-center shadow-[0_10px_28px_rgba(0,0,0,0.05)] transition-[transform,box-shadow,border-color,background-color] duration-500 ease-out hover:-translate-y-1 hover:border-black/16 hover:bg-umx-cream-bright hover:shadow-[0_18px_40px_rgba(0,0,0,0.1)] sm:px-7 sm:py-9"
               >
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white to-transparent"
-                />
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute -top-8 left-1/2 h-24 w-[70%] -translate-x-1/2 rounded-full bg-white/80 blur-2xl"
-                />
-
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-umx-orange/10 text-umx-orange ring-1 ring-umx-orange/15 transition duration-500 group-hover:bg-umx-orange group-hover:text-white group-hover:ring-umx-orange group-hover:shadow-[0_10px_24px_rgba(255,91,4,0.35)]">
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-black/6 text-black ring-1 ring-black/10 transition-[background-color,color,box-shadow,transform] duration-500 ease-out group-hover:scale-105 group-hover:bg-black group-hover:text-umx-cream group-hover:ring-black group-hover:shadow-[0_10px_22px_rgba(0,0,0,0.18)]">
                   <Icon className="h-6 w-6" strokeWidth={1.75} aria-hidden />
                 </div>
                 <h3 className="relative mt-5 font-display text-xl font-bold tracking-tight text-black">
@@ -100,7 +91,7 @@ function WhyUmaxes() {
 
 export default function Features() {
   return (
-    <section id="features" className="relative overflow-hidden bg-white">
+    <section id="features" className="relative overflow-hidden bg-umx-cream">
       <WhyUmaxes />
     </section>
   );

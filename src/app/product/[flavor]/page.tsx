@@ -6,7 +6,6 @@ import Header from "@/components/Header";
 import Features from "@/components/Features";
 import ProductDetail from "@/components/ProductDetail";
 import ProductKeyFeatures from "@/components/ProductKeyFeatures";
-import ProductStoryImages from "@/components/ProductStoryImages";
 import { flavors, getFlavor, product } from "@/lib/assets";
 
 type Props = {
@@ -40,7 +39,6 @@ export default async function ProductPage({ params }: Props) {
         <ProductDetail flavor={flavor} />
         <ProductKeyFeatures />
         <Features />
-        <ProductStoryImages />
       </main>
       <Footer />
     </>

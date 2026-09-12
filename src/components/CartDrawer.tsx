@@ -35,7 +35,7 @@ export default function CartDrawer() {
         onClick={() => setOpen(false)}
       />
       <aside
-        className={`absolute top-0 right-0 flex h-full w-full max-w-md flex-col bg-umx-cream shadow-[-12px_0_40px_rgba(61,22,5,0.12)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`absolute top-0 right-0 flex h-full w-full max-w-md flex-col bg-white shadow-[-12px_0_40px_rgba(0,0,0,0.12)] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog"
@@ -67,7 +67,7 @@ export default function CartDrawer() {
                 return (
                   <li
                     key={line.flavorId}
-                    className="flex gap-4 rounded-2xl border border-black/10 bg-umx-cream-bright p-4"
+                    className="flex gap-4 rounded-2xl border border-black/10 bg-white p-4"
                   >
                     <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">
                       <Image

@@ -40,6 +40,7 @@ const ADMIN_PATH_RULES: PathRule[] = [
   },
   { href: "/admin/catalog", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/coupons", roles: ["ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/invoices", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/credit", roles: ["ADMIN", "SALES", "SUPER_ADMIN"] },
   { href: "/admin/aging", roles: ["ADMIN", "SALES", "SUPER_ADMIN"] },
   {

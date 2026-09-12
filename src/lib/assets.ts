@@ -1,5 +1,15 @@
 export const heroBanner = "/images/hero/hookamax-banner.webp";
 
+export const heroSceneImages = [
+  "/images/hero/desert-carry.webp",
+  "/images/hero/skate-bowl.webp",
+  "/images/hero/coastal-draw.webp",
+  "/images/hero/ramp-hold.webp",
+  "/images/hero/neon-studio.webp",
+  "/images/hero/night-city.webp",
+  "/images/hero/velvet-night.webp",
+] as const;
+
 export const heroImages = [
   "/images/hero/01.webp",
   "/images/hero/02.webp",
@@ -71,7 +81,7 @@ export const product = {
 
 /** Full-bleed detail panels after Specs (shared on every flavor page) */
 export const productStoryImages = [
-  "/images/product/story/01.webp",
+  "/images/product/story/01-fit.webp",
   "/images/product/story/02.webp",
   "/images/product/story/03.webp",
   "/images/product/story/04.webp",
@@ -239,6 +249,16 @@ export const flavors = [
     price: 35,
     profile: "Berry",
     accent: "#3d5aab",
+  },
+  {
+    id: "love-max",
+    name: "Love Max",
+    tagline: "Peach · Melon · Mint ice",
+    description: "Peach and melon with a cool mint finish.",
+    image: "/images/product/10.webp",
+    price: 29,
+    profile: "Ice",
+    accent: "#e8899a",
   },
 ] as const;
 

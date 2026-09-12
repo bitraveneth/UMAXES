@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
+  type TransitionEvent as ReactTransitionEvent,
 } from "react";
 import { flavors, type Flavor } from "@/lib/assets";
 
@@ -39,18 +40,6 @@ function usePageSize() {
   return isDesktop ? 2 : 1;
 }
 
-function wrapIndex(index: number) {
-  const n = flavors.length;
-  return ((index % n) + n) % n;
-}
-
-function flavorsAt(page: number, pageSize: number): Flavor[] {
-  const start = page * pageSize;
-  return Array.from({ length: pageSize }, (_, i) =>
-    flavors[wrapIndex(start + i)],
-  );
-}
-
 function FlavorMarquee() {
   const names = [...flavors, ...flavors].map((f) => f.name);
   return (
@@ -58,8 +47,6 @@ function FlavorMarquee() {
       className="relative mt-10 overflow-hidden border-y border-black/8 py-3.5"
       aria-hidden
     >
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-umx-cream to-transparent sm:w-24" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-umx-cream to-transparent sm:w-24" />
       <div className="animate-flavor-marquee flex w-max items-center gap-8 pr-8">
         {names.map((name, i) => (
           <span
@@ -75,17 +62,28 @@ function FlavorMarquee() {
   );
 }
 
-function FlavorPoster({ flavor }: { flavor: Flavor }) {
+function FlavorPoster({
+  flavor,
+  priority = false,
+}: {
+  flavor: Flavor;
+  priority?: boolean;
+}) {
   return (
     <Link href={`/product/${flavor.id}`} className="group min-w-0">
-      <div className="relative aspect-[1/1] overflow-hidden rounded-[1.35rem] bg-umx-cream-bright shadow-[0_18px_44px_rgba(0,0,0,0.12)] ring-1 ring-black/8 sm:rounded-[1.75rem]">
+      <div
+        className="relative aspect-[1/1] overflow-hidden rounded-[1.35rem] ring-1 ring-black/8 sm:rounded-[1.75rem]"
+        style={{ backgroundColor: flavor.accent }}
+      >
         <Image
           src={flavor.image}
           alt={flavor.name}
           fill
+          priority={priority}
+          loading={priority ? undefined : "eager"}
           className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.04]"
           sizes="(max-width: 640px) 92vw, 42vw"
-          quality={78}
+          quality={75}
         />
       </div>
       <div className="mt-3.5 sm:mt-5">
@@ -121,7 +119,7 @@ function ArrowButton({
       type="button"
       aria-label={label}
       onClick={onClick}
-      className={`absolute top-[42%] z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-black shadow-[0_10px_28px_rgba(0,0,0,0.16)] ring-1 ring-black/8 transition hover:bg-black hover:text-white sm:h-12 sm:w-12 ${
+      className={`absolute top-[42%] z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white text-black ring-1 ring-black/8 transition hover:bg-black hover:text-white sm:h-12 sm:w-12 ${
         side === "prev" ? "-left-1 sm:-left-5" : "-right-1 sm:-right-5"
       }`}
     >
@@ -145,25 +143,65 @@ function ArrowButton({
   );
 }
 
+const AUTO_MS = 4500;
+
 export default function ProductShowcase() {
   const pageSize = usePageSize();
-  const pageCount = Math.max(1, Math.ceil(flavors.length / pageSize));
-  const [page, setPage] = useState(0);
+  const count = flavors.length;
+  const lead = pageSize;
+  const track = [
+    ...flavors.slice(-pageSize),
+    ...flavors,
+    ...flavors.slice(0, pageSize),
+  ];
+
+  const [slide, setSlide] = useState(pageSize);
+  const [anim, setAnim] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const [inView, setInView] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const dragX = useRef<number | null>(null);
   const dragged = useRef(false);
 
   useEffect(() => {
-    setPage((p) => Math.min(p, pageCount - 1));
-  }, [pageCount]);
+    setAnim(false);
+    setSlide(pageSize);
+  }, [pageSize]);
 
-  const go = useCallback(
-    (next: number) => {
-      setPage(((next % pageCount) + pageCount) % pageCount);
-    },
-    [pageCount],
-  );
+  const goBy = useCallback((delta: number) => {
+    setAnim(true);
+    setSlide((s) => s + delta);
+  }, []);
 
-  const visible = flavorsAt(page, pageSize);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.28 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (paused || !inView) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduce.matches) return;
+    const id = window.setTimeout(() => goBy(1), AUTO_MS);
+    return () => window.clearTimeout(id);
+  }, [slide, paused, inView, goBy]);
+
+  function onTransitionEnd(e: ReactTransitionEvent<HTMLDivElement>) {
+    if (e.target !== e.currentTarget) return;
+    if (slide >= lead + count) {
+      setAnim(false);
+      setSlide(slide - count);
+    } else if (slide < lead) {
+      setAnim(false);
+      setSlide(slide + count);
+    }
+  }
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -182,7 +220,7 @@ export default function ProductShowcase() {
     const dx = e.clientX - dragX.current;
     dragX.current = null;
     if (Math.abs(dx) >= SWIPE_THRESHOLD) {
-      go(page + (dx < 0 ? 1 : -1));
+      goBy(dx < 0 ? 1 : -1);
     }
   }
 
@@ -198,14 +236,6 @@ export default function ProductShowcase() {
       id="products"
       className="relative overflow-hidden bg-umx-cream px-4 py-20 sm:px-6 sm:py-28"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-24 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-umx-orange/10 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute bottom-10 left-0 h-80 w-80 -translate-x-1/4 rounded-full bg-umx-cream-deep/55 blur-3xl"
-      />
       <p
         aria-hidden
         className="pointer-events-none absolute top-[6%] left-1/2 -translate-x-1/2 font-display text-[clamp(5rem,16vw,12rem)] font-extrabold tracking-[-0.06em] text-black/[0.035] uppercase select-none"
@@ -230,9 +260,13 @@ export default function ProductShowcase() {
 
         <FlavorMarquee />
 
-        <div className="relative mt-14 sm:mt-16">
+        <div className="relative mt-14 sm:mt-16" ref={rootRef}>
           <div
             className="relative touch-pan-y select-none px-8 sm:px-10"
+            aria-roledescription="carousel"
+            aria-label="HOOKAMAX flavors"
+            onPointerEnter={() => setPaused(true)}
+            onPointerLeave={() => setPaused(false)}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -244,25 +278,39 @@ export default function ProductShowcase() {
             <ArrowButton
               label="Previous flavors"
               side="prev"
-              onClick={() => go(page - 1)}
+              onClick={() => goBy(-1)}
             />
             <ArrowButton
               label="Next flavors"
               side="next"
-              onClick={() => go(page + 1)}
+              onClick={() => goBy(1)}
             />
 
-            <div
-              key={visible.map((f) => f.id).join("-")}
-              className={`grid gap-3 sm:gap-7 ${
-                pageSize === 1 ? "grid-cols-1" : "grid-cols-2"
-              }`}
-              aria-label="HOOKAMAX flavors"
-              aria-live="polite"
-            >
-              {visible.map((flavor) => (
-                <FlavorPoster key={flavor.id} flavor={flavor} />
-              ))}
+            <div className="overflow-hidden">
+              <div
+                className="flex ease-out"
+                style={{
+                  transform: `translate3d(-${slide * (100 / pageSize)}%, 0, 0)`,
+                  transition: anim
+                    ? "transform 560ms cubic-bezier(0.22, 1, 0.36, 1)"
+                    : "none",
+                }}
+                onTransitionEnd={onTransitionEnd}
+              >
+                {track.map((flavor, i) => (
+                  <div
+                    key={`${flavor.id}-${i}`}
+                    className="shrink-0 px-1.5 sm:px-3.5"
+                    style={{ width: `${100 / pageSize}%` }}
+                    aria-hidden={i < slide || i >= slide + pageSize}
+                  >
+                    <FlavorPoster
+                      flavor={flavor}
+                      priority={i >= lead && i < lead + pageSize}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

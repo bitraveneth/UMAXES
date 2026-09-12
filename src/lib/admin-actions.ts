@@ -2242,3 +2242,130 @@ export async function deleteProductOption(optionId: string) {
 
   revalidatePath("/admin/catalog");
 }
+
+export async function saveBankAccount(input: {
+  id?: string;
+  label: string;
+  companyName: string;
+  accountNumber: string;
+  bankName: string;
+  bankAddress?: string;
+  swiftCode?: string;
+  currency?: string;
+  notes?: string;
+  isActive?: boolean;
+}) {
+  const session = await requireRoles(["ADMIN"]);
+  const label = input.label.trim();
+  const companyName = input.companyName.trim();
+  const accountNumber = input.accountNumber.trim();
+  const bankName = input.bankName.trim();
+  if (!label || !companyName || !accountNumber || !bankName) {
+    throw new Error("Label, company, account number, and bank name are required");
+  }
+
+  const data = {
+    label,
+    companyName,
+    accountNumber,
+    bankName,
+    bankAddress: input.bankAddress?.trim() || "",
+    swiftCode: input.swiftCode?.trim().toUpperCase() || "",
+    currency: (input.currency?.trim() || "USD").toUpperCase(),
+    notes: input.notes?.trim() || null,
+  };
+
+  const row = await prisma.$transaction(async (tx) => {
+    const saved = input.id
+      ? await tx.bankAccount.update({ where: { id: input.id }, data })
+      : await tx.bankAccount.create({
+          data: { ...data, isActive: false },
+        });
+
+    const count = await tx.bankAccount.count();
+    if (input.isActive || count === 1) {
+      await tx.bankAccount.updateMany({ data: { isActive: false } });
+      return tx.bankAccount.update({
+        where: { id: saved.id },
+        data: { isActive: true },
+      });
+    }
+    return saved;
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: input.id ? "BANK_ACCOUNT_UPDATED" : "BANK_ACCOUNT_CREATED",
+      entity: "BankAccount",
+      entityId: row.id,
+      meta: JSON.stringify({
+        label: row.label,
+        isActive: row.isActive,
+        bankName: row.bankName,
+      }),
+    },
+  });
+
+  revalidatePath("/admin/invoices");
+  return row;
+}
+
+export async function activateBankAccount(id: string) {
+  const session = await requireRoles(["ADMIN"]);
+  const row = await prisma.$transaction(async (tx) => {
+    const existing = await tx.bankAccount.findUnique({ where: { id } });
+    if (!existing) throw new Error("Bank account not found");
+    await tx.bankAccount.updateMany({ data: { isActive: false } });
+    return tx.bankAccount.update({
+      where: { id },
+      data: { isActive: true },
+    });
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "BANK_ACCOUNT_ACTIVATED",
+      entity: "BankAccount",
+      entityId: row.id,
+      meta: JSON.stringify({ label: row.label, bankName: row.bankName }),
+    },
+  });
+
+  revalidatePath("/admin/invoices");
+  return row;
+}
+
+export async function deleteBankAccount(id: string) {
+  const session = await requireRoles(["ADMIN"]);
+  const existing = await prisma.bankAccount.findUnique({ where: { id } });
+  if (!existing) throw new Error("Bank account not found");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.bankAccount.delete({ where: { id } });
+    if (existing.isActive) {
+      const next = await tx.bankAccount.findFirst({
+        orderBy: { updatedAt: "desc" },
+      });
+      if (next) {
+        await tx.bankAccount.update({
+          where: { id: next.id },
+          data: { isActive: true },
+        });
+      }
+    }
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "BANK_ACCOUNT_DELETED",
+      entity: "BankAccount",
+      entityId: id,
+      meta: JSON.stringify({ label: existing.label }),
+    },
+  });
+
+  revalidatePath("/admin/invoices");
+}

@@ -27,9 +27,13 @@ export default function ProductKeyFeatures() {
   return (
     <section
       id="key-features"
-      className="relative overflow-hidden bg-white px-4 py-20 sm:px-6 sm:py-28"
+      className="relative overflow-hidden bg-umx-cream px-4 py-20 sm:px-6 sm:py-28"
       aria-label="Product key features"
     >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-20 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-umx-cream-deep/50 blur-3xl"
+      />
       <div className="relative mx-auto max-w-[1200px]">
         <header className="mb-14 max-w-2xl sm:mb-16">
           <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
@@ -62,13 +66,13 @@ export default function ProductKeyFeatures() {
 
           {/* Right — aligned feature list */}
           <div className="flex flex-col justify-center">
-            <ul className="divide-y divide-black/8 overflow-hidden rounded-[1.5rem] border border-black/8 bg-umx-cream-bright shadow-[0_14px_40px_rgba(61,22,5,0.06)]">
+            <ul className="divide-y divide-black/8 overflow-hidden rounded-[1.5rem] border border-black/8 bg-umx-cream-warm shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
               {productSpecs.map((spec, i) => {
                 const Icon = iconMap[spec.icon];
                 return (
                   <li key={spec.id}>
-                    <div className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4 transition duration-300 hover:bg-umx-orange/[0.04] sm:gap-5 sm:px-6 sm:py-5">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-umx-orange/10 text-umx-orange ring-1 ring-umx-orange/15 transition duration-300 group-hover:bg-umx-orange group-hover:text-white group-hover:ring-umx-orange sm:h-14 sm:w-14">
+                    <div className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4 transition duration-300 ease-out hover:bg-black/[0.035] sm:gap-5 sm:px-6 sm:py-5">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-black/6 text-black ring-1 ring-black/10 transition duration-300 ease-out group-hover:bg-black group-hover:text-umx-cream group-hover:ring-black sm:h-14 sm:w-14">
                         <Icon
                           className="h-5 w-5 sm:h-6 sm:w-6"
                           strokeWidth={1.75}
@@ -85,7 +89,7 @@ export default function ProductKeyFeatures() {
                         </p>
                       </div>
 
-                      <span className="font-display text-xs font-bold tabular-nums tracking-wider text-black/15 transition group-hover:text-umx-orange/60">
+                      <span className="font-display text-xs font-bold tabular-nums tracking-wider text-black/15 transition duration-300 ease-out group-hover:text-black/40">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                     </div>

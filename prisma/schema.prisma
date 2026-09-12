@@ -533,3 +533,24 @@ model SiteSetting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+/// Wire / TT accounts printed on proforma and commercial invoices.
+/// Exactly one row should be isActive; that account is shown on documents.
+model BankAccount {
+  id            String   @id @default(cuid())
+  /// Internal nickname shown in admin (e.g. Dah Sing HKD)
+  label         String
+  /// Beneficiary company name on the invoice
+  companyName   String
+  accountNumber String
+  bankName      String
+  bankAddress   String   @default("")
+  swiftCode     String   @default("")
+  currency      String   @default("USD")
+  notes         String?
+  isActive      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([isActive])
+}

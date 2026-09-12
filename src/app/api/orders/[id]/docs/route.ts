@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { getActiveBankAccount } from "@/lib/bank-accounts";
 import { buildInvoiceHtml, type InvoiceDocType } from "@/lib/invoice-html";
 import { prisma } from "@/lib/db";
 
@@ -89,6 +90,8 @@ export async function GET(request: Request, { params }: Params) {
         }`
       : "";
 
+  const bank = type === "packing" ? null : await getActiveBankAccount();
+  const origin = new URL(request.url).origin;
   const html = buildInvoiceHtml({
     type,
     orderNumber: order.orderNumber,
@@ -111,6 +114,8 @@ export async function GET(request: Request, { params }: Params) {
     packingMetaHtml,
     forceDownloadHref: `?type=${type}&download=1`,
     showToolbar: true,
+    bank,
+    origin,
   });
 
   return new NextResponse(html, {

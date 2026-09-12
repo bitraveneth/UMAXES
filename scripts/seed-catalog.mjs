@@ -15,6 +15,7 @@ const flavors = [
   { id: "blue-razz-ice", name: "Blue Razz Ice", price: 32, image: "/images/product/07.webp" },
   { id: "grape-ice", name: "Grape Ice", price: 29, image: "/images/product/08.webp" },
   { id: "blueberry-ice", name: "Blueberry Ice", price: 35, image: "/images/product/09.webp" },
+  { id: "love-max", name: "Love Max", price: 29, image: "/images/product/10.webp" },
 ];
 
 function money(n) {

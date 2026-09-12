@@ -14,8 +14,8 @@ import { logos } from "@/lib/assets";
 
 /** Public site nav — keep lean */
 const primaryNav = [
-  { href: "/", label: "Home", match: "home" as const },
   { href: "/shop", label: "Store", match: "shop" as const },
+  { href: "/products", label: "Products", match: "products" as const },
   { href: "/maxcore", label: "MAXCORE", match: "maxcore" as const },
   {
     href: "/support/verify",
@@ -75,10 +75,10 @@ function isNavActive(
   pathname: string,
 ) {
   switch (match) {
-    case "home":
-      return pathname === "/";
     case "shop":
-      return pathname === "/shop" || pathname.startsWith("/product");
+      return pathname === "/shop" || pathname.startsWith("/product/");
+    case "products":
+      return pathname === "/products" || pathname.startsWith("/products/");
     case "maxcore":
       return pathname.startsWith("/maxcore");
     case "verify":
@@ -318,8 +318,8 @@ export default function Header() {
       >
         <header
           className={`pt-5 sm:pt-7 transition-[background,box-shadow,backdrop-filter,padding] duration-300 ${
-            scrolled || open
-              ? "border-b border-umx-cream-deep/70 bg-umx-cream/90 shadow-[0_8px_30px_rgba(61,22,5,0.06)] backdrop-blur-xl"
+            pinNav || scrolled || open
+              ? "border-b border-umx-cream-deep/70 bg-umx-cream shadow-[0_8px_30px_rgba(61,22,5,0.06)]"
               : "border-b border-transparent bg-umx-cream/80 backdrop-blur-md"
           }`}
         >

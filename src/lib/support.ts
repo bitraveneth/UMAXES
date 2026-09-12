@@ -13,7 +13,7 @@ export const faqs = [
   },
   {
     q: "What flavors are available?",
-    a: `Available HOOKAMAX flavors: ${flavors.map((f) => f.name).join("; ")}. Open the UMAXES Shop to filter by Tropical, Ice, Berry, Mint, or Candy. Pricing is set by the brand and shown after wholesale/distributor approval.`,
+    a: `Available HOOKAMAX flavors: ${flavors.map((f) => f.name).join("; ")}. Open the UMAXES Shop to browse the full lineup. Pricing is set by the brand and shown after wholesale/distributor approval.`,
     keys: ["what flavor", "list flavor", "available flavor", "which flavor", "menu"],
   },
   {

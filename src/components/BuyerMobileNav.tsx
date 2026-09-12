@@ -26,7 +26,7 @@ export default function BuyerMobileNav() {
   const shopActive =
     pathname === "/shop" ||
     pathname.startsWith("/shop/") ||
-    pathname.startsWith("/product");
+    pathname.startsWith("/product/");
   const accountActive = pathname.startsWith("/account");
   const cartActive = pathname.startsWith("/cart");
 

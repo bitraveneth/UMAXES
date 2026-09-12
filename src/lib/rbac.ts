@@ -134,6 +134,7 @@ export const adminNav: AdminNavItem[] = [
   },
   { href: "/admin/catalog", label: "Catalog", roles: [SA, AD] },
   { href: "/admin/coupons", label: "Coupons", roles: [SA, AD] },
+  { href: "/admin/invoices", label: "Invoices", roles: [SA, AD] },
   { href: "/admin/credit", label: "Credit", roles: [SA, AD, "SALES"] },
   { href: "/admin/aging", label: "Aging", roles: [SA, AD, "SALES"] },
   { href: "/admin/rma", label: "RMA", roles: [SA, AD, "SALES"] },

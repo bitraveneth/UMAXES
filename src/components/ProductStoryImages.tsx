@@ -1,25 +1,35 @@
+"use client";
+
 import Image from "next/image";
+import { useCompactMobileStoreChrome } from "@/hooks/useStoreChrome";
 import { productStoryImages } from "@/lib/assets";
 
-/** Full-bleed marketing panels after Specs — designed as images, no CSS recreation */
+/**
+ * One complete artwork per section, full width, native aspect — no crop.
+ * Cream page chrome meets the first panel flush so a black bar never shows.
+ */
 export default function ProductStoryImages() {
+  const compact = useCompactMobileStoreChrome();
+
   return (
     <section
       id="product-story"
-      className="w-full bg-black"
+      className={`relative w-full bg-umx-cream ${
+        compact ? "pt-0 lg:pt-[6.8rem]" : "pt-[6.75rem] sm:pt-[6.8rem]"
+      }`}
       aria-label="HOOKAMAX product story"
     >
       {productStoryImages.map((src, i) => (
         <div key={src} className="relative w-full leading-none">
           <Image
             src={src}
-            alt={`HOOKAMAX product details ${i + 1}`}
+            alt=""
             width={1920}
-            height={2400}
+            height={i === 0 ? 1011 : 1080}
             className="h-auto w-full"
             sizes="100vw"
-            quality={75}
-            loading={i === 0 ? "eager" : "lazy"}
+            quality={88}
+            priority={i === 0}
           />
         </div>
       ))}

@@ -6,6 +6,7 @@ import { SITE_CONTACT_EMAIL } from "@/lib/site";
 
 const shopLinks = [
   { href: "/shop", label: "Shop" },
+  { href: "/products", label: "Products" },
   { href: "/maxcore", label: "MaxCore™" },
   { href: "/news", label: "News" },
   { href: "/product/peach-mango#features", label: "Why UMAXES" },

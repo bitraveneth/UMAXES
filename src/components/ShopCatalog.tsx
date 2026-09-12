@@ -32,7 +32,6 @@ import {
 import { useSession } from "next-auth/react";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import {
-  flavorProfiles,
   flavors,
   product,
   type Flavor,
@@ -55,7 +54,6 @@ type SortId =
   | "name-asc"
   | "price-asc"
   | "price-desc";
-type FinishFilter = "all" | "iced" | "smooth";
 type ViewMode = "grid" | "list";
 
 const sortOptions: { id: SortId; label: string }[] = [
@@ -141,7 +139,7 @@ function ShopCard({
       <article className="group grid grid-cols-[140px_minmax(0,1fr)] gap-5 border-b border-black/8 py-6 sm:grid-cols-[220px_minmax(0,1fr)_auto] sm:gap-8">
         <Link
           href={`/product/${flavor.id}`}
-          className="relative aspect-[4/5] overflow-hidden bg-umx-cream ring-1 ring-black/6 sm:aspect-square"
+          className="relative aspect-[4/5] overflow-hidden bg-white ring-1 ring-black/6 sm:aspect-square"
         >
           <Image
             src={flavor.image}
@@ -154,7 +152,7 @@ function ShopCard({
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 bg-umx-cream px-2 py-1 font-display text-[0.65rem] font-bold tracking-[0.12em] text-black/60 uppercase">
+            <span className="inline-flex items-center gap-1.5 bg-black/[0.04] px-2 py-1 font-display text-[0.65rem] font-bold tracking-[0.12em] text-black/60 uppercase">
               <ProfileIcon className="h-3 w-3 text-umx-orange" strokeWidth={2.2} aria-hidden />
               {flavor.profile}
             </span>
@@ -218,7 +216,7 @@ function ShopCard({
 
   return (
     <article className="group flex h-full flex-col">
-      <div className="relative aspect-[4/5] overflow-hidden bg-umx-cream ring-1 ring-black/6">
+      <div className="relative aspect-[4/5] overflow-hidden bg-white ring-1 ring-black/6">
         <Link href={`/product/${flavor.id}`} className="absolute inset-0 block">
           <Image
             src={flavor.image}
@@ -313,12 +311,10 @@ function ShopCard({
 function FilterPanel({
   query,
   setQuery,
-  profiles,
-  setProfiles,
+  selectedFlavorIds,
+  setSelectedFlavorIds,
   priceRange,
   setPriceRange,
-  finish,
-  setFinish,
   favoritesOnly,
   setFavoritesOnly,
   onClear,
@@ -326,12 +322,10 @@ function FilterPanel({
 }: {
   query: string;
   setQuery: (value: string) => void;
-  profiles: FlavorProfile[];
-  setProfiles: (next: FlavorProfile[]) => void;
+  selectedFlavorIds: string[];
+  setSelectedFlavorIds: (next: string[]) => void;
   priceRange: PriceRangeId;
   setPriceRange: (id: PriceRangeId) => void;
-  finish: FinishFilter;
-  setFinish: (value: FinishFilter) => void;
   favoritesOnly: boolean;
   setFavoritesOnly: (value: boolean) => void;
   onClear: () => void;
@@ -339,11 +333,11 @@ function FilterPanel({
 }) {
   const showPrices = useShowStorePrices();
 
-  function toggleProfile(profile: FlavorProfile) {
-    if (profiles.includes(profile)) {
-      setProfiles(profiles.filter((p) => p !== profile));
+  function toggleFlavor(id: string) {
+    if (selectedFlavorIds.includes(id)) {
+      setSelectedFlavorIds(selectedFlavorIds.filter((x) => x !== id));
     } else {
-      setProfiles([...profiles, profile]);
+      setSelectedFlavorIds([...selectedFlavorIds, id]);
     }
   }
 
@@ -392,65 +386,29 @@ function FilterPanel({
           Flavor profile
         </legend>
         <div className="mt-4 space-y-1">
-          {flavorProfiles.map((profile) => {
-            const checked = profiles.includes(profile);
-            const count = flavors.filter((f) => f.profile === profile).length;
-            const Icon = profileIcons[profile];
+          {flavors.map((flavor) => {
+            const checked = selectedFlavorIds.includes(flavor.id);
+            const Icon = profileIcons[flavor.profile];
             return (
               <label
-                key={profile}
+                key={flavor.id}
                 className={`flex cursor-pointer items-center justify-between gap-3 px-2 py-2 transition ${
                   checked ? "bg-umx-orange/10" : "hover:bg-black/[0.03]"
                 }`}
               >
-                <span className="flex items-center gap-3">
+                <span className="flex min-w-0 items-center gap-3">
                   <input
                     type="checkbox"
                     checked={checked}
-                    onChange={() => toggleProfile(profile)}
-                    className="h-4 w-4 accent-umx-orange"
+                    onChange={() => toggleFlavor(flavor.id)}
+                    className="h-4 w-4 shrink-0 accent-umx-orange"
                   />
-                  <Icon className="h-4 w-4 text-umx-orange" strokeWidth={2} aria-hidden />
+                  <Icon className="h-4 w-4 shrink-0 text-umx-orange" strokeWidth={2} aria-hidden />
                   <span className="font-display text-sm font-medium text-black">
-                    {profile}
+                    {flavor.name}
                   </span>
                 </span>
-                <span className="font-display text-xs text-black/35">{count}</span>
               </label>
-            );
-          })}
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend className="inline-flex items-center gap-2 font-display text-sm font-bold text-black">
-          <Snowflake className="h-4 w-4 text-umx-orange" strokeWidth={2.2} aria-hidden />
-          Finish
-        </legend>
-        <div className="mt-4 grid grid-cols-1 gap-2">
-          {(
-            [
-              { id: "all", label: "All finishes", icon: Package },
-              { id: "iced", label: "Iced only", icon: Snowflake },
-              { id: "smooth", label: "Smooth / no ice", icon: Droplets },
-            ] as const
-          ).map((option) => {
-            const Icon = option.icon;
-            const active = finish === option.id;
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setFinish(option.id)}
-                className={`inline-flex items-center gap-2.5 px-3 py-2.5 text-left font-display text-sm font-semibold transition ${
-                  active
-                    ? "bg-black text-umx-cream"
-                    : "bg-white text-black ring-1 ring-black/10 hover:ring-umx-orange/40"
-                }`}
-              >
-                <Icon className="h-4 w-4" strokeWidth={2.1} aria-hidden />
-                {option.label}
-              </button>
             );
           })}
         </div>
@@ -531,14 +489,14 @@ function ShopAside({
     <aside className="hidden space-y-4 xl:block">
       <div className="sticky top-28 space-y-4">
         <div className="overflow-hidden border border-black/8 bg-white">
-          <div className="bg-umx-orange px-5 py-4 text-white">
+          <div className="border-b border-black/8 bg-white px-5 py-4 text-black">
             <div className="flex items-center justify-between gap-3">
               <p className="inline-flex items-center gap-2 font-display text-sm font-bold tracking-[0.12em] uppercase">
                 <ShoppingBag className="h-4 w-4" strokeWidth={2.2} aria-hidden />
                 Your bag
               </p>
               {quantity > 0 && (
-                <span className="bg-white px-2 py-0.5 font-display text-xs font-bold text-umx-orange">
+                <span className="bg-black px-2 py-0.5 font-display text-xs font-bold text-white">
                   {quantity}
                 </span>
               )}
@@ -615,7 +573,7 @@ function ShopAside({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="group flex items-center gap-3 px-4 py-3.5 transition hover:bg-umx-cream"
+                  className="group flex items-center gap-3 px-4 py-3.5 transition hover:bg-black/[0.03]"
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-umx-orange/10 text-umx-orange transition group-hover:bg-umx-orange group-hover:text-white">
                     <Icon className="h-4 w-4" strokeWidth={2.1} aria-hidden />
@@ -649,9 +607,8 @@ export default function ShopCatalog() {
   const showPrices = useShowStorePrices();
   const compactChrome = useCompactMobileStoreChrome();
   const [query, setQuery] = useState("");
-  const [profiles, setProfiles] = useState<FlavorProfile[]>([]);
+  const [selectedFlavorIds, setSelectedFlavorIds] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<PriceRangeId>("all");
-  const [finish, setFinish] = useState<FinishFilter>("all");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [sort, setSort] = useState<SortId>("featured");
   const [view, setView] = useState<ViewMode>("grid");
@@ -718,21 +675,19 @@ export default function ShopCatalog() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = flavors.filter((flavor) => {
-      const profileOk =
-        profiles.length === 0 || profiles.includes(flavor.profile);
+      const flavorOk =
+        selectedFlavorIds.length === 0 ||
+        selectedFlavorIds.includes(flavor.id);
       const priceOk =
         !showPrices ||
         (flavor.price >= activePrice.min && flavor.price <= activePrice.max);
-      const finishOk =
-        finish === "all" ||
-        (finish === "iced" ? isIced(flavor) : !isIced(flavor));
       const favOk = !favoritesOnly || favorites.includes(flavor.id);
       const searchOk =
         !q ||
         flavor.name.toLowerCase().includes(q) ||
         flavor.tagline.toLowerCase().includes(q) ||
         flavor.description.toLowerCase().includes(q);
-      return profileOk && priceOk && finishOk && favOk && searchOk;
+      return flavorOk && priceOk && favOk && searchOk;
     });
 
     const next = [...list];
@@ -747,20 +702,18 @@ export default function ShopCatalog() {
     if (showPrices && sort === "price-desc")
       next.sort((a, b) => b.price - a.price);
     return next;
-  }, [query, profiles, activePrice, finish, favoritesOnly, favorites, sort, showPrices]);
+  }, [query, selectedFlavorIds, activePrice, favoritesOnly, favorites, sort, showPrices]);
 
   const activeFilterCount =
-    profiles.length +
+    selectedFlavorIds.length +
     (priceRange === "all" ? 0 : 1) +
-    (finish === "all" ? 0 : 1) +
     (favoritesOnly ? 1 : 0) +
     (query.trim() ? 1 : 0);
 
   function clearFilters() {
     setQuery("");
-    setProfiles([]);
+    setSelectedFlavorIds([]);
     setPriceRange("all");
-    setFinish("all");
     setFavoritesOnly(false);
   }
 
@@ -796,7 +749,7 @@ export default function ShopCatalog() {
     <div
       className={`bg-white pb-[calc(8.5rem+env(safe-area-inset-bottom))] lg:pb-16 ${storeTopPadClass(compactChrome)}`}
     >
-      <div className="border-b border-black/8 bg-umx-cream">
+      <div className="border-b border-black/8 bg-white">
         <div className="mx-auto max-w-[1680px] px-4 py-8 text-center sm:px-6 sm:py-12 lg:px-6 xl:px-8">
           <h1 className="font-display text-[clamp(2.25rem,8vw,4.25rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black">
             <span className="text-umx-orange">UMAXES</span> Shop
@@ -900,16 +853,14 @@ export default function ShopCatalog() {
 
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_260px] xl:gap-10">
           <aside className="hidden lg:block">
-            <div className="sticky top-28 border border-black/8 bg-umx-cream/70 p-5">
+            <div className="sticky top-28 border border-black/8 bg-white p-5">
               <FilterPanel
                 query={query}
                 setQuery={setQuery}
-                profiles={profiles}
-                setProfiles={setProfiles}
+                selectedFlavorIds={selectedFlavorIds}
+                setSelectedFlavorIds={setSelectedFlavorIds}
                 priceRange={priceRange}
                 setPriceRange={setPriceRange}
-                finish={finish}
-                setFinish={setFinish}
                 favoritesOnly={favoritesOnly}
                 setFavoritesOnly={setFavoritesOnly}
                 onClear={clearFilters}
@@ -919,7 +870,7 @@ export default function ShopCatalog() {
 
           <div>
             {filtered.length === 0 ? (
-              <div className="border border-dashed border-black/15 bg-umx-cream/50 px-6 py-16 text-center">
+              <div className="border border-dashed border-black/15 bg-white px-6 py-16 text-center">
                 <Search className="mx-auto h-8 w-8 text-black/25" strokeWidth={1.75} aria-hidden />
                 <p className="mt-4 font-display text-lg font-bold text-black">
                   No flavors match
@@ -994,12 +945,10 @@ export default function ShopCatalog() {
               <FilterPanel
                 query={query}
                 setQuery={setQuery}
-                profiles={profiles}
-                setProfiles={setProfiles}
+                selectedFlavorIds={selectedFlavorIds}
+                setSelectedFlavorIds={setSelectedFlavorIds}
                 priceRange={priceRange}
                 setPriceRange={setPriceRange}
-                finish={finish}
-                setFinish={setFinish}
                 favoritesOnly={favoritesOnly}
                 setFavoritesOnly={setFavoritesOnly}
                 onClear={clearFilters}

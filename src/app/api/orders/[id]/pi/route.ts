@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { getActiveBankAccount } from "@/lib/bank-accounts";
 import { buildInvoiceHtml } from "@/lib/invoice-html";
 import { prisma } from "@/lib/db";
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function GET(_request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: Params) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -34,6 +35,7 @@ export async function GET(_request: Request, { params }: Params) {
   }
 
   const docNumber = order.piNumber || order.orderNumber;
+  const bank = await getActiveBankAccount();
   const html = buildInvoiceHtml({
     type: "pi",
     orderNumber: order.orderNumber,
@@ -54,6 +56,8 @@ export async function GET(_request: Request, { params }: Params) {
     total: order.total,
     showToolbar: true,
     forceDownloadHref: `/api/orders/${order.id}/docs?type=pi&download=1`,
+    bank,
+    origin: new URL(request.url).origin,
   });
 
   return new NextResponse(html, {
