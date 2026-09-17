@@ -3,9 +3,7 @@
 import Image from "next/image";
 import {
   ArrowUp,
-  DollarSign,
   Headset,
-  Layers,
   Mail,
   Package,
   Sparkles,
@@ -26,28 +24,16 @@ type ChatMessage = {
 
 const QUICK_ACTIONS = [
   {
-    id: "flavors",
-    label: "Flavors",
-    icon: Layers,
-    prompt: "How many flavors do you have?",
+    id: "product",
+    label: "Product",
+    icon: Package,
+    prompt: "What is HOOKAMAX?",
   },
   {
     id: "features",
     label: "Features",
     icon: Sparkles,
-    prompt: "What are the main HOOKAMAX specs / features?",
-  },
-  {
-    id: "pricing",
-    label: "Pricing",
-    icon: DollarSign,
-    prompt: "How much does HOOKAMAX cost?",
-  },
-  {
-    id: "product",
-    label: "Product",
-    icon: Package,
-    prompt: "What is HOOKAMAX?",
+    prompt: "What coil and airflow does it use?",
   },
   {
     id: "shipping",

@@ -1,35 +1,10 @@
-import { flavors, flavorProfiles, product, productSpecs } from "@/lib/assets";
+import { flavors, product } from "@/lib/assets";
 
 export const faqs = [
   {
     q: "Who can buy UMAXES / HOOKAMAX?",
     a: "Only adults 21 years of age or older. Nicotine is an addictive chemical. Keep products out of reach of children and pets.",
     keys: ["age", "21", "adult", "who can", "legal", "buy"],
-  },
-  {
-    q: "How many flavors do you have?",
-    a: `HOOKAMAX currently has ${flavors.length} flavors: ${flavors.map((f) => f.name).join(", ")}. Profiles include ${flavorProfiles.join(", ")}.`,
-    keys: ["how many flavor", "flavors", "flavour", "how many", "variety", "options"],
-  },
-  {
-    q: "What flavors are available?",
-    a: `Available HOOKAMAX flavors: ${flavors.map((f) => f.name).join("; ")}. Open the UMAXES Shop to browse the full lineup. Pricing is set by the brand and shown after wholesale/distributor approval.`,
-    keys: ["what flavor", "list flavor", "available flavor", "which flavor", "menu"],
-  },
-  {
-    q: "What are the main HOOKAMAX specs / features?",
-    a: `${product.name} key features: ${productSpecs.map((s) => `${s.label} ${s.value}`).join("; ")}. One device line, many flavors — adults 21+ only.`,
-    keys: ["spec", "feature", "puff", "battery", "coil", "airflow", "eliquid", "e-liquid", "mesh", "capacity", "what does it"],
-  },
-  {
-    q: "How many puffs does HOOKAMAX have?",
-    a: "HOOKAMAX is rated about 40K puffs in MTL mode and about 20K puffs in DL mode, depending on draw style and settings.",
-    keys: ["puff", "hits", "how long last", "lasting"],
-  },
-  {
-    q: "What is the battery and e-liquid capacity?",
-    a: "HOOKAMAX includes a 1300mAh rechargeable battery and about 40ML of e-liquid, with battery and liquid capacity indicators on the device.",
-    keys: ["battery", "1300", "40ml", "e-liquid", "eliquid", "recharge", "charge", "indicator"],
   },
   {
     q: "What coil and airflow does it use?",
@@ -42,34 +17,24 @@ export const faqs = [
     keys: ["nicotine", "nic", "0.35", "strength", "addictive"],
   },
   {
-    q: "How much does HOOKAMAX cost?",
-    a: "Retail list prices are not published on the website. Wholesale and distributor accounts see contracted rates after approval. Contact UMAXES or register for trade pricing.",
-    keys: ["price", "pricing", "cost", "how much", "expensive", "cheap", "dollar"],
-  },
-  {
-    q: "Is there free shipping?",
-    a: "Standard shipping is free on orders $75+. Express shipping is available at checkout for faster delivery.",
-    keys: ["free shipping", "shipping cost", "delivery fee", "$75", "express"],
-  },
-  {
     q: "How long does shipping take?",
-    a: "Most domestic orders ship within 1–3 business days. Standard delivery is about 5–7 business days; express is about 2–3 business days. You’ll get tracking once the order ships.",
-    keys: ["shipping", "delivery", "arrive", "transit", "how long ship", "tracking"],
+    a: "About 2–7 business days. You’ll get tracking once the order ships.",
+    keys: ["shipping", "delivery", "arrive", "transit", "how long ship", "tracking", "business days"],
   },
   {
     q: "Do you offer coupon codes?",
-    a: "Yes — try demo codes UMAXES10 (10% off), WELCOME5 ($5 off), or SAVE15 (15% off) at checkout. Offers may change.",
-    keys: ["coupon", "discount", "promo", "code", "umaxes10", "welcome5", "save15", "sale"],
+    a: "Yes. Larger order quantities can qualify for a coupon.",
+    keys: ["coupon", "discount", "promo", "code", "sale", "quantity"],
   },
   {
     q: "How do I know my device is authentic?",
     a: "Buy HOOKAMAX from official UMAXES channels. If you have questions about a device, use the Contact Us form with your order details.",
-    keys: ["authentic", " authenticity", "verify", "fake", "real", "code", "scratch"],
+    keys: ["authentic", "authenticity", "verify", "fake", "real"],
   },
   {
     q: "What is your return policy?",
-    a: "Unopened products in original packaging may be eligible for return within 14 days of delivery. Defective devices should be reported to support with your order number.",
-    keys: ["return", "refund", "exchange", "defective", "broken", "warranty"],
+    a: "If there is a quality issue, send evidence (photos or video). UMAXES will contact you to replace it.",
+    keys: ["return", "refund", "exchange", "defective", "broken", "warranty", "quality", "replace"],
   },
   {
     q: "How do I contact support?",
@@ -83,7 +48,7 @@ export const faqs = [
   },
   {
     q: "Where can I shop?",
-    a: "Shop all HOOKAMAX flavors on the UMAXES Shop page (/shop). You can filter by profile and price, then checkout when ready. Adults 21+ only.",
+    a: "Shop HOOKAMAX on the UMAXES Shop page (/shop). Adults 21+ only.",
     keys: ["shop", "store", "order", "purchase", "buy online", "catalog"],
   },
   {
@@ -99,7 +64,7 @@ export type SupportFaq = (typeof faqs)[number];
 export function findSupportAnswer(query: string): string {
   const q = query.toLowerCase().trim();
   if (!q) {
-    return "Ask about flavors, features, pricing, shipping, or contact — or tap a quick topic below.";
+    return "Ask about HOOKAMAX, shipping, returns, or contact — or tap a quick topic below.";
   }
 
   let best: { score: number; a: string } | null = null;
@@ -125,5 +90,5 @@ export function findSupportAnswer(query: string): string {
 
   if (best && best.score >= 3) return best.a;
 
-  return `I can help with how many flavors we have (${flavors.length}), HOOKAMAX features, pricing, shipping, coupons, returns, and contact info. Try asking “How many flavors?” or tap a topic below.`;
+  return "I can help with HOOKAMAX, shipping, coupons, returns, and contact. Try asking “What is HOOKAMAX?” or tap a topic below.";
 }
