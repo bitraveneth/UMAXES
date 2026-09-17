@@ -162,13 +162,15 @@ function SupportDropdown({
 
   return (
     <div className="group relative">
-      <MemberOnlyLink
-        href="/faq"
-        className={navLinkClass(supportActive)}
+      <button
+        type="button"
+        className={`${navLinkClass(supportActive)} gap-1.5`}
         aria-haspopup="menu"
+        aria-expanded={supportActive}
       >
         Support
-      </MemberOnlyLink>
+        <NavChevron />
+      </button>
 
       <div
         role="menu"
