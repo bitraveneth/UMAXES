@@ -39,7 +39,7 @@ export default async function ProductPage({ params }: Props) {
       <Header />
       <main className="flex-1">
         <ProductDetail flavor={flavor} />
-        <ProductKeyFeatures />
+        <ProductKeyFeatures flavor={flavor} />
         <Features />
       </main>
       <Footer />

@@ -13,7 +13,7 @@ import {
   Sparkles,
   Wind,
 } from "lucide-react";
-import { product, productSpecs } from "@/lib/assets";
+import { productSpecs, type Flavor } from "@/lib/assets";
 
 const iconMap: Record<(typeof productSpecs)[number]["icon"], LucideIcon> = {
   sparkles: Sparkles,
@@ -29,7 +29,7 @@ const iconMap: Record<(typeof productSpecs)[number]["icon"], LucideIcon> = {
   draw: Power,
 };
 
-export default function ProductKeyFeatures() {
+export default function ProductKeyFeatures({ flavor }: { flavor: Flavor }) {
   return (
     <section
       id="key-features"
@@ -56,13 +56,16 @@ export default function ProductKeyFeatures() {
 
         <div className="grid items-stretch gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <div className="relative min-h-0">
-            <div className="h-full overflow-hidden rounded-[1.75rem] shadow-[0_22px_55px_rgba(61,22,5,0.12)] ring-1 ring-black/5">
-              <div className="relative aspect-[4/5] w-full lg:aspect-auto lg:h-full lg:min-h-[680px]">
+            <div className="h-full overflow-hidden rounded-[1.75rem] bg-umx-cream-warm shadow-[0_22px_55px_rgba(61,22,5,0.12)] ring-1 ring-black/5">
+              <div
+                className="relative aspect-[4/5] w-full lg:aspect-auto lg:h-full lg:min-h-[680px]"
+                style={{ backgroundColor: `${flavor.accent}14` }}
+              >
                 <Image
-                  src={product.featuresHero}
-                  alt="HOOKAMAX device and packaging"
+                  src={flavor.packageImage}
+                  alt={`${flavor.name} HOOKAMAX package`}
                   fill
-                  className="object-cover object-center"
+                  className="object-contain object-center p-6 sm:p-8"
                   sizes="(max-width: 1024px) 100vw, 560px"
                 />
               </div>
