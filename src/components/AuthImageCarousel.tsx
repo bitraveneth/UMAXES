@@ -2,17 +2,10 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { heroImages, productImages } from "@/lib/assets";
+import { heroImages } from "@/lib/assets";
 
-const SLIDES = [
-  heroImages[0],
-  heroImages[1],
-  heroImages[2],
-  heroImages[3],
-  productImages[0],
-  productImages[2],
-  productImages[4],
-] as const;
+/** Three cinematic device shots — no flavor-pack photography. */
+const SLIDES = [heroImages[0], heroImages[2], heroImages[3]] as const;
 
 const INTERVAL_MS = 4500;
 
