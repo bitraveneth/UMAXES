@@ -41,14 +41,14 @@ export default function ProductKeyFeatures({ flavor }: { flavor: Flavor }) {
         className="pointer-events-none absolute -top-20 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-umx-cream-deep/50 blur-3xl"
       />
       <div className="relative mx-auto max-w-[1400px]">
-        <header className="mb-10 max-w-2xl sm:mb-12">
+        <header className="mx-auto mb-10 max-w-2xl text-center sm:mb-12">
           <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
             Specs that matter
           </p>
           <h2 className="mt-3 font-display text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-black">
             Key features
           </h2>
-          <p className="mt-4 font-body text-base text-black/60 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-xl font-body text-base text-black/60 sm:text-lg">
             Everything packed into HOOKAMAX 80K — power, capacity, and control
             in one device.
           </p>
