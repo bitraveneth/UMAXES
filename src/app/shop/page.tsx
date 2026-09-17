@@ -8,7 +8,7 @@ import { requireMember } from "@/lib/require-member";
 export const metadata: Metadata = {
   title: "UMAXES Shop",
   description:
-    "HOOKAMAX flavors — browse the catalog. Adults 21+. Nicotine is an addictive chemical.",
+    "Shop HOOKAMAX — premium hookah-inspired disposable. Adults 21+. Nicotine is an addictive chemical.",
 };
 
 export default async function ShopPage() {
