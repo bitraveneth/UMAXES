@@ -293,18 +293,20 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
           </div>
 
           <div className="rounded-[1.35rem] bg-white p-5 ring-1 ring-black/8 sm:p-7">
-            <p className="font-display text-xs font-semibold tracking-[0.16em] text-umx-orange uppercase">
-              {product.name}
-            </p>
-            <h1 className="mt-2 font-display text-[clamp(1.85rem,3.6vw,2.75rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-black text-balance">
-              {flavor.name}
-            </h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="min-w-0 font-display text-[clamp(1.85rem,3.6vw,2.75rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-black text-balance">
+                {flavor.name}
+              </h1>
+              <span className="mt-1 shrink-0 rounded-full bg-[#1b4f72] px-3 py-1 font-display text-[0.68rem] font-bold tracking-[0.14em] text-white uppercase">
+                {product.name}
+              </span>
+            </div>
             <p className="mt-3 font-display text-3xl font-bold tracking-tight text-black sm:text-4xl">
               <StorePrice amount={flavor.price} suffix=".00" />
             </p>
 
             <div className="mt-6">
-              <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-end gap-3 pb-2 sm:grid-cols-[minmax(0,1fr)_5.25rem_8.75rem]">
+              <div className="grid grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3 pb-2">
                 <p className="font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
                   Flavor
                 </p>
@@ -325,7 +327,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   return (
                     <li
                       key={line.key}
-                      className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_5.25rem_8.75rem]"
+                      className="grid grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3"
                     >
                       <label className="min-w-0">
                         <span className="sr-only">Flavor</span>
@@ -336,7 +338,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                               changeFlavor(line, e.target.value as FlavorId)
                             }
                             aria-label="Flavor"
-                            className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold text-black outline-none focus:border-black"
+                            className="min-w-0 w-full rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold text-black outline-none focus:border-black"
                           >
                             {options.map((f) => (
                               <option key={f.id} value={f.id}>
@@ -359,7 +361,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                       <p className="text-right font-display text-sm font-semibold text-black">
                         <StorePrice amount={item.price} />
                       </p>
-                      <div className="justify-self-end">
+                      <div className="flex justify-end">
                         <QtyStepper
                           value={line.quantity}
                           onChange={(next) =>
