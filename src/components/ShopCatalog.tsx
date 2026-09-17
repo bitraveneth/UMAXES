@@ -10,6 +10,7 @@ import {
   Grid3x3,
   Package,
   ShoppingBag,
+  Sparkles,
   Usb,
   Wind,
 } from "lucide-react";
@@ -80,7 +81,7 @@ function ShopFlavorCarousel() {
 
   return (
     <div
-      className="relative min-h-[28rem] overflow-hidden bg-[#f3f0ea] sm:min-h-[34rem] lg:min-h-[40rem]"
+      className="flex h-full min-h-[28rem] flex-col bg-[#f3f0ea] sm:min-h-[34rem] lg:min-h-[40rem]"
       aria-roledescription="carousel"
       aria-label="HOOKAMAX photos"
       onPointerEnter={() => setPaused(true)}
@@ -91,50 +92,51 @@ function ShopFlavorCarousel() {
         tracking.current = false;
       }}
     >
-      {SHOP_SLIDES.map((slide, i) => (
-        <div
-          key={slide.id}
-          className={`absolute inset-0 transition-opacity duration-700 ease-out ${
-            i === index ? "z-[1] opacity-100" : "z-0 opacity-0"
-          }`}
-          aria-hidden={i !== index}
+      <div className="relative min-h-0 flex-1">
+        {SHOP_SLIDES.map((slide, i) => (
+          <div
+            key={slide.id}
+            className={`absolute inset-0 transition-opacity duration-700 ease-out ${
+              i === index ? "z-[1] opacity-100" : "z-0 opacity-0"
+            }`}
+            aria-hidden={i !== index}
+          >
+            <Link
+              href={PRODUCT_HREF}
+              className="absolute inset-0"
+              tabIndex={i === index ? 0 : -1}
+            >
+              <Image
+                src={slide.image}
+                alt={`${product.name} — ${slide.name}`}
+                fill
+                priority={i === 0}
+                sizes="(max-width: 1024px) 100vw, 55vw"
+                className="object-contain object-center p-5 sm:p-8"
+              />
+            </Link>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          aria-label="Previous photo"
+          onClick={() => go(index - 1)}
+          className="absolute top-1/2 left-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:left-4"
         >
-          <Link href={PRODUCT_HREF} className="absolute inset-0 block" tabIndex={i === index ? 0 : -1}>
-            <Image
-              src={slide.image}
-              alt={`${product.name} — ${slide.name}`}
-              fill
-              priority={i === 0}
-              sizes="(max-width: 1024px) 100vw, 55vw"
-              className="object-cover object-center"
-            />
-          </Link>
-        </div>
-      ))}
+          <ChevronLeft className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+        </button>
+        <button
+          type="button"
+          aria-label="Next photo"
+          onClick={() => go(index + 1)}
+          className="absolute top-1/2 right-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:right-4"
+        >
+          <ChevronRight className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+        </button>
+      </div>
 
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-28 bg-gradient-to-t from-black/45 to-transparent"
-      />
-
-      <button
-        type="button"
-        aria-label="Previous photo"
-        onClick={() => go(index - 1)}
-        className="absolute top-1/2 left-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:left-4"
-      >
-        <ChevronLeft className="h-5 w-5" strokeWidth={2.1} aria-hidden />
-      </button>
-      <button
-        type="button"
-        aria-label="Next photo"
-        onClick={() => go(index + 1)}
-        className="absolute top-1/2 right-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:right-4"
-      >
-        <ChevronRight className="h-5 w-5" strokeWidth={2.1} aria-hidden />
-      </button>
-
-      <div className="absolute inset-x-0 bottom-4 z-[3] flex justify-center gap-2 px-4">
+      <div className="flex justify-center gap-2 px-4 pb-4">
         {SHOP_SLIDES.map((slide, i) => (
           <button
             key={slide.id}
@@ -142,23 +144,73 @@ function ShopFlavorCarousel() {
             aria-label={`Show photo ${i + 1}`}
             aria-current={i === index}
             onClick={() => go(i)}
-            className={`relative h-14 w-11 overflow-hidden ring-2 transition sm:h-16 sm:w-12 ${
+            className={`relative h-14 w-14 overflow-hidden bg-white ring-2 transition sm:h-16 sm:w-16 ${
               i === index
                 ? "ring-umx-orange"
-                : "ring-white/70 hover:ring-white"
+                : "ring-black/10 hover:ring-black/30"
             }`}
           >
             <Image
               src={slide.image}
               alt=""
               fill
-              sizes="48px"
-              className="object-cover"
+              sizes="64px"
+              className="object-contain p-1"
             />
           </button>
         ))}
       </div>
     </div>
+  );
+}
+
+function ComingSoonCard() {
+  return (
+    <article
+      aria-label="Coming soon"
+      className="overflow-hidden border border-black/8 bg-white"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <div className="relative min-h-[22rem] overflow-hidden bg-[#f3f0ea] sm:min-h-[26rem] lg:min-h-[28rem]">
+          <Image
+            src={flavors[9].image}
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 100vw, 55vw"
+            className="scale-110 object-contain p-8 blur-xl"
+            aria-hidden
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-white/35 backdrop-blur-[2px]"
+          />
+          <div className="absolute inset-0 flex items-center justify-center p-6">
+            <span className="inline-flex items-center gap-2 bg-black px-5 py-3 font-display text-sm font-bold tracking-[0.18em] text-white uppercase">
+              <Sparkles className="h-4 w-4 text-umx-orange" strokeWidth={2.2} aria-hidden />
+              Coming soon
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 lg:px-12">
+          <p className="font-display text-xs font-bold tracking-[0.2em] text-black/35 uppercase">
+            Next drop
+          </p>
+          <h2 className="mt-3 font-display text-[clamp(2.25rem,5vw,3.5rem)] font-extrabold leading-[0.9] tracking-[-0.04em] text-black/35">
+            Coming soon
+          </h2>
+          <p className="mt-4 max-w-md font-body text-base leading-relaxed text-black/40 sm:text-lg">
+            New UMAXES products will land here. This slot is ready for the next
+            device.
+          </p>
+          <div className="mt-10 border-t border-black/8 pt-8">
+            <span className="inline-flex min-h-14 min-w-[12rem] items-center justify-center border border-black/15 bg-black/[0.04] px-8 font-display text-base font-semibold text-black/35">
+              Not available yet
+            </span>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -301,7 +353,8 @@ export default function ShopCatalog() {
 
       <div className="mx-auto max-w-[1680px] px-4 py-8 sm:px-5 sm:py-10 lg:px-6 xl:px-8">
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_260px] xl:gap-10">
-          <article className="group overflow-hidden border border-black/8 bg-white">
+          <div className="space-y-8">
+          <article className="overflow-hidden border border-black/8 bg-white">
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
               <ShopFlavorCarousel />
 
@@ -355,6 +408,8 @@ export default function ShopCatalog() {
               </div>
             </div>
           </article>
+          <ComingSoonCard />
+          </div>
 
           <ShopAside quantity={quantity} total={total} />
         </div>
