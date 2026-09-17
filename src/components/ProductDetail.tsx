@@ -306,20 +306,20 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               {flavor.description}
             </p>
 
-            <div className="mt-6 border-t border-black/10 pt-5">
-              <div className="hidden grid-cols-[minmax(0,1fr)_5.25rem_8.75rem] items-center gap-3 pb-2.5 sm:grid">
-                <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
+            <div className="mt-6">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-end gap-3 pb-2 sm:grid-cols-[minmax(0,1fr)_5.25rem_8.75rem]">
+                <p className="font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
                   Flavor
                 </p>
-                <p className="text-right font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                <p className="text-right font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
                   Unit price
                 </p>
-                <p className="text-right font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                <p className="text-right font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
                   Quantity
                 </p>
               </div>
 
-              <ul className="divide-y divide-black/8 border-y border-black/10">
+              <ul className="space-y-2">
                 {lines.map((line) => {
                   const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
                   const options = flavors.filter(
@@ -328,7 +328,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   return (
                     <li
                       key={line.key}
-                      className="grid grid-cols-1 items-center gap-3 py-3.5 sm:grid-cols-[minmax(0,1fr)_5.25rem_8.75rem]"
+                      className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_5.25rem_8.75rem]"
                     >
                       <label className="min-w-0">
                         <span className="sr-only">Flavor</span>
@@ -359,16 +359,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                           ) : null}
                         </div>
                       </label>
-                      <p className="text-right font-display text-sm font-semibold text-black sm:block">
-                        <span className="mr-3 font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase sm:hidden">
-                          Unit price
-                        </span>
+                      <p className="text-right font-display text-sm font-semibold text-black">
                         <StorePrice amount={item.price} />
                       </p>
-                      <div className="flex items-center justify-between sm:justify-end">
-                        <span className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase sm:hidden">
-                          Quantity
-                        </span>
+                      <div className="justify-self-end">
                         <QtyStepper
                           value={line.quantity}
                           onChange={(next) =>
