@@ -234,10 +234,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
 
   return (
     <div
-      className={`px-4 pb-20 sm:px-6 lg:px-8 sm:pb-28 ${storeTopPadClass(compactChrome)}`}
+      className={`px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pb-20 ${storeTopPadClass(compactChrome)}`}
     >
-      <div className="mx-auto max-w-[1600px]">
-        <nav className="mb-6 font-display text-xs tracking-wide text-black/55 sm:mb-8">
+      <div className="mx-auto max-w-[1120px]">
+        <nav className="mb-4 font-display text-[0.7rem] tracking-wide text-black/55 sm:mb-6">
           <Link href="/" className="transition hover:text-umx-orange">
             Home
           </Link>
@@ -249,26 +249,24 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
           <span className="text-black">{flavor.name}</span>
         </nav>
 
-        <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
-          <div className="lg:max-w-[38rem]">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)] lg:gap-10">
+          <div>
             <div
-              className="relative overflow-hidden rounded-[1.5rem] bg-white ring-1 ring-black/8"
+              className="relative mx-auto aspect-square w-full max-w-[22rem] overflow-hidden rounded-2xl bg-white ring-1 ring-black/8 sm:max-w-[28rem] lg:mx-0 lg:max-w-none"
               style={{ backgroundColor: `${flavor.accent}14` }}
             >
-              <div className="relative aspect-square">
-                <Image
-                  src={activeShot.src}
-                  alt={activeShot.alt}
-                  fill
-                  priority
-                  className="object-contain p-5 sm:p-7"
-                  quality={80}
-                  sizes="(max-width: 1024px) 100vw, 608px"
-                />
-              </div>
+              <Image
+                src={activeShot.src}
+                alt={activeShot.alt}
+                fill
+                priority
+                className="object-contain p-4 sm:p-6"
+                quality={80}
+                sizes="(max-width: 1024px) 90vw, 560px"
+              />
             </div>
 
-            <div className="mt-3 flex gap-3">
+            <div className="mt-2.5 flex gap-2">
               {gallery.map((item, i) => (
                 <button
                   key={item.id}
@@ -276,7 +274,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   onClick={() => setShot(i)}
                   aria-label={`Show ${item.alt}`}
                   aria-current={i === shot}
-                  className={`relative h-[4.75rem] w-[4.75rem] overflow-hidden rounded-xl bg-white ring-2 transition sm:h-[5.5rem] sm:w-[5.5rem] ${
+                  className={`relative h-14 w-14 overflow-hidden rounded-lg bg-white ring-2 transition sm:h-16 sm:w-16 ${
                     i === shot
                       ? "ring-umx-orange"
                       : "ring-black/10 hover:ring-black/25"
@@ -286,38 +284,40 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     src={item.src}
                     alt=""
                     fill
-                    sizes="88px"
-                    className="object-contain p-1.5"
+                    sizes="64px"
+                    className="object-contain p-1"
                   />
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="lg:sticky lg:top-32">
-            <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase">
+          <div className="rounded-2xl bg-white p-4 ring-1 ring-black/8 sm:p-5">
+            <p className="font-display text-[0.65rem] font-semibold tracking-[0.16em] text-umx-orange uppercase">
               {product.name}
             </p>
-            <h1 className="mt-2 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black">
-              {flavor.name}
-            </h1>
-            <p className="mt-4 font-display text-3xl font-bold tracking-tight text-black sm:text-4xl">
-              <StorePrice amount={flavor.price} suffix=".00" />
-            </p>
-            <p className="mt-4 max-w-xl font-body text-base leading-relaxed text-black/65 sm:text-lg">
+            <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <h1 className="font-display text-[clamp(1.65rem,4.5vw,2.15rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-black">
+                {flavor.name}
+              </h1>
+              <p className="font-display text-xl font-bold tracking-tight text-black">
+                <StorePrice amount={flavor.price} suffix=".00" />
+              </p>
+            </div>
+            <p className="mt-2 font-body text-sm leading-relaxed text-black/60">
               {flavor.description}
             </p>
 
-            <div className="mt-8 border-t border-black/10 pt-6">
-              <div className="hidden grid-cols-[minmax(0,1fr)_7rem_9.5rem] items-center gap-4 pb-3 sm:grid">
-                <p className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
+            <div className="mt-4 border-t border-black/10 pt-3">
+              <div className="hidden grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 pb-2 sm:grid">
+                <p className="font-display text-[0.62rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
                   Flavor
                 </p>
-                <p className="text-right font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
-                  Unit price
+                <p className="w-[4.75rem] text-right font-display text-[0.62rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                  Price
                 </p>
-                <p className="text-right font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
-                  Quantity
+                <p className="w-[8.25rem] text-right font-display text-[0.62rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                  Qty
                 </p>
               </div>
 
@@ -330,20 +330,18 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   return (
                     <li
                       key={line.key}
-                      className="py-4 sm:grid sm:grid-cols-[minmax(0,1fr)_7rem_9.5rem] sm:items-center sm:gap-4"
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-2.5 sm:grid-cols-[minmax(0,1fr)_4.75rem_8.25rem] sm:gap-3"
                     >
-                      <label className="block">
-                        <span className="mb-1.5 block font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:sr-only">
-                          Flavor
-                        </span>
-                        <div className="flex items-center gap-2">
+                      <label className="min-w-0">
+                        <span className="sr-only">Flavor</span>
+                        <div className="flex min-w-0 items-center gap-2">
                           <select
                             value={line.flavorId}
                             onChange={(e) =>
                               changeFlavor(line, e.target.value as FlavorId)
                             }
                             aria-label="Flavor"
-                            className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3.5 py-2.5 font-display text-sm font-semibold text-black outline-none focus:border-black"
+                            className="min-w-0 flex-1 rounded-md border border-black/15 bg-white px-2.5 py-2 font-display text-sm font-semibold text-black outline-none focus:border-black"
                           >
                             {options.map((f) => (
                               <option key={f.id} value={f.id}>
@@ -355,7 +353,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                             <button
                               type="button"
                               onClick={() => removeLine(line.key)}
-                              className="font-display text-xs font-semibold text-black/45 transition hover:text-black"
+                              className="shrink-0 font-display text-[0.7rem] font-semibold text-black/40 transition hover:text-black"
                               aria-label={`Remove ${item.name}`}
                             >
                               Remove
@@ -363,18 +361,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                           ) : null}
                         </div>
                       </label>
-                      <p className="mt-3 flex items-center justify-between sm:mt-0 sm:block sm:text-right">
-                        <span className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:hidden">
-                          Unit price
-                        </span>
-                        <span className="font-display text-sm font-semibold text-black">
-                          <StorePrice amount={item.price} />
-                        </span>
+                      <p className="hidden text-right font-display text-sm font-semibold text-black sm:block">
+                        <StorePrice amount={item.price} />
                       </p>
-                      <div className="mt-3 flex items-center justify-between gap-3 sm:mt-0 sm:justify-end">
-                        <span className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:hidden">
-                          Quantity
-                        </span>
+                      <div className="justify-self-end">
                         <QtyStepper
                           value={line.quantity}
                           onChange={(next) =>
@@ -396,87 +386,75 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 <button
                   type="button"
                   onClick={addFlavorRow}
-                  className="mt-4 font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
+                  className="mt-2.5 font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
                 >
-                  + Add another flavor
+                  + Add flavor
                 </button>
               ) : null}
 
-              <div className="mt-8">
-                <p className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
-                  Total
-                </p>
-                <p className="mt-1 font-display text-2xl font-bold text-black">
-                  {showPrices ? (
-                    <StorePrice amount={payable} />
-                  ) : (
-                    "On request"
-                  )}
-                  <span className="ml-2 font-display text-sm font-semibold text-black/40">
-                    · {totalQty} {totalQty === 1 ? "item" : "items"}
-                  </span>
-                </p>
-                {showPrices && discount > 0 ? (
-                  <p className="mt-1 font-body text-sm text-black/50">
-                    Subtotal <StorePrice amount={subtotal} />
-                    {appliedCoupon ? ` · ${appliedCoupon} −$${discount.toFixed(2)}` : ""}
+              <div className="mt-4 flex items-end justify-between gap-3">
+                <div>
+                  <p className="font-display text-[0.62rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                    Total
                   </p>
-                ) : null}
+                  <p className="mt-0.5 font-display text-xl font-bold text-black">
+                    {showPrices ? <StorePrice amount={payable} /> : "On request"}
+                  </p>
+                  <p className="font-body text-xs text-black/45">
+                    {totalQty} {totalQty === 1 ? "item" : "items"}
+                    {showPrices && discount > 0 && appliedCoupon
+                      ? ` · ${appliedCoupon} −$${discount.toFixed(2)}`
+                      : ""}
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-5">
-                <label
-                  htmlFor="product-coupon"
-                  className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase"
-                >
+              <div className="mt-3 flex gap-2">
+                <label htmlFor="product-coupon" className="sr-only">
                   Coupon code
                 </label>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    id="product-coupon"
-                    value={couponDraft}
-                    onChange={(e) => {
-                      setCouponDraft(e.target.value.toUpperCase());
-                      setCouponMessage("");
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void validateCoupon(couponDraft, subtotal);
-                      }
-                    }}
-                    placeholder="Enter code"
-                    autoComplete="off"
-                    className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3.5 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void validateCoupon(couponDraft, subtotal)}
-                    disabled={couponBusy}
-                    className="shrink-0 rounded-lg border border-black bg-white px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange disabled:opacity-50"
-                  >
-                    {couponBusy ? "…" : "Apply"}
-                  </button>
-                </div>
-                {appliedCoupon && !couponMessage ? (
-                  <p className="mt-2 font-body text-sm text-black/60">
-                    Applied {appliedCoupon}
-                    {showPrices && discount > 0 ? ` (−$${discount.toFixed(2)})` : ""}
-                  </p>
-                ) : null}
-                {couponMessage ? (
-                  <p className="mt-2 font-body text-sm text-red-700">
-                    {couponMessage}
-                  </p>
-                ) : null}
+                <input
+                  id="product-coupon"
+                  value={couponDraft}
+                  onChange={(e) => {
+                    setCouponDraft(e.target.value.toUpperCase());
+                    setCouponMessage("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void validateCoupon(couponDraft, subtotal);
+                    }
+                  }}
+                  placeholder="Coupon code"
+                  autoComplete="off"
+                  className="min-w-0 flex-1 rounded-md border border-black/15 bg-white px-3 py-2 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black"
+                />
+                <button
+                  type="button"
+                  onClick={() => void validateCoupon(couponDraft, subtotal)}
+                  disabled={couponBusy}
+                  className="shrink-0 rounded-md border border-black/20 px-3 py-2 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange disabled:opacity-50"
+                >
+                  {couponBusy ? "…" : "Apply"}
+                </button>
               </div>
+              {couponMessage ? (
+                <p className="mt-1.5 font-body text-xs text-red-700">
+                  {couponMessage}
+                </p>
+              ) : appliedCoupon && !couponMessage ? (
+                <p className="mt-1.5 font-body text-xs text-black/55">
+                  Applied {appliedCoupon}
+                </p>
+              ) : null}
 
-              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={handleAdd}
                   disabled={!totalQty}
-                  className={`inline-flex min-h-12 items-center justify-center rounded-lg px-6 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 sm:text-base ${
+                  className={`inline-flex min-h-11 items-center justify-center rounded-md px-3 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 ${
                     !totalQty
                       ? "cursor-not-allowed bg-black/25"
                       : added
@@ -484,13 +462,13 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                         : "bg-black hover:bg-umx-orange"
                   }`}
                 >
-                  {added ? "Added to cart" : "Add to cart"}
+                  {added ? "Added" : "Add to cart"}
                 </button>
                 <button
                   type="button"
                   onClick={handleBuy}
                   disabled={!totalQty}
-                  className={`inline-flex min-h-12 items-center justify-center rounded-lg px-6 font-display text-sm font-semibold tracking-wide transition duration-300 sm:text-base ${
+                  className={`inline-flex min-h-11 items-center justify-center rounded-md px-3 font-display text-sm font-semibold tracking-wide transition duration-300 ${
                     !totalQty
                       ? "cursor-not-allowed border border-black/15 text-black/30"
                       : "border border-black bg-white text-black hover:border-umx-orange hover:text-umx-orange"
