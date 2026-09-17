@@ -174,8 +174,15 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
 
         <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
           <div>
+            <p className="font-display text-xs font-semibold tracking-[0.16em] text-umx-orange uppercase">
+              {product.name}
+            </p>
+            <h1 className="mt-2 font-display text-[clamp(2.25rem,5vw,3.5rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-black">
+              {flavor.name}
+            </h1>
+
             <div
-              className="relative aspect-square overflow-hidden rounded-[1.75rem] bg-umx-cream-warm shadow-[0_20px_50px_rgba(61,22,5,0.1)] ring-1 ring-black/5"
+              className="relative mt-6 aspect-square overflow-hidden rounded-[1.75rem] bg-umx-cream-warm shadow-[0_20px_50px_rgba(61,22,5,0.1)] ring-1 ring-black/5"
               style={{ backgroundColor: `${flavor.accent}18` }}
             >
               <Image
@@ -189,18 +196,18 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               />
             </div>
 
-            <p className="mt-6 font-display text-xs font-semibold tracking-[0.16em] text-umx-orange uppercase">
-              {product.name}
-            </p>
-            <h1 className="mt-2 font-display text-[clamp(2.25rem,5vw,3.5rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-black">
-              {flavor.name}
-            </h1>
-            <p className="mt-3 font-display text-2xl font-semibold text-black">
-              <StorePrice amount={flavor.price} suffix=".00" />
-            </p>
-            <p className="mt-4 max-w-md font-body text-base leading-relaxed text-black/70 sm:text-lg">
-              {flavor.description}
-            </p>
+            <div className="mt-5 flex flex-wrap items-start gap-4">
+              <span className="relative inline-flex shrink-0 items-center bg-umx-orange py-2 pr-5 pl-6 font-display text-lg font-bold tracking-tight text-white [clip-path:polygon(12px_0,100%_0,100%_100%,12px_100%,0_50%)]">
+                <span
+                  aria-hidden
+                  className="absolute top-1/2 left-2.5 h-2 w-2 -translate-y-1/2 rounded-full bg-white"
+                />
+                <StorePrice amount={flavor.price} suffix=".00" />
+              </span>
+              <p className="min-w-0 max-w-md flex-1 font-body text-base leading-relaxed text-black/70 sm:text-lg">
+                {flavor.description}
+              </p>
+            </div>
           </div>
 
           <div className="overflow-hidden rounded-[1.5rem] bg-white shadow-[0_12px_36px_rgba(61,22,5,0.08)] ring-1 ring-black/8">
