@@ -15,6 +15,7 @@ const slides = [
     title: siteSlogan,
     subtitle: "Crafted for Smooth Flavor & Lasting Satisfaction.",
     cta: "Buy now",
+    href: "/shop",
     object: "object-center",
     bright: false,
   },
@@ -24,7 +25,8 @@ const slides = [
     kicker: "On the move",
     title: "Luxury That Travels",
     subtitle: "A diamond-cut device that slips into the day — desert light, city night, always ready.",
-    cta: "Shop now",
+    cta: "About UMAXES",
+    href: "/about",
     object: "object-[center_42%]",
     bright: false,
   },
@@ -34,7 +36,8 @@ const slides = [
     kicker: "80K puffs",
     title: "Own Every Session",
     subtitle: "Dual airflow. Dense vapor. Energy that keeps pace when the bowl gets loud.",
-    cta: "See flavors",
+    cta: "Shop now",
+    href: "/shop",
     object: "object-[center_68%]",
     bright: true,
   },
@@ -44,7 +47,8 @@ const slides = [
     kicker: "Flavor lineup",
     title: "Coastal Cool. Open Sky.",
     subtitle: "Crisp clouds and sunlit flavor — pick a profile and let the session stretch.",
-    cta: "Explore lineup",
+    cta: "About UMAXES",
+    href: "/about",
     object: "object-[center_28%]",
     bright: true,
   },
@@ -54,7 +58,8 @@ const slides = [
     kicker: "In hand",
     title: "Grip. Glow. Go.",
     subtitle: "Hookah-inspired taste with a hold that feels built for motion.",
-    cta: "Buy now",
+    cta: "See flavors",
+    href: "/shop",
     object: "object-[center_52%]",
     bright: true,
   },
@@ -64,7 +69,8 @@ const slides = [
     kicker: "Night mode",
     title: "Light Up the Room",
     subtitle: "ARGB glow and a silver-hour look — vapor that photographs as bold as it tastes.",
-    cta: "Shop HOOKAMAX",
+    cta: "About UMAXES",
+    href: "/about",
     object: "object-[center_32%]",
     bright: false,
   },
@@ -75,6 +81,7 @@ const slides = [
     title: "The City Never Sleeps",
     subtitle: "Pink-neon nights. Smooth draw. Luxury that belongs on wet streets after midnight.",
     cta: "Shop now",
+    href: "/shop",
     object: "object-[center_38%]",
     bright: false,
   },
@@ -84,7 +91,8 @@ const slides = [
     kicker: "Evening ritual",
     title: "Velvet. Vapor. Voltage.",
     subtitle: "The nightcap draw — luminous, unhurried, unmistakably HOOKAMAX.",
-    cta: "Buy now",
+    cta: "About UMAXES",
+    href: "/about",
     object: "object-[center_26%]",
     bright: false,
   },
@@ -202,7 +210,8 @@ export default function HeroProgress() {
               {active.subtitle}
             </p>
             <Link
-              href="/shop"
+              key={`${active.href}-${active.cta}`}
+              href={active.href}
               className="group mt-4 inline-flex w-fit items-center gap-2.5 rounded-full bg-white px-4 py-2.5 font-display text-[0.8125rem] font-semibold tracking-[0.04em] text-black shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition duration-300 hover:bg-black hover:text-white sm:mt-8 sm:gap-3.5 sm:px-7 sm:py-3.5 sm:text-base"
               onPointerDown={(e) => e.stopPropagation()}
             >
