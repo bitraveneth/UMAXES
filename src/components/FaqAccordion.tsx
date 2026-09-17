@@ -11,7 +11,7 @@ export default function FaqAccordion() {
       {faqs.map((item, i) => {
         const isOpen = open === i;
         return (
-          <li key={item.q}>
+          <li key={item.q} id={item.q.toLowerCase().includes("coupon") ? "coupons" : undefined}>
             <button
               type="button"
               aria-expanded={isOpen}

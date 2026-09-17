@@ -23,6 +23,7 @@ type CartContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
   add: (flavorId: FlavorId, amount?: number) => void;
+  addMany: (lines: { flavorId: FlavorId; quantity: number }[]) => void;
   setQuantity: (flavorId: FlavorId, qty: number) => void;
   remove: (flavorId: FlavorId) => void;
   clear: () => void;
@@ -109,6 +110,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const addMany = useCallback(
+    (lines: { flavorId: FlavorId; quantity: number }[]) => {
+      setItems((prev) => {
+        const next = [...prev];
+        for (const line of lines) {
+          const n = Math.max(0, Math.floor(line.quantity));
+          if (n < 1) continue;
+          const i = next.findIndex((l) => l.flavorId === line.flavorId);
+          if (i >= 0) {
+            next[i] = { ...next[i], quantity: next[i].quantity + n };
+          } else {
+            next.push({ flavorId: line.flavorId, quantity: n });
+          }
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
   const setQuantity = useCallback((flavorId: FlavorId, qty: number) => {
     const next = Math.max(0, Math.floor(qty));
     setItems((prev) => {
@@ -146,12 +167,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       open,
       setOpen,
       add,
+      addMany,
       setQuantity,
       remove,
       clear,
       total,
     }),
-    [items, quantity, open, add, setQuantity, remove, clear, total],
+    [items, quantity, open, add, addMany, setQuantity, remove, clear, total],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

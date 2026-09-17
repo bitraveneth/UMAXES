@@ -2,26 +2,106 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { StorePrice } from "@/components/StorePrice";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { QtyStepper } from "@/components/QtyStepper";
+import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
-import { flavors, product, PUFF_OPTIONS, type Flavor } from "@/lib/assets";
+import { flavors, product, type Flavor, type FlavorId } from "@/lib/assets";
+
+const DRAFT_KEY = "umaxes-product-draft-qty";
+
+function emptyQty(): Record<FlavorId, number> {
+  return Object.fromEntries(flavors.map((f) => [f.id, 0])) as Record<
+    FlavorId,
+    number
+  >;
+}
+
+function loadDraft(): Record<FlavorId, number> {
+  const base = emptyQty();
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return base;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    for (const f of flavors) {
+      const n = Number(parsed[f.id]);
+      if (Number.isFinite(n) && n > 0) base[f.id] = Math.floor(n);
+    }
+  } catch {
+    /* ignore */
+  }
+  return base;
+}
 
 export default function ProductDetail({ flavor }: { flavor: Flavor }) {
-  const { add } = useCart();
-  const [qty, setQty] = useState(1);
+  const router = useRouter();
+  const { addMany } = useCart();
+  const showPrices = useShowStorePrices();
+  const [qty, setQty] = useState<Record<FlavorId, number>>(emptyQty);
   const [added, setAdded] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
   const compactChrome = useCompactMobileStoreChrome();
 
+  useEffect(() => {
+    setQty(loadDraft());
+    setDraftReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(qty));
+    } catch {
+      /* ignore */
+    }
+  }, [qty, draftReady]);
+
+  const lines = useMemo(
+    () =>
+      flavors
+        .filter((f) => (qty[f.id] ?? 0) > 0)
+        .map((f) => ({ flavorId: f.id, quantity: qty[f.id] })),
+    [qty],
+  );
+
+  const totalQty = useMemo(
+    () => lines.reduce((sum, l) => sum + l.quantity, 0),
+    [lines],
+  );
+  const totalAmount = useMemo(
+    () =>
+      lines.reduce((sum, l) => {
+        const item = flavors.find((f) => f.id === l.flavorId);
+        return sum + (item?.price ?? 0) * l.quantity;
+      }, 0),
+    [lines],
+  );
+
+  function setFlavorQty(id: FlavorId, next: number) {
+    setQty((prev) => ({ ...prev, [id]: Math.max(0, Math.floor(next)) }));
+  }
+
   function handleAdd() {
-    add(flavor.id, qty);
+    if (!lines.length) return;
+    addMany(lines);
     setAdded(true);
+    setQty(emptyQty());
     window.setTimeout(() => setAdded(false), 1200);
+  }
+
+  function handleBuy() {
+    if (!lines.length) return;
+    flushSync(() => {
+      addMany(lines);
+      setQty(emptyQty());
+    });
+    router.push("/checkout");
   }
 
   return (
@@ -71,84 +151,127 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               {flavor.description}
             </p>
 
-            {/* Product feature — display only, not a chooser */}
             <div className="mt-6">
               <p className="font-display text-sm font-bold tracking-[0.08em] text-black uppercase">
-                Variants
+                Coupons
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {PUFF_OPTIONS.map((option) => (
-                  <span
-                    key={option}
-                    className="inline-flex items-center rounded-full bg-white px-3.5 py-2 font-display text-[13px] font-semibold tracking-[0.04em] text-black ring-1 ring-black/12"
-                  >
-                    {option}
-                    <span className="ml-1.5 font-body text-xs font-medium text-black/45">
-                      puffs
-                    </span>
-                  </span>
-                ))}
-              </div>
+              <Link
+                href="/faq#coupons"
+                className="mt-2 inline-flex items-center gap-1.5 font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
+              >
+                View coupon offers
+                <span aria-hidden>→</span>
+              </Link>
+              <p className="mt-1.5 font-body text-xs leading-relaxed text-black/50">
+                Larger order quantities can qualify for a coupon.
+              </p>
             </div>
 
-            <div className="mt-8">
-              <p className="font-display text-sm font-bold tracking-[0.08em] text-black uppercase">
-                HOOKAMAX flavors
-              </p>
-              <div
-                className="mt-3 flex flex-wrap gap-2"
-                role="list"
-                aria-label="Flavors"
-              >
+            <div className="mt-8 overflow-hidden rounded-[1.5rem] bg-white shadow-[0_12px_36px_rgba(61,22,5,0.08)] ring-1 ring-black/8">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-black/8 px-4 py-3 sm:px-5">
+                <p className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
+                  Flavor
+                </p>
+                <p className="w-[4.75rem] text-right font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:w-24">
+                  Unit price
+                </p>
+                <p className="w-[8.5rem] text-center font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:w-40">
+                  Quantity
+                </p>
+              </div>
+
+              <ul>
                 {flavors.map((f) => {
                   const active = f.id === flavor.id;
                   return (
-                    <Link
+                    <li
                       key={f.id}
-                      href={`/product/${f.id}`}
-                      scroll={false}
-                      role="listitem"
-                      aria-current={active ? "page" : undefined}
-                      className={`inline-flex items-center rounded-full px-3.5 py-2 font-display text-[13px] font-semibold tracking-[0.02em] transition duration-200 ${
-                        active
-                          ? "bg-umx-orange text-white shadow-[0_6px_16px_rgba(255,91,4,0.28)]"
-                          : "bg-white text-black ring-1 ring-black/12 hover:text-umx-orange hover:ring-umx-orange/55"
+                      className={`grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-black/6 px-4 py-2.5 last:border-b-0 sm:px-5 ${
+                        active ? "bg-umx-cream/70" : "bg-white"
                       }`}
                     >
-                      {f.name}
-                    </Link>
+                      <Link
+                        href={`/product/${f.id}`}
+                        scroll={false}
+                        aria-current={active ? "page" : undefined}
+                        className={`min-w-0 truncate font-display text-[13px] font-semibold tracking-[0.02em] transition ${
+                          active
+                            ? "text-black"
+                            : "text-black/70 hover:text-umx-orange"
+                        }`}
+                      >
+                        {f.name}
+                      </Link>
+                      <p className="w-[4.75rem] text-right font-display text-sm font-semibold text-black sm:w-24">
+                        <StorePrice amount={f.price} />
+                      </p>
+                      <div className="flex w-[8.5rem] justify-end sm:w-40">
+                        <QtyStepper
+                          value={qty[f.id] ?? 0}
+                          onChange={(next) => setFlavorQty(f.id, next)}
+                          min={0}
+                          allowRemove
+                          size="sm"
+                          ariaLabel={`${f.name} quantity`}
+                        />
+                      </div>
+                    </li>
                   );
                 })}
-              </div>
-            </div>
+              </ul>
 
-            <div className="mt-7">
-              <p className="font-display text-sm font-bold tracking-[0.08em] text-black uppercase">
-                Quantity
-              </p>
-              <div className="mt-3 flex flex-wrap items-stretch gap-3">
-                <QtyStepper
-                  value={qty}
-                  onChange={setQty}
-                  ariaLabel="Quantity"
-                />
+              <div className="flex flex-col gap-4 border-t border-black/8 bg-umx-cream/40 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-5">
+                <div>
+                  <p className="font-display text-xs font-semibold tracking-[0.12em] text-black/45 uppercase">
+                    Total quantity
+                  </p>
+                  <p className="mt-1 font-display text-xl font-bold text-black">
+                    {totalQty}
+                  </p>
+                  <p className="mt-3 font-display text-xs font-semibold tracking-[0.12em] text-black/45 uppercase">
+                    Total amount
+                  </p>
+                  <p className="mt-1 font-display text-xl font-bold text-black">
+                    {showPrices ? (
+                      <StorePrice amount={totalAmount} />
+                    ) : (
+                      "On request"
+                    )}
+                  </p>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={handleAdd}
-                  className={`inline-flex h-12 min-w-[11rem] flex-1 items-center justify-center gap-2 rounded-full px-7 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 sm:flex-none sm:text-base ${
-                    added ? "bg-umx-orange" : "bg-black hover:bg-umx-orange"
-                  }`}
-                >
-                  {added ? "Added to cart" : "Add to cart"}
-                  <span aria-hidden className="!text-white">
-                    {added ? "✓" : "→"}
-                  </span>
-                </button>
+                <div className="flex flex-col gap-2 sm:min-w-[12.5rem]">
+                  <button
+                    type="button"
+                    onClick={handleAdd}
+                    disabled={!totalQty}
+                    className={`inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 sm:text-base ${
+                      !totalQty
+                        ? "cursor-not-allowed bg-black/25"
+                        : added
+                          ? "bg-umx-orange"
+                          : "bg-black hover:bg-umx-orange"
+                    }`}
+                  >
+                    {added ? "Added to cart" : "Add to cart"}
+                    <span aria-hidden className="!text-white">
+                      {added ? "✓" : "→"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBuy}
+                    disabled={!totalQty}
+                    className={`inline-flex h-12 items-center justify-center rounded-full px-7 font-display text-sm font-semibold tracking-wide transition duration-300 sm:text-base ${
+                      !totalQty
+                        ? "cursor-not-allowed border border-black/15 text-black/30"
+                        : "border border-black bg-white text-black hover:border-umx-orange hover:text-umx-orange"
+                    }`}
+                  >
+                    Buy it
+                  </button>
+                </div>
               </div>
-              <p className="mt-2 font-body text-xs text-black/45">
-                Type any amount — e.g. 100
-              </p>
             </div>
           </div>
         </div>
