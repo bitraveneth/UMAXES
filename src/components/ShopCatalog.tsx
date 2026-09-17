@@ -81,7 +81,7 @@ function ShopFlavorCarousel() {
 
   return (
     <div
-      className="flex h-full min-h-[28rem] flex-col bg-[#f3f0ea] sm:min-h-[34rem] lg:min-h-[40rem]"
+      className="relative h-full min-h-[28rem] overflow-hidden bg-black sm:min-h-[34rem] lg:min-h-[40rem]"
       aria-roledescription="carousel"
       aria-label="HOOKAMAX photos"
       onPointerEnter={() => setPaused(true)}
@@ -92,51 +92,54 @@ function ShopFlavorCarousel() {
         tracking.current = false;
       }}
     >
-      <div className="relative min-h-0 flex-1">
-        {SHOP_SLIDES.map((slide, i) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-700 ease-out ${
-              i === index ? "z-[1] opacity-100" : "z-0 opacity-0"
-            }`}
-            aria-hidden={i !== index}
+      {SHOP_SLIDES.map((slide, i) => (
+        <div
+          key={slide.id}
+          className={`absolute inset-0 transition-opacity duration-700 ease-out ${
+            i === index ? "z-[1] opacity-100" : "z-0 opacity-0"
+          }`}
+          aria-hidden={i !== index}
+        >
+          <Link
+            href={PRODUCT_HREF}
+            className="absolute inset-0"
+            tabIndex={i === index ? 0 : -1}
           >
-            <Link
-              href={PRODUCT_HREF}
-              className="absolute inset-0"
-              tabIndex={i === index ? 0 : -1}
-            >
-              <Image
-                src={slide.image}
-                alt={`${product.name} — ${slide.name}`}
-                fill
-                priority={i === 0}
-                sizes="(max-width: 1024px) 100vw, 55vw"
-                className="object-contain object-center p-5 sm:p-8"
-              />
-            </Link>
-          </div>
-        ))}
+            <Image
+              src={slide.image}
+              alt={`${product.name} — ${slide.name}`}
+              fill
+              priority={i === 0}
+              sizes="(max-width: 1024px) 100vw, 55vw"
+              className="object-cover object-center"
+            />
+          </Link>
+        </div>
+      ))}
 
-        <button
-          type="button"
-          aria-label="Previous photo"
-          onClick={() => go(index - 1)}
-          className="absolute top-1/2 left-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:left-4"
-        >
-          <ChevronLeft className="h-5 w-5" strokeWidth={2.1} aria-hidden />
-        </button>
-        <button
-          type="button"
-          aria-label="Next photo"
-          onClick={() => go(index + 1)}
-          className="absolute top-1/2 right-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:right-4"
-        >
-          <ChevronRight className="h-5 w-5" strokeWidth={2.1} aria-hidden />
-        </button>
-      </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-24 bg-gradient-to-t from-black/50 to-transparent"
+      />
 
-      <div className="flex justify-center gap-2 px-4 pb-4">
+      <button
+        type="button"
+        aria-label="Previous photo"
+        onClick={() => go(index - 1)}
+        className="absolute top-1/2 left-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:left-4"
+      >
+        <ChevronLeft className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+      </button>
+      <button
+        type="button"
+        aria-label="Next photo"
+        onClick={() => go(index + 1)}
+        className="absolute top-1/2 right-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:right-4"
+      >
+        <ChevronRight className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+      </button>
+
+      <div className="absolute inset-x-0 bottom-4 z-[3] flex justify-center gap-2 px-4">
         {SHOP_SLIDES.map((slide, i) => (
           <button
             key={slide.id}
@@ -144,10 +147,10 @@ function ShopFlavorCarousel() {
             aria-label={`Show photo ${i + 1}`}
             aria-current={i === index}
             onClick={() => go(i)}
-            className={`relative h-14 w-14 overflow-hidden bg-white ring-2 transition sm:h-16 sm:w-16 ${
+            className={`relative h-14 w-14 overflow-hidden ring-2 transition sm:h-16 sm:w-16 ${
               i === index
                 ? "ring-umx-orange"
-                : "ring-black/10 hover:ring-black/30"
+                : "ring-white/80 hover:ring-white"
             }`}
           >
             <Image
@@ -155,7 +158,7 @@ function ShopFlavorCarousel() {
               alt=""
               fill
               sizes="64px"
-              className="object-contain p-1"
+              className="object-cover"
             />
           </button>
         ))}
@@ -171,13 +174,13 @@ function ComingSoonCard() {
       className="overflow-hidden border border-black/8 bg-white"
     >
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <div className="relative min-h-[22rem] overflow-hidden bg-[#f3f0ea] sm:min-h-[26rem] lg:min-h-[28rem]">
+        <div className="relative min-h-[22rem] overflow-hidden bg-black sm:min-h-[26rem] lg:min-h-[28rem]">
           <Image
             src={flavors[9].image}
             alt=""
             fill
             sizes="(max-width: 1024px) 100vw, 55vw"
-            className="scale-110 object-contain p-8 blur-xl"
+            className="scale-110 object-cover object-center blur-xl"
             aria-hidden
           />
           <div
