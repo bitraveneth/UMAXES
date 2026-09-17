@@ -15,12 +15,12 @@ export default function Support() {
           customers.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <a
-            href="mailto:info@umaxesvape.com"
+          <Link
+            href="/contact"
             className="rounded-full border border-black bg-black px-6 py-3 font-display text-sm font-semibold text-umx-cream transition hover:border-umx-orange hover:bg-umx-orange hover:text-umx-cream"
           >
-            Email support
-          </a>
+            Contact us
+          </Link>
           <Link
             href="/shop"
             className="rounded-full border border-black px-6 py-3 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange"

@@ -63,17 +63,17 @@ export const faqs = [
   },
   {
     q: "How do I know my device is authentic?",
-    a: "Use Product Verification with the code on your packaging or device. Enter it on the verify page (/support/verify) to confirm it came through official UMAXES channels.",
+    a: "Buy HOOKAMAX from official UMAXES channels. If you have questions about a device, use the Contact Us form with your order details.",
     keys: ["authentic", " authenticity", "verify", "fake", "real", "code", "scratch"],
   },
   {
     q: "What is your return policy?",
-    a: "Unopened products in original packaging may be eligible for return within 14 days of delivery. Defective devices should be reported to support with your order number and verification code.",
+    a: "Unopened products in original packaging may be eligible for return within 14 days of delivery. Defective devices should be reported to support with your order number.",
     keys: ["return", "refund", "exchange", "defective", "broken", "warranty"],
   },
   {
     q: "How do I contact support?",
-    a: "Email info@umaxesvape.com or use the Contact Us form. Include your order number and, if relevant, your product verification code so we can help faster. We usually reply within 1–2 business days.",
+    a: "Use the Contact Us form and include your order number so we can help faster. We usually reply within 1–2 business days.",
     keys: ["contact", "email", "support", "help", "reach", "message"],
   },
   {
@@ -99,7 +99,7 @@ export type SupportFaq = (typeof faqs)[number];
 export function findSupportAnswer(query: string): string {
   const q = query.toLowerCase().trim();
   if (!q) {
-    return "Ask about flavors, features, pricing, shipping, authenticity, or contact — or tap a quick topic below.";
+    return "Ask about flavors, features, pricing, shipping, or contact — or tap a quick topic below.";
   }
 
   let best: { score: number; a: string } | null = null;
@@ -125,5 +125,5 @@ export function findSupportAnswer(query: string): string {
 
   if (best && best.score >= 3) return best.a;
 
-  return `I can help with how many flavors we have (${flavors.length}), HOOKAMAX features, pricing, shipping, coupons, authenticity checks, returns, and contact info. Try asking “How many flavors?” or tap a topic below — or email info@umaxesvape.com.`;
+  return `I can help with how many flavors we have (${flavors.length}), HOOKAMAX features, pricing, shipping, coupons, returns, and contact info. Try asking “How many flavors?” or tap a topic below.`;
 }

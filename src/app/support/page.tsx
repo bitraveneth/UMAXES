@@ -2,26 +2,14 @@ import Link from "next/link";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import StoreTopPad from "@/components/StoreTopPad";
-import {
-  BadgeCheck,
-  CircleHelp,
-  Headphones,
-  Mail,
-} from "lucide-react";
-import { SITE_CONTACT_EMAIL } from "@/lib/site";
+import { CircleHelp, Mail } from "lucide-react";
 
 export const metadata = {
   title: "Support · UMAXES",
-  description: "Support, product verification, contact, and FAQ for UMAXES.",
+  description: "Contact and FAQ for UMAXES.",
 };
 
 const cards = [
-  {
-    href: "/support/verify",
-    title: "Product verification",
-    body: "Confirm your HOOKAMAX device is authentic with the code on the pack.",
-    icon: BadgeCheck,
-  },
   {
     href: "/contact",
     title: "Contact us",
@@ -31,14 +19,8 @@ const cards = [
   {
     href: "/faq",
     title: "FAQ",
-    body: "Quick answers on age, specs, shipping, returns, and authenticity.",
+    body: "Quick answers on age, specs, shipping, and returns.",
     icon: CircleHelp,
-  },
-  {
-    href: `mailto:${SITE_CONTACT_EMAIL}`,
-    title: "Email support",
-    body: `Prefer email? Reach the team at ${SITE_CONTACT_EMAIL}.`,
-    icon: Headphones,
   },
 ] as const;
 
@@ -58,20 +40,20 @@ export default function SupportPage() {
                 <span className="text-umx-orange"> to help.</span>
               </h1>
               <p className="mt-4 font-body text-base leading-relaxed text-black/65 sm:text-lg">
-                Verify your product, browse FAQs, or contact the UMAXES team —
-                for adult customers 21+.
+                Browse FAQs or contact the UMAXES team — for adult customers
+                21+.
               </p>
             </header>
 
             <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6">
               {cards.map((card) => {
                 const Icon = card.icon;
-                const isMail = card.href.startsWith("mailto:");
-                const className =
-                  "group flex flex-col rounded-[1.5rem] bg-white p-6 shadow-[0_12px_36px_rgba(61,22,5,0.08)] ring-1 ring-black/6 transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_22px_50px_rgba(61,22,5,0.12)] hover:ring-umx-orange/30 sm:p-7";
-
-                const inner = (
-                  <>
+                return (
+                  <Link
+                    key={card.href}
+                    href={card.href}
+                    className="group flex flex-col rounded-[1.5rem] bg-white p-6 shadow-[0_12px_36px_rgba(61,22,5,0.08)] ring-1 ring-black/6 transition duration-500 hover:-translate-y-1.5 hover:shadow-[0_22px_50px_rgba(61,22,5,0.12)] hover:ring-umx-orange/30 sm:p-7"
+                  >
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-umx-orange/10 text-umx-orange transition duration-500 group-hover:bg-umx-orange group-hover:text-white">
                       <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
                     </div>
@@ -82,19 +64,9 @@ export default function SupportPage() {
                       {card.body}
                     </p>
                     <span className="mt-5 inline-flex items-center gap-2 font-display text-sm font-semibold text-umx-orange transition group-hover:gap-3">
-                      {isMail ? "Email now" : "Open"}
+                      Open
                       <span aria-hidden>→</span>
                     </span>
-                  </>
-                );
-
-                return isMail ? (
-                  <a key={card.href} href={card.href} className={className}>
-                    {inner}
-                  </a>
-                ) : (
-                  <Link key={card.href} href={card.href} className={className}>
-                    {inner}
                   </Link>
                 );
               })}

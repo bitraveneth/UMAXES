@@ -12,7 +12,7 @@ export default function FaqPage() {
       eyebrow="FAQ"
       title="Common"
       titleAccent=" questions."
-      description="Age, authenticity, specs, shipping, and returns — short answers for adult customers."
+      description="Age, specs, shipping, and returns — short answers for adult customers."
     >
       <FaqAccordion />
     </SupportShell>

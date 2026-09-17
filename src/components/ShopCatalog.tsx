@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowUpDown,
-  BadgeCheck,
   ChevronRight,
   CircleHelp,
   Droplets,
@@ -548,12 +547,6 @@ function ShopAside({
           <div className="divide-y divide-black/8">
             {(
               [
-                {
-                  href: "/support/verify",
-                  title: "Verify product",
-                  body: "Check authenticity",
-                  icon: BadgeCheck,
-                },
                 {
                   href: "/faq",
                   title: "FAQ",

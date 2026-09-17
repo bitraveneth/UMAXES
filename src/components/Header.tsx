@@ -17,11 +17,6 @@ const primaryNav = [
   { href: "/shop", label: "Store", match: "shop" as const },
   { href: "/products", label: "Products", match: "products" as const },
   { href: "/maxcore", label: "MAXCORE", match: "maxcore" as const },
-  {
-    href: "/support/verify",
-    label: "Verify product",
-    match: "verify" as const,
-  },
   { href: "/login", label: "Wholesale", match: "wholesale" as const },
 ] as const;
 
@@ -81,8 +76,6 @@ function isNavActive(
       return pathname === "/products" || pathname.startsWith("/products/");
     case "maxcore":
       return pathname.startsWith("/maxcore");
-    case "verify":
-      return pathname.startsWith("/support/verify");
     case "wholesale":
       return (
         pathname.startsWith("/login") ||
@@ -175,9 +168,7 @@ function SupportDropdown({
     <div className="group relative">
       <MemberOnlyLink
         href="/support"
-        className={navLinkClass(
-          supportActive && !pathname.startsWith("/support/verify"),
-        )}
+        className={navLinkClass(supportActive)}
         aria-haspopup="menu"
       >
         Support
@@ -361,9 +352,9 @@ export default function Header() {
                     {item.label}
                   </MemberOnlyLink>
                 );
-                if (item.match === "verify") {
+                if (item.match === "maxcore") {
                   return (
-                    <Fragment key="verify-info">
+                    <Fragment key="maxcore-info">
                       {link}
                       <InfoCenterDropdown pathname={pathname} />
                     </Fragment>
@@ -489,9 +480,9 @@ export default function Header() {
                     />
                   </MemberOnlyLink>
                 );
-                if (item.match === "verify") {
+                if (item.match === "maxcore") {
                   return (
-                    <Fragment key="verify-info-mobile">
+                    <Fragment key="maxcore-info-mobile">
                       {link}
                       <button
                         type="button"

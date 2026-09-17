@@ -212,8 +212,7 @@ export default function SupportAssistant() {
                     you today?
                   </h2>
                   <p className="mx-auto mt-2.5 max-w-[18rem] text-center font-body text-sm leading-relaxed text-black/60">
-                    Flavors, features, pricing, shipping, authenticity — ask
-                    anything.
+                    Flavors, features, pricing, shipping — ask anything.
                   </p>
                 </div>
               </div>
