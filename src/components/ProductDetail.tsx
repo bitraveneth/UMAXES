@@ -14,7 +14,7 @@ import {
 } from "@/hooks/useStoreChrome";
 import { flavors, product, type Flavor, type FlavorId } from "@/lib/assets";
 
-const DRAFT_KEY = "umaxes-product-order-lines";
+const DRAFT_KEY = "umaxes-product-order-lines-v2";
 
 type OrderLine = {
   key: string;
@@ -34,13 +34,24 @@ function defaultLine(flavorId: FlavorId): OrderLine {
   return { key: newKey(), flavorId, quantity: 1 };
 }
 
+/** All catalog flavors as line items, with the current product flavor first. */
+function defaultLines(preferred: FlavorId): OrderLine[] {
+  const head = flavors.filter((f) => f.id === preferred);
+  const tail = flavors.filter((f) => f.id !== preferred);
+  return [...head, ...tail].map((f) => ({
+    key: `line-${f.id}`,
+    flavorId: f.id,
+    quantity: 1,
+  }));
+}
+
 function loadLines(fallback: FlavorId): OrderLine[] {
   try {
     const raw = sessionStorage.getItem(DRAFT_KEY);
-    if (!raw) return [defaultLine(fallback)];
+    if (!raw) return defaultLines(fallback);
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      return [defaultLine(fallback)];
+      return defaultLines(fallback);
     }
     const lines: OrderLine[] = [];
     for (const entry of parsed) {
@@ -54,9 +65,9 @@ function loadLines(fallback: FlavorId): OrderLine[] {
         quantity,
       });
     }
-    return lines.length ? lines : [defaultLine(fallback)];
+    return lines.length ? lines : defaultLines(fallback);
   } catch {
-    return [defaultLine(fallback)];
+    return defaultLines(fallback);
   }
 }
 
@@ -64,7 +75,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const router = useRouter();
   const { addMany, couponCode: savedCoupon, setCouponCode } = useCart();
   const showPrices = useShowStorePrices();
-  const [lines, setLines] = useState<OrderLine[]>([defaultLine(flavor.id)]);
+  const [lines, setLines] = useState<OrderLine[]>(() => defaultLines(flavor.id));
   const [draftReady, setDraftReady] = useState(false);
   const [added, setAdded] = useState(false);
   const [shot, setShot] = useState(0);
@@ -391,15 +402,14 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 })}
               </ul>
 
-              {availableExtra ? (
-                <button
-                  type="button"
-                  onClick={addFlavorRow}
-                  className="mt-3 font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
-                >
-                  + Add another flavor
-                </button>
-              ) : null}
+              <button
+                type="button"
+                onClick={addFlavorRow}
+                disabled={!availableExtra}
+                className="mt-3 font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep disabled:cursor-not-allowed disabled:text-black/30 disabled:hover:text-black/30"
+              >
+                + Add another flavor
+              </button>
 
               <div className="mt-5">
                 <label
