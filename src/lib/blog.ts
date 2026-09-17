@@ -13,15 +13,15 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "hookamax-flavor-drop",
     category: "News",
-    title: "HOOKAMAX: 80K puffs, 10 flavors",
+    title: "HOOKAMAX: 80K puffs, diamond glow",
     excerpt:
-      "Stellar vapor. Diamond glow. Ten profiles on one HOOKAMAX device — Peach Mango to Exotic Kiwi.",
+      "Stellar vapor. Diamond glow. A growing HOOKAMAX flavor lineup — from Peach Mango to Exotic Kiwi, and more to come.",
     date: "2026-08-15",
     dateLabel: "Aug 15, 2026",
     image: "/images/hero/01.webp",
     body: [
       "UMAXES HOOKAMAX is built for long sessions: up to 80K puffs, stellar vapor, and diamond glow — crafted exclusively for the HOOKAMAX line.",
-      "The lineup is ten flavors: Peach Mango, Watermelon Ice, Fantasy Tea, Strawberry Watermelon Ice, Mixed Berries, Cool Mint, Blue Razz Ice, Grape Ice, Blueberry Ice, and Exotic Kiwi.",
+      "Explore the HOOKAMAX flavor lineup, including Peach Mango, Watermelon Ice, Fantasy Tea, Strawberry Watermelon Ice, Mixed Berries, Cool Mint, Blue Razz Ice, Grape Ice, Blueberry Ice, and Exotic Kiwi — with more flavors on the way.",
       "Shop HOOKAMAX online. For adults 21+ only. Nicotine is an addictive chemical.",
     ],
   },
