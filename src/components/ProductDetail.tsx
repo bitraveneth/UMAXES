@@ -459,7 +459,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                       ? "cursor-not-allowed bg-black/25"
                       : added
                         ? "bg-umx-orange"
-                        : "bg-black hover:bg-umx-orange"
+                        : "bg-black hover:-translate-y-0.5 hover:bg-umx-orange hover:shadow-[0_10px_22px_rgba(0,0,0,0.16)]"
                   }`}
                 >
                   {added ? "Added" : "Add to cart"}
@@ -471,10 +471,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   className={`inline-flex min-h-12 items-center justify-center rounded-lg px-4 font-display text-sm font-semibold tracking-wide transition duration-300 ${
                     !totalQty
                       ? "cursor-not-allowed border border-black/15 text-black/30"
-                      : "border border-black bg-white text-black hover:border-umx-orange hover:text-umx-orange"
+                      : "border border-black bg-white text-black hover:-translate-y-0.5 hover:border-umx-orange hover:bg-umx-orange hover:!text-white hover:shadow-[0_10px_22px_rgba(0,0,0,0.16)]"
                   }`}
                 >
-                  Buy it
+                  Buy now
                 </button>
               </div>
             </div>
