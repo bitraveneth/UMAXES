@@ -302,9 +302,6 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             <p className="mt-3 font-display text-3xl font-bold tracking-tight text-black sm:text-4xl">
               <StorePrice amount={flavor.price} suffix=".00" />
             </p>
-            <p className="mt-3 font-body text-base leading-relaxed text-black/62">
-              {flavor.description}
-            </p>
 
             <div className="mt-6">
               <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-end gap-3 pb-2 sm:grid-cols-[minmax(0,1fr)_5.25rem_8.75rem]">
