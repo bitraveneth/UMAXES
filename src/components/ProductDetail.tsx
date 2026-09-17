@@ -62,12 +62,34 @@ function loadLines(fallback: FlavorId): OrderLine[] {
 
 export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const router = useRouter();
-  const { addMany } = useCart();
+  const { addMany, couponCode: savedCoupon, setCouponCode } = useCart();
   const showPrices = useShowStorePrices();
   const [lines, setLines] = useState<OrderLine[]>([defaultLine(flavor.id)]);
   const [draftReady, setDraftReady] = useState(false);
   const [added, setAdded] = useState(false);
+  const [shot, setShot] = useState(0);
+  const [couponDraft, setCouponDraft] = useState(savedCoupon);
+  const [appliedCoupon, setAppliedCoupon] = useState(savedCoupon);
+  const [discount, setDiscount] = useState(0);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [couponBusy, setCouponBusy] = useState(false);
   const compactChrome = useCompactMobileStoreChrome();
+
+  const gallery = useMemo(
+    () => [
+      { id: "product", src: flavor.image, alt: flavor.name },
+      {
+        id: "pack",
+        src: flavor.packageImage,
+        alt: `${flavor.name} package`,
+      },
+    ],
+    [flavor],
+  );
+
+  useEffect(() => {
+    setShot(0);
+  }, [flavor.id]);
 
   useEffect(() => {
     setLines(loadLines(flavor.id));
@@ -104,6 +126,59 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
       }, 0),
     [lines],
   );
+
+  const payable = Math.max(0, subtotal - discount);
+  const activeShot = gallery[shot] ?? gallery[0];
+
+  async function validateCoupon(code: string, amount: number) {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setDiscount(0);
+      setAppliedCoupon("");
+      setCouponCode("");
+      setCouponMessage("");
+      return;
+    }
+    setCouponBusy(true);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: trimmed, subtotal: amount }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDiscount(0);
+        setAppliedCoupon("");
+        setCouponCode("");
+        setCouponMessage(data.error || "Invalid coupon code.");
+        return;
+      }
+      setAppliedCoupon(data.code);
+      setCouponCode(data.code);
+      setDiscount(Number(data.discount) || 0);
+      setCouponMessage("");
+    } catch {
+      setCouponMessage("Could not check that coupon.");
+    } finally {
+      setCouponBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!savedCoupon || !draftReady) return;
+    setCouponDraft((draft) => draft || savedCoupon);
+    if (!appliedCoupon) {
+      void validateCoupon(savedCoupon, subtotal);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedCoupon, draftReady]);
+
+  useEffect(() => {
+    if (!draftReady || !appliedCoupon) return;
+    void validateCoupon(appliedCoupon, subtotal);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, draftReady, appliedCoupon]);
 
   function updateLine(key: string, patch: Partial<OrderLine>) {
     setLines((prev) =>
@@ -142,6 +217,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
     const next = cartLines();
     if (!next.length) return;
     addMany(next);
+    if (appliedCoupon) setCouponCode(appliedCoupon);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1200);
   }
@@ -151,6 +227,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
     if (!next.length) return;
     flushSync(() => {
       addMany(next);
+      if (appliedCoupon) setCouponCode(appliedCoupon);
     });
     router.push("/checkout");
   }
@@ -173,19 +250,48 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
         </nav>
 
         <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
-          <div
-            className="relative mx-auto aspect-square w-full max-w-[36rem] overflow-hidden rounded-[1.5rem] bg-umx-cream-warm ring-1 ring-black/8 lg:mx-0"
-            style={{ backgroundColor: `${flavor.accent}18` }}
-          >
-            <Image
-              src={flavor.image}
-              alt={flavor.name}
-              fill
-              priority
-              className="object-cover"
-              quality={75}
-              sizes="(max-width: 1024px) 100vw, 60vw"
-            />
+          <div className="lg:max-w-[38rem]">
+            <div
+              className="relative overflow-hidden rounded-[1.5rem] bg-white ring-1 ring-black/8"
+              style={{ backgroundColor: `${flavor.accent}14` }}
+            >
+              <div className="relative aspect-square">
+                <Image
+                  src={activeShot.src}
+                  alt={activeShot.alt}
+                  fill
+                  priority
+                  className="object-contain p-5 sm:p-7"
+                  quality={80}
+                  sizes="(max-width: 1024px) 100vw, 608px"
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 flex gap-3">
+              {gallery.map((item, i) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setShot(i)}
+                  aria-label={`Show ${item.alt}`}
+                  aria-current={i === shot}
+                  className={`relative h-[4.75rem] w-[4.75rem] overflow-hidden rounded-xl bg-white ring-2 transition sm:h-[5.5rem] sm:w-[5.5rem] ${
+                    i === shot
+                      ? "ring-umx-orange"
+                      : "ring-black/10 hover:ring-black/25"
+                  }`}
+                >
+                  <Image
+                    src={item.src}
+                    alt=""
+                    fill
+                    sizes="88px"
+                    className="object-contain p-1.5"
+                  />
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="lg:sticky lg:top-32">
@@ -301,11 +407,68 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   Total
                 </p>
                 <p className="mt-1 font-display text-2xl font-bold text-black">
-                  {showPrices ? <StorePrice amount={subtotal} /> : "On request"}
+                  {showPrices ? (
+                    <StorePrice amount={payable} />
+                  ) : (
+                    "On request"
+                  )}
                   <span className="ml-2 font-display text-sm font-semibold text-black/40">
                     · {totalQty} {totalQty === 1 ? "item" : "items"}
                   </span>
                 </p>
+                {showPrices && discount > 0 ? (
+                  <p className="mt-1 font-body text-sm text-black/50">
+                    Subtotal <StorePrice amount={subtotal} />
+                    {appliedCoupon ? ` · ${appliedCoupon} −$${discount.toFixed(2)}` : ""}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-5">
+                <label
+                  htmlFor="product-coupon"
+                  className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase"
+                >
+                  Coupon code
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="product-coupon"
+                    value={couponDraft}
+                    onChange={(e) => {
+                      setCouponDraft(e.target.value.toUpperCase());
+                      setCouponMessage("");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void validateCoupon(couponDraft, subtotal);
+                      }
+                    }}
+                    placeholder="Enter code"
+                    autoComplete="off"
+                    className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3.5 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void validateCoupon(couponDraft, subtotal)}
+                    disabled={couponBusy}
+                    className="shrink-0 rounded-lg border border-black bg-white px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange disabled:opacity-50"
+                  >
+                    {couponBusy ? "…" : "Apply"}
+                  </button>
+                </div>
+                {appliedCoupon && !couponMessage ? (
+                  <p className="mt-2 font-body text-sm text-black/60">
+                    Applied {appliedCoupon}
+                    {showPrices && discount > 0 ? ` (−$${discount.toFixed(2)})` : ""}
+                  </p>
+                ) : null}
+                {couponMessage ? (
+                  <p className="mt-2 font-body text-sm text-red-700">
+                    {couponMessage}
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
