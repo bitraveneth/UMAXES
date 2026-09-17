@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import AuthFooter from "@/components/AuthFooter";
 import AuthImageCarousel from "@/components/AuthImageCarousel";
 import { logos } from "@/lib/assets";
 
@@ -18,7 +19,7 @@ export default function AuthSplitShell({
   children,
 }: AuthSplitShellProps) {
   return (
-    <main className="umx-brand-navy fixed inset-0 z-50 flex h-dvh w-full flex-col overflow-hidden bg-[#e8eef6]">
+    <main className="umx-brand-navy flex min-h-dvh w-full flex-col bg-[#e8eef6]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(27,79,114,0.12),transparent_55%)]"
@@ -52,7 +53,7 @@ export default function AuthSplitShell({
           </div>
 
           {/* Mobile: natural height. Desktop: shared comfortable sign-in card size */}
-          <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.12)] ring-1 ring-black/5 lg:h-[min(42.5rem,calc(100dvh-7.5rem))] lg:flex-row lg:rounded-[1.25rem]">
+          <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.12)] ring-1 ring-black/5 lg:h-[min(38rem,calc(100dvh-16rem))] lg:flex-row lg:rounded-[1.25rem]">
             <AuthImageCarousel />
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -77,15 +78,7 @@ export default function AuthSplitShell({
         </div>
       </div>
 
-      <footer className="relative z-[2] shrink-0 border-t border-black/10 bg-[#1a1a1a] px-4 py-2.5 text-center sm:px-6 sm:py-3">
-        <p className="mx-auto max-w-4xl font-body text-[0.7rem] leading-snug text-white/70 sm:text-xs">
-          <span className="font-display font-semibold tracking-[0.08em] text-umx-orange uppercase">
-            Warning:
-          </span>{" "}
-          This product contains nicotine. Nicotine is an addictive chemical. For
-          adults 21 years of age or older only.
-        </p>
-      </footer>
+      <AuthFooter />
     </main>
   );
 }
