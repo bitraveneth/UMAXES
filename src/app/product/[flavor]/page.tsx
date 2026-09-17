@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import Features from "@/components/Features";
 import ProductDetail from "@/components/ProductDetail";
+import ProductFlavorLineup from "@/components/ProductFlavorLineup";
 import ProductKeyFeatures from "@/components/ProductKeyFeatures";
 import { flavors, getFlavor, product } from "@/lib/assets";
 import { requireMember } from "@/lib/require-member";
@@ -41,6 +42,7 @@ export default async function ProductPage({ params }: Props) {
         <ProductDetail flavor={flavor} />
         <ProductKeyFeatures flavor={flavor} />
         <Features />
+        <ProductFlavorLineup flavor={flavor} />
       </main>
       <Footer />
     </>
