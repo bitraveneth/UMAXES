@@ -172,9 +172,9 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
           <span className="text-black">{flavor.name}</span>
         </nav>
 
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-12 xl:gap-16">
+        <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
           <div
-            className="relative aspect-[4/5] min-h-[22rem] overflow-hidden rounded-[1.5rem] bg-umx-cream-warm ring-1 ring-black/8 sm:min-h-[32rem] lg:aspect-auto lg:min-h-[44rem] xl:min-h-[52rem]"
+            className="relative mx-auto aspect-square w-full max-w-[36rem] overflow-hidden rounded-[1.5rem] bg-umx-cream-warm ring-1 ring-black/8 lg:mx-0"
             style={{ backgroundColor: `${flavor.accent}18` }}
           >
             <Image
