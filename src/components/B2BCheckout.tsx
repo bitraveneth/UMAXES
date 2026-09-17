@@ -39,7 +39,8 @@ export default function B2BCheckout() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const showPrices = useShowStorePrices();
-  const { items, clear, quantity } = useCart();
+  const { items, clear, quantity, couponCode: savedCoupon, setCouponCode: persistCoupon } =
+    useCart();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
@@ -92,6 +93,10 @@ export default function B2BCheckout() {
     });
   }, [status, session, router]);
 
+  useEffect(() => {
+    if (savedCoupon && !couponCode) setCouponCode(savedCoupon);
+  }, [savedCoupon, couponCode]);
+
   const priceMap = useMemo(() => {
     const map = new Map<string, CatalogProduct>();
     for (const p of catalog) map.set(p.sku, p);
@@ -117,6 +122,26 @@ export default function B2BCheckout() {
   );
   const total = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
 
+  useEffect(() => {
+    if (!savedCoupon || appliedCoupon || subtotal <= 0) return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: savedCoupon, subtotal }),
+      });
+      const data = await res.json();
+      if (cancelled || !res.ok) return;
+      setCouponCode(data.code);
+      setAppliedCoupon(data.code);
+      setDiscount(data.discount);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [savedCoupon, appliedCoupon, subtotal]);
+
   async function applyCoupon() {
     setError(null);
     const res = await fetch("/api/coupons/validate", {
@@ -133,6 +158,7 @@ export default function B2BCheckout() {
     }
     setDiscount(data.discount);
     setAppliedCoupon(data.code);
+    persistCoupon(data.code);
   }
 
   async function placeOrder() {

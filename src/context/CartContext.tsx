@@ -11,6 +11,7 @@ import {
 import { flavors, getFlavor, type FlavorId } from "@/lib/assets";
 
 const STORAGE_KEY = "umaxes-cart-v4";
+const COUPON_KEY = "umaxes-cart-coupon";
 
 export type CartLine = {
   flavorId: FlavorId;
@@ -28,6 +29,8 @@ type CartContextValue = {
   remove: (flavorId: FlavorId) => void;
   clear: () => void;
   total: number;
+  couponCode: string;
+  setCouponCode: (code: string) => void;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -52,6 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartLine[]>([]);
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
+  const [couponCode, setCouponCodeState] = useState("");
 
   useEffect(() => {
     try {
@@ -79,6 +83,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           );
         }
       }
+      const savedCoupon = localStorage.getItem(COUPON_KEY);
+      if (savedCoupon) setCouponCodeState(savedCoupon);
     } catch {
       /* ignore */
     }
@@ -96,6 +102,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }, [items, ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      if (couponCode) localStorage.setItem(COUPON_KEY, couponCode);
+      else localStorage.removeItem(COUPON_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, [couponCode, ready]);
 
   const add = useCallback((flavorId: FlavorId, amount = 1) => {
     const n = Math.max(1, amount);
@@ -144,7 +160,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => prev.filter((l) => l.flavorId !== flavorId));
   }, []);
 
-  const clear = useCallback(() => setItems([]), []);
+  const clear = useCallback(() => {
+    setItems([]);
+    setCouponCodeState("");
+  }, []);
+
+  const setCouponCode = useCallback((code: string) => {
+    setCouponCodeState(code.trim().toUpperCase());
+  }, []);
 
   const quantity = useMemo(
     () => items.reduce((sum, l) => sum + l.quantity, 0),
@@ -172,8 +195,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       remove,
       clear,
       total,
+      couponCode,
+      setCouponCode,
     }),
-    [items, quantity, open, add, addMany, setQuantity, remove, clear, total],
+    [
+      items,
+      quantity,
+      open,
+      add,
+      addMany,
+      setQuantity,
+      remove,
+      clear,
+      total,
+      couponCode,
+      setCouponCode,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
