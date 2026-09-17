@@ -1,13 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import BuyerAccountMenu from "@/components/BuyerAccountMenu";
 import GoogleTranslate from "@/components/GoogleTranslate";
 import LanguagePicker from "@/components/LanguagePicker";
+import MemberOnlyLink from "@/components/MemberOnlyLink";
 import { useCart } from "@/context/CartContext";
 import { useCompactMobileStoreChrome } from "@/hooks/useStoreChrome";
 import { logos } from "@/lib/assets";
@@ -126,14 +126,14 @@ function InfoCenterDropdown({
 
   return (
     <div className="group relative">
-      <Link
+      <MemberOnlyLink
         href="/news"
         className={`${navLinkClass(active)} gap-1.5`}
         aria-haspopup="menu"
       >
         Info center
         <NavChevron />
-      </Link>
+      </MemberOnlyLink>
 
       <div
         role="menu"
@@ -141,7 +141,7 @@ function InfoCenterDropdown({
       >
         <div className="overflow-hidden rounded-2xl bg-white shadow-[0_16px_40px_rgba(61,22,5,0.14)] ring-1 ring-black/8">
           {infoCenterLinks.map((item) => (
-            <Link
+            <MemberOnlyLink
               key={item.href}
               href={item.href}
               role="menuitem"
@@ -151,7 +151,7 @@ function InfoCenterDropdown({
               }`}
             >
               {item.label}
-            </Link>
+            </MemberOnlyLink>
           ))}
         </div>
       </div>
@@ -173,7 +173,7 @@ function SupportDropdown({
 
   return (
     <div className="group relative">
-      <Link
+      <MemberOnlyLink
         href="/support"
         className={navLinkClass(
           supportActive && !pathname.startsWith("/support/verify"),
@@ -181,7 +181,7 @@ function SupportDropdown({
         aria-haspopup="menu"
       >
         Support
-      </Link>
+      </MemberOnlyLink>
 
       <div
         role="menu"
@@ -194,7 +194,7 @@ function SupportDropdown({
                 ? pathname === "/support"
                 : pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
-              <Link
+              <MemberOnlyLink
                 key={item.href}
                 href={item.href}
                 role="menuitem"
@@ -204,7 +204,7 @@ function SupportDropdown({
                 }`}
               >
                 {item.label}
-              </Link>
+              </MemberOnlyLink>
             );
           })}
         </div>
@@ -330,7 +330,7 @@ export default function Header() {
                 : "h-[4.75rem] px-2.5 sm:h-20 sm:px-4 md:px-5"
             }`}
           >
-            <Link
+            <MemberOnlyLink
               href="/"
               className="relative z-50 block h-10 w-44 shrink-0 sm:h-11 sm:w-52 lg:h-12 lg:w-56"
               onClick={closeMenu}
@@ -344,7 +344,7 @@ export default function Header() {
                 quality={70}
                 priority
               />
-            </Link>
+            </MemberOnlyLink>
 
             <nav
               className="ml-2 hidden min-w-0 flex-1 items-center justify-center gap-x-1 xl:flex"
@@ -353,13 +353,13 @@ export default function Header() {
               {primaryNav.map((item) => {
                 const active = isNavActive(item.match, pathname);
                 const link = (
-                  <Link
+                  <MemberOnlyLink
                     key={item.href + item.label}
                     href={item.href}
                     className={navLinkClass(active)}
                   >
                     {item.label}
-                  </Link>
+                  </MemberOnlyLink>
                 );
                 if (item.match === "verify") {
                   return (
@@ -381,7 +381,7 @@ export default function Header() {
             </nav>
 
             <div className="relative z-50 ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-              <Link
+              <MemberOnlyLink
                 href="/cart"
                 aria-label={
                   quantity > 0 ? `Cart, ${quantity} items` : "Cart"
@@ -395,26 +395,26 @@ export default function Header() {
                     {quantity > 99 ? "99+" : quantity}
                   </span>
                 )}
-              </Link>
+              </MemberOnlyLink>
 
               {session?.user ? (
                 session.user.role === "CUSTOMER" ? (
                   <BuyerAccountMenu />
                 ) : (
-                  <Link
+                  <MemberOnlyLink
                     href={accountHref}
                     className={`hidden h-9 items-center rounded-full border border-black/15 px-4 text-black/85 transition hover:border-black hover:bg-black hover:text-white sm:inline-flex ${NAV_TYPE}`}
                   >
                     Account
-                  </Link>
+                  </MemberOnlyLink>
                 )
               ) : (
-                <Link
+                <MemberOnlyLink
                   href="/login"
                   className={`hidden h-9 items-center rounded-full border border-black/15 px-4 text-black/85 transition hover:border-black hover:bg-black hover:text-white sm:inline-flex ${NAV_TYPE}`}
                 >
                   Sign in
-                </Link>
+                </MemberOnlyLink>
               )}
 
               <button
@@ -472,7 +472,7 @@ export default function Header() {
               {primaryNav.map((item, i) => {
                 const active = isNavActive(item.match, pathname);
                 const link = (
-                  <Link
+                  <MemberOnlyLink
                     key={item.href + item.label}
                     href={item.href}
                     onClick={closeMenu}
@@ -487,7 +487,7 @@ export default function Header() {
                         active ? "bg-umx-orange" : "bg-umx-cream-deep"
                       }`}
                     />
-                  </Link>
+                  </MemberOnlyLink>
                 );
                 if (item.match === "verify") {
                   return (
@@ -504,7 +504,7 @@ export default function Header() {
                       {infoOpen && (
                         <div className="mb-1 ml-3 border-l-2 border-umx-orange/30 pl-2">
                           {infoCenterLinks.map((sub) => (
-                            <Link
+                            <MemberOnlyLink
                               key={sub.href}
                               href={sub.href}
                               onClick={closeMenu}
@@ -515,7 +515,7 @@ export default function Header() {
                               }`}
                             >
                               {sub.label}
-                            </Link>
+                            </MemberOnlyLink>
                           ))}
                         </div>
                       )}
@@ -542,7 +542,7 @@ export default function Header() {
                         ? pathname === "/support"
                         : pathname === item.href;
                     return (
-                      <Link
+                      <MemberOnlyLink
                         key={item.href}
                         href={item.href}
                         onClick={closeMenu}
@@ -551,7 +551,7 @@ export default function Header() {
                         }`}
                       >
                         {item.label}
-                      </Link>
+                      </MemberOnlyLink>
                     );
                   })}
                 </div>
@@ -575,13 +575,13 @@ export default function Header() {
                 </div>
               )}
 
-              <Link
+              <MemberOnlyLink
                 href={session?.user ? accountHref : "/login"}
                 onClick={closeMenu}
                 className={`mt-4 rounded-full border border-black/15 px-5 py-4 text-center text-black transition hover:border-black hover:bg-black hover:text-white ${NAV_TYPE} !text-base !tracking-[0.06em]`}
               >
                 {session?.user ? "Account" : "Sign in"}
-              </Link>
+              </MemberOnlyLink>
             </nav>
           </div>
         </div>

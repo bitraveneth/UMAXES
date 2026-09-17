@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, Store, UserRound } from "lucide-react";
+import MemberOnlyLink from "@/components/MemberOnlyLink";
 import { useCart } from "@/context/CartContext";
 
 const HIDDEN = [
@@ -43,12 +44,12 @@ export default function BuyerMobileNav() {
       aria-label="Primary"
     >
       <div className="mx-auto grid h-14 max-w-lg grid-cols-3">
-        <Link href="/shop" className={itemClass(shopActive)} aria-current={shopActive ? "page" : undefined}>
+        <MemberOnlyLink href="/shop" className={itemClass(shopActive)} aria-current={shopActive ? "page" : undefined}>
           <Store className="h-5 w-5" strokeWidth={activeStroke(shopActive)} aria-hidden />
           Store
-        </Link>
+        </MemberOnlyLink>
 
-        <Link
+        <MemberOnlyLink
           href="/cart"
           className={itemClass(cartActive)}
           aria-label={quantity ? `Cart, ${quantity} items` : "Cart"}
@@ -63,7 +64,7 @@ export default function BuyerMobileNav() {
             ) : null}
           </span>
           Cart
-        </Link>
+        </MemberOnlyLink>
 
         <Link
           href="/account"

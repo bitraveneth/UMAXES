@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import StoreTopPad from "@/components/StoreTopPad";
 import { blogPosts, getPost } from "@/lib/blog";
+import { requireMember } from "@/lib/require-member";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -24,6 +25,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
+  await requireMember(`/blog/${slug}`);
   const post = getPost(slug);
   if (!post) notFound();
 

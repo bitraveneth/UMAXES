@@ -2,6 +2,7 @@ import AgeGate from "@/components/AgeGate";
 import AboutView from "@/components/AboutView";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { requireMember } from "@/lib/require-member";
 
 export const metadata = {
   title: "About UMAXES · Company Profile",
@@ -9,7 +10,9 @@ export const metadata = {
     "UMAXES — MAX YOUR EXPERIENCE. Distinctive design, richer flavor, and stronger performance for adult consumers 21+.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  await requireMember("/about");
+
   return (
     <>
       <AgeGate />

@@ -7,6 +7,7 @@ import Features from "@/components/Features";
 import ProductDetail from "@/components/ProductDetail";
 import ProductKeyFeatures from "@/components/ProductKeyFeatures";
 import { flavors, getFlavor, product } from "@/lib/assets";
+import { requireMember } from "@/lib/require-member";
 
 type Props = {
   params: Promise<{ flavor: string }>;
@@ -28,6 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { flavor: id } = await params;
+  await requireMember(`/product/${id}`);
   const flavor = getFlavor(id);
   if (!flavor) notFound();
 

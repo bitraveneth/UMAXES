@@ -1,7 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
 import AuthImageCarousel from "@/components/AuthImageCarousel";
 import Footer from "@/components/Footer";
+import MemberOnlyLink from "@/components/MemberOnlyLink";
 import { logos } from "@/lib/assets";
 
 type AuthSplitShellProps = {
@@ -26,14 +26,12 @@ export default function AuthSplitShell({
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(27,79,114,0.12),transparent_55%)]"
         />
 
-        <Link
+        <MemberOnlyLink
           href="/"
-          target="_blank"
-          rel="noopener noreferrer"
           className="absolute top-4 right-4 z-[2] inline-flex items-center rounded-full border border-black/10 bg-white px-4 py-2 font-display text-xs font-semibold tracking-wide text-black transition hover:border-umx-orange hover:bg-umx-orange hover:text-white sm:top-5 sm:right-6 sm:text-sm"
         >
           Visit website
-        </Link>
+        </MemberOnlyLink>
 
         <div className="relative z-[1] flex flex-1 flex-col items-center justify-center px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-8">
           <div className="flex w-full max-w-[64rem] flex-col lg:max-w-[72rem]">

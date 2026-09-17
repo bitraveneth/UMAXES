@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import FooterSubscribe from "@/components/FooterSubscribe";
+import MemberOnlyLink from "@/components/MemberOnlyLink";
 import { logos } from "@/lib/assets";
 import { SITE_CONTACT_EMAIL } from "@/lib/site";
 
@@ -22,9 +23,11 @@ const supportLinks = [
 function FooterLink({
   href,
   label,
+  memberOnly = false,
 }: {
   href: string;
   label: string;
+  memberOnly?: boolean;
 }) {
   const className =
     "font-display text-sm text-white/80 transition hover:text-white";
@@ -34,6 +37,14 @@ function FooterLink({
       <a href={href} className={className}>
         {label}
       </a>
+    );
+  }
+
+  if (memberOnly) {
+    return (
+      <MemberOnlyLink href={href} className={className}>
+        {label}
+      </MemberOnlyLink>
     );
   }
 
@@ -53,7 +64,7 @@ export default function Footer() {
         <div className="relative mx-auto max-w-[1200px] px-5 pt-16 pb-10 sm:px-8 sm:pt-20 sm:pb-12 lg:pt-24 lg:pb-14">
           <div className="grid gap-12 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-14 lg:grid-cols-[1.2fr_0.9fr_1.15fr] lg:gap-x-16">
             <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-              <Link href="/" className="inline-block">
+              <MemberOnlyLink href="/" className="inline-block">
                 <div className="relative h-9 w-40 sm:h-10 sm:w-48">
                   <Image
                     src={logos.blueWordmarkOnDark}
@@ -63,7 +74,7 @@ export default function Footer() {
                     sizes="192px"
                   />
                 </div>
-              </Link>
+              </MemberOnlyLink>
               <p className="mt-5 max-w-[22rem] font-body text-[0.95rem] leading-relaxed text-white/88">
                 Adult vape brand behind HOOKAMAX — bold flavor, clean design,
                 and a ritual built for 21+.
@@ -89,7 +100,7 @@ export default function Footer() {
                 <ul className="mt-4 space-y-2.5">
                   {shopLinks.map((item) => (
                     <li key={item.href}>
-                      <FooterLink href={item.href} label={item.label} />
+                      <FooterLink href={item.href} label={item.label} memberOnly />
                     </li>
                   ))}
                 </ul>

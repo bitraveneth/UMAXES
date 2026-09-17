@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import NewsEvents from "@/components/NewsEvents";
 import StoreTopPad from "@/components/StoreTopPad";
+import { requireMember } from "@/lib/require-member";
 
 type Props = {
   searchParams: Promise<{ filter?: string }>;
@@ -22,6 +23,7 @@ function parseFilter(value: string | undefined) {
 export default async function NewsPage({ searchParams }: Props) {
   const { filter } = await searchParams;
   const initialFilter = parseFilter(filter);
+  await requireMember(filter ? `/news?filter=${encodeURIComponent(filter)}` : "/news");
 
   return (
     <>

@@ -1,4 +1,5 @@
 import CheckoutShell from "@/components/CheckoutShell";
+import { requireMember } from "@/lib/require-member";
 
 export const metadata = {
   title: "Checkout · UMAXES",
@@ -6,6 +7,7 @@ export const metadata = {
     "Checkout for UMAXES HOOKAMAX. Adults 21+ only. Nicotine is an addictive chemical.",
 };
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  await requireMember("/checkout");
   return <CheckoutShell />;
 }

@@ -1,4 +1,5 @@
 import CartPage from "@/components/CartPage";
+import { requireMember } from "@/lib/require-member";
 
 export const metadata = {
   title: "Cart · UMAXES",
@@ -6,6 +7,7 @@ export const metadata = {
     "Review your HOOKAMAX cart before checkout. Adults 21+ only. Nicotine is an addictive chemical.",
 };
 
-export default function CartRoute() {
+export default async function CartRoute() {
+  await requireMember("/cart");
   return <CartPage />;
 }
