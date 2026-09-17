@@ -40,8 +40,8 @@ export default function ProductKeyFeatures({ flavor }: { flavor: Flavor }) {
         aria-hidden
         className="pointer-events-none absolute -top-20 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-umx-cream-deep/50 blur-3xl"
       />
-      <div className="relative mx-auto max-w-[1200px]">
-        <header className="mb-14 max-w-2xl sm:mb-16">
+      <div className="relative mx-auto max-w-[1400px]">
+        <header className="mb-10 max-w-2xl sm:mb-12">
           <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
             Specs that matter
           </p>
@@ -54,44 +54,44 @@ export default function ProductKeyFeatures({ flavor }: { flavor: Flavor }) {
           </p>
         </header>
 
-        <div className="grid items-stretch gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
-          <div className="relative min-h-0">
-            <div className="h-full overflow-hidden rounded-[1.75rem] bg-umx-cream-warm shadow-[0_22px_55px_rgba(61,22,5,0.12)] ring-1 ring-black/5">
-              <div
-                className="relative aspect-[4/5] w-full lg:aspect-auto lg:h-full lg:min-h-[680px]"
-                style={{ backgroundColor: `${flavor.accent}14` }}
-              >
-                <Image
-                  src={flavor.packageImage}
-                  alt={`${flavor.name} HOOKAMAX package`}
-                  fill
-                  className="object-contain object-center p-6 sm:p-8"
-                  sizes="(max-width: 1024px) 100vw, 560px"
-                />
-              </div>
+        <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-6 xl:gap-8">
+          <div
+            className="relative overflow-hidden rounded-[1.75rem] shadow-[0_22px_55px_rgba(61,22,5,0.12)] ring-1 ring-black/8"
+            style={{ backgroundColor: `${flavor.accent}18` }}
+          >
+            <div className="relative aspect-[4/5] w-full sm:aspect-[3/4] lg:aspect-auto lg:h-full lg:min-h-[46rem]">
+              <Image
+                src={flavor.packageImage}
+                alt={`${flavor.name} HOOKAMAX package`}
+                fill
+                className="object-contain object-center p-3 sm:p-4 lg:p-5"
+                sizes="(max-width: 1024px) 100vw, 720px"
+                quality={80}
+                priority
+              />
             </div>
           </div>
 
-          <div className="flex flex-col justify-center">
-            <ul className="divide-y divide-black/8 overflow-hidden rounded-[1.5rem] border border-black/8 bg-umx-cream-warm shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
+          <div className="flex min-h-0">
+            <ul className="flex w-full flex-col divide-y divide-black/8 overflow-hidden rounded-[1.75rem] border border-black/8 bg-umx-cream-warm shadow-[0_22px_55px_rgba(61,22,5,0.08)]">
               {productSpecs.map((spec, i) => {
                 const Icon = iconMap[spec.icon];
                 return (
-                  <li key={spec.id}>
-                    <div className="group grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-4 transition duration-300 ease-out hover:bg-black/[0.035] sm:gap-5 sm:px-6 sm:py-5">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-black/6 text-black ring-1 ring-black/10 transition duration-300 ease-out group-hover:bg-black group-hover:text-umx-cream group-hover:ring-black sm:h-14 sm:w-14">
+                  <li key={spec.id} className="flex min-h-0 flex-1">
+                    <div className="group grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-5 py-3.5 transition duration-300 ease-out hover:bg-black/[0.035] sm:gap-4 sm:px-6 sm:py-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-black/6 text-black ring-1 ring-black/10 transition duration-300 ease-out group-hover:bg-black group-hover:text-umx-cream group-hover:ring-black sm:h-12 sm:w-12">
                         <Icon
-                          className="h-5 w-5 sm:h-6 sm:w-6"
+                          className="h-5 w-5"
                           strokeWidth={1.75}
                           aria-hidden
                         />
                       </div>
 
                       <div className="min-w-0">
-                        <p className="font-display text-[0.65rem] font-semibold tracking-[0.14em] text-black/40 uppercase">
+                        <p className="font-display text-[0.62rem] font-semibold tracking-[0.14em] text-black/40 uppercase">
                           {spec.label}
                         </p>
-                        <p className="mt-1 font-display text-lg font-bold tracking-tight text-black sm:text-xl">
+                        <p className="mt-0.5 font-display text-base font-bold tracking-tight text-black sm:text-lg">
                           {spec.value}
                         </p>
                       </div>
