@@ -131,7 +131,7 @@ export default function AltchaField({
             "--altcha-color-base": "#ffffff",
             "--altcha-color-base-content": "#111111",
             "--altcha-color-neutral": "rgba(17,17,17,0.2)",
-            "--altcha-color-primary": "#ff5b04",
+            "--altcha-color-primary": "#1b4f72",
             "--altcha-color-primary-content": "#ffffff",
             "--altcha-border-color": "rgba(0,0,0,0.14)",
             "--altcha-input-background-color": "#ffffff",
@@ -149,7 +149,7 @@ export default function AltchaField({
       className={`rounded-xl border-2 px-3.5 py-3.5 transition ${
         verified
           ? "border-emerald-400/70 bg-emerald-50/80"
-          : "border-umx-orange/45 bg-[linear-gradient(180deg,#fff7f0_0%,#ffffff_58%)] shadow-[0_0_0_3px_rgba(255,91,4,0.08)]"
+          : "border-umx-orange/45 bg-[linear-gradient(180deg,#eef5fa_0%,#ffffff_58%)] shadow-[0_0_0_3px_rgba(27,79,114,0.08)]"
       }`}
     >
       <div className="mb-2.5 flex items-start justify-between gap-3">

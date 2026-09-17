@@ -19,7 +19,8 @@
 }
 
 /*
- * Buyer account + auth (login/register) keep classic UMAXES orange.
+ * Buyer account keeps classic UMAXES orange.
+ * Login / register / forgot-password use sapphire (adult ops chrome).
  * Admin uses its own --admin-brand-* tokens in admin.css.
  */
 .umx-account-theme,
@@ -36,6 +37,21 @@
   --color-umx-orange-mid: #e04f03;
   --color-umx-orange-soft: #ffb888;
   --color-umx-orange-wash: #ffe8d6;
+}
+
+.umx-brand-navy {
+  --umx-orange: #1b4f72;
+  --umx-orange-deep: #163f5c;
+  --umx-orange-ink: #0e2438;
+  --umx-orange-mid: #2b7aab;
+  --umx-orange-soft: #9bbdd4;
+  --umx-orange-wash: #e7f1f8;
+  --color-umx-orange: #1b4f72;
+  --color-umx-orange-deep: #163f5c;
+  --color-umx-orange-ink: #0e2438;
+  --color-umx-orange-mid: #2b7aab;
+  --color-umx-orange-soft: #9bbdd4;
+  --color-umx-orange-wash: #e7f1f8;
 }
 
 @theme inline {
@@ -226,6 +242,88 @@
 .umx-account-theme .group:hover [class*="group-hover:border-umx-orange"],
 .umx-brand-orange .group:hover [class*="group-hover:border-umx-orange"] {
   border-color: #ff5b04;
+}
+
+.umx-brand-navy .text-umx-orange {
+  color: #1b4f72;
+}
+.umx-brand-navy .bg-umx-orange {
+  background-color: #1b4f72;
+}
+.umx-brand-navy .bg-umx-orange-deep {
+  background-color: #163f5c;
+}
+.umx-brand-navy .bg-umx-orange-ink {
+  background-color: #0e2438;
+}
+.umx-brand-navy .bg-umx-orange-wash {
+  background-color: #e7f1f8;
+}
+.umx-brand-navy .text-umx-orange-ink {
+  color: #0e2438;
+}
+.umx-brand-navy .text-umx-orange-deep {
+  color: #163f5c;
+}
+.umx-brand-navy .border-umx-orange {
+  border-color: #1b4f72;
+}
+.umx-brand-navy .ring-umx-orange {
+  --tw-ring-color: #1b4f72;
+}
+
+@media (hover: hover) {
+  .umx-brand-navy [class*="hover:text-umx-orange"]:hover:not([class*="hover:text-umx-orange-"]) {
+    color: #1b4f72;
+  }
+  .umx-brand-navy [class*="hover:text-umx-orange-deep"]:hover {
+    color: #163f5c;
+  }
+  .umx-brand-navy [class*="hover:text-white"]:hover {
+    color: #fff;
+  }
+  .umx-brand-navy
+    [class*="hover:bg-umx-orange"]:hover:not([class*="hover:bg-umx-orange-"]):not(
+      [class*="hover:bg-umx-orange/"]
+    ) {
+    background-color: #1b4f72;
+    box-shadow: none;
+  }
+  .umx-brand-navy [class*="hover:bg-umx-orange-wash"]:hover {
+    background-color: #e7f1f8;
+    box-shadow: none;
+  }
+  .umx-brand-navy [class*="hover:bg-umx-orange-deep"]:hover {
+    background-color: #163f5c;
+    box-shadow: none;
+  }
+  .umx-brand-navy [class*="hover:bg-umx-orange-mid"]:hover {
+    background-color: #2b7aab;
+    box-shadow: none;
+  }
+  .umx-brand-navy [class*="hover:bg-umx-orange/"]:hover {
+    background-color: rgb(27 79 114 / 0.1);
+    box-shadow: none;
+  }
+  .umx-brand-navy [class*="hover:border-umx-orange"]:hover:not([class*="hover:border-umx-orange/"]) {
+    border-color: #1b4f72;
+    box-shadow: none;
+  }
+  .umx-brand-navy [class*="hover:ring-umx-orange"]:hover {
+    --tw-ring-color: #1b4f72;
+    --tw-ring-opacity: 1;
+    box-shadow: 0 0 0 2px #1b4f72;
+  }
+}
+
+.umx-brand-navy .group:hover [class*="group-hover:text-umx-orange"]:not([class*="group-hover:text-umx-orange-"]) {
+  color: #1b4f72;
+}
+.umx-brand-navy .group:hover [class*="group-hover:bg-umx-orange"]:not([class*="group-hover:bg-umx-orange-"]) {
+  background-color: #1b4f72;
+}
+.umx-brand-navy .group:hover [class*="group-hover:border-umx-orange"] {
+  border-color: #1b4f72;
 }
 
 html {

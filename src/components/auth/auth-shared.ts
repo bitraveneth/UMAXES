@@ -63,4 +63,4 @@ export const COUNTRY_CODES = [
 ] as const;
 
 export const SUBMIT_BTN_CLASS =
-  "w-full rounded-xl bg-umx-orange py-3 font-display text-sm font-semibold tracking-wide text-white shadow-[0_10px_24px_rgba(255,91,4,0.26)] transition hover:bg-umx-orange-deep disabled:opacity-60";
+  "w-full rounded-xl bg-umx-orange py-3 font-display text-sm font-semibold tracking-wide text-white shadow-[0_10px_24px_rgba(27,79,114,0.26)] transition hover:bg-umx-orange-deep disabled:opacity-60";

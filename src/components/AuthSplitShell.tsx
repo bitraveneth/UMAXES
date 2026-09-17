@@ -18,10 +18,10 @@ export default function AuthSplitShell({
   children,
 }: AuthSplitShellProps) {
   return (
-    <main className="umx-brand-orange fixed inset-0 z-50 flex h-dvh w-full flex-col overflow-hidden bg-[#e8e0d6]">
+    <main className="umx-brand-navy fixed inset-0 z-50 flex h-dvh w-full flex-col overflow-hidden bg-[#e8eef6]">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(255,91,4,0.12),transparent_55%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(27,79,114,0.12),transparent_55%)]"
       />
 
       <Link
@@ -56,7 +56,7 @@ export default function AuthSplitShell({
             <AuthImageCarousel />
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-              <div className="h-1 w-full shrink-0 bg-gradient-to-r from-umx-orange via-[#ff7a33] to-[#ffb888] lg:hidden" />
+              <div className="h-1 w-full shrink-0 bg-gradient-to-r from-[#1b4f72] via-[#2b7aab] to-[#9bbdd4] lg:hidden" />
 
               <div className="flex min-h-0 flex-1 flex-col justify-center px-6 py-6 sm:px-8 sm:py-7 lg:overflow-hidden lg:px-10 lg:pt-8 lg:pb-10 xl:px-11">
                 <div className="w-full">
