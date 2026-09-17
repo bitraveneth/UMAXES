@@ -41,7 +41,7 @@ const slides = [
   {
     src: heroSceneImages[2],
     alt: "Coastal selfie with HOOKAMAX under a clear sky",
-    kicker: "Ten flavors",
+    kicker: "Flavor lineup",
     title: "Coastal Cool. Open Sky.",
     subtitle: "Crisp clouds and sunlit flavor — pick a profile and let the session stretch.",
     cta: "Explore lineup",
