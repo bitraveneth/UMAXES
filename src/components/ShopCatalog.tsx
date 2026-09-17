@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   BatteryCharging,
+  ChevronLeft,
   ChevronRight,
   CircleHelp,
   Grid3x3,
@@ -12,6 +13,7 @@ import {
   Usb,
   Wind,
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import {
   storeTopPadClass,
@@ -22,12 +24,143 @@ import { flavors, product } from "@/lib/assets";
 
 const PRODUCT_HREF = `/product/${flavors[0].id}`;
 
+/** Five flavor photos for the shop card carousel — still one product. */
+const SHOP_SLIDES = [
+  flavors[0], // Peach Mango
+  flavors[1], // Watermelon Ice
+  flavors[4], // Miami Sunset
+  flavors[5], // Cool Mint
+  flavors[6], // Blue Razz Ice
+] as const;
+
+const SLIDE_MS = 4200;
+
 const highlights = [
   { label: "~80,000 puffs", icon: Wind },
   { label: "1600mAh rechargeable", icon: BatteryCharging },
   { label: "LIT Mesh coil", icon: Grid3x3 },
   { label: "USB Type-C", icon: Usb },
 ] as const;
+
+function ShopFlavorCarousel() {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const tracking = useRef(false);
+  const count = SHOP_SLIDES.length;
+
+  const go = useCallback((next: number) => {
+    setIndex(((next % count) + count) % count);
+  }, [count]);
+
+  useEffect(() => {
+    if (paused) return;
+    const id = window.setTimeout(() => go(index + 1), SLIDE_MS);
+    return () => window.clearTimeout(id);
+  }, [index, paused, go]);
+
+  function onPointerDown(e: React.PointerEvent) {
+    const target = e.target as HTMLElement;
+    if (target.closest("a, button")) return;
+    tracking.current = true;
+    startX.current = e.clientX;
+    startY.current = e.clientY;
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+  }
+
+  function onPointerUp(e: React.PointerEvent) {
+    if (!tracking.current) return;
+    tracking.current = false;
+    const dx = e.clientX - startX.current;
+    const dy = e.clientY - startY.current;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+    go(dx < 0 ? index + 1 : index - 1);
+  }
+
+  return (
+    <div
+      className="relative min-h-[28rem] overflow-hidden bg-[#f3f0ea] sm:min-h-[34rem] lg:min-h-[40rem]"
+      aria-roledescription="carousel"
+      aria-label="HOOKAMAX photos"
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onPointerCancel={() => {
+        tracking.current = false;
+      }}
+    >
+      {SHOP_SLIDES.map((slide, i) => (
+        <div
+          key={slide.id}
+          className={`absolute inset-0 transition-opacity duration-700 ease-out ${
+            i === index ? "z-[1] opacity-100" : "z-0 opacity-0"
+          }`}
+          aria-hidden={i !== index}
+        >
+          <Link href={PRODUCT_HREF} className="absolute inset-0 block" tabIndex={i === index ? 0 : -1}>
+            <Image
+              src={slide.image}
+              alt={`${product.name} — ${slide.name}`}
+              fill
+              priority={i === 0}
+              sizes="(max-width: 1024px) 100vw, 55vw"
+              className="object-cover object-center"
+            />
+          </Link>
+        </div>
+      ))}
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-28 bg-gradient-to-t from-black/45 to-transparent"
+      />
+
+      <button
+        type="button"
+        aria-label="Previous photo"
+        onClick={() => go(index - 1)}
+        className="absolute top-1/2 left-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:left-4"
+      >
+        <ChevronLeft className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+      </button>
+      <button
+        type="button"
+        aria-label="Next photo"
+        onClick={() => go(index + 1)}
+        className="absolute top-1/2 right-3 z-[3] flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white sm:right-4"
+      >
+        <ChevronRight className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+      </button>
+
+      <div className="absolute inset-x-0 bottom-4 z-[3] flex justify-center gap-2 px-4">
+        {SHOP_SLIDES.map((slide, i) => (
+          <button
+            key={slide.id}
+            type="button"
+            aria-label={`Show photo ${i + 1}`}
+            aria-current={i === index}
+            onClick={() => go(i)}
+            className={`relative h-14 w-11 overflow-hidden ring-2 transition sm:h-16 sm:w-12 ${
+              i === index
+                ? "ring-umx-orange"
+                : "ring-white/70 hover:ring-white"
+            }`}
+          >
+            <Image
+              src={slide.image}
+              alt=""
+              fill
+              sizes="48px"
+              className="object-cover"
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function ShopAside({
   quantity,
@@ -170,19 +303,7 @@ export default function ShopCatalog() {
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_260px] xl:gap-10">
           <article className="group overflow-hidden border border-black/8 bg-white">
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-              <Link
-                href={PRODUCT_HREF}
-                className="relative flex min-h-[28rem] items-center justify-center bg-[#f6f4ef] sm:min-h-[34rem] lg:min-h-[40rem]"
-              >
-                <Image
-                  src={product.deviceImage}
-                  alt={product.name}
-                  width={720}
-                  height={1280}
-                  priority
-                  className="h-[22rem] w-auto object-contain drop-shadow-[0_28px_48px_rgba(0,0,0,0.18)] transition duration-500 group-hover:scale-[1.03] sm:h-[28rem] lg:h-[34rem]"
-                />
-              </Link>
+              <ShopFlavorCarousel />
 
               <div className="flex flex-col justify-center px-6 py-10 sm:px-10 sm:py-12 lg:px-12">
                 <p className="font-display text-xs font-bold tracking-[0.2em] text-umx-orange uppercase">
