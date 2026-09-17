@@ -137,7 +137,7 @@ export const productSpecs = [
   },
   {
     id: "coil",
-    value: "LIT MESH",
+    value: "MaxCore™ mesh coil",
     label: "Coil",
     icon: "mesh",
   },

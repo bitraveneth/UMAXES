@@ -39,7 +39,7 @@ const SLIDE_MS = 4200;
 const highlights = [
   { label: "~80,000 puffs", icon: Wind },
   { label: "1600mAh rechargeable", icon: BatteryCharging },
-  { label: "LIT Mesh coil", icon: Grid3x3 },
+  { label: "MaxCore™ mesh coil", icon: Grid3x3 },
   { label: "USB Type-C", icon: Usb },
 ] as const;
 
@@ -372,7 +372,7 @@ export default function ShopCatalog() {
                 </Link>
                 <p className="mt-4 max-w-md font-body text-base leading-relaxed text-black/60 sm:text-lg">
                   {product.tagline} Rated up to 80K puffs, rechargeable, with a
-                  LIT Mesh coil.
+                  MaxCore™ mesh coil.
                 </p>
 
                 <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">

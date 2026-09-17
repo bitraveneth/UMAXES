@@ -8,8 +8,8 @@ export const faqs = [
   },
   {
     q: "What coil and airflow does it use?",
-    a: "HOOKAMAX uses a LIT Mesh coil with bottom airflow control, so you can switch between MTL and DTL.",
-    keys: ["coil", "mesh", "ohm", "0.6", "airflow", "mtl", "dl", "draw"],
+    a: "HOOKAMAX uses a MaxCore™ mesh coil with bottom airflow control, so you can switch between MTL and DTL.",
+    keys: ["coil", "mesh", "maxcore", "ohm", "0.6", "airflow", "mtl", "dl", "draw"],
   },
   {
     q: "What nicotine strength is HOOKAMAX?",
