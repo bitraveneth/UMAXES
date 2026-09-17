@@ -396,21 +396,6 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 </button>
               ) : null}
 
-              <div className="mt-6">
-                <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
-                  Total
-                </p>
-                <p className="mt-1 font-display text-3xl font-bold text-black">
-                  {showPrices ? <StorePrice amount={payable} /> : "On request"}
-                </p>
-                <p className="mt-1 font-body text-sm text-black/45">
-                  {totalQty} {totalQty === 1 ? "item" : "items"}
-                  {showPrices && discount > 0 && appliedCoupon
-                    ? ` · ${appliedCoupon} −$${discount.toFixed(2)}`
-                    : ""}
-                </p>
-              </div>
-
               <div className="mt-5">
                 <label
                   htmlFor="product-coupon"
@@ -454,6 +439,21 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     Applied {appliedCoupon}
                   </p>
                 ) : null}
+              </div>
+
+              <div className="mt-6 text-right">
+                <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                  Total
+                </p>
+                <p className="mt-1 font-display text-3xl font-bold text-black">
+                  {showPrices ? <StorePrice amount={payable} /> : "On request"}
+                </p>
+                <p className="mt-1 font-body text-sm text-black/45">
+                  {totalQty} {totalQty === 1 ? "item" : "items"}
+                  {showPrices && discount > 0 && appliedCoupon
+                    ? ` · ${appliedCoupon} −$${discount.toFixed(2)}`
+                    : ""}
+                </p>
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
