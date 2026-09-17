@@ -157,10 +157,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
 
   return (
     <div
-      className={`px-4 pb-20 sm:px-6 sm:pb-28 ${storeTopPadClass(compactChrome)}`}
+      className={`px-4 pb-20 sm:px-6 lg:px-8 sm:pb-28 ${storeTopPadClass(compactChrome)}`}
     >
-      <div className="mx-auto max-w-[1200px]">
-        <nav className="mb-8 font-display text-xs tracking-wide text-black/55 sm:mb-10">
+      <div className="mx-auto max-w-[1600px]">
+        <nav className="mb-6 font-display text-xs tracking-wide text-black/55 sm:mb-8">
           <Link href="/" className="transition hover:text-umx-orange">
             Home
           </Link>
@@ -172,162 +172,148 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
           <span className="text-black">{flavor.name}</span>
         </nav>
 
-        <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
-          <div>
-            <p className="font-display text-xs font-semibold tracking-[0.16em] text-umx-orange uppercase">
-              {product.name}
-            </p>
-            <h1 className="mt-2 font-display text-[clamp(2.25rem,5vw,3.5rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-black">
-              {flavor.name}
-            </h1>
-
-            <div
-              className="relative mt-6 aspect-square overflow-hidden rounded-[1.75rem] bg-umx-cream-warm shadow-[0_20px_50px_rgba(61,22,5,0.1)] ring-1 ring-black/5"
-              style={{ backgroundColor: `${flavor.accent}18` }}
-            >
-              <Image
-                src={flavor.image}
-                alt={flavor.name}
-                fill
-                priority
-                className="object-cover"
-                quality={70}
-                sizes="(max-width: 1024px) 100vw, 600px"
-              />
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-start gap-4">
-              <span className="relative inline-flex shrink-0 items-center bg-umx-orange py-2 pr-5 pl-6 font-display text-lg font-bold tracking-tight text-white [clip-path:polygon(12px_0,100%_0,100%_100%,12px_100%,0_50%)]">
-                <span
-                  aria-hidden
-                  className="absolute top-1/2 left-2.5 h-2 w-2 -translate-y-1/2 rounded-full bg-white"
-                />
-                <StorePrice amount={flavor.price} suffix=".00" />
-              </span>
-              <p className="min-w-0 max-w-md flex-1 font-body text-base leading-relaxed text-black/70 sm:text-lg">
-                {flavor.description}
-              </p>
-            </div>
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-12 xl:gap-16">
+          <div
+            className="relative aspect-[4/5] min-h-[22rem] overflow-hidden rounded-[1.5rem] bg-umx-cream-warm ring-1 ring-black/8 sm:min-h-[32rem] lg:aspect-auto lg:min-h-[44rem] xl:min-h-[52rem]"
+            style={{ backgroundColor: `${flavor.accent}18` }}
+          >
+            <Image
+              src={flavor.image}
+              alt={flavor.name}
+              fill
+              priority
+              className="object-cover"
+              quality={75}
+              sizes="(max-width: 1024px) 100vw, 60vw"
+            />
           </div>
 
-          <div className="overflow-hidden rounded-[1.5rem] bg-white shadow-[0_12px_36px_rgba(61,22,5,0.08)] ring-1 ring-black/8">
-            <div className="hidden grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-black/8 px-5 py-3 sm:grid">
-              <p className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
-                Flavor
-              </p>
-              <p className="w-24 text-right font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
-                Unit price
-              </p>
-              <p className="w-40 text-center font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
-                Quantity
-              </p>
-            </div>
+          <div className="lg:sticky lg:top-32">
+            <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase">
+              {product.name}
+            </p>
+            <h1 className="mt-2 font-display text-[clamp(2.4rem,4.5vw,3.75rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black">
+              {flavor.name}
+            </h1>
+            <p className="mt-4 font-display text-3xl font-bold tracking-tight text-black sm:text-4xl">
+              <StorePrice amount={flavor.price} suffix=".00" />
+            </p>
+            <p className="mt-4 max-w-xl font-body text-base leading-relaxed text-black/65 sm:text-lg">
+              {flavor.description}
+            </p>
 
-            <ul>
-              {lines.map((line) => {
-                const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
-                const options = flavors.filter(
-                  (f) => f.id === line.flavorId || !usedFlavorIds.has(f.id),
-                );
-                return (
-                  <li
-                    key={line.key}
-                    className="border-b border-black/6 px-4 py-4 last:border-b-0 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-3 sm:px-5 sm:py-3.5"
-                  >
-                    <label className="block">
-                      <span className="mb-1.5 block font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:sr-only">
-                        Flavor
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={line.flavorId}
-                          onChange={(e) =>
-                            changeFlavor(line, e.target.value as FlavorId)
-                          }
-                          aria-label="Flavor"
-                          className="min-w-0 flex-1 rounded-full border border-black/15 bg-white px-3.5 py-2.5 font-display text-sm font-semibold text-black outline-none focus:border-black"
-                        >
-                          {options.map((f) => (
-                            <option key={f.id} value={f.id}>
-                              {f.name}
-                            </option>
-                          ))}
-                        </select>
-                        {lines.length > 1 ? (
-                          <button
-                            type="button"
-                            onClick={() => removeLine(line.key)}
-                            className="font-display text-xs font-semibold text-black/45 transition hover:text-black"
-                            aria-label={`Remove ${item.name}`}
+            <div className="mt-8 border-t border-black/10 pt-6">
+              <div className="hidden grid-cols-[minmax(0,1fr)_7rem_9.5rem] items-center gap-4 pb-3 sm:grid">
+                <p className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
+                  Flavor
+                </p>
+                <p className="text-right font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
+                  Unit price
+                </p>
+                <p className="text-right font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
+                  Quantity
+                </p>
+              </div>
+
+              <ul className="divide-y divide-black/8 border-y border-black/10">
+                {lines.map((line) => {
+                  const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
+                  const options = flavors.filter(
+                    (f) => f.id === line.flavorId || !usedFlavorIds.has(f.id),
+                  );
+                  return (
+                    <li
+                      key={line.key}
+                      className="py-4 sm:grid sm:grid-cols-[minmax(0,1fr)_7rem_9.5rem] sm:items-center sm:gap-4"
+                    >
+                      <label className="block">
+                        <span className="mb-1.5 block font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:sr-only">
+                          Flavor
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={line.flavorId}
+                            onChange={(e) =>
+                              changeFlavor(line, e.target.value as FlavorId)
+                            }
+                            aria-label="Flavor"
+                            className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3.5 py-2.5 font-display text-sm font-semibold text-black outline-none focus:border-black"
                           >
-                            Remove
-                          </button>
-                        ) : null}
+                            {options.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.name}
+                              </option>
+                            ))}
+                          </select>
+                          {lines.length > 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => removeLine(line.key)}
+                              className="font-display text-xs font-semibold text-black/45 transition hover:text-black"
+                              aria-label={`Remove ${item.name}`}
+                            >
+                              Remove
+                            </button>
+                          ) : null}
+                        </div>
+                      </label>
+                      <p className="mt-3 flex items-center justify-between sm:mt-0 sm:block sm:text-right">
+                        <span className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:hidden">
+                          Unit price
+                        </span>
+                        <span className="font-display text-sm font-semibold text-black">
+                          <StorePrice amount={item.price} />
+                        </span>
+                      </p>
+                      <div className="mt-3 flex items-center justify-between gap-3 sm:mt-0 sm:justify-end">
+                        <span className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:hidden">
+                          Quantity
+                        </span>
+                        <QtyStepper
+                          value={line.quantity}
+                          onChange={(next) =>
+                            updateLine(line.key, {
+                              quantity: Math.max(1, next),
+                            })
+                          }
+                          min={1}
+                          size="sm"
+                          ariaLabel={`${item.name} quantity`}
+                        />
                       </div>
-                    </label>
-                    <p className="mt-3 flex items-center justify-between sm:mt-0 sm:block sm:w-24 sm:text-right">
-                      <span className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:hidden">
-                        Unit price
-                      </span>
-                      <span className="font-display text-sm font-semibold text-black">
-                        <StorePrice amount={item.price} />
-                      </span>
-                    </p>
-                    <div className="mt-3 flex items-center justify-between gap-3 sm:mt-0 sm:w-40 sm:justify-end">
-                      <span className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase sm:hidden">
-                        Quantity
-                      </span>
-                      <QtyStepper
-                        value={line.quantity}
-                        onChange={(next) =>
-                          updateLine(line.key, {
-                            quantity: Math.max(1, next),
-                          })
-                        }
-                        min={1}
-                        size="sm"
-                        ariaLabel={`${item.name} quantity`}
-                      />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                    </li>
+                  );
+                })}
+              </ul>
 
-            {availableExtra ? (
-              <div className="border-t border-black/8 px-4 py-3 sm:px-5">
+              {availableExtra ? (
                 <button
                   type="button"
                   onClick={addFlavorRow}
-                  className="font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
+                  className="mt-4 font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
                 >
                   + Add another flavor
                 </button>
-              </div>
-            ) : null}
+              ) : null}
 
-            <div className="flex flex-col gap-4 border-t border-black/8 bg-umx-cream/40 px-4 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-5">
-              <div>
-                <p className="font-display text-xs font-semibold tracking-[0.12em] text-black/45 uppercase">
-                  Total quantity
+              <div className="mt-8">
+                <p className="font-display text-[0.68rem] font-semibold tracking-[0.14em] text-black/45 uppercase">
+                  Total
                 </p>
-                <p className="mt-1 font-display text-xl font-bold text-black">
-                  {totalQty}
-                </p>
-                <p className="mt-3 font-display text-xs font-semibold tracking-[0.12em] text-black/45 uppercase">
-                  Total amount
-                </p>
-                <p className="mt-1 font-display text-xl font-bold text-black">
+                <p className="mt-1 font-display text-2xl font-bold text-black">
                   {showPrices ? <StorePrice amount={subtotal} /> : "On request"}
+                  <span className="ml-2 font-display text-sm font-semibold text-black/40">
+                    · {totalQty} {totalQty === 1 ? "item" : "items"}
+                  </span>
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2 sm:min-w-[12.5rem]">
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={handleAdd}
                   disabled={!totalQty}
-                  className={`inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 sm:text-base ${
+                  className={`inline-flex min-h-12 items-center justify-center rounded-lg px-6 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 sm:text-base ${
                     !totalQty
                       ? "cursor-not-allowed bg-black/25"
                       : added
@@ -336,15 +322,12 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   }`}
                 >
                   {added ? "Added to cart" : "Add to cart"}
-                  <span aria-hidden className="!text-white">
-                    {added ? "✓" : "→"}
-                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={handleBuy}
                   disabled={!totalQty}
-                  className={`inline-flex h-12 items-center justify-center rounded-full px-7 font-display text-sm font-semibold tracking-wide transition duration-300 sm:text-base ${
+                  className={`inline-flex min-h-12 items-center justify-center rounded-lg px-6 font-display text-sm font-semibold tracking-wide transition duration-300 sm:text-base ${
                     !totalQty
                       ? "cursor-not-allowed border border-black/15 text-black/30"
                       : "border border-black bg-white text-black hover:border-umx-orange hover:text-umx-orange"
