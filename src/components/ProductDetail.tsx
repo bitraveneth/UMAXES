@@ -292,21 +292,21 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             </div>
           </div>
 
-          <div className="rounded-[1.35rem] bg-white p-5 ring-1 ring-black/8 sm:p-7">
-            <div className="flex items-start justify-between gap-3">
-              <h1 className="min-w-0 font-display text-[clamp(1.85rem,3.6vw,2.75rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-black text-balance">
+          <div className="min-w-0 rounded-[1.35rem] bg-white p-4 ring-1 ring-black/8 sm:p-7">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+              <h1 className="order-2 min-w-0 font-display text-[1.65rem] font-extrabold leading-[1.12] tracking-[-0.03em] text-black text-balance sm:order-none sm:text-[clamp(1.85rem,3.6vw,2.75rem)] sm:leading-[1.08]">
                 {flavor.name}
               </h1>
-              <span className="mt-1 shrink-0 rounded-full bg-[#1b4f72] px-3 py-1 font-display text-[0.68rem] font-bold tracking-[0.14em] text-white uppercase">
+              <span className="order-1 self-end shrink-0 rounded-full bg-[#1b4f72] px-3 py-1 font-display text-[0.68rem] font-bold tracking-[0.14em] text-white uppercase sm:order-none sm:mt-1 sm:self-auto">
                 {product.name}
               </span>
             </div>
-            <p className="mt-3 font-display text-3xl font-bold tracking-tight text-black sm:text-4xl">
+            <p className="mt-2.5 font-display text-[1.75rem] font-bold tracking-tight text-black sm:mt-3 sm:text-4xl">
               <StorePrice amount={flavor.price} suffix=".00" />
             </p>
 
-            <div className="mt-6">
-              <div className="grid grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3 pb-2">
+            <div className="mt-5 sm:mt-6">
+              <div className="hidden grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3 pb-2 sm:grid">
                 <p className="font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
                   Flavor
                 </p>
@@ -318,7 +318,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 </p>
               </div>
 
-              <ul className="space-y-2">
+              <ul className="space-y-4 sm:space-y-2">
                 {lines.map((line) => {
                   const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
                   const options = flavors.filter(
@@ -327,10 +327,12 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   return (
                     <li
                       key={line.key}
-                      className="grid grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3"
+                      className="grid grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,1fr)_6.75rem_9rem] sm:items-center sm:gap-3"
                     >
                       <label className="min-w-0">
-                        <span className="sr-only">Flavor</span>
+                        <span className="mb-1.5 block font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:sr-only">
+                          Flavor
+                        </span>
                         <div className="flex min-w-0 items-center gap-2">
                           <select
                             value={line.flavorId}
@@ -358,21 +360,31 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                           ) : null}
                         </div>
                       </label>
-                      <p className="text-right font-display text-sm font-semibold text-black">
-                        <StorePrice amount={item.price} />
-                      </p>
-                      <div className="flex justify-end">
-                        <QtyStepper
-                          value={line.quantity}
-                          onChange={(next) =>
-                            updateLine(line.key, {
-                              quantity: Math.max(1, next),
-                            })
-                          }
-                          min={1}
-                          size="sm"
-                          ariaLabel={`${item.name} quantity`}
-                        />
+                      <div className="grid grid-cols-2 items-end gap-3 sm:contents">
+                        <div className="min-w-0 sm:text-right">
+                          <p className="mb-1.5 font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:hidden">
+                            Unit price
+                          </p>
+                          <p className="font-display text-sm font-semibold text-black sm:text-right">
+                            <StorePrice amount={item.price} />
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <p className="mb-1.5 font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:hidden">
+                            Quantity
+                          </p>
+                          <QtyStepper
+                            value={line.quantity}
+                            onChange={(next) =>
+                              updateLine(line.key, {
+                                quantity: Math.max(1, next),
+                              })
+                            }
+                            min={1}
+                            size="sm"
+                            ariaLabel={`${item.name} quantity`}
+                          />
+                        </div>
                       </div>
                     </li>
                   );
@@ -412,13 +424,13 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     }}
                     placeholder="Enter code"
                     autoComplete="off"
-                    className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3.5 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black"
+                    className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black sm:px-3.5"
                   />
                   <button
                     type="button"
                     onClick={() => void validateCoupon(couponDraft, subtotal)}
                     disabled={couponBusy}
-                    className="shrink-0 rounded-lg border border-black px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange disabled:opacity-50"
+                    className="shrink-0 rounded-lg border border-black px-3 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange disabled:opacity-50 sm:px-4"
                   >
                     {couponBusy ? "…" : "Apply"}
                   </button>
@@ -438,7 +450,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
                   Total
                 </p>
-                <p className="mt-1 font-display text-3xl font-bold text-black">
+                <p className="mt-1 font-display text-2xl font-bold text-black sm:text-3xl">
                   {showPrices ? <StorePrice amount={payable} /> : "On request"}
                 </p>
                 <p className="mt-1 font-body text-sm text-black/45">
@@ -449,12 +461,12 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 </p>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={handleAdd}
                   disabled={!totalQty}
-                  className={`inline-flex min-h-12 items-center justify-center rounded-lg px-4 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 ${
+                  className={`inline-flex min-h-12 items-center justify-center rounded-lg px-3 font-display text-sm font-semibold tracking-wide !text-white transition duration-300 sm:px-4 ${
                     !totalQty
                       ? "cursor-not-allowed bg-black/25"
                       : added
@@ -468,7 +480,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   type="button"
                   onClick={handleBuy}
                   disabled={!totalQty}
-                  className={`inline-flex min-h-12 items-center justify-center rounded-lg px-4 font-display text-sm font-semibold tracking-wide transition duration-300 ${
+                  className={`inline-flex min-h-12 items-center justify-center rounded-lg px-3 font-display text-sm font-semibold tracking-wide transition duration-300 sm:px-4 ${
                     !totalQty
                       ? "cursor-not-allowed border border-black/15 text-black/30"
                       : "border border-black bg-white text-black hover:-translate-y-0.5 hover:border-[#1b4f72] hover:bg-[#1b4f72] hover:!text-white hover:shadow-[0_10px_22px_rgba(27,79,114,0.28)]"
