@@ -101,7 +101,7 @@ export function isPuffOption(value: unknown): value is PuffOption {
 export const productSpecs = [
   {
     id: "puffs",
-    value: "50K / 80K",
+    value: "80K",
     label: "Puffs",
     icon: "puffs",
   },
@@ -125,7 +125,7 @@ export const productSpecs = [
   },
   {
     id: "nicotine",
-    value: "0.35%",
+    value: "0.5%",
     label: "Nicotine",
     icon: "nicotine",
   },
@@ -143,7 +143,7 @@ export const productSpecs = [
   },
   {
     id: "battery",
-    value: "1300mAh",
+    value: "1600mAh",
     label: "Rechargeable",
     icon: "battery",
   },

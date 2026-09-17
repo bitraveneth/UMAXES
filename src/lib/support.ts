@@ -8,13 +8,13 @@ export const faqs = [
   },
   {
     q: "What coil and airflow does it use?",
-    a: "HOOKAMAX uses a LIT MESH coil at 0.6Ω with dual MTL/DL airflow, so you can switch between tighter and more open draws.",
+    a: "HOOKAMAX uses a LIT Mesh coil with bottom airflow control, so you can switch between MTL and DTL.",
     keys: ["coil", "mesh", "ohm", "0.6", "airflow", "mtl", "dl", "draw"],
   },
   {
     q: "What nicotine strength is HOOKAMAX?",
-    a: "HOOKAMAX is listed at 0.35% nicotine. Nicotine is an addictive chemical — for adults 21+ only.",
-    keys: ["nicotine", "nic", "0.35", "strength", "addictive"],
+    a: "HOOKAMAX is listed at 0.5% nicotine (3.5mg/ml). Nicotine is an addictive chemical — for adults 21+ only.",
+    keys: ["nicotine", "nic", "0.5", "3.5", "strength", "addictive"],
   },
   {
     q: "How long does shipping take?",
