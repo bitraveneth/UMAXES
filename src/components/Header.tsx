@@ -26,7 +26,6 @@ const infoCenterLinks = [
 ] as const;
 
 const supportLinks = [
-  { href: "/support", label: "Support hub" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact us" },
 ] as const;
@@ -159,15 +158,12 @@ function SupportDropdown({
   pathname: string;
   onNavigate?: () => void;
 }) {
-  const supportActive =
-    pathname.startsWith("/support") ||
-    pathname === "/faq" ||
-    pathname === "/contact";
+  const supportActive = pathname === "/faq" || pathname === "/contact";
 
   return (
     <div className="group relative">
       <MemberOnlyLink
-        href="/support"
+        href="/faq"
         className={navLinkClass(supportActive)}
         aria-haspopup="menu"
       >
@@ -180,10 +176,7 @@ function SupportDropdown({
       >
         <div className="overflow-hidden rounded-2xl bg-white shadow-[0_16px_40px_rgba(61,22,5,0.14)] ring-1 ring-black/8">
           {supportLinks.map((item) => {
-            const active =
-              item.href === "/support"
-                ? pathname === "/support"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = pathname === item.href;
             return (
               <MemberOnlyLink
                 key={item.href}
@@ -528,10 +521,7 @@ export default function Header() {
               {supportOpen && (
                 <div className="mb-1 ml-3 border-l-2 border-umx-orange/30 pl-2">
                   {supportLinks.map((item) => {
-                    const active =
-                      item.href === "/support"
-                        ? pathname === "/support"
-                        : pathname === item.href;
+                    const active = pathname === item.href;
                     return (
                       <MemberOnlyLink
                         key={item.href}

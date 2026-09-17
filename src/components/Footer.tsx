@@ -14,7 +14,6 @@ const shopLinks = [
 ] as const;
 
 const supportLinks = [
-  { href: "/support", label: "Support" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
 ] as const;

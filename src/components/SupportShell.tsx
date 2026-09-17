@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import StoreTopPad from "@/components/StoreTopPad";
@@ -26,13 +25,7 @@ export function SupportShell({
       <main className="flex-1 bg-umx-cream">
         <StoreTopPad className="px-4 pb-20 sm:px-6 sm:pb-28">
           <div className={`mx-auto ${wide ? "max-w-[1200px]" : "max-w-[900px]"}`}>
-            <Link
-              href="/support"
-              className="font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
-            >
-              ← Support
-            </Link>
-            <header className={`mt-8 ${align === "center" ? "text-center" : ""}`}>
+            <header className={align === "center" ? "text-center" : ""}>
               <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase">
                 {eyebrow}
               </p>

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function VerifyPage() {
-  redirect("/support");
+export default function SupportVerifyPage() {
+  redirect("/faq");
 }
