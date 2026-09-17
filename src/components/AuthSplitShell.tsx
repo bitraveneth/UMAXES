@@ -19,7 +19,7 @@ export default function AuthSplitShell({
   children,
 }: AuthSplitShellProps) {
   return (
-    <main className="umx-brand-navy flex min-h-dvh w-full flex-col bg-[#e8eef6]">
+    <main className="umx-brand-navy relative flex min-h-dvh w-full flex-col bg-[#e8eef6]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(27,79,114,0.12),transparent_55%)]"
