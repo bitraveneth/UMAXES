@@ -236,7 +236,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
     <div
       className={`px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8 lg:pb-20 ${storeTopPadClass(compactChrome)}`}
     >
-      <div className="mx-auto max-w-[1200px]">
+      <div className="mx-auto max-w-[1280px]">
         <nav className="mb-5 font-display text-xs tracking-wide text-black/55 sm:mb-7">
           <Link href="/" className="transition hover:text-umx-orange">
             Home
@@ -249,7 +249,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
           <span className="text-black">{flavor.name}</span>
         </nav>
 
-        <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(24rem,32rem)] lg:gap-12">
+        <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(28rem,40rem)] lg:gap-12">
           <div>
             <div
               className="relative mx-auto aspect-square w-full max-w-[22rem] overflow-hidden rounded-2xl bg-white ring-1 ring-black/8 sm:max-w-[28rem] lg:mx-0 lg:max-w-none"
@@ -296,10 +296,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             <p className="font-display text-xs font-semibold tracking-[0.16em] text-umx-orange uppercase">
               {product.name}
             </p>
-            <h1 className="mt-2 font-display text-[clamp(1.9rem,4vw,2.6rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-black">
+            <h1 className="mt-2 font-display text-[clamp(1.85rem,3.6vw,2.75rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-black text-balance">
               {flavor.name}
             </h1>
-            <p className="mt-3 font-display text-2xl font-bold tracking-tight text-black">
+            <p className="mt-3 font-display text-3xl font-bold tracking-tight text-black sm:text-4xl">
               <StorePrice amount={flavor.price} suffix=".00" />
             </p>
             <p className="mt-3 font-body text-base leading-relaxed text-black/62">
@@ -307,7 +307,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             </p>
 
             <div className="mt-6 border-t border-black/10 pt-5">
-              <div className="hidden grid-cols-[minmax(0,1fr)_5.5rem_9rem] items-center gap-3 pb-2.5 sm:grid">
+              <div className="hidden grid-cols-[minmax(0,1fr)_5.25rem_8.75rem] items-center gap-3 pb-2.5 sm:grid">
                 <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
                   Flavor
                 </p>
@@ -328,7 +328,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   return (
                     <li
                       key={line.key}
-                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3.5 sm:grid-cols-[minmax(0,1fr)_5.5rem_9rem]"
+                      className="grid grid-cols-1 items-center gap-3 py-3.5 sm:grid-cols-[minmax(0,1fr)_5.25rem_8.75rem]"
                     >
                       <label className="min-w-0">
                         <span className="sr-only">Flavor</span>
@@ -359,10 +359,16 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                           ) : null}
                         </div>
                       </label>
-                      <p className="hidden text-right font-display text-sm font-semibold text-black sm:block">
+                      <p className="text-right font-display text-sm font-semibold text-black sm:block">
+                        <span className="mr-3 font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase sm:hidden">
+                          Unit price
+                        </span>
                         <StorePrice amount={item.price} />
                       </p>
-                      <div className="justify-self-end">
+                      <div className="flex items-center justify-between sm:justify-end">
+                        <span className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase sm:hidden">
+                          Quantity
+                        </span>
                         <QtyStepper
                           value={line.quantity}
                           onChange={(next) =>
@@ -394,7 +400,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
                   Total
                 </p>
-                <p className="mt-1 font-display text-2xl font-bold text-black">
+                <p className="mt-1 font-display text-3xl font-bold text-black">
                   {showPrices ? <StorePrice amount={payable} /> : "On request"}
                 </p>
                 <p className="mt-1 font-body text-sm text-black/45">
