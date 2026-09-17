@@ -1,12 +1,13 @@
-/* UMAXES brand orange + TailAdmin shell — light + dark */
+/* UMAXES ops chrome — sapphire + ice blue (storefront keeps brand orange). */
 
 .admin-shell {
-  --admin-brand-25: #fff6ef;
-  --admin-brand-50: #ffebd9;
-  --admin-brand-100: #ffd0ad;
-  --admin-brand-500: #ff5b04;
-  --admin-brand-600: #e04f03;
-  --admin-brand-700: #c44503;
+  --admin-brand-25: #f3f8fc;
+  --admin-brand-50: #e7f1f8;
+  --admin-brand-100: #c9dcea;
+  --admin-brand-200: #9bbdd4;
+  --admin-brand-500: #1b4f72;
+  --admin-brand-600: #163f5c;
+  --admin-brand-700: #12324a;
 
   --admin-gray-25: #f8fafc;
   --admin-gray-50: #f1f5f9;
@@ -30,8 +31,8 @@
   --admin-warning-500: #f79009;
   --admin-warning-700: #b54708;
 
-  /* Cool slate page so white cards pop (TailAdmin-style light) */
-  --admin-page: #eef2f7;
+  /* Cool ice page so white cards pop */
+  --admin-page: #e8eef6;
   --admin-sidebar: #ffffff;
   --admin-header: #ffffff;
   --admin-card: #ffffff;
@@ -40,8 +41,8 @@
   --admin-muted: #5b6b7f;
   --admin-hover: #f3f6fa;
   --admin-input-bg: #ffffff;
-  --admin-menu-active-bg: #ffe8d6;
-  --admin-menu-active-text: #c44503;
+  --admin-menu-active-bg: #e7f1f8;
+  --admin-menu-active-text: #163f5c;
   --admin-shadow-theme:
     0 1px 2px rgba(15, 23, 42, 0.06),
     0 8px 24px rgba(15, 23, 42, 0.06);
@@ -60,12 +61,13 @@
 }
 
 .admin-shell.dark {
-  --admin-brand-25: rgba(255, 91, 4, 0.08);
-  --admin-brand-50: rgba(255, 91, 4, 0.14);
-  --admin-brand-100: rgba(255, 91, 4, 0.24);
-  --admin-brand-500: #ff5b04;
-  --admin-brand-600: #ff7a33;
-  --admin-brand-700: #ffb888;
+  --admin-brand-25: rgba(43, 122, 171, 0.12);
+  --admin-brand-50: rgba(43, 122, 171, 0.20);
+  --admin-brand-100: rgba(90, 167, 210, 0.28);
+  --admin-brand-200: rgba(90, 167, 210, 0.40);
+  --admin-brand-500: #2b7aab;
+  --admin-brand-600: #3a8ec0;
+  --admin-brand-700: #b7d9ec;
 
   --admin-gray-25: #1a2231;
   --admin-gray-50: #1a2231;
@@ -98,8 +100,8 @@
   --admin-muted: #98a2b3;
   --admin-hover: #24303f;
   --admin-input-bg: #101828;
-  --admin-menu-active-bg: rgba(255, 91, 4, 0.16);
-  --admin-menu-active-text: #ff7a33;
+  --admin-menu-active-bg: rgba(110, 180, 217, 0.16);
+  --admin-menu-active-text: #8fc6e3;
   --admin-shadow-theme: none;
 
   color-scheme: dark;
@@ -242,7 +244,7 @@
 .admin-btn-primary {
   background: var(--admin-brand-500);
   color: #fff;
-  box-shadow: 0 8px 20px rgba(255, 91, 4, 0.22);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--admin-brand-500) 28%, transparent);
 }
 
 .admin-btn-primary:hover {
