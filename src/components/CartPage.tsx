@@ -5,8 +5,9 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { EmptyCart } from "@/components/EmptyCart";
+import { CaseQtyStepper } from "@/components/QtyStepper";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
-import { QtyStepper } from "@/components/QtyStepper";
+import { formatCases, formatPack } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
 import {
   storeTopPadClass,
@@ -15,7 +16,7 @@ import {
 import { getFlavor, product } from "@/lib/assets";
 
 export default function CartPage() {
-  const { items, quantity, setQuantity, remove, total } = useCart();
+  const { items, quantity, cases, setQuantity, remove, total } = useCart();
   const compactChrome = useCompactMobileStoreChrome();
   const showPrices = useShowStorePrices();
 
@@ -38,7 +39,7 @@ export default function CartPage() {
             <p className="mt-2 font-body text-black/65">
               {quantity === 0
                 ? "No items yet — start with a flavor below or open the full shop."
-                : `${quantity} item${quantity === 1 ? "" : "s"} ready when you are.`}
+                : `${formatCases(cases)} · ${quantity.toLocaleString()} pcs ready when you are.`}
             </p>
           </header>
 
@@ -89,10 +90,13 @@ export default function CartPage() {
                             </Link>
                             <p className="mt-0.5 font-display text-sm text-black/55">
                               {showPrices ? (
-                                <>${flavor.price.toFixed(2)} each</>
+                                <>${flavor.price.toFixed(2)} / pc</>
                               ) : (
                                 "On request"
                               )}
+                            </p>
+                            <p className="mt-0.5 font-body text-xs text-black/45">
+                              {formatPack(line.quantity)}
                             </p>
                           </div>
                           <p className="shrink-0 font-display text-base font-bold text-black">
@@ -101,11 +105,11 @@ export default function CartPage() {
                         </div>
 
                         <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-                          <QtyStepper
-                            value={line.quantity}
-                            ariaLabel={flavor.name}
+                          <CaseQtyStepper
+                            pcs={line.quantity}
+                            ariaLabel={`${flavor.name} cases`}
                             allowRemove
-                            onChange={(qty) =>
+                            onChangePcs={(qty) =>
                               setQuantity(line.flavorId, qty)
                             }
                           />
@@ -133,7 +137,7 @@ export default function CartPage() {
                   </span>
                 </div>
                 <p className="mt-2 font-body text-sm text-black/50">
-                  Shipping calculated at checkout.
+                  1 case = 95 pieces. Shipping calculated at checkout.
                 </p>
                 <Link
                   href="/checkout"

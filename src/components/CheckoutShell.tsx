@@ -7,13 +7,14 @@ import Footer from "@/components/Footer";
 import B2BCheckout from "@/components/B2BCheckout";
 import { StorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
+import { formatCases } from "@/lib/pack";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
 
 function CheckoutAuthGate() {
-  const { quantity, total } = useCart();
+  const { quantity, cases, total } = useCart();
 
   return (
     <div className="relative mx-auto max-w-md">
@@ -43,7 +44,7 @@ function CheckoutAuthGate() {
                   In your bag
                 </p>
                 <p className="mt-0.5 font-display text-sm font-semibold text-black">
-                  {quantity} item{quantity === 1 ? "" : "s"}
+                  {formatCases(cases)}
                 </p>
               </div>
               <p className="font-display text-lg font-bold text-black">

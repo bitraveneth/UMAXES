@@ -1,5 +1,6 @@
 import type { CustomerLevel, PaymentMethod } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { CASE_MOQ_PCS } from "@/lib/pack";
 
 export async function getCatalogForLevel(level: CustomerLevel) {
   const products = await prisma.product.findMany({
@@ -24,7 +25,7 @@ export async function getCatalogForLevel(level: CustomerLevel) {
     description: p.description,
     image: p.image,
     unitPrice: p.prices[0]?.unitPrice ?? 0,
-    moq: p.prices[0]?.moq ?? 1,
+    moq: p.prices[0]?.moq ?? CASE_MOQ_PCS,
     stock: Math.max(0, (p.inventory?.quantity ?? 0) - (p.inventory?.reserved ?? 0)),
   }));
 }

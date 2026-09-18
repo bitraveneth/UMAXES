@@ -9,6 +9,7 @@ import type {
 } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { CASE_MOQ_PCS } from "@/lib/pack";
 import { canAccessAdmin } from "@/lib/rbac";
 
 async function requireRoles(roles: UserRole[]) {
@@ -2118,17 +2119,17 @@ export async function createProduct(input: {
           {
             level: "DISTRO",
             unitPrice: Number(input.distroPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.distroMoq ?? 50)),
+            moq: Math.max(1, Math.floor(input.distroMoq ?? CASE_MOQ_PCS)),
           },
           {
             level: "WHOLESALER",
             unitPrice: Number(input.wholesalerPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.wholesalerMoq ?? 20)),
+            moq: Math.max(1, Math.floor(input.wholesalerMoq ?? CASE_MOQ_PCS)),
           },
           {
             level: "SHOP",
             unitPrice: Number(input.shopPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.shopMoq ?? 5)),
+            moq: Math.max(1, Math.floor(input.shopMoq ?? CASE_MOQ_PCS)),
           },
         ],
       },
