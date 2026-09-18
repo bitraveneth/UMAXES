@@ -94,7 +94,7 @@ export default function CartDrawer() {
                       </p>
                       <p className="mt-0.5 font-display text-sm text-black/60">
                         {showPrices ? (
-                          <>${flavor.price}.00 each</>
+                          <>${flavor.price.toFixed(2)} each</>
                         ) : (
                           "On request"
                         )}
@@ -130,7 +130,7 @@ export default function CartDrawer() {
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-sm text-black/60">Subtotal</span>
               <span className="font-display text-lg font-semibold text-black">
-                <StorePrice amount={total} suffix=".00" />
+                <StorePrice amount={total} />
               </span>
             </div>
             <Link

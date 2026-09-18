@@ -185,7 +185,7 @@ export function EmptyCart({ compact = false, onShopClick }: EmptyCartProps) {
                     {f.tagline}
                   </span>
                   <span className="mt-1 block font-display text-sm font-bold text-black">
-                    <StorePrice amount={f.price} suffix=".00" />
+                    <StorePrice amount={f.price} />
                   </span>
                 </span>
               </Link>
