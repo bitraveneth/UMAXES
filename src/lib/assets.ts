@@ -149,7 +149,7 @@ export const productSpecs = [
   },
   {
     id: "nicotine",
-    value: "0.5% · 3.5mg/ml",
+    value: "0.5% · 5mg/ml",
     label: "Nicotine",
     icon: "nicotine",
   },
