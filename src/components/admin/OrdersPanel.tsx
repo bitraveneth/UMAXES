@@ -222,7 +222,7 @@ export default function OrdersPanel({
                   <th>{t("orders.colPayment")}</th>
                   <th>{t("orders.colTotal")}</th>
                   <th>{t("orders.colStatus")}</th>
-                  <th>{t("orders.colDocs")}</th>
+                  <th className="text-center">{t("orders.colDocs")}</th>
                   <th className="text-right">{t("orders.updateStatus")}</th>
                 </tr>
               </thead>
@@ -299,7 +299,7 @@ export default function OrdersPanel({
                             {statusLabel(order.status)}
                           </AdminBadge>
                         </td>
-                        <td className="whitespace-nowrap">
+                        <td className="text-center">
                           <OrderDocLinks orderId={order.id} compact />
                         </td>
                         <td className="text-right">
