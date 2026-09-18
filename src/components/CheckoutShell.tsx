@@ -107,7 +107,7 @@ export default function CheckoutShell() {
     <>
       <Header />
       <main
-        className={`flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
+        className={`umx-account-theme flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
       >
         {status === "loading" ? (
           <p className="py-20 text-center font-body text-black/55">

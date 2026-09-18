@@ -13,8 +13,8 @@ import {
 
 const PREVIEW_BG: Record<NonNullable<MediaKitFile["previewBg"]>, string> = {
   cream: "bg-umx-cream",
-  ink: "bg-umx-orange-ink",
-  orange: "bg-umx-orange",
+  ink: "umx-brand-orange bg-umx-orange-ink",
+  orange: "umx-brand-orange bg-umx-orange",
   white: "bg-white",
 };
 
