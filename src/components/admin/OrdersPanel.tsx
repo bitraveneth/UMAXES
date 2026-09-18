@@ -134,13 +134,20 @@ export default function OrdersPanel({
     return orders.filter((o) => matchesFilter(o.status, filter));
   }, [orders, filter]);
 
-  function payLabel(method: PaymentMethod) {
-    const map: Record<PaymentMethod, string> = {
-      TT: t("orders.payTT"),
-      CHECK: t("orders.payCheck"),
-      ONLINE: t("orders.payOnline"),
-      CREDIT: t("orders.payCredit"),
-    };
+  function payLabel(method: PaymentMethod, short = false) {
+    const map: Record<PaymentMethod, string> = short
+      ? {
+          TT: t("orders.payShortTT"),
+          CHECK: t("orders.payShortCheck"),
+          ONLINE: t("orders.payShortOnline"),
+          CREDIT: t("orders.payShortCredit"),
+        }
+      : {
+          TT: t("orders.payTT"),
+          CHECK: t("orders.payCheck"),
+          ONLINE: t("orders.payOnline"),
+          CREDIT: t("orders.payCredit"),
+        };
     return map[method] || method;
   }
 
@@ -152,7 +159,7 @@ export default function OrdersPanel({
     try {
       return new Date(iso).toLocaleDateString(
         locale === "zh" ? "zh-CN" : "en-US",
-        { year: "numeric", month: "short", day: "numeric" },
+        { month: "short", day: "numeric" },
       );
     } catch {
       return iso.slice(0, 10);
@@ -215,6 +222,7 @@ export default function OrdersPanel({
                   <th>{t("orders.colPayment")}</th>
                   <th>{t("orders.colTotal")}</th>
                   <th>{t("orders.colStatus")}</th>
+                  <th>{t("orders.colDocs")}</th>
                   <th className="text-right">{t("orders.updateStatus")}</th>
                 </tr>
               </thead>
@@ -238,8 +246,8 @@ export default function OrdersPanel({
                         }}
                       >
                         <td>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--admin-gray-100)]">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--admin-gray-100)]">
                               {thumb ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
@@ -248,34 +256,33 @@ export default function OrdersPanel({
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <Package className="h-4 w-4 text-[var(--admin-muted)]" />
+                                <Package className="h-3.5 w-3.5 text-[var(--admin-muted)]" />
                               )}
                             </div>
-                            <div className="min-w-0">
-                              <p className="font-semibold text-[var(--admin-text)]">
-                                {order.orderNumber}
-                              </p>
-                              <OrderDocLinks orderId={order.id} compact />
-                            </div>
+                            <p className="whitespace-nowrap font-semibold text-[var(--admin-text)]">
+                              {order.orderNumber}
+                            </p>
                           </div>
                         </td>
-                        <td>
-                          <p className="font-medium text-[var(--admin-text)]">
+                        <td className="max-w-[9.5rem]">
+                          <p className="truncate font-medium text-[var(--admin-text)]">
                             {order.companyName}
                           </p>
-                          <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
+                          <p className="mt-0.5 truncate text-xs text-[var(--admin-muted)]">
                             {order.supplierName
                               ? order.supplierName
                               : t("orders.noSupplier")}
                           </p>
                         </td>
-                        <td className="whitespace-nowrap text-sm text-[var(--admin-muted)]">
+                        <td className="whitespace-nowrap text-xs text-[var(--admin-muted)]">
                           {formatDate(order.createdAt)}
                         </td>
                         <td>
-                          <p className="text-sm">{payLabel(order.paymentMethod)}</p>
+                          <p className="whitespace-nowrap text-sm">
+                            {payLabel(order.paymentMethod, true)}
+                          </p>
                           <span
-                            className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                            className={`mt-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                               unpaid
                                 ? "bg-[var(--admin-warning-50)] text-[var(--admin-warning-700)]"
                                 : "bg-[var(--admin-success-50)] text-[var(--admin-success-700)]"
@@ -284,13 +291,16 @@ export default function OrdersPanel({
                             {unpaid ? t("orders.unpaid") : t("orders.paid")}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap tabular-nums font-semibold">
+                        <td className="whitespace-nowrap tabular-nums text-sm font-semibold">
                           {money(order.total)}
                         </td>
                         <td>
                           <AdminBadge tone={orderTone(order.status)}>
                             {statusLabel(order.status)}
                           </AdminBadge>
+                        </td>
+                        <td className="whitespace-nowrap">
+                          <OrderDocLinks orderId={order.id} compact />
                         </td>
                         <td className="text-right">
                           <button
@@ -310,7 +320,7 @@ export default function OrdersPanel({
                       </tr>
                       {open ? (
                         <tr className="bg-[var(--admin-brand-50)]/20">
-                          <td colSpan={7} className="!p-0 !align-top">
+                          <td colSpan={8} className="!p-0 !align-top">
                             <OrderExpand
                               order={order}
                               suppliers={suppliers}
@@ -363,20 +373,18 @@ function OrderDocLinks({
 
   if (compact) {
     return (
-      <div className="admin-doc-inline">
-        {links.map((link, i) => (
-          <Fragment key={link.type}>
-            {i > 0 ? <span className="admin-doc-sep">·</span> : null}
-            <a
-              href={`/api/orders/${orderId}/docs?type=${link.type}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={link.full}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {link.short}
-            </a>
-          </Fragment>
+      <div className="admin-doc-pills">
+        {links.map((link) => (
+          <a
+            key={link.type}
+            href={`/api/orders/${orderId}/docs?type=${link.type}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={link.full}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {link.short}
+          </a>
         ))}
       </div>
     );
