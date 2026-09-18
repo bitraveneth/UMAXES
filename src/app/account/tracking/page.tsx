@@ -147,7 +147,7 @@ export default async function TrackingPage() {
 
                     return (
                       <li key={order.id}>
-                        <article className="overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(61,22,5,0.04)]">
+                        <article className="overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(14,36,56,0.04)]">
                           <div className="flex flex-col lg:flex-row">
                             {/* Status rail */}
                             <div className="flex items-start gap-4 border-b border-black/10 bg-umx-orange-wash/50 px-5 py-5 lg:w-56 lg:shrink-0 lg:border-r lg:border-b-0 lg:px-6">

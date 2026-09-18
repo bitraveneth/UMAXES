@@ -48,7 +48,7 @@ export default async function DocumentsPage() {
       />
 
       {orders.length === 0 ? (
-        <div className="border border-black/10 bg-white px-6 py-16 text-center shadow-[0_8px_20px_rgba(61,22,5,0.04)]">
+        <div className="border border-black/10 bg-white px-6 py-16 text-center shadow-[0_8px_20px_rgba(14,36,56,0.04)]">
           <p className="font-display text-base font-semibold text-black">
             No documents yet
           </p>
@@ -71,7 +71,7 @@ export default async function DocumentsPage() {
             return (
               <li
                 key={order.id}
-                className="group/card overflow-hidden border border-black/10 bg-white shadow-[0_8px_20px_rgba(61,22,5,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-umx-orange/50 hover:shadow-[0_14px_32px_rgba(255,91,4,0.12)]"
+                className="group/card overflow-hidden border border-black/10 bg-white shadow-[0_8px_20px_rgba(14,36,56,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-umx-orange/50 hover:shadow-[0_14px_32px_rgba(27,79,114,0.12)]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/8 px-5 py-4 sm:px-6">
                   <div className="min-w-0">

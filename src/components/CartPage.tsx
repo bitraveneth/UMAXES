@@ -23,7 +23,7 @@ export default function CartPage() {
     <>
       <Header />
       <main
-        className={`flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
+        className={`umx-account-theme flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
       >
         <div
           className={`mx-auto ${quantity === 0 ? "max-w-5xl" : "max-w-3xl"}`}
