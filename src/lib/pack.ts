@@ -1,6 +1,9 @@
 /** HOOKAMAX ships as a case. One case (pack) is 95 selling pieces. */
 export const PCS_PER_CASE = 95;
 
+/** Storefront catalog MOQ in pieces — one case. */
+export const CASE_MOQ_PCS = PCS_PER_CASE;
+
 export function pcsFromCases(cases: number) {
   const n = Math.floor(Number(cases) || 0);
   if (n <= 0) return 0;

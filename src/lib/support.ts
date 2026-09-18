@@ -48,7 +48,7 @@ export const faqs = [
   },
   {
     q: "How is HOOKAMAX packed?",
-    a: "HOOKAMAX is sold by the case. 1 case (pack) = 95 pieces. On the product page, + / − adds one case at a time — 1 case, 2 cases, and so on.",
+    a: "HOOKAMAX is sold by the case. Minimum order is 1 case (95 pieces). On the product page, + / − adds one case at a time — 1 case, 2 cases, and so on.",
     keys: ["case", "pack", "95", "quantity", "pcs", "piece", "carton", "how many", "moq"],
   },
   {

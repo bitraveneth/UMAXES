@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
-import { formatPack } from "@/lib/pack";
+import { CASE_MOQ_PCS, formatPack } from "@/lib/pack";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 
 type Address = {
@@ -113,7 +113,7 @@ export default function B2BCheckout() {
       name: priced?.name || flavor?.name || item.flavorId,
       image: priced?.image || flavor?.image || null,
       unitPrice: priced?.unitPrice ?? flavor?.price ?? 0,
-      moq: priced?.moq ?? 1,
+      moq: priced?.moq ?? CASE_MOQ_PCS,
     };
   });
 
@@ -462,7 +462,7 @@ export default function B2BCheckout() {
                 <p className="font-display text-sm font-semibold">{l.name}</p>
                 <p className="font-body text-xs text-black/55">
                   {formatPack(l.quantity)}
-                  {l.quantity < l.moq ? ` · MOQ ${l.moq}` : ""}
+                  {l.quantity < l.moq ? ` · MOQ ${l.moq} pcs` : ""}
                 </p>
                 <p className="font-display text-sm">
                   <StorePrice amount={l.unitPrice * l.quantity} />

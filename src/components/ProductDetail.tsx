@@ -323,7 +323,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               <div>
                 <label
                   htmlFor="product-coupon"
-                  className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase"
+                  className="font-display text-sm font-bold text-black"
                 >
                   Coupon code
                 </label>
@@ -343,7 +343,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     }}
                     placeholder="Enter code"
                     autoComplete="off"
-                    className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black sm:px-3.5"
+                    className="min-w-0 flex-1 rounded-lg border border-black/25 bg-white px-3 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/45 focus:border-black sm:px-3.5"
                   />
                   <button
                     type="button"
@@ -365,91 +365,92 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 ) : null}
               </div>
 
-              <div className="mb-2 hidden grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] items-center gap-4 px-3 sm:grid">
-                <p className="font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase">
-                  Flavor
-                </p>
-                <p className="text-right font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase">
-                  Price / pc
-                </p>
-                <p className="text-center font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase">
-                  Cases
-                </p>
-              </div>
+              <div className="mt-6 overflow-hidden rounded-2xl ring-1 ring-black/10">
+                <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
+                  <p className="font-display text-sm font-bold text-black">
+                    Flavor
+                  </p>
+                  <p className="text-right font-display text-sm font-bold text-black">
+                    Price / pc
+                  </p>
+                  <p className="text-center font-display text-sm font-bold text-black">
+                    Cases
+                  </p>
+                </div>
 
-              <ul className="space-y-2.5">
-                {lines.map((line) => {
-                  const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
-                  const options = flavors.filter(
-                    (f) => f.id === line.flavorId || !usedFlavorIds.has(f.id),
-                  );
-                  return (
-                    <li
-                      key={line.key}
-                      className="grid grid-cols-1 gap-3 rounded-2xl border border-black/8 bg-[#f7f8fa] p-3 sm:grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] sm:items-center sm:gap-4 sm:px-3 sm:py-2.5"
-                    >
-                      <label className="min-w-0">
-                        <span className="mb-1.5 block font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase sm:sr-only">
-                          Flavor
-                        </span>
-                        <div className="flex min-w-0 items-center gap-2">
-                          <select
-                            value={line.flavorId}
-                            onChange={(e) =>
-                              changeFlavor(line, e.target.value as FlavorId)
-                            }
-                            aria-label="Flavor"
-                            className="min-w-0 w-full rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold text-black outline-none focus:border-black"
-                          >
-                            {options.map((f) => (
-                              <option key={f.id} value={f.id}>
-                                {f.name}
-                              </option>
-                            ))}
-                          </select>
-                          {lines.length > 1 ? (
-                            <button
-                              type="button"
-                              onClick={() => removeLine(line.key)}
-                              className="shrink-0 font-display text-xs font-semibold text-black/40 transition hover:text-black"
-                              aria-label={`Remove ${item.name}`}
+                <ul className="divide-y divide-black/8">
+                  {lines.map((line) => {
+                    const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
+                    const options = flavors.filter(
+                      (f) => f.id === line.flavorId || !usedFlavorIds.has(f.id),
+                    );
+                    return (
+                      <li
+                        key={line.key}
+                        className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] sm:items-center sm:gap-4"
+                      >
+                        <label className="min-w-0">
+                          <span className="mb-1.5 block font-display text-sm font-bold text-black sm:sr-only">
+                            Flavor
+                          </span>
+                          <div className="flex min-w-0 items-center gap-2">
+                            <select
+                              value={line.flavorId}
+                              onChange={(e) =>
+                                changeFlavor(line, e.target.value as FlavorId)
+                              }
+                              aria-label="Flavor"
+                              className="min-w-0 w-full rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold text-black outline-none focus:border-black"
                             >
-                              Remove
-                            </button>
-                          ) : null}
+                              {options.map((f) => (
+                                <option key={f.id} value={f.id}>
+                                  {f.name}
+                                </option>
+                              ))}
+                            </select>
+                            {lines.length > 1 ? (
+                              <button
+                                type="button"
+                                onClick={() => removeLine(line.key)}
+                                className="shrink-0 font-display text-xs font-semibold text-black/40 transition hover:text-black"
+                                aria-label={`Remove ${item.name}`}
+                              >
+                                Remove
+                              </button>
+                            ) : null}
+                          </div>
+                        </label>
+                        <div className="grid grid-cols-2 items-center gap-3 sm:contents">
+                          <div className="min-w-0 sm:text-right">
+                            <p className="mb-1.5 font-display text-sm font-bold text-black sm:hidden">
+                              Price / pc
+                            </p>
+                            <p className="font-display text-sm font-semibold text-black sm:text-right">
+                              <StorePrice amount={item.price} />
+                            </p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="mb-1.5 text-center font-display text-sm font-bold text-black sm:hidden">
+                              Cases
+                            </p>
+                            <CaseQtyStepper
+                              pcs={line.quantity}
+                              onChangePcs={(next) =>
+                                updateLine(line.key, {
+                                  quantity: snapToCasePcs(next) || PCS_PER_CASE,
+                                })
+                              }
+                              size="sm"
+                              align="center"
+                              ariaLabel={`${item.name} cases`}
+                            />
+                          </div>
                         </div>
-                      </label>
-                      <div className="grid grid-cols-2 items-end gap-3 sm:contents">
-                        <div className="min-w-0 sm:text-right">
-                          <p className="mb-1.5 font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase sm:hidden">
-                            Price / pc
-                          </p>
-                          <p className="font-display text-sm font-semibold text-black sm:text-right">
-                            <StorePrice amount={item.price} />
-                          </p>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="mb-1.5 text-center font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase sm:hidden">
-                            Cases
-                          </p>
-                          <CaseQtyStepper
-                            pcs={line.quantity}
-                            onChangePcs={(next) =>
-                              updateLine(line.key, {
-                                quantity: snapToCasePcs(next) || PCS_PER_CASE,
-                              })
-                            }
-                            size="sm"
-                            align="center"
-                            showHint
-                            ariaLabel={`${item.name} cases`}
-                          />
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
 
               <button
                 type="button"
@@ -461,7 +462,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               </button>
 
               <div className="mt-6 text-right">
-                <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                <p className="font-display text-sm font-bold text-black">
                   Total
                 </p>
                 <p className="mt-1 font-display text-2xl font-bold text-black sm:text-3xl">
