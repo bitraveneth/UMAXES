@@ -51,7 +51,7 @@ export default function FavoritesManager() {
   }
 
   function addToCart(sku: string) {
-    add(sku as FlavorId, 1);
+    add(sku as FlavorId);
     setAddedId(sku);
     window.setTimeout(() => setAddedId(null), 1200);
   }

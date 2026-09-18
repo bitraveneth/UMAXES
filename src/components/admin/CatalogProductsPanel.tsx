@@ -13,6 +13,7 @@ import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { ProductImageField } from "@/components/admin/ProductImageField";
 import { Package } from "@/components/admin/icons";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
+import { CASE_MOQ_PCS } from "@/lib/pack";
 
 const levels: CustomerLevel[] = ["DISTRO", "WHOLESALER", "SHOP"];
 
@@ -305,7 +306,7 @@ function ProductEditPanel({
                     name="moq"
                     type="number"
                     min={1}
-                    defaultValue={price?.moq ?? 1}
+                    defaultValue={price?.moq ?? CASE_MOQ_PCS}
                     className="admin-input mt-1 w-full"
                     required
                   />
