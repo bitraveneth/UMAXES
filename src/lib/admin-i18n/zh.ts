@@ -54,6 +54,12 @@ const zh: AdminMessages = {
     "/admin/audit": "操作审计",
     "/admin/profile": "个人资料",
     "/admin/notifications": "消息中心",
+    groupOps: "日常作业",
+    groupCustomers: "客户",
+    groupMoney: "账务",
+    groupCatalog: "商品",
+    groupInsights: "分析",
+    groupAdmin: "设置",
     signOut: "退出登录",
   },
   role: {

@@ -30,6 +30,7 @@ import {
   Store,
   ClipboardList,
   Shield,
+  Receipt,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -50,6 +51,7 @@ export const adminNavIcons: Record<string, LucideIcon> = {
   "/admin/profile": UserRound,
   "/admin/catalog": Package,
   "/admin/coupons": TicketPercent,
+  "/admin/invoices": Receipt,
   "/admin/credit": CreditCard,
   "/admin/aging": Clock3,
   "/admin/notifications": Bell,
