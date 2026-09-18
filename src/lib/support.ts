@@ -1,4 +1,4 @@
-import { flavors, product } from "@/lib/assets";
+import { product } from "@/lib/assets";
 
 export const faqs = [
   {
@@ -43,7 +43,7 @@ export const faqs = [
   },
   {
     q: "What is HOOKAMAX?",
-    a: `${product.name} is UMAXES’ premium hookah-inspired disposable line — ${product.tagline} One device family with ${flavors.length} flavor options. Adults 21+ only.`,
+    a: `${product.name} is UMAXES’ premium hookah-inspired disposable line — ${product.tagline} One device family. Adults 21+ only.`,
     keys: ["what is hookamax", "hookamax", "product", "device", "disposable", "what is umaxes"],
   },
   {
