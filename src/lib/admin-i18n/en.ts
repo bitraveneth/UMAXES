@@ -53,6 +53,12 @@ const en: AdminMessages = {
     "/admin/audit": "Audit",
     "/admin/profile": "Profile",
     "/admin/notifications": "Notifications",
+    groupOps: "Daily ops",
+    groupCustomers: "Customers",
+    groupMoney: "Accounts",
+    groupCatalog: "Catalog",
+    groupInsights: "Insights",
+    groupAdmin: "Admin",
     signOut: "Sign out",
   },
   role: {
