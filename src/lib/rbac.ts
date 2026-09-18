@@ -117,6 +117,12 @@ export const adminNav: AdminNavItem[] = [
     group: "ops",
   },
   {
+    href: "/admin/suppliers",
+    label: "Suppliers",
+    roles: [SA, AD, "SALES", "WAREHOUSE"],
+    group: "ops",
+  },
+  {
     href: "/admin/distributors",
     label: "Distributors",
     roles: [SA, AD, "SALES"],
