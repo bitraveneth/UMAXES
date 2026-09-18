@@ -49,6 +49,11 @@ const ACTION_META: Record<
     category: "payments",
     tone: "warning",
   },
+  PAYMENT_SLIP_DELETED: {
+    label: "Payment slip deleted",
+    category: "payments",
+    tone: "warning",
+  },
   PAYMENT_RECEIVED: {
     label: "Funds confirmed (到账)",
     category: "payments",

@@ -10,6 +10,7 @@ import type {
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canAccessAdmin } from "@/lib/rbac";
+import { deleteOrderPaymentSlip } from "@/lib/payment-slip-ops";
 
 async function requireRoles(roles: UserRole[]) {
   const session = await auth();
@@ -764,6 +765,11 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
       paymentMethod: order.paymentMethod,
     });
   }
+}
+
+export async function deletePaymentSlip(orderId: string) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  await deleteOrderPaymentSlip(orderId, session.user.id);
 }
 
 export async function upsertShipment(

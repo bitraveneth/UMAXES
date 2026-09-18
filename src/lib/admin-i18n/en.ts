@@ -478,6 +478,9 @@ const en: AdminMessages = {
     viewSlip: "Open payment slip",
     noSlip: "No slip yet",
     slipIn: "Slip in",
+    deleteSlip: "Delete slip",
+    deleteSlipConfirm:
+      "Delete this payment slip file? The buyer can upload again. This frees storage.",
     paid: "Paid",
     markPaid: "Confirm funds received",
     markPaidHint:

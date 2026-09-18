@@ -464,6 +464,8 @@ const zh: AdminMessages = {
     viewSlip: "查看水单",
     noSlip: "尚未上传水单",
     slipIn: "已传水单",
+    deleteSlip: "删除水单",
+    deleteSlipConfirm: "删除这张水单文件？客户可以重新上传。删除后不再占用存储。",
     paid: "已到账",
     markPaid: "确认到账",
     markPaidHint:

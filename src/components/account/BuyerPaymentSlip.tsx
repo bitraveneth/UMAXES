@@ -3,7 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FileText, Upload } from "lucide-react";
-import { PAYMENT_SLIP, isImageSlip } from "@/lib/payment-slip";
+import {
+  PAYMENT_SLIP,
+  formatMaxSlipSize,
+  guessSlipMime,
+  isAllowedSlipMime,
+  isImageSlip,
+} from "@/lib/payment-slip";
 
 export default function BuyerPaymentSlip({
   orderId,
@@ -29,6 +35,14 @@ export default function BuyerPaymentSlip({
   async function onFile(file: File | undefined) {
     if (!file || paid) return;
     setError(null);
+    if (file.size > PAYMENT_SLIP.maxBytes) {
+      setError(`Image must be under ${formatMaxSlipSize()}.`);
+      return;
+    }
+    if (!isAllowedSlipMime(guessSlipMime(file))) {
+      setError("Use a JPG, PNG, or WebP photo of the bank slip.");
+      return;
+    }
     setBusy(true);
     try {
       const fd = new FormData();
@@ -80,7 +94,7 @@ export default function BuyerPaymentSlip({
       <p className="mt-1 font-body text-sm text-black/60">
         {hasSlip
           ? "Slip received. UMAXES Info will confirm after finance sees the funds — then the order is complete for rebate."
-          : "Pay the proforma by TT / wire, then upload the bank slip (水单). Uploading does not finish the order — Info confirms arrival."}
+          : "Pay the proforma by TT / wire, then upload a photo of the bank slip (水单). Uploading does not finish the order — Info confirms arrival."}
       </p>
 
       {hasSlip ? (
@@ -100,7 +114,7 @@ export default function BuyerPaymentSlip({
               className="flex items-center gap-3 px-4 py-4 font-display text-sm font-semibold text-black hover:bg-black/[0.03]"
             >
               <FileText className="h-5 w-5 text-[#1b4f72]" />
-              {fileName || "Open payment slip PDF"}
+              {fileName || "Open payment slip"}
             </a>
           )}
         </div>
@@ -135,7 +149,7 @@ export default function BuyerPaymentSlip({
         />
       </label>
       <p className="mt-2 font-body text-xs text-black/45">
-        JPG, PNG, WebP, or PDF · max 8 MB
+        JPG, PNG, or WebP photo · max {formatMaxSlipSize()}
       </p>
       {error ? (
         <p className="mt-2 font-body text-sm text-red-700">{error}</p>

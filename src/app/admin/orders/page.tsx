@@ -58,6 +58,7 @@ export default async function AdminOrdersPage() {
     role === "SUPER_ADMIN" ||
     role === "SALES" ||
     role === "WAREHOUSE";
+  const canDeleteSlip = role === "ADMIN" || role === "SUPER_ADMIN";
 
   const [orders, suppliers] = await Promise.all([
     prisma.order.findMany({
@@ -182,6 +183,7 @@ export default async function AdminOrdersPage() {
         suppliers={suppliers}
         allowedStatuses={allowedStatuses}
         canAssignSupplier={canAssignSupplier}
+        canDeleteSlip={canDeleteSlip}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import {
   markPaymentReceived,
   updateOrderStatus,
   assignOrderToSupplier,
+  deletePaymentSlip,
 } from "@/lib/admin-actions";
 import type { OrderStatus, PaymentMethod } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
@@ -101,11 +102,13 @@ export default function OrdersPanel({
   suppliers,
   allowedStatuses,
   canAssignSupplier,
+  canDeleteSlip,
 }: {
   orders: OrdersPanelItem[];
   suppliers: OrdersPanelSupplier[];
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
+  canDeleteSlip: boolean;
 }) {
   const { t, locale } = useAdminI18n();
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -300,6 +303,7 @@ export default function OrdersPanel({
                               suppliers={suppliers}
                               allowedStatuses={allowedStatuses}
                               canAssignSupplier={canAssignSupplier}
+                              canDeleteSlip={canDeleteSlip}
                               payLabel={payLabel}
                               statusLabel={statusLabel}
                               onClose={() => setEditingId(null)}
@@ -368,6 +372,7 @@ function OrderExpand({
   suppliers,
   allowedStatuses,
   canAssignSupplier,
+  canDeleteSlip,
   payLabel,
   statusLabel,
   onClose,
@@ -376,6 +381,7 @@ function OrderExpand({
   suppliers: OrdersPanelSupplier[];
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
+  canDeleteSlip: boolean;
   payLabel: (m: PaymentMethod) => string;
   statusLabel: (s: OrderStatus) => string;
   onClose: () => void;
@@ -488,14 +494,32 @@ function OrderExpand({
                   {t("orders.paymentSlip")}
                 </span>
                 {order.paymentSlipUrl ? (
-                  <a
-                    href={`/api/orders/${order.id}/payment-slip`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 block font-medium text-[var(--admin-brand-700)] underline"
-                  >
-                    {order.paymentSlipName || t("orders.viewSlip")}
-                  </a>
+                  <div className="mt-1 flex flex-wrap items-center gap-3">
+                    <a
+                      href={`/api/orders/${order.id}/payment-slip`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-[var(--admin-brand-700)] underline"
+                    >
+                      {order.paymentSlipName || t("orders.viewSlip")}
+                    </a>
+                    {canDeleteSlip ? (
+                      <form
+                        action={async () => {
+                          if (!confirm(t("orders.deleteSlipConfirm"))) return;
+                          await deletePaymentSlip(order.id);
+                          onClose();
+                        }}
+                      >
+                        <button
+                          type="submit"
+                          className="admin-btn admin-btn-danger admin-btn-sm"
+                        >
+                          {t("orders.deleteSlip")}
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
                 ) : (
                   <p className="mt-1 font-medium text-[var(--admin-warning-700)]">
                     {t("orders.noSlip")}

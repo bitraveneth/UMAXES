@@ -4,20 +4,51 @@ import path from "path";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { PAYMENT_SLIP, isImageSlip } from "@/lib/payment-slip";
-import { storeUpload } from "@/lib/upload-store";
+import {
+  PAYMENT_SLIP,
+  formatMaxSlipSize,
+  guessSlipMime,
+  isAllowedSlipMime,
+} from "@/lib/payment-slip";
+import { deleteOrderPaymentSlip } from "@/lib/payment-slip-ops";
+import { removeStoredUpload, storeUpload } from "@/lib/upload-store";
+
+export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
 
-function extFor(mime: string) {
-  if (mime === "application/pdf") return "pdf";
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  return "jpg";
-}
-
 function safeName(name: string) {
   return name.replace(/[^\w.\-()+ ]+/g, "_").slice(0, 80) || "payment-slip";
+}
+
+async function compressSlipImage(raw: Buffer) {
+  let quality = PAYMENT_SLIP.jpegQuality;
+  let buf = await sharp(raw, { failOn: "none" })
+    .rotate()
+    .resize({
+      width: PAYMENT_SLIP.maxDimension,
+      height: PAYMENT_SLIP.maxDimension,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .jpeg({ quality, mozjpeg: true })
+    .toBuffer();
+
+  while (buf.length > PAYMENT_SLIP.maxBytes && quality > 40) {
+    quality -= 8;
+    buf = await sharp(raw, { failOn: "none" })
+      .rotate()
+      .resize({
+        width: PAYMENT_SLIP.maxDimension,
+        height: PAYMENT_SLIP.maxDimension,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality, mozjpeg: true })
+      .toBuffer();
+  }
+
+  return buf;
 }
 
 async function loadOrderForSession(id: string) {
@@ -76,8 +107,8 @@ export async function GET(_request: Request, { params }: Params) {
     const data = await readFile(abs);
     return new NextResponse(new Uint8Array(data), {
       headers: {
-        "Content-Type": payment.slipMime || "application/octet-stream",
-        "Content-Disposition": `inline; filename="${encodeURIComponent(payment.slipFileName || "payment-slip")}"`,
+        "Content-Type": payment.slipMime || "image/jpeg",
+        "Content-Disposition": `inline; filename="${encodeURIComponent(payment.slipFileName || "payment-slip.jpg")}"`,
         "Cache-Control": "private, max-age=0, must-revalidate",
       },
     });
@@ -122,36 +153,38 @@ export async function POST(request: Request, { params }: Params) {
   const file = form.get("file");
   const reference = String(form.get("reference") || "").trim().slice(0, 80);
   if (!(file instanceof File) || file.size <= 0) {
-    return NextResponse.json({ error: "Choose a payment slip file" }, { status: 400 });
+    return NextResponse.json({ error: "Choose a payment slip photo" }, { status: 400 });
   }
   if (file.size > PAYMENT_SLIP.maxBytes) {
-    return NextResponse.json({ error: "File too large (max 8 MB)" }, { status: 400 });
-  }
-  const mime = (file.type || "").toLowerCase();
-  if (!(PAYMENT_SLIP.acceptMime as readonly string[]).includes(mime)) {
     return NextResponse.json(
-      { error: "Use a JPG, PNG, WebP, or PDF of the bank slip" },
+      { error: `Image too large (max ${formatMaxSlipSize()})` },
+      { status: 400 },
+    );
+  }
+  const mime = guessSlipMime(file);
+  if (!isAllowedSlipMime(mime)) {
+    return NextResponse.json(
+      { error: "Use a JPG, PNG, or WebP photo of the bank slip" },
       { status: 400 },
     );
   }
 
   const raw = Buffer.from(await file.arrayBuffer());
-  let storedBuf = raw;
-  let storedMime = mime;
-  if (isImageSlip(mime)) {
-    try {
-      storedBuf = await sharp(raw, { failOn: "none" })
-        .rotate()
-        .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true })
-        .jpeg({ quality: 85 })
-        .toBuffer();
-      storedMime = "image/jpeg";
-    } catch {
-      return NextResponse.json({ error: "Could not read that image" }, { status: 400 });
-    }
+  let storedBuf: Buffer;
+  try {
+    storedBuf = await compressSlipImage(raw);
+  } catch {
+    return NextResponse.json({ error: "Could not read that image" }, { status: 400 });
+  }
+  if (storedBuf.length > PAYMENT_SLIP.maxBytes) {
+    return NextResponse.json(
+      { error: `Could not keep that image under ${formatMaxSlipSize()}` },
+      { status: 400 },
+    );
   }
 
-  const filename = `slip-${order.id.slice(-8)}-${Date.now()}.${extFor(storedMime)}`;
+  const storedMime = "image/jpeg";
+  const filename = `slip-${order.id.slice(-8)}-${Date.now()}.jpg`;
   let stored;
   try {
     stored = await storeUpload("slips", filename, storedBuf, storedMime);
@@ -162,6 +195,7 @@ export async function POST(request: Request, { params }: Params) {
 
   const originalName = safeName(file.name || filename);
   const payment = order.payments[0];
+  const previousUrl = payment?.slipUrl || null;
   const now = new Date();
 
   if (payment) {
@@ -192,6 +226,10 @@ export async function POST(request: Request, { params }: Params) {
     });
   }
 
+  if (previousUrl && previousUrl !== stored.url) {
+    await removeStoredUpload(previousUrl);
+  }
+
   if (reference) {
     await prisma.order.update({
       where: { id: order.id },
@@ -209,6 +247,7 @@ export async function POST(request: Request, { params }: Params) {
         orderNumber: order.orderNumber,
         fileName: originalName,
         mime: storedMime,
+        bytes: storedBuf.length,
         reference: reference || order.paymentRef || null,
       }),
     },
@@ -229,4 +268,31 @@ export async function POST(request: Request, { params }: Params) {
     fileName: originalName,
     status: "submitted",
   });
+}
+
+/** Admin / super admin delete the stored 水单 so it does not sit on disk. */
+export async function DELETE(_request: Request, { params }: Params) {
+  const { id } = await params;
+  const result = await loadOrderForSession(id);
+  if ("error" in result) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  const role = result.session.user.role;
+  if (role !== "ADMIN" && role !== "SUPER_ADMIN") {
+    return NextResponse.json(
+      { error: "Only admin or super admin can delete a payment slip" },
+      { status: 403 },
+    );
+  }
+
+  try {
+    await deleteOrderPaymentSlip(id, result.session.user.id);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Could not delete the slip";
+    const status = message === "Order not found" || message.startsWith("No payment") ? 404 : 400;
+    return NextResponse.json({ error: message }, { status });
+  }
+
+  return NextResponse.json({ ok: true });
 }
