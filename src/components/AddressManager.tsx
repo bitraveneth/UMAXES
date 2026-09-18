@@ -146,7 +146,7 @@ export default function AddressManager() {
                 setError(null);
                 setShowForm(true);
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-umx-orange px-4 py-2.5 font-display text-sm font-semibold text-umx-cream shadow-[0_10px_24px_rgba(255,91,4,0.28)] transition hover:bg-umx-orange-deep disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-full bg-umx-orange px-4 py-2.5 font-display text-sm font-semibold text-umx-cream shadow-[0_10px_24px_rgba(27,79,114,0.28)] transition hover:bg-umx-orange-deep disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-4 w-4" strokeWidth={2} />
               Add address
@@ -394,7 +394,7 @@ export default function AddressManager() {
                 <button
                   type="submit"
                   disabled={loading || atLimit}
-                  className="w-full rounded-full bg-umx-orange py-3.5 font-display text-sm font-semibold text-umx-cream shadow-[0_12px_28px_rgba(255,91,4,0.3)] transition hover:bg-umx-orange-deep disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-full bg-umx-orange py-3.5 font-display text-sm font-semibold text-umx-cream shadow-[0_12px_28px_rgba(27,79,114,0.3)] transition hover:bg-umx-orange-deep disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading ? "Saving…" : "Save address"}
                 </button>

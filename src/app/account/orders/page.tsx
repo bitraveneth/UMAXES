@@ -105,7 +105,7 @@ export default async function OrdersPage() {
               <li key={order.id}>
                 <Link
                   href={`/account/orders/${order.id}`}
-                  className="group block overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(61,22,5,0.04)] transition hover:border-umx-orange hover:shadow-[0_12px_28px_rgba(255,91,4,0.1)]"
+                  className="group block overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(14,36,56,0.04)] transition hover:border-umx-orange hover:shadow-[0_12px_28px_rgba(27,79,114,0.1)]"
                 >
                   <div className="flex flex-col sm:flex-row">
                     {/* Left: identity */}
