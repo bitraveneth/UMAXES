@@ -1,8 +1,8 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 
-export type UploadFolder = "products" | "avatars" | "staff";
+export type UploadFolder = "products" | "avatars" | "staff" | "slips";
 
 export type StoredUpload = {
   /** Public URL — absolute Blob URL or site-relative `/uploads/...` */
@@ -39,4 +39,26 @@ export async function storeUpload(
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, filename), data);
   return { url: `/uploads/${folder}/${filename}`, storage: "local" };
+}
+
+/**
+ * Remove a file written by storeUpload. Missing files are ignored so
+ * Info can still clear the order's slip metadata.
+ */
+export async function removeStoredUpload(url: string | null | undefined) {
+  if (!url) return;
+  try {
+    if (/^https?:\/\//i.test(url)) {
+      await del(url);
+      return;
+    }
+    const rel = url.replace(/^\/+/, "");
+    if (!rel.startsWith("uploads/")) return;
+    const abs = path.resolve(process.cwd(), "public", rel);
+    const root = path.resolve(process.cwd(), "public", "uploads");
+    if (abs !== root && !abs.startsWith(root + path.sep)) return;
+    await unlink(abs);
+  } catch {
+    // Blob gone / file already deleted — metadata can still be cleared.
+  }
 }

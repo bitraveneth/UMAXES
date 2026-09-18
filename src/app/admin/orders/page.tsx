@@ -42,7 +42,11 @@ const statusByRole: Partial<Record<UserRole, OrderStatus[]>> = {
   ],
 };
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ open?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -51,6 +55,9 @@ export default async function AdminOrdersPage() {
     redirect("/admin");
   }
 
+  const params = searchParams ? await searchParams : {};
+  const openId = typeof params.open === "string" ? params.open : null;
+
   const role = session.user.role as UserRole;
   const allowedStatuses = statusByRole[role] ?? statusByRole.SALES!;
   const canAssignSupplier =
@@ -58,6 +65,7 @@ export default async function AdminOrdersPage() {
     role === "SUPER_ADMIN" ||
     role === "SALES" ||
     role === "WAREHOUSE";
+  const canDeleteSlip = role === "ADMIN" || role === "SUPER_ADMIN";
 
   const [orders, suppliers] = await Promise.all([
     prisma.order.findMany({
@@ -67,7 +75,7 @@ export default async function AdminOrdersPage() {
         supplier: true,
         items: true,
         shipments: true,
-        payments: { select: { status: true, paidAt: true } },
+        payments: true,
         placedByStaff: { select: { name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -96,6 +104,9 @@ export default async function AdminOrdersPage() {
     paymentMethod: o.paymentMethod,
     paymentRef: o.paymentRef,
     paymentPaid: o.payments.some((p) => p.status === "paid" && p.paidAt),
+    paymentSlipUrl: o.payments.find((p) => p.slipUrl)?.slipUrl ?? null,
+    paymentSlipName: o.payments.find((p) => p.slipUrl)?.slipFileName ?? null,
+    paymentSlipMime: o.payments.find((p) => p.slipUrl)?.slipMime ?? null,
     notes: o.notes,
     total: o.total,
     createdAt: o.createdAt.toISOString(),
@@ -179,6 +190,8 @@ export default async function AdminOrdersPage() {
         suppliers={suppliers}
         allowedStatuses={allowedStatuses}
         canAssignSupplier={canAssignSupplier}
+        canDeleteSlip={canDeleteSlip}
+        openId={openId}
       />
     </div>
   );

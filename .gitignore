@@ -62,6 +62,8 @@ yarn-error.log*
 !/public/uploads/avatars/.gitkeep
 /public/uploads/staff/*
 !/public/uploads/staff/.gitkeep
+/public/uploads/slips/*
+!/public/uploads/slips/.gitkeep
 
 # vercel
 .vercel

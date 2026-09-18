@@ -16,6 +16,7 @@ import {
   buyerStatusLabel,
   type BuyerDocType,
 } from "@/lib/buyer-order";
+import BuyerPaymentSlip from "@/components/account/BuyerPaymentSlip";
 import OrderProgressBar from "@/components/account/OrderProgressBar";
 import type { OrderStatus } from "@/generated/prisma/enums";
 
@@ -83,6 +84,12 @@ export default function BuyerOrderDetail({
     createdAt: string;
     items: OrderLine[];
     shipments: ShipmentInfo[];
+    paymentStatus: string | null;
+    paymentPaid: boolean;
+    hasPaymentSlip: boolean;
+    paymentSlipMime: string | null;
+    paymentSlipName: string | null;
+    paymentRef: string | null;
   };
   paymentLabel: string;
   companyLevel?: string | null;
@@ -113,9 +120,12 @@ export default function BuyerOrderDetail({
                 {order.orderNumber}
               </h1>
               <span
-                className={`inline-flex px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide uppercase ${buyerStatusClass(order.status)}`}
+                className={`inline-flex px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide uppercase ${buyerStatusClass(order.status, { paid: order.paymentPaid, hasSlip: order.hasPaymentSlip })}`}
               >
-                {buyerStatusLabel(order.status)}
+                {buyerStatusLabel(order.status, {
+                  paid: order.paymentPaid,
+                  hasSlip: order.hasPaymentSlip,
+                })}
               </span>
             </div>
             <p className="mt-2 font-body text-sm text-black">
@@ -144,12 +154,24 @@ export default function BuyerOrderDetail({
         </div>
       </header>
 
-      {isCreditBuyer && order.status === "PAYMENT_PENDING" ? (
+      {order.status !== "CANCELLED" ? (
+        <BuyerPaymentSlip
+          orderId={order.id}
+          paid={order.paymentPaid}
+          hasSlip={order.hasPaymentSlip}
+          slipMime={order.paymentSlipMime}
+          fileName={order.paymentSlipName}
+          paymentRef={order.paymentRef}
+        />
+      ) : null}
+
+      {isCreditBuyer && order.status === "PAYMENT_PENDING" && !order.hasPaymentSlip ? (
         <div className="border border-umx-orange/25 bg-umx-orange-wash/60 px-5 py-4 font-body text-sm text-black">
           <span className="font-display font-semibold text-umx-orange">
             Payment pending.
           </span>{" "}
-          Your proforma is ready under Documents — confirm TT / check when paid.
+          Download the proforma under Documents, send the TT, then upload the
+          bank slip above.
         </div>
       ) : null}
 

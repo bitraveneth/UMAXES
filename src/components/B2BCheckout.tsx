@@ -411,6 +411,10 @@ export default function B2BCheckout() {
               placeholder="TT / wire reference"
             />
           </label>
+          <p className="mt-3 font-body text-xs text-black/50">
+            After you place the order, open it and upload the bank slip (水单).
+            Info confirms 到账 before the order counts for rebate.
+          </p>
         </section>
 
         <section className="border border-black/10 bg-white p-6">

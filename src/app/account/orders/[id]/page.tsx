@@ -38,10 +38,14 @@ export default async function AccountOrderDetailPage({
     include: {
       items: true,
       shipments: { orderBy: { createdAt: "desc" } },
+      payments: { orderBy: { createdAt: "desc" } },
     },
   });
 
   if (!order) notFound();
+
+  const payment = order.payments[0] ?? null;
+  const paymentPaid = Boolean(payment?.status === "paid" && payment.paidAt);
 
   return (
     <BuyerOrderDetail
@@ -76,6 +80,12 @@ export default async function AccountOrderDetailPage({
           packedAt: s.packedAt?.toISOString() ?? null,
           trackingStatus: s.trackingStatus,
         })),
+        paymentStatus: payment?.status ?? null,
+        paymentPaid,
+        hasPaymentSlip: Boolean(payment?.slipUrl),
+        paymentSlipMime: payment?.slipMime ?? null,
+        paymentSlipName: payment?.slipFileName ?? null,
+        paymentRef: order.paymentRef,
       }}
     />
   );
