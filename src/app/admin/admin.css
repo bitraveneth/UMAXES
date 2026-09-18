@@ -407,7 +407,7 @@
   overflow: hidden;
   border: 1px solid var(--admin-border);
   border-radius: 0.5rem;
-  background: var(--admin-card);
+  background: #ffffff;
   box-shadow: 0 1px 1px rgba(15, 23, 42, 0.04);
 }
 
@@ -415,17 +415,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.35rem;
-  padding: 0.28rem 0.48rem;
-  font-size: 0.6875rem;
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--admin-brand-700);
+  padding: 0.32rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #0b1220;
   text-decoration: none;
   border-right: 1px solid var(--admin-border);
-  background: transparent;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  background: #ffffff;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
 }
 
 .admin-doc-pills a:last-child {
@@ -433,12 +434,19 @@
 }
 
 .admin-doc-pills a:hover {
-  background: var(--admin-brand-50);
-  color: var(--admin-brand-600);
+  background: var(--admin-gray-50);
+  color: #0b1220;
 }
 
-.admin-shell.dark .admin-doc-pills {
-  background: var(--admin-input-bg);
+.admin-shell.dark .admin-doc-pills,
+.admin-shell.dark .admin-doc-pills a {
+  background: #ffffff;
+  color: #0b1220;
+}
+
+.admin-shell.dark .admin-doc-pills a:hover {
+  background: #e8eef5;
+  color: #0b1220;
 }
 
 .admin-pipeline {
