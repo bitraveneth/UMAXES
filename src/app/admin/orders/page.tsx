@@ -42,7 +42,11 @@ const statusByRole: Partial<Record<UserRole, OrderStatus[]>> = {
   ],
 };
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ open?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -50,6 +54,9 @@ export default async function AdminOrdersPage() {
   ) {
     redirect("/admin");
   }
+
+  const params = searchParams ? await searchParams : {};
+  const openId = typeof params.open === "string" ? params.open : null;
 
   const role = session.user.role as UserRole;
   const allowedStatuses = statusByRole[role] ?? statusByRole.SALES!;
@@ -184,6 +191,7 @@ export default async function AdminOrdersPage() {
         allowedStatuses={allowedStatuses}
         canAssignSupplier={canAssignSupplier}
         canDeleteSlip={canDeleteSlip}
+        openId={openId}
       />
     </div>
   );

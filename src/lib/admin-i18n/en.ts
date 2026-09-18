@@ -435,7 +435,7 @@ const en: AdminMessages = {
   orders: {
     title: "Orders",
     description:
-      "Confirm payment, assign a supplier company, then track shipment.",
+      "When a buyer uploads a 水单 on their order, it shows here. Open the row to see the photo, then confirm 到账.",
     createOrder: "Create order",
     exportOrders: "Export orders CSV",
     exportCustomers: "Export customers CSV",
@@ -444,10 +444,12 @@ const en: AdminMessages = {
     fulfillment: "With supplier",
     completed: "Completed",
     listed: "Orders",
-    listedHint: "{count} shown · click Edit to manage",
+    listedHint:
+      "{count} shown · buyer 水单 is here. Filter Slip in, open the row, check the photo, then confirm 到账.",
     noOrders: "No orders match this filter.",
     filterAll: "All",
     filterPending: "Pending",
+    filterSlipIn: "Slip in",
     filterConfirmed: "Confirmed",
     filterPicking: "With supplier",
     filterSupplier: "With supplier",
@@ -478,6 +480,7 @@ const en: AdminMessages = {
     viewSlip: "Open payment slip",
     noSlip: "No slip yet",
     slipIn: "Slip in",
+    docSlip: "Slip",
     deleteSlip: "Delete slip",
     deleteSlipConfirm:
       "Delete this payment slip file? The buyer can upload again. This frees storage.",

@@ -54,6 +54,7 @@ export type OrdersPanelItem = {
 type FilterKey =
   | "all"
   | "PAYMENT_PENDING"
+  | "SLIP_IN"
   | "CONFIRMED"
   | "SENT_TO_SUPPLIER"
   | "SHIPPED"
@@ -82,6 +83,7 @@ function orderTone(status: string) {
 const FILTERS: { key: FilterKey; labelKey: string }[] = [
   { key: "all", labelKey: "orders.filterAll" },
   { key: "PAYMENT_PENDING", labelKey: "orders.filterPending" },
+  { key: "SLIP_IN", labelKey: "orders.filterSlipIn" },
   { key: "CONFIRMED", labelKey: "orders.filterConfirmed" },
   { key: "SENT_TO_SUPPLIER", labelKey: "orders.filterSupplier" },
   { key: "SHIPPED", labelKey: "orders.filterShipped" },
@@ -89,12 +91,46 @@ const FILTERS: { key: FilterKey; labelKey: string }[] = [
   { key: "CANCELLED", labelKey: "orders.filterCancelled" },
 ];
 
-function matchesFilter(status: OrderStatus, filter: FilterKey) {
+function waitingSlip(order: OrdersPanelItem) {
+  return Boolean(order.paymentSlipUrl) && !order.paymentPaid;
+}
+
+function matchesFilter(order: OrdersPanelItem, filter: FilterKey) {
   if (filter === "all") return true;
+  if (filter === "SLIP_IN") return waitingSlip(order);
   if (filter === "SENT_TO_SUPPLIER") {
-    return status === "SENT_TO_SUPPLIER" || status === "PICKING";
+    return order.status === "SENT_TO_SUPPLIER" || order.status === "PICKING";
   }
-  return status === filter;
+  return order.status === filter;
+}
+
+function slipHref(orderId: string) {
+  return `/api/orders/${orderId}/payment-slip`;
+}
+
+function AdminSlipPhoto({
+  orderId,
+  fileName,
+}: {
+  orderId: string;
+  fileName: string | null;
+}) {
+  const href = slipHref(orderId);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-2 block overflow-hidden rounded-lg ring-1 ring-[var(--admin-border)]"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={href}
+        alt={fileName || "Payment slip"}
+        className="max-h-72 w-full bg-[var(--admin-hover)] object-contain"
+      />
+    </a>
+  );
 }
 
 export default function OrdersPanel({
@@ -103,19 +139,25 @@ export default function OrdersPanel({
   allowedStatuses,
   canAssignSupplier,
   canDeleteSlip,
+  openId = null,
 }: {
   orders: OrdersPanelItem[];
   suppliers: OrdersPanelSupplier[];
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
   canDeleteSlip: boolean;
+  openId?: string | null;
 }) {
   const { t, locale } = useAdminI18n();
-  const [filter, setFilter] = useState<FilterKey>("all");
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(openId);
+  const [filter, setFilter] = useState<FilterKey>(() => {
+    if (!openId) return "all";
+    const opened = orders.find((o) => o.id === openId);
+    return opened && waitingSlip(opened) ? "SLIP_IN" : "all";
+  });
 
   const filtered = useMemo(() => {
-    return orders.filter((o) => matchesFilter(o.status, filter));
+    return orders.filter((o) => matchesFilter(o, filter));
   }, [orders, filter]);
 
   function payLabel(method: PaymentMethod) {
@@ -150,7 +192,7 @@ export default function OrdersPanel({
           const count =
             f.key === "all"
               ? orders.length
-              : orders.filter((o) => matchesFilter(o.status, f.key)).length;
+              : orders.filter((o) => matchesFilter(o, f.key)).length;
           const active = filter === f.key;
           return (
             <button
@@ -259,9 +301,15 @@ export default function OrdersPanel({
                               {t("orders.paid")}
                             </p>
                           ) : order.paymentSlipUrl ? (
-                            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-brand-700)]">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingId(open ? null : order.id)
+                              }
+                              className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-brand-700)] underline"
+                            >
                               {t("orders.slipIn")}
-                            </p>
+                            </button>
                           ) : (
                             <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-warning-700)]">
                               {t("orders.noSlip")}
@@ -277,7 +325,11 @@ export default function OrdersPanel({
                           </AdminBadge>
                         </td>
                         <td>
-                          <OrderDocLinks orderId={order.id} compact />
+                          <OrderDocLinks
+                            orderId={order.id}
+                            compact
+                            hasSlip={Boolean(order.paymentSlipUrl)}
+                          />
                         </td>
                         <td className="text-right">
                           <button
@@ -326,9 +378,11 @@ export default function OrdersPanel({
 function OrderDocLinks({
   orderId,
   compact = false,
+  hasSlip = false,
 }: {
   orderId: string;
   compact?: boolean;
+  hasSlip?: boolean;
 }) {
   const { t } = useAdminI18n();
   const links = [
@@ -336,25 +390,38 @@ function OrderDocLinks({
       type: "pi",
       short: t("orders.docPi"),
       full: t("orders.viewPi"),
+      href: `/api/orders/${orderId}/docs?type=pi`,
     },
     {
       type: "packing",
       short: t("orders.docPack"),
       full: t("orders.viewPacking"),
+      href: `/api/orders/${orderId}/docs?type=packing`,
     },
     {
       type: "invoice",
       short: t("orders.docCi"),
       full: t("orders.viewCi"),
+      href: `/api/orders/${orderId}/docs?type=invoice`,
     },
-  ] as const;
+    ...(hasSlip
+      ? [
+          {
+            type: "slip",
+            short: t("orders.docSlip"),
+            full: t("orders.viewSlip"),
+            href: slipHref(orderId),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="flex flex-wrap gap-1.5">
       {links.map((link) => (
         <a
           key={link.type}
-          href={`/api/orders/${orderId}/docs?type=${link.type}`}
+          href={link.href}
           target="_blank"
           rel="noopener noreferrer"
           title={link.full}
@@ -487,39 +554,48 @@ function OrderExpand({
             <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
               {t("orders.documents")}
             </p>
-            <OrderDocLinks orderId={order.id} />
+            <OrderDocLinks
+              orderId={order.id}
+              hasSlip={Boolean(order.paymentSlipUrl)}
+            />
             <div className="mt-4 space-y-2 text-sm">
               <div>
                 <span className="text-[var(--admin-muted)]">
                   {t("orders.paymentSlip")}
                 </span>
                 {order.paymentSlipUrl ? (
-                  <div className="mt-1 flex flex-wrap items-center gap-3">
-                    <a
-                      href={`/api/orders/${order.id}/payment-slip`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-[var(--admin-brand-700)] underline"
-                    >
-                      {order.paymentSlipName || t("orders.viewSlip")}
-                    </a>
-                    {canDeleteSlip ? (
-                      <form
-                        action={async () => {
-                          if (!confirm(t("orders.deleteSlipConfirm"))) return;
-                          await deletePaymentSlip(order.id);
-                          onClose();
-                        }}
+                  <>
+                    <AdminSlipPhoto
+                      orderId={order.id}
+                      fileName={order.paymentSlipName}
+                    />
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <a
+                        href={slipHref(order.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-[var(--admin-brand-700)] underline"
                       >
-                        <button
-                          type="submit"
-                          className="admin-btn admin-btn-danger admin-btn-sm"
+                        {order.paymentSlipName || t("orders.viewSlip")}
+                      </a>
+                      {canDeleteSlip ? (
+                        <form
+                          action={async () => {
+                            if (!confirm(t("orders.deleteSlipConfirm"))) return;
+                            await deletePaymentSlip(order.id);
+                            onClose();
+                          }}
                         >
-                          {t("orders.deleteSlip")}
-                        </button>
-                      </form>
-                    ) : null}
-                  </div>
+                          <button
+                            type="submit"
+                            className="admin-btn admin-btn-danger admin-btn-sm"
+                          >
+                            {t("orders.deleteSlip")}
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+                  </>
                 ) : (
                   <p className="mt-1 font-medium text-[var(--admin-warning-700)]">
                     {t("orders.noSlip")}
@@ -651,14 +727,20 @@ function OrderExpand({
                     : t("orders.markPaidNeedSlip")}
                 </p>
                 {order.paymentSlipUrl ? (
-                  <a
-                    href={`/api/orders/${order.id}/payment-slip`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mb-2 block text-xs font-semibold text-[var(--admin-brand-700)] underline"
-                  >
-                    {t("orders.viewSlip")}
-                  </a>
+                  <>
+                    <AdminSlipPhoto
+                      orderId={order.id}
+                      fileName={order.paymentSlipName}
+                    />
+                    <a
+                      href={slipHref(order.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mb-2 mt-2 block text-xs font-semibold text-[var(--admin-brand-700)] underline"
+                    >
+                      {t("orders.viewSlip")}
+                    </a>
+                  </>
                 ) : null}
                 <button
                   type="submit"
