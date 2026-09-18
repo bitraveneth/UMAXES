@@ -383,12 +383,12 @@
 }
 
 .admin-table.admin-table-compact th {
-  padding: 0.5rem 0.6rem;
-  font-size: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.8125rem;
 }
 
 .admin-table.admin-table-compact td {
-  padding: 0.5rem 0.6rem;
+  padding: 0.6rem 0.7rem;
 }
 
 .admin-table.admin-table-compact th:first-child,
