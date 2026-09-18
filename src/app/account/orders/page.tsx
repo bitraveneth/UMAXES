@@ -44,6 +44,11 @@ export default async function OrdersPage() {
         select: { id: true, name: true, image: true, quantity: true },
         take: 3,
       },
+      payments: {
+        select: { status: true, paidAt: true, slipUrl: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
       _count: { select: { items: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -130,9 +135,21 @@ export default async function OrdersPage() {
                     <div className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`inline-flex px-2.5 py-1 font-display text-[10px] font-bold tracking-wide uppercase ${buyerStatusClass(order.status)}`}
+                          className={`inline-flex px-2.5 py-1 font-display text-[10px] font-bold tracking-wide uppercase ${buyerStatusClass(order.status, {
+                            paid: Boolean(
+                              order.payments[0]?.status === "paid" &&
+                                order.payments[0]?.paidAt,
+                            ),
+                            hasSlip: Boolean(order.payments[0]?.slipUrl),
+                          })}`}
                         >
-                          {buyerStatusLabel(order.status)}
+                          {buyerStatusLabel(order.status, {
+                            paid: Boolean(
+                              order.payments[0]?.status === "paid" &&
+                                order.payments[0]?.paidAt,
+                            ),
+                            hasSlip: Boolean(order.payments[0]?.slipUrl),
+                          })}
                         </span>
                         <span className="font-display text-[10px] font-semibold tracking-wide text-black uppercase">
                           {shortPayment(order.paymentMethod)}

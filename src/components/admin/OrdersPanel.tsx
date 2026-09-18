@@ -22,6 +22,10 @@ export type OrdersPanelItem = {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   paymentRef: string | null;
+  paymentPaid: boolean;
+  paymentSlipUrl: string | null;
+  paymentSlipName: string | null;
+  paymentSlipMime: string | null;
   notes: string | null;
   total: number;
   createdAt: string;
@@ -245,7 +249,22 @@ export default function OrdersPanel({
                         <td className="whitespace-nowrap text-sm text-[var(--admin-muted)]">
                           {formatDate(order.createdAt)}
                         </td>
-                        <td className="text-sm">{payLabel(order.paymentMethod)}</td>
+                        <td className="text-sm">
+                          <p>{payLabel(order.paymentMethod)}</p>
+                          {order.paymentPaid ? (
+                            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-success-700)]">
+                              {t("orders.paid")}
+                            </p>
+                          ) : order.paymentSlipUrl ? (
+                            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-brand-700)]">
+                              {t("orders.slipIn")}
+                            </p>
+                          ) : (
+                            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--admin-warning-700)]">
+                              {t("orders.noSlip")}
+                            </p>
+                          )}
+                        </td>
                         <td className="tabular-nums font-medium">
                           {money(order.total)}
                         </td>
@@ -464,6 +483,25 @@ function OrderExpand({
             </p>
             <OrderDocLinks orderId={order.id} />
             <div className="mt-4 space-y-2 text-sm">
+              <div>
+                <span className="text-[var(--admin-muted)]">
+                  {t("orders.paymentSlip")}
+                </span>
+                {order.paymentSlipUrl ? (
+                  <a
+                    href={`/api/orders/${order.id}/payment-slip`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 block font-medium text-[var(--admin-brand-700)] underline"
+                  >
+                    {order.paymentSlipName || t("orders.viewSlip")}
+                  </a>
+                ) : (
+                  <p className="mt-1 font-medium text-[var(--admin-warning-700)]">
+                    {t("orders.noSlip")}
+                  </p>
+                )}
+              </div>
               <p>
                 <span className="text-[var(--admin-muted)]">
                   {t("orders.paymentRef")}
@@ -583,9 +621,25 @@ function OrderExpand({
                 }}
                 className="mb-3"
               >
+                <p className="mb-2 text-xs text-[var(--admin-muted)]">
+                  {order.paymentSlipUrl
+                    ? t("orders.markPaidHint")
+                    : t("orders.markPaidNeedSlip")}
+                </p>
+                {order.paymentSlipUrl ? (
+                  <a
+                    href={`/api/orders/${order.id}/payment-slip`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mb-2 block text-xs font-semibold text-[var(--admin-brand-700)] underline"
+                  >
+                    {t("orders.viewSlip")}
+                  </a>
+                ) : null}
                 <button
                   type="submit"
-                  className="admin-btn admin-btn-primary admin-btn-sm w-full sm:w-auto"
+                  disabled={!order.paymentSlipUrl && order.paymentMethod !== "CREDIT"}
+                  className="admin-btn admin-btn-primary admin-btn-sm w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {t("orders.markPaid")}
                 </button>

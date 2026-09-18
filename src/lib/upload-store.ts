@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { put } from "@vercel/blob";
 
-export type UploadFolder = "products" | "avatars" | "staff";
+export type UploadFolder = "products" | "avatars" | "staff" | "slips";
 
 export type StoredUpload = {
   /** Public URL — absolute Blob URL or site-relative `/uploads/...` */

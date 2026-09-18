@@ -508,6 +508,27 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   });
   if (!before) throw new Error("Order not found");
 
+  if (
+    before.status === "PAYMENT_PENDING" &&
+    status !== "PAYMENT_PENDING" &&
+    status !== "CANCELLED" &&
+    status !== "SUBMITTED"
+  ) {
+    const paid = await prisma.payment.findFirst({
+      where: { orderId, status: "paid", paidAt: { not: null } },
+      select: { id: true },
+    });
+    const method = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { paymentMethod: true },
+    });
+    if (method?.paymentMethod !== "CREDIT" && !paid) {
+      throw new Error(
+        "Confirm funds received (到账) after the payment slip before moving this order forward",
+      );
+    }
+  }
+
   await prisma.$transaction([
     prisma.order.update({ where: { id: orderId }, data: { status } }),
     prisma.auditLog.create({
@@ -679,13 +700,21 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
   const session = await requireRoles(["ADMIN", "SALES"]);
 
   await prisma.$transaction(async (tx) => {
-    const order = await tx.order.findUnique({ where: { id: orderId } });
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: { payments: true },
+    });
     if (!order) throw new Error("Order not found");
+
+    const hasSlip = order.payments.some((p) => p.slipUrl);
+    if (!hasSlip && order.paymentMethod !== "CREDIT") {
+      throw new Error("Wait for the buyer to upload a payment slip (水单) first");
+    }
 
     await tx.order.update({
       where: { id: orderId },
       data: {
-        status: "CONFIRMED",
+        status: order.status === "PAYMENT_PENDING" ? "CONFIRMED" : order.status,
         paymentRef: reference || order.paymentRef,
       },
     });
@@ -709,7 +738,7 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
           orderNumber: order.orderNumber,
           reference: reference || order.paymentRef || null,
           previousStatus: order.status,
-          status: "CONFIRMED",
+          status: order.status === "PAYMENT_PENDING" ? "CONFIRMED" : order.status,
           amount: order.total,
           paymentMethod: order.paymentMethod,
           companyId: order.companyId,
@@ -720,6 +749,8 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
 
   revalidatePath("/admin/orders");
   revalidatePath("/admin/credit");
+  revalidatePath("/account/orders");
+  revalidatePath(`/account/orders/${orderId}`);
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
