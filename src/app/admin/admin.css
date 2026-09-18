@@ -377,6 +377,107 @@
   vertical-align: middle;
 }
 
+.admin-table.admin-table-compact th {
+  padding: 0.7rem 0.9rem;
+}
+
+.admin-table.admin-table-compact td {
+  padding: 0.7rem 0.9rem;
+}
+
+.admin-table.admin-table-compact th:first-child,
+.admin-table.admin-table-compact td:first-child {
+  padding-left: 1.15rem;
+}
+
+.admin-table.admin-table-compact th:last-child,
+.admin-table.admin-table-compact td:last-child {
+  padding-right: 1.15rem;
+}
+
+.admin-doc-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-doc-inline a {
+  color: var(--admin-brand-600);
+  text-decoration: none;
+}
+
+.admin-doc-inline a:hover {
+  text-decoration: underline;
+}
+
+.admin-doc-sep {
+  color: var(--admin-gray-300);
+  font-weight: 500;
+}
+
+.admin-pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.admin-pipeline-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: var(--admin-gray-200);
+  flex-shrink: 0;
+}
+
+.admin-pipeline-step.is-done .admin-pipeline-dot,
+.admin-pipeline-step.is-active .admin-pipeline-dot {
+  background: var(--admin-brand-500);
+}
+
+.admin-pipeline-step.is-active .admin-pipeline-dot {
+  box-shadow: 0 0 0 4px var(--admin-brand-100);
+}
+
+.admin-pipeline-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--admin-muted);
+  white-space: nowrap;
+}
+
+.admin-pipeline-step.is-done .admin-pipeline-label,
+.admin-pipeline-step.is-active .admin-pipeline-label {
+  color: var(--admin-brand-700);
+}
+
+.admin-pipeline-line {
+  width: 1.35rem;
+  height: 2px;
+  margin: 0 0.2rem;
+  background: var(--admin-gray-200);
+  flex-shrink: 0;
+}
+
+.admin-pipeline-step.is-done .admin-pipeline-line {
+  background: var(--admin-brand-200);
+}
+
 .admin-table tbody tr:last-child td {
   border-bottom: none;
 }
