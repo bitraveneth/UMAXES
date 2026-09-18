@@ -44,12 +44,26 @@ export function homeForRole(
   return "/account";
 }
 
+export const ADMIN_NAV_GROUPS = [
+  "home",
+  "ops",
+  "customers",
+  "money",
+  "catalog",
+  "insights",
+  "admin",
+] as const;
+
+export type AdminNavGroup = (typeof ADMIN_NAV_GROUPS)[number];
+
 export type AdminNavItem = {
   href: string;
   label: string;
   roles: UserRole[];
   /** Optional i18n key under `nav.*` (defaults to href) */
   navKey?: string;
+  /** Sidebar section — order follows SOP: approve → order → pack → money. */
+  group?: AdminNavGroup;
 };
 
 const SA: UserRole = "SUPER_ADMIN";
@@ -61,102 +75,105 @@ export const adminNav: AdminNavItem[] = [
     href: "/admin",
     label: "Dashboard",
     roles: [SA, AD, "SALES", "WAREHOUSE", "LOGISTICS"],
+    group: "home",
   },
-  {
-    href: "/admin/activity",
-    label: "Activity",
-    roles: [SA, AD],
-  },
-  {
-    href: "/admin/learn",
-    label: "Learning",
-    roles: [SA, AD],
-  },
-  { href: "/admin/approvals", label: "Approvals", roles: [SA, AD, "SALES"] },
-  {
-    href: "/admin/users",
-    label: "Users",
-    roles: [SA, AD],
-  },
-  {
-    href: "/admin/staff",
-    label: "Staff",
-    roles: [SA, AD],
-  },
-  {
-    href: "/admin/distributors",
-    label: "Distributors",
-    roles: [SA, AD, "SALES"],
-  },
-  {
-    href: "/admin/wholesalers",
-    label: "Wholesalers",
-    roles: [SA, AD, "SALES"],
-  },
-  { href: "/admin/retail", label: "Retail", roles: [SA, AD, "SALES"] },
+  { href: "/admin/approvals", label: "Approvals", roles: [SA, AD, "SALES"], group: "ops" },
   {
     href: "/admin/orders",
     label: "Orders",
     roles: [SA, AD, "SALES", "WAREHOUSE"],
+    group: "ops",
   },
   {
     href: "/admin/orders/new",
     label: "Create order",
     roles: [SA, AD, "SALES"],
+    group: "ops",
   },
-  {
-    href: "/admin/suppliers",
-    label: "Suppliers",
-    roles: [SA, AD, "SALES", "WAREHOUSE"],
-  },
-  /** Logistics primary — Orders (packing queue) */
   {
     href: "/admin/logistics",
     label: "Orders",
     navKey: "/admin/logistics/orders",
     roles: ["LOGISTICS"],
+    group: "ops",
   },
   {
     href: "/admin/logistics",
     label: "Packing",
     navKey: "/admin/logistics",
     roles: [SA, AD, "SALES"],
+    group: "ops",
   },
   {
     href: "/admin/logistics/shipments",
     label: "Shipments",
     roles: [SA, AD, "LOGISTICS", "SALES"],
+    group: "ops",
   },
   {
     href: "/admin/logistics/packing-lists",
     label: "Packing lists",
     roles: [SA, AD, "LOGISTICS", "SALES"],
+    group: "ops",
   },
-  { href: "/admin/catalog", label: "Catalog", roles: [SA, AD] },
-  { href: "/admin/faq", label: "FAQ", roles: [SA, AD] },
-  { href: "/admin/coupons", label: "Coupons", roles: [SA, AD] },
-  { href: "/admin/rebates", label: "Volume rebate", roles: [SA, AD] },
-  { href: "/admin/invoices", label: "Invoices", roles: [SA, AD] },
-  { href: "/admin/credit", label: "Credit", roles: [SA, AD, "SALES"] },
-  { href: "/admin/aging", label: "Aging", roles: [SA, AD, "SALES"] },
-  { href: "/admin/rma", label: "RMA", roles: [SA, AD, "SALES"] },
-  { href: "/admin/commissions", label: "Commissions", roles: [SA, AD, "SALES"] },
-  { href: "/admin/reports", label: "Reports", roles: [SA, AD, "SALES"] },
-  { href: "/admin/system", label: "System", roles: [SA] },
+  {
+    href: "/admin/suppliers",
+    label: "Suppliers",
+    roles: [SA, AD, "SALES", "WAREHOUSE"],
+    group: "ops",
+  },
+  {
+    href: "/admin/distributors",
+    label: "Distributors",
+    roles: [SA, AD, "SALES"],
+    group: "customers",
+  },
+  {
+    href: "/admin/wholesalers",
+    label: "Wholesalers",
+    roles: [SA, AD, "SALES"],
+    group: "customers",
+  },
+  { href: "/admin/retail", label: "Retail", roles: [SA, AD, "SALES"], group: "customers" },
+  { href: "/admin/credit", label: "Credit", roles: [SA, AD, "SALES"], group: "money" },
+  { href: "/admin/aging", label: "Aging", roles: [SA, AD, "SALES"], group: "money" },
+  { href: "/admin/rebates", label: "Volume rebate", roles: [SA, AD], group: "money" },
+  { href: "/admin/invoices", label: "Invoices", roles: [SA, AD], group: "money" },
+  { href: "/admin/coupons", label: "Coupons", roles: [SA, AD], group: "money" },
+  { href: "/admin/commissions", label: "Commissions", roles: [SA, AD, "SALES"], group: "money" },
+  { href: "/admin/rma", label: "RMA", roles: [SA, AD, "SALES"], group: "money" },
+  { href: "/admin/catalog", label: "Catalog", roles: [SA, AD], group: "catalog" },
+  { href: "/admin/faq", label: "FAQ", roles: [SA, AD], group: "catalog" },
+  { href: "/admin/reports", label: "Reports", roles: [SA, AD, "SALES"], group: "insights" },
+  { href: "/admin/activity", label: "Activity", roles: [SA, AD], group: "insights" },
+  { href: "/admin/users", label: "Users", roles: [SA, AD], group: "admin" },
+  { href: "/admin/staff", label: "Staff", roles: [SA, AD], group: "admin" },
+  { href: "/admin/system", label: "System", roles: [SA], group: "admin" },
+  { href: "/admin/learn", label: "Learning", roles: [SA, AD], group: "admin" },
   {
     href: "/admin/profile",
     label: "Profile",
     roles: [SA, AD, "SALES", "WAREHOUSE", "LOGISTICS"],
+    group: "admin",
   },
   {
     href: "/admin/notifications",
     label: "Notifications",
     roles: [SA, AD, "SALES", "WAREHOUSE", "LOGISTICS"],
+    group: "admin",
   },
 ];
 
 export function navForRole(role: UserRole) {
   return adminNav.filter((item) => item.roles.includes(role));
+}
+
+export function groupedNavForRole(role: UserRole) {
+  const items = navForRole(role);
+  return ADMIN_NAV_GROUPS.map((group) => ({
+    group,
+    items: items.filter((item) => (item.group || "home") === group),
+  })).filter((section) => section.items.length > 0);
 }
 
 export function canAccessPath(role: UserRole, pathname: string) {

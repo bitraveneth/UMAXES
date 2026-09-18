@@ -203,6 +203,16 @@
   color: var(--admin-menu-active-text);
 }
 
+.admin-menu-group {
+  margin: 0 0 0.35rem;
+  padding: 0.15rem 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
 /* Cards */
 .admin-card {
   border-radius: 1rem;

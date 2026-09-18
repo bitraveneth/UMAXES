@@ -32,6 +32,7 @@ import {
   ClipboardList,
   CircleHelp,
   Shield,
+  Receipt,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -54,6 +55,7 @@ export const adminNavIcons: Record<string, LucideIcon> = {
   "/admin/faq": CircleHelp,
   "/admin/coupons": TicketPercent,
   "/admin/rebates": Wallet,
+  "/admin/invoices": Receipt,
   "/admin/credit": CreditCard,
   "/admin/aging": Clock3,
   "/admin/notifications": Bell,
