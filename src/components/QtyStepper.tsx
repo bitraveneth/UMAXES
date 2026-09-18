@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  PACK_COPY,
+  PCS_PER_CASE,
+  casesFromPcs,
+  formatPack,
+  pcsFromCases,
+} from "@/lib/pack";
 
 type QtyStepperProps = {
   value: number;
@@ -100,5 +107,50 @@ export function QtyStepper({
         +
       </button>
     </div>
+  );
+}
+
+type CaseQtyStepperProps = {
+  pcs: number;
+  onChangePcs: (pcs: number) => void;
+  allowRemove?: boolean;
+  ariaLabel?: string;
+  size?: "sm" | "md";
+  showHint?: boolean;
+};
+
+/** +/- stepper in cases. Cart still stores pieces (95 pcs per case). */
+export function CaseQtyStepper({
+  pcs,
+  onChangePcs,
+  allowRemove = false,
+  ariaLabel = "Cases",
+  size = "md",
+  showHint = false,
+}: CaseQtyStepperProps) {
+  const cases = Math.max(allowRemove ? 0 : 1, casesFromPcs(pcs));
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <QtyStepper
+        value={cases || 1}
+        onChange={(nextCases) => onChangePcs(pcsFromCases(nextCases))}
+        min={1}
+        max={999}
+        allowRemove={allowRemove}
+        ariaLabel={ariaLabel}
+        size={size}
+      />
+      {showHint ? (
+        <p className="font-body text-[11px] leading-tight text-black/45">
+          {formatPack(pcsFromCases(Math.max(1, cases)))} · {PCS_PER_CASE} pcs each
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function PackNote({ className }: { className?: string }) {
+  return (
+    <p className={className ?? "font-body text-sm text-black/60"}>{PACK_COPY}</p>
   );
 }

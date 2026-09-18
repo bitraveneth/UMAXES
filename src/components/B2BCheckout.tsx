@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
+import { formatPack } from "@/lib/pack";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 
 type Address = {
@@ -460,7 +461,7 @@ export default function B2BCheckout() {
               <div className="min-w-0 flex-1">
                 <p className="font-display text-sm font-semibold">{l.name}</p>
                 <p className="font-body text-xs text-black/55">
-                  Qty {l.quantity}
+                  {formatPack(l.quantity)}
                   {l.quantity < l.moq ? ` · MOQ ${l.moq}` : ""}
                 </p>
                 <p className="font-display text-sm">

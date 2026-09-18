@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
-import { QtyStepper } from "@/components/QtyStepper";
+import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
+import { PCS_PER_CASE, formatPack, snapToCasePcs } from "@/lib/pack";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
 import {
@@ -14,7 +15,7 @@ import {
 } from "@/hooks/useStoreChrome";
 import { flavors, product, type Flavor, type FlavorId } from "@/lib/assets";
 
-const DRAFT_KEY = "umaxes-product-order-lines-v2";
+const DRAFT_KEY = "umaxes-product-order-lines-v3";
 
 type OrderLine = {
   key: string;
@@ -31,7 +32,7 @@ function newKey() {
 }
 
 function defaultLine(flavorId: FlavorId): OrderLine {
-  return { key: newKey(), flavorId, quantity: 1 };
+  return { key: newKey(), flavorId, quantity: PCS_PER_CASE };
 }
 
 /** All catalog flavors as line items, with the current product flavor first. */
@@ -41,7 +42,7 @@ function defaultLines(preferred: FlavorId): OrderLine[] {
   return [...head, ...tail].map((f) => ({
     key: `line-${f.id}`,
     flavorId: f.id,
-    quantity: 1,
+    quantity: PCS_PER_CASE,
   }));
 }
 
@@ -58,7 +59,7 @@ function loadLines(fallback: FlavorId): OrderLine[] {
       if (!entry || typeof entry !== "object") continue;
       const row = entry as Record<string, unknown>;
       if (!isFlavorId(String(row.flavorId))) continue;
-      const quantity = Math.max(1, Math.floor(Number(row.quantity) || 1));
+      const quantity = snapToCasePcs(Number(row.quantity) || PCS_PER_CASE);
       lines.push({
         key: String(row.key || newKey()),
         flavorId: row.flavorId as FlavorId,
@@ -370,9 +371,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   Unit price
                 </p>
                 <p className="text-right font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
-                  Quantity
+                  Cases
                 </p>
               </div>
+              <PackNote className="mb-3 font-body text-sm text-black/55" />
 
               <ul className="space-y-4 sm:space-y-2">
                 {lines.map((line) => {
@@ -427,18 +429,17 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                         </div>
                         <div className="flex flex-col items-end">
                           <p className="mb-1.5 font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:hidden">
-                            Quantity
+                            Cases
                           </p>
-                          <QtyStepper
-                            value={line.quantity}
-                            onChange={(next) =>
+                          <CaseQtyStepper
+                            pcs={line.quantity}
+                            onChangePcs={(next) =>
                               updateLine(line.key, {
-                                quantity: Math.max(1, next),
+                                quantity: snapToCasePcs(next) || PCS_PER_CASE,
                               })
                             }
-                            min={1}
                             size="sm"
-                            ariaLabel={`${item.name} quantity`}
+                            ariaLabel={`${item.name} cases`}
                           />
                         </div>
                       </div>
@@ -464,7 +465,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   {showPrices ? <StorePrice amount={payable} /> : "On request"}
                 </p>
                 <p className="mt-1 font-body text-sm text-black/45">
-                  {totalQty} {totalQty === 1 ? "item" : "items"}
+                  {formatPack(totalQty)}
                   {showPrices && discount > 0 && appliedCoupon
                     ? ` · ${appliedCoupon} −$${discount.toFixed(2)}`
                     : ""}
