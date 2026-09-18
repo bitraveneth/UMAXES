@@ -17,6 +17,7 @@ export async function GET() {
     const company = await prisma.company.findUnique({
       where: { id: session.user.companyId },
       select: {
+        id: true,
         level: true,
         paymentTermsDays: true,
         creditLimit: true,
@@ -34,12 +35,19 @@ export async function GET() {
   }
 
   const products = await getCatalogForLevel(level);
+  let channel = null;
+  if (session.user.companyId) {
+    const { quoteForCompany } = await import("@/lib/rebate");
+    channel = await quoteForCompany(session.user.companyId, 0);
+  }
+
   return NextResponse.json({
     level,
     products,
     credit: {
       allowed: creditAllowed,
     },
+    channel,
     companyRole: session.user.companyRole,
     canOrder:
       session.user.role === "CUSTOMER" &&

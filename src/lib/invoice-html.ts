@@ -165,6 +165,11 @@ type BuildInvoiceHtmlInput = {
   addressSnap: string;
   paymentMethod?: keyof typeof paymentLabels;
   couponCode?: string | null;
+  rebateAppliedUsd?: number | null;
+  firstOrderUnpaidPcs?: number | null;
+  testStationQty?: number | null;
+  chargedQty?: number | null;
+  sellingQty?: number | null;
   items: MoneyItem[];
   packingLines?: PackingLine[] | null;
   subtotal?: number;
@@ -270,7 +275,11 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
         discount > 0
           ? `<tr class="sum-row">
         <td></td>
-        <td colspan="3" class="total-label">Discount</td>
+        <td colspan="3" class="total-label">${
+          input.rebateAppliedUsd && input.rebateAppliedUsd > 0
+            ? "Discount / rebate credit"
+            : "Discount"
+        }</td>
         <td></td>
         <td></td>
         <td class="num center">−${formatUsd(discount)}</td>
@@ -353,6 +362,22 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
       : "",
     input.couponCode
       ? `<span><strong>Coupon</strong> · ${escapeHtml(input.couponCode)}</span>`
+      : "",
+    input.testStationQty
+      ? `<span><strong>Test stations</strong> · ${input.testStationQty} free</span>`
+      : "",
+    input.firstOrderUnpaidPcs
+      ? `<span><strong>First-order unpaid</strong> · ${input.firstOrderUnpaidPcs} pcs</span>`
+      : "",
+    input.rebateAppliedUsd
+      ? `<span><strong>Rebate credit</strong> · −${formatUsd(input.rebateAppliedUsd)}</span>`
+      : "",
+    input.sellingQty
+      ? `<span><strong>Shipped pcs</strong> · ${input.sellingQty}${
+          input.chargedQty != null && input.chargedQty !== input.sellingQty
+            ? ` · charged ${input.chargedQty}`
+            : ""
+        }</span>`
       : "",
     `<span><strong>Order</strong> · ${escapeHtml(input.orderNumber)}</span>`,
   ]

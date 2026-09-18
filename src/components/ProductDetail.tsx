@@ -84,6 +84,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const [discount, setDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState("");
   const [couponBusy, setCouponBusy] = useState(false);
+  const [hideCoupon, setHideCoupon] = useState(false);
   const compactChrome = useCompactMobileStoreChrome();
 
   const gallery = useMemo(
@@ -101,6 +102,20 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   useEffect(() => {
     setShot(0);
   }, [flavor.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/catalog")
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.channel?.hideCoupon) setHideCoupon(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setLines(loadLines(flavor.id));
@@ -177,6 +192,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   }
 
   useEffect(() => {
+    if (hideCoupon) return;
     if (!savedCoupon || !draftReady) return;
     setCouponDraft((draft) => draft || savedCoupon);
     if (!appliedCoupon) {
@@ -186,6 +202,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   }, [savedCoupon, draftReady]);
 
   useEffect(() => {
+    if (hideCoupon) return;
     if (!draftReady || !appliedCoupon) return;
     void validateCoupon(appliedCoupon, subtotal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -316,7 +333,11 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               <StorePrice amount={flavor.price} />
             </p>
 
-            <div className="mt-5 sm:mt-6">
+            {hideCoupon ? (
+              <p className="font-body text-sm text-black/60">
+                Channel rebate and test stations apply automatically at checkout. No coupon code.
+              </p>
+            ) : (
               <div>
                 <label
                   htmlFor="product-coupon"
@@ -361,7 +382,9 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   </p>
                 ) : null}
               </div>
+            )}
 
+            <div className="mt-5 sm:mt-6">
               <div className="mt-5 hidden grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3 pb-2 sm:grid">
                 <p className="font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
                   Flavor

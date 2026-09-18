@@ -22,6 +22,7 @@ export type OrdersPanelItem = {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   paymentRef: string | null;
+  paymentPaid: boolean;
   notes: string | null;
   total: number;
   createdAt: string;
@@ -572,7 +573,8 @@ function OrderExpand({
             <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
               {t("orders.updateStatus")}
             </p>
-            {order.status === "PAYMENT_PENDING" ? (
+            {(order.status === "PAYMENT_PENDING" || !order.paymentPaid) &&
+            order.status !== "CANCELLED" ? (
               <form
                 action={async () => {
                   await markPaymentReceived(

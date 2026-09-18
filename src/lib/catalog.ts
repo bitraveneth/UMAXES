@@ -17,16 +17,21 @@ export async function getCatalogForLevel(level: CustomerLevel) {
     orderBy: { name: "asc" },
   });
 
-  return products.map((p) => ({
-    id: p.id,
-    sku: p.sku,
-    name: p.name,
-    description: p.description,
-    image: p.image,
-    unitPrice: p.prices[0]?.unitPrice ?? 0,
-    moq: p.prices[0]?.moq ?? 1,
-    stock: Math.max(0, (p.inventory?.quantity ?? 0) - (p.inventory?.reserved ?? 0)),
-  }));
+  return products
+    .filter((p) => p.sku !== "test-station")
+    .map((p) => ({
+      id: p.id,
+      sku: p.sku,
+      name: p.name,
+      description: p.description,
+      image: p.image,
+      unitPrice: p.prices[0]?.unitPrice ?? 0,
+      moq: p.prices[0]?.moq ?? 1,
+      stock: Math.max(
+        0,
+        (p.inventory?.quantity ?? 0) - (p.inventory?.reserved ?? 0),
+      ),
+    }));
 }
 
 export function roundMoney(n: number) {

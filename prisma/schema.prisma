@@ -104,6 +104,11 @@ model Company {
   orders            Order[]
   creditLedgers     CreditLedger[]
   rmas              Rma[]
+  rebateBalanceUsd  Float          @default(0)
+  firstOrderId      String?
+  firstCompletedOrderId String?
+  rebateMonths      RebateMonth[]
+  rebateLedgers     RebateLedger[]
 
   @@index([defaultSupplierId])
 }
@@ -283,6 +288,15 @@ model Order {
   shipments      Shipment[]
   creditLedgers  CreditLedger[]
   rmas           Rma[]
+  /// Paid selling pcs (excludes $0 test-station lines)
+  sellingQty     Int           @default(0)
+  /// Invoice pcs after first-order unpaid gift
+  chargedQty     Int           @default(0)
+  testStationQty Int           @default(0)
+  firstOrderUnpaidPcs Int      @default(0)
+  rebateAppliedUsd Float       @default(0)
+  isFirstOrder   Boolean       @default(false)
+  rebateLedgers  RebateLedger[]
 
   @@index([companyId])
   @@index([status])
@@ -532,6 +546,76 @@ model SiteSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+/// Channel SOP: one row per customer level (WHOLESALER / DISTRO).
+model RebatePolicy {
+  id                    String         @id @default(cuid())
+  level                 CustomerLevel  @unique
+  active                Boolean        @default(false)
+  unitPrice             Float?
+  pcsPerCase            Int            @default(95)
+  testStationsPerCase   Int            @default(1)
+  firstOrderCases       Int            @default(5)
+  firstOrderUnpaidPcs   Int            @default(20)
+  timezone              String         @default("America/Los_Angeles")
+  /// [{ "minQty": 5000, "rateUsd": 0.2 }, ...]
+  tiers                 Json
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+}
+
+model RebateMonth {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  yearMonth       String
+  paidQty         Int      @default(0)
+  tierRate        Float    @default(0)
+  rebateAmount    Float    @default(0)
+  issuedAmount    Float    @default(0)
+  status          String   @default("DRAFT")
+  policySnapshot  String   @default("{}")
+  issuedAt        DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  ledgers         RebateLedger[]
+
+  @@unique([companyId, yearMonth])
+  @@index([yearMonth])
+  @@index([status])
+}
+
+model RebateLedger {
+  id            String       @id @default(cuid())
+  companyId     String
+  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orderId       String?
+  order         Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  rebateMonthId String?
+  rebateMonth   RebateMonth? @relation(fields: [rebateMonthId], references: [id], onDelete: SetNull)
+  type          String
+  amount        Float
+  note          String?
+  actorId       String?
+  createdAt     DateTime     @default(now())
+
+  @@index([companyId])
+  @@index([orderId])
+}
+
+/// Public FAQ entries managed by ADMIN / SUPER_ADMIN
+model Faq {
+  id         String   @id @default(cuid())
+  question   String
+  answer     String
+  keywords   String   @default("")
+  sortOrder  Int      @default(0)
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([published, sortOrder])
 }
 
 /// Wire / TT accounts printed on proforma and commercial invoices.
