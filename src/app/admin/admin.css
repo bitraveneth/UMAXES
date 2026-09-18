@@ -394,6 +394,7 @@
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.35rem;
+  white-space: nowrap;
 }
 
 .admin-badge-neutral {

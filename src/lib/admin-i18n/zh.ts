@@ -164,6 +164,7 @@ const zh: AdminMessages = {
     colPayment: "付款方式",
     colTotal: "合计",
     colStatus: "状态",
+    statusPending: "待收款",
     noOrders: "暂无订单。",
     revenueByMonth: "月度营收",
     revenueByMonthHint: "本年已确认流水",
