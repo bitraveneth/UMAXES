@@ -159,7 +159,7 @@ export default function OrdersPanel({
     try {
       return new Date(iso).toLocaleDateString(
         locale === "zh" ? "zh-CN" : "en-US",
-        { month: "short", day: "numeric" },
+        { year: "numeric", month: "short", day: "numeric" },
       );
     } catch {
       return iso.slice(0, 10);
@@ -216,9 +216,9 @@ export default function OrdersPanel({
             <table className="admin-table admin-table-compact">
               <thead>
                 <tr>
+                  <th>{t("orders.colDate")}</th>
                   <th>{t("orders.colOrder")}</th>
                   <th>{t("orders.colCompany")}</th>
-                  <th>{t("orders.colDate")}</th>
                   <th>{t("orders.colPayment")}</th>
                   <th>{t("orders.colTotal")}</th>
                   <th>{t("orders.colStatus")}</th>
@@ -245,6 +245,9 @@ export default function OrdersPanel({
                           setEditingId(open ? null : order.id);
                         }}
                       >
+                        <td className="whitespace-nowrap font-medium tabular-nums text-[var(--admin-text)]">
+                          {formatDate(order.createdAt)}
+                        </td>
                         <td>
                           <div className="flex items-center gap-2">
                             <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--admin-gray-100)]">
@@ -273,9 +276,6 @@ export default function OrdersPanel({
                               ? order.supplierName
                               : t("orders.noSupplier")}
                           </p>
-                        </td>
-                        <td className="whitespace-nowrap text-xs text-[var(--admin-muted)]">
-                          {formatDate(order.createdAt)}
                         </td>
                         <td>
                           <p className="whitespace-nowrap text-sm">
