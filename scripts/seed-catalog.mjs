@@ -6,16 +6,16 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 const flavors = [
-  { id: "peach-mango", name: "Peach Mango", price: 29, image: "/images/product/01.webp" },
-  { id: "watermelon-ice", name: "Watermelon Ice", price: 29, image: "/images/product/02.webp" },
-  { id: "fcuking-fab", name: "Fcuking Fab", price: 32, image: "/images/product/03.webp" },
-  { id: "strawberry-watermelon-ice", name: "Strawberry Watermelon Ice", price: 32, image: "/images/product/04.webp" },
-  { id: "miami-sunset", name: "Miami Sunset", price: 29, image: "/images/product/05.webp" },
-  { id: "cool-mint", name: "Cool Mint", price: 27, image: "/images/product/06.webp" },
-  { id: "blue-razz-ice", name: "Blue Razz Ice", price: 32, image: "/images/product/07.webp" },
-  { id: "grape-ice", name: "Grape Ice", price: 29, image: "/images/product/08.webp" },
-  { id: "blueberry-ice", name: "Blueberry Ice", price: 35, image: "/images/product/09.webp" },
-  { id: "love-max", name: "Love Max", price: 29, image: "/images/product/10.webp" },
+  { id: "peach-mango", name: "Peach Mango", price: 34.5, image: "/images/product/01.webp" },
+  { id: "watermelon-ice", name: "Watermelon Ice", price: 34.5, image: "/images/product/02.webp" },
+  { id: "fcuking-fab", name: "Fcuking Fab", price: 34.5, image: "/images/product/03.webp" },
+  { id: "strawberry-watermelon-ice", name: "Strawberry Watermelon Ice", price: 34.5, image: "/images/product/04.webp" },
+  { id: "miami-sunset", name: "Miami Sunset", price: 34.5, image: "/images/product/05.webp" },
+  { id: "cool-mint", name: "Cool Mint", price: 34.5, image: "/images/product/06.webp" },
+  { id: "blue-razz-ice", name: "Blue Razz Ice", price: 34.5, image: "/images/product/07.webp" },
+  { id: "grape-ice", name: "Grape Ice", price: 34.5, image: "/images/product/08.webp" },
+  { id: "blueberry-ice", name: "Blueberry Ice", price: 34.5, image: "/images/product/09.webp" },
+  { id: "love-max", name: "Love Max", price: 34.5, image: "/images/product/10.webp" },
 ];
 
 function money(n) {

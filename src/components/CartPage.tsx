@@ -89,7 +89,7 @@ export default function CartPage() {
                             </Link>
                             <p className="mt-0.5 font-display text-sm text-black/55">
                               {showPrices ? (
-                                <>${flavor.price}.00 each</>
+                                <>${flavor.price.toFixed(2)} each</>
                               ) : (
                                 "On request"
                               )}

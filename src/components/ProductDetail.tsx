@@ -313,11 +313,56 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               </span>
             </div>
             <p className="mt-2.5 font-display text-[1.75rem] font-bold tracking-tight text-black sm:mt-3 sm:text-4xl">
-              <StorePrice amount={flavor.price} suffix=".00" />
+              <StorePrice amount={flavor.price} />
             </p>
 
             <div className="mt-5 sm:mt-6">
-              <div className="hidden grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3 pb-2 sm:grid">
+              <div>
+                <label
+                  htmlFor="product-coupon"
+                  className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase"
+                >
+                  Coupon code
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="product-coupon"
+                    value={couponDraft}
+                    onChange={(e) => {
+                      setCouponDraft(e.target.value.toUpperCase());
+                      setCouponMessage("");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void validateCoupon(couponDraft, subtotal);
+                      }
+                    }}
+                    placeholder="Enter code"
+                    autoComplete="off"
+                    className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black sm:px-3.5"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void validateCoupon(couponDraft, subtotal)}
+                    disabled={couponBusy}
+                    className="shrink-0 rounded-lg border border-black px-3 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange disabled:opacity-50 sm:px-4"
+                  >
+                    {couponBusy ? "…" : "Apply"}
+                  </button>
+                </div>
+                {couponMessage ? (
+                  <p className="mt-2 font-body text-sm text-red-700">
+                    {couponMessage}
+                  </p>
+                ) : appliedCoupon && !couponMessage ? (
+                  <p className="mt-2 font-body text-sm text-black/55">
+                    Applied {appliedCoupon}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-5 hidden grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3 pb-2 sm:grid">
                 <p className="font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
                   Flavor
                 </p>
@@ -410,51 +455,6 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               >
                 + Add another flavor
               </button>
-
-              <div className="mt-5">
-                <label
-                  htmlFor="product-coupon"
-                  className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase"
-                >
-                  Coupon code
-                </label>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    id="product-coupon"
-                    value={couponDraft}
-                    onChange={(e) => {
-                      setCouponDraft(e.target.value.toUpperCase());
-                      setCouponMessage("");
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void validateCoupon(couponDraft, subtotal);
-                      }
-                    }}
-                    placeholder="Enter code"
-                    autoComplete="off"
-                    className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black sm:px-3.5"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void validateCoupon(couponDraft, subtotal)}
-                    disabled={couponBusy}
-                    className="shrink-0 rounded-lg border border-black px-3 py-2.5 font-display text-sm font-semibold text-black transition hover:border-umx-orange hover:text-umx-orange disabled:opacity-50 sm:px-4"
-                  >
-                    {couponBusy ? "…" : "Apply"}
-                  </button>
-                </div>
-                {couponMessage ? (
-                  <p className="mt-2 font-body text-sm text-red-700">
-                    {couponMessage}
-                  </p>
-                ) : appliedCoupon && !couponMessage ? (
-                  <p className="mt-2 font-body text-sm text-black/55">
-                    Applied {appliedCoupon}
-                  </p>
-                ) : null}
-              </div>
 
               <div className="mt-6 text-right">
                 <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
