@@ -13,8 +13,8 @@ export const faqs = [
   },
   {
     q: "What nicotine strength is HOOKAMAX?",
-    a: "HOOKAMAX is listed at 0.5% nicotine (3.5mg/ml). Nicotine is an addictive chemical — for adults 21+ only.",
-    keys: ["nicotine", "nic", "0.5", "3.5", "strength", "addictive"],
+    a: "HOOKAMAX is listed at 0.5% nicotine (5mg/ml). Nicotine is an addictive chemical — for adults 21+ only.",
+    keys: ["nicotine", "nic", "0.5", "5", "5mg", "strength", "addictive"],
   },
   {
     q: "How long does shipping take?",
