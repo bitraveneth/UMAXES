@@ -99,7 +99,7 @@ export default function RebateManager({
           testStationsPerCase: Number(fd.get("testStationsPerCase") || 1),
           firstOrderCases: Number(fd.get("firstOrderCases") || 5),
           firstOrderUnpaidPcs: Number(fd.get("firstOrderUnpaidPcs") || 20),
-          timezone: String(fd.get("timezone") || "America/Los_Angeles"),
+          timezone: policy.timezone || "America/Los_Angeles",
           tiers: parseTiers(String(fd.get("tiers") || "")),
         });
         setMessage(t("rebates.saved"));
@@ -188,14 +188,6 @@ export default function RebateManager({
               </label>
             </div>
             <label className="admin-label mt-3">
-              {t("rebates.timezone")}
-              <input
-                name="timezone"
-                defaultValue={policy.timezone}
-                className="admin-input mt-1 w-full"
-              />
-            </label>
-            <label className="admin-label mt-3">
               {t("rebates.tiers")}
               <textarea
                 name="tiers"
@@ -232,7 +224,7 @@ export default function RebateManager({
               <li key={m.id} className="admin-list-item text-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold">
+                    <p className="font-semibold text-[var(--admin-text)]">
                       {m.companyName} · {m.yearMonth}
                     </p>
                     <p className="mt-1 admin-muted">
@@ -287,7 +279,7 @@ export default function RebateManager({
           <ul className="admin-list mt-3">
             {companies.map((c) => (
               <li key={c.id} className="admin-list-item text-sm">
-                <p className="font-semibold">{c.name}</p>
+                <p className="font-semibold text-[var(--admin-text)]">{c.name}</p>
                 <p className="mt-1 admin-muted">
                   {c.level} · {money(c.rebateBalanceUsd)}
                 </p>
@@ -354,7 +346,7 @@ export default function RebateManager({
             ) : (
               ledger.map((row) => (
                 <li key={row.id} className="admin-list-item text-sm">
-                  <p className="font-semibold">
+                  <p className="font-semibold text-[var(--admin-text)]">
                     {row.companyName} · {row.type} · {money(row.amount)}
                   </p>
                   <p className="mt-1 admin-muted">

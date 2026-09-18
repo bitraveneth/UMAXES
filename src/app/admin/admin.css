@@ -111,6 +111,11 @@
   color: inherit;
 }
 
+/* Storefront sets `p { color: #2a2824 }` which makes names vanish on admin cards. */
+.admin-shell p {
+  color: inherit;
+}
+
 .admin-shell ::selection {
   background: var(--admin-brand-100);
   color: var(--admin-gray-900);

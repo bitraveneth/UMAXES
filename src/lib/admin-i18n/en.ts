@@ -696,7 +696,6 @@ const en: AdminMessages = {
     testPerCase: "Test stations per case",
     firstOrderCases: "First-order: cases per gift",
     firstOrderUnpaid: "First-order: unpaid pcs per gift",
-    timezone: "Calendar timezone",
     tiers: "Rebate ladder (minQty:rate)",
     tiersHint: "One per line, e.g. 5000:0.2 then 10000:0.4. Highest matching rate applies to the whole month.",
     active: "Program active for this level",

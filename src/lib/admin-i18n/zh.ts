@@ -676,7 +676,6 @@ const zh: AdminMessages = {
     testPerCase: "每箱试抽装",
     firstOrderCases: "第一单：每满几箱",
     firstOrderUnpaid: "第一单：少收几支",
-    timezone: "自然月时区",
     tiers: "返利阶梯（最低数量:费率）",
     tiersHint: "每行一条，例如 5000:0.2 和 10000:0.4。达档后当月全部按最高档计算。",
     active: "对该等级启用",
