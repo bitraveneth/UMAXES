@@ -174,6 +174,7 @@ const en: AdminMessages = {
     colPayment: "Payment",
     colTotal: "Total",
     colStatus: "Status",
+    statusPending: "Pending",
     noOrders: "No orders yet.",
     revenueByMonth: "Revenue by month",
     revenueByMonthHint: "Confirmed pipeline this year",
