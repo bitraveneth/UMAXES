@@ -316,8 +316,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             <p className="mt-2.5 font-display text-[1.75rem] font-bold tracking-tight text-black sm:mt-3 sm:text-4xl">
               <StorePrice amount={flavor.price} />
             </p>
+            <p className="mt-1 font-body text-sm text-black/45">per piece</p>
+            <PackNote className="mt-4" />
 
-            <div className="mt-5 sm:mt-6">
+            <div className="mt-6">
               <div>
                 <label
                   htmlFor="product-coupon"
@@ -363,20 +365,19 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 ) : null}
               </div>
 
-              <div className="mt-5 hidden grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3 pb-2 sm:grid">
-                <p className="font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
+              <div className="mb-2 hidden grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] items-center gap-4 px-3 sm:grid">
+                <p className="font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase">
                   Flavor
                 </p>
-                <p className="text-right font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
-                  Unit price
+                <p className="text-right font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase">
+                  Price / pc
                 </p>
-                <p className="text-right font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
+                <p className="text-center font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase">
                   Cases
                 </p>
               </div>
-              <PackNote className="mb-3 font-body text-sm text-black/55" />
 
-              <ul className="space-y-4 sm:space-y-2">
+              <ul className="space-y-2.5">
                 {lines.map((line) => {
                   const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
                   const options = flavors.filter(
@@ -385,10 +386,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   return (
                     <li
                       key={line.key}
-                      className="grid grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,1fr)_6.75rem_9rem] sm:items-center sm:gap-3"
+                      className="grid grid-cols-1 gap-3 rounded-2xl border border-black/8 bg-[#f7f8fa] p-3 sm:grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] sm:items-center sm:gap-4 sm:px-3 sm:py-2.5"
                     >
                       <label className="min-w-0">
-                        <span className="mb-1.5 block font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:sr-only">
+                        <span className="mb-1.5 block font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase sm:sr-only">
                           Flavor
                         </span>
                         <div className="flex min-w-0 items-center gap-2">
@@ -420,15 +421,15 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                       </label>
                       <div className="grid grid-cols-2 items-end gap-3 sm:contents">
                         <div className="min-w-0 sm:text-right">
-                          <p className="mb-1.5 font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:hidden">
-                            Unit price
+                          <p className="mb-1.5 font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase sm:hidden">
+                            Price / pc
                           </p>
                           <p className="font-display text-sm font-semibold text-black sm:text-right">
                             <StorePrice amount={item.price} />
                           </p>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <p className="mb-1.5 font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:hidden">
+                        <div className="min-w-0">
+                          <p className="mb-1.5 text-center font-display text-[0.7rem] font-bold tracking-[0.12em] text-black/45 uppercase sm:hidden">
                             Cases
                           </p>
                           <CaseQtyStepper
@@ -439,6 +440,8 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                               })
                             }
                             size="sm"
+                            align="center"
+                            showHint
                             ariaLabel={`${item.name} cases`}
                           />
                         </div>

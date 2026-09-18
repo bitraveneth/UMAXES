@@ -131,7 +131,7 @@ export default function CartDrawer() {
 
         {quantity > 0 && (
           <div className="border-t border-black/10 px-5 py-5 sm:px-6">
-            <PackNote className="mb-3 font-body text-xs text-black/50" />
+            <PackNote className="mb-3" />
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-sm text-black/60">Subtotal</span>
               <span className="font-display text-lg font-semibold text-black">
