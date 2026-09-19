@@ -730,7 +730,7 @@ function OrderExpand({
                       {t("orders.selectSupplier")}
                     </option>
                     {suppliers.map((s) => (
-                      <option key={s} value={s.id}>
+                      <option key={s.id} value={s.id}>
                         {s.name}
                       </option>
                     ))}
