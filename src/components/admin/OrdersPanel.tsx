@@ -5,6 +5,7 @@ import {
   markPaymentReceived,
   updateOrderStatus,
   assignOrderToSupplier,
+  deletePaymentSlip,
 } from "@/lib/admin-actions";
 import type { OrderStatus, PaymentMethod } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
@@ -22,6 +23,10 @@ export type OrdersPanelItem = {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   paymentRef: string | null;
+  paymentPaid: boolean;
+  paymentSlipUrl: string | null;
+  paymentSlipName: string | null;
+  paymentSlipMime: string | null;
   notes: string | null;
   total: number;
   createdAt: string;
@@ -49,11 +54,30 @@ export type OrdersPanelItem = {
 type FilterKey =
   | "all"
   | "PAYMENT_PENDING"
+  | "SLIP_IN"
   | "CONFIRMED"
   | "SENT_TO_SUPPLIER"
   | "SHIPPED"
   | "COMPLETED"
   | "CANCELLED";
+
+const PIPELINE: OrderStatus[] = [
+  "SUBMITTED",
+  "PAYMENT_PENDING",
+  "CONFIRMED",
+  "SENT_TO_SUPPLIER",
+  "SHIPPED",
+  "COMPLETED",
+];
+
+const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
+  SUBMITTED: "PAYMENT_PENDING",
+  PAYMENT_PENDING: "CONFIRMED",
+  CONFIRMED: "SENT_TO_SUPPLIER",
+  SENT_TO_SUPPLIER: "SHIPPED",
+  PICKING: "SHIPPED",
+  SHIPPED: "COMPLETED",
+};
 
 function money(n: number) {
   return n.toLocaleString("en-US", {
@@ -74,9 +98,14 @@ function orderTone(status: string) {
   return "neutral" as const;
 }
 
+function pipelineStatus(status: OrderStatus): OrderStatus {
+  return status === "PICKING" ? "SENT_TO_SUPPLIER" : status;
+}
+
 const FILTERS: { key: FilterKey; labelKey: string }[] = [
   { key: "all", labelKey: "orders.filterAll" },
   { key: "PAYMENT_PENDING", labelKey: "orders.filterPending" },
+  { key: "SLIP_IN", labelKey: "orders.filterSlipIn" },
   { key: "CONFIRMED", labelKey: "orders.filterConfirmed" },
   { key: "SENT_TO_SUPPLIER", labelKey: "orders.filterSupplier" },
   { key: "SHIPPED", labelKey: "orders.filterShipped" },
@@ -84,12 +113,46 @@ const FILTERS: { key: FilterKey; labelKey: string }[] = [
   { key: "CANCELLED", labelKey: "orders.filterCancelled" },
 ];
 
-function matchesFilter(status: OrderStatus, filter: FilterKey) {
+function waitingSlip(order: OrdersPanelItem) {
+  return Boolean(order.paymentSlipUrl) && !order.paymentPaid;
+}
+
+function matchesFilter(order: OrdersPanelItem, filter: FilterKey) {
   if (filter === "all") return true;
+  if (filter === "SLIP_IN") return waitingSlip(order);
   if (filter === "SENT_TO_SUPPLIER") {
-    return status === "SENT_TO_SUPPLIER" || status === "PICKING";
+    return order.status === "SENT_TO_SUPPLIER" || order.status === "PICKING";
   }
-  return status === filter;
+  return order.status === filter;
+}
+
+function slipHref(orderId: string) {
+  return `/api/orders/${orderId}/payment-slip`;
+}
+
+function AdminSlipPhoto({
+  orderId,
+  fileName,
+}: {
+  orderId: string;
+  fileName: string | null;
+}) {
+  const href = slipHref(orderId);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-2 block overflow-hidden rounded-lg ring-1 ring-[var(--admin-border)]"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={href}
+        alt={fileName || "Payment slip"}
+        className="max-h-72 w-full bg-[var(--admin-hover)] object-contain"
+      />
+    </a>
+  );
 }
 
 export default function OrdersPanel({
@@ -97,27 +160,42 @@ export default function OrdersPanel({
   suppliers,
   allowedStatuses,
   canAssignSupplier,
+  canDeleteSlip,
+  openId = null,
 }: {
   orders: OrdersPanelItem[];
   suppliers: OrdersPanelSupplier[];
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
+  canDeleteSlip: boolean;
+  openId?: string | null;
 }) {
   const { t, locale } = useAdminI18n();
-  const [filter, setFilter] = useState<FilterKey>("all");
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(openId);
+  const [filter, setFilter] = useState<FilterKey>(() => {
+    if (!openId) return "all";
+    const opened = orders.find((o) => o.id === openId);
+    return opened && waitingSlip(opened) ? "SLIP_IN" : "all";
+  });
 
   const filtered = useMemo(() => {
-    return orders.filter((o) => matchesFilter(o.status, filter));
+    return orders.filter((o) => matchesFilter(o, filter));
   }, [orders, filter]);
 
-  function payLabel(method: PaymentMethod) {
-    const map: Record<PaymentMethod, string> = {
-      TT: t("orders.payTT"),
-      CHECK: t("orders.payCheck"),
-      ONLINE: t("orders.payOnline"),
-      CREDIT: t("orders.payCredit"),
-    };
+  function payLabel(method: PaymentMethod, short = false) {
+    const map: Record<PaymentMethod, string> = short
+      ? {
+          TT: t("orders.payShortTT"),
+          CHECK: t("orders.payShortCheck"),
+          ONLINE: t("orders.payShortOnline"),
+          CREDIT: t("orders.payShortCredit"),
+        }
+      : {
+          TT: t("orders.payTT"),
+          CHECK: t("orders.payCheck"),
+          ONLINE: t("orders.payOnline"),
+          CREDIT: t("orders.payCredit"),
+        };
     return map[method] || method;
   }
 
@@ -143,7 +221,7 @@ export default function OrdersPanel({
           const count =
             f.key === "all"
               ? orders.length
-              : orders.filter((o) => matchesFilter(o.status, f.key)).length;
+              : orders.filter((o) => matchesFilter(o, f.key)).length;
           const active = filter === f.key;
           return (
             <button
@@ -182,35 +260,45 @@ export default function OrdersPanel({
             {t("orders.noOrders")}
           </p>
         ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
+          <div className="overflow-x-auto">
+            <table className="admin-table admin-table-compact">
               <thead>
                 <tr>
+                  <th>{t("orders.colDate")}</th>
                   <th>{t("orders.colOrder")}</th>
                   <th>{t("orders.colCompany")}</th>
-                  <th>{t("orders.colSupplier")}</th>
-                  <th>{t("orders.colDate")}</th>
                   <th>{t("orders.colPayment")}</th>
                   <th>{t("orders.colTotal")}</th>
                   <th>{t("orders.colStatus")}</th>
-                  <th>{t("orders.colDocs")}</th>
-                  <th className="text-right">{t("common.actions")}</th>
+                  <th className="text-center">{t("orders.colDocs")}</th>
+                  <th className="text-right">{t("orders.updateStatus")}</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((order) => {
                   const open = editingId === order.id;
                   const thumb = order.items[0]?.image;
+                  const unpaid =
+                    !order.paymentPaid && order.status !== "CANCELLED";
                   return (
                     <Fragment key={order.id}>
                       <tr
-                        className={
-                          open ? "bg-[var(--admin-brand-50)]/40" : undefined
-                        }
+                        className={`cursor-pointer ${
+                          open ? "bg-[var(--admin-brand-50)]/50" : ""
+                        }`}
+                        onClick={(e) => {
+                          const el = e.target as HTMLElement;
+                          if (el.closest("a, button, select, input, label, form"))
+                            return;
+                          setEditingId(open ? null : order.id);
+                        }}
                       >
+                        <td className="whitespace-nowrap font-medium tabular-nums text-[var(--admin-text)]">
+                          {formatDate(order.createdAt)}
+                        </td>
                         <td>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--admin-gray-100)]">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--admin-gray-100)]">
                               {thumb ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
@@ -219,34 +307,45 @@ export default function OrdersPanel({
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <Package className="h-4 w-4 text-[var(--admin-muted)]" />
+                                <Package className="h-3.5 w-3.5 text-[var(--admin-muted)]" />
                               )}
                             </div>
-                            <div>
-                              <p className="font-semibold text-[var(--admin-text)]">
-                                {order.orderNumber}
-                              </p>
-                              <p className="text-xs text-[var(--admin-muted)]">
-                                {order.placedByStaffName
-                                  ? `Staff: ${order.placedByStaffName}`
-                                  : order.items[0]?.name || "—"}
-                              </p>
-                            </div>
+                            <p className="whitespace-nowrap font-semibold text-[var(--admin-text)]">
+                              {order.orderNumber}
+                            </p>
                           </div>
                         </td>
-                        <td className="font-medium">{order.companyName}</td>
-                        <td className="text-sm">
-                          {order.supplierName || (
-                            <span className="text-[var(--admin-muted)]">
-                              {t("orders.noSupplier")}
-                            </span>
-                          )}
+                        <td className="max-w-[9.5rem]">
+                          <p className="truncate font-medium text-[var(--admin-text)]">
+                            {order.companyName}
+                          </p>
+                          <p className="mt-0.5 truncate text-xs text-[var(--admin-muted)]">
+                            {order.supplierName
+                              ? order.supplierName
+                              : t("orders.noSupplier")}
+                          </p>
                         </td>
-                        <td className="whitespace-nowrap text-sm text-[var(--admin-muted)]">
-                          {formatDate(order.createdAt)}
+                        <td>
+                          <p className="whitespace-nowrap text-sm">
+                            {payLabel(order.paymentMethod, true)}
+                          </p>
+                          <span
+                            className={`mt-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                              unpaid
+                                ? order.paymentSlipUrl
+                                  ? "bg-[var(--admin-brand-50)] text-[var(--admin-brand-700)]"
+                                  : "bg-[var(--admin-warning-50)] text-[var(--admin-warning-700)]"
+                                : "bg-[var(--admin-success-50)] text-[var(--admin-success-700)]"
+                            }`}
+                          >
+                            {unpaid
+                              ? order.paymentSlipUrl
+                                ? t("orders.slipIn")
+                                : t("orders.unpaid")
+                              : t("orders.paid")}
+                          </span>
                         </td>
-                        <td className="text-sm">{payLabel(order.paymentMethod)}</td>
-                        <td className="tabular-nums font-medium">
+                        <td className="whitespace-nowrap tabular-nums text-sm font-semibold">
                           {money(order.total)}
                         </td>
                         <td>
@@ -254,8 +353,12 @@ export default function OrdersPanel({
                             {statusLabel(order.status)}
                           </AdminBadge>
                         </td>
-                        <td>
-                          <OrderDocLinks orderId={order.id} compact />
+                        <td className="text-center">
+                          <OrderDocLinks
+                            orderId={order.id}
+                            compact
+                            hasSlip={Boolean(order.paymentSlipUrl)}
+                          />
                         </td>
                         <td className="text-right">
                           <button
@@ -265,22 +368,23 @@ export default function OrdersPanel({
                             }
                             className={`admin-btn admin-btn-sm ${
                               open
-                                ? "admin-btn-primary"
-                                : "admin-btn-secondary"
+                                ? "admin-btn-secondary"
+                                : "admin-btn-primary"
                             }`}
                           >
-                            {open ? t("common.close") : t("common.edit")}
+                            {open ? t("common.close") : t("orders.updateStatus")}
                           </button>
                         </td>
                       </tr>
                       {open ? (
-                        <tr className="bg-[var(--admin-brand-50)]/25">
-                          <td colSpan={9} className="!p-0 !align-top">
+                        <tr className="bg-[var(--admin-brand-50)]/20">
+                          <td colSpan={8} className="!p-0 !align-top">
                             <OrderExpand
                               order={order}
                               suppliers={suppliers}
                               allowedStatuses={allowedStatuses}
                               canAssignSupplier={canAssignSupplier}
+                              canDeleteSlip={canDeleteSlip}
                               payLabel={payLabel}
                               statusLabel={statusLabel}
                               onClose={() => setEditingId(null)}
@@ -303,9 +407,11 @@ export default function OrdersPanel({
 function OrderDocLinks({
   orderId,
   compact = false,
+  hasSlip = false,
 }: {
   orderId: string;
   compact?: boolean;
+  hasSlip?: boolean;
 }) {
   const { t } = useAdminI18n();
   const links = [
@@ -313,34 +419,109 @@ function OrderDocLinks({
       type: "pi",
       short: t("orders.docPi"),
       full: t("orders.viewPi"),
+      href: `/api/orders/${orderId}/docs?type=pi`,
     },
     {
       type: "packing",
-      short: t("orders.docPack"),
+      short: t("orders.docPackShort"),
       full: t("orders.viewPacking"),
+      href: `/api/orders/${orderId}/docs?type=packing`,
     },
     {
       type: "invoice",
       short: t("orders.docCi"),
       full: t("orders.viewCi"),
+      href: `/api/orders/${orderId}/docs?type=invoice`,
     },
-  ] as const;
+    ...(hasSlip
+      ? [
+          {
+            type: "slip",
+            short: t("orders.docSlip"),
+            full: t("orders.viewSlip"),
+            href: slipHref(orderId),
+          },
+        ]
+      : []),
+  ];
+
+  if (compact) {
+    return (
+      <div className="admin-doc-pills">
+        {links.map((link) => (
+          <a
+            key={link.type}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={link.full}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {link.short}
+          </a>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap gap-1.5">
       {links.map((link) => (
         <a
           key={link.type}
-          href={`/api/orders/${orderId}/docs?type=${link.type}`}
+          href={link.href}
           target="_blank"
           rel="noopener noreferrer"
           title={link.full}
-          className="admin-btn admin-btn-secondary admin-btn-sm !px-2 !text-xs"
+          className="admin-btn admin-btn-secondary admin-btn-sm !px-2.5 !text-xs"
         >
-          {compact ? link.short : link.full}
+          {link.full}
         </a>
       ))}
     </div>
+  );
+}
+
+function OrderPipeline({
+  status,
+  statusLabel,
+}: {
+  status: OrderStatus;
+  statusLabel: (s: OrderStatus) => string;
+}) {
+  const { t } = useAdminI18n();
+  if (status === "CANCELLED") {
+    return (
+      <p className="text-sm font-medium text-[var(--admin-error-700)]">
+        {t("orders.statusCANCELLED")}
+      </p>
+    );
+  }
+
+  const current = pipelineStatus(status);
+  const currentIndex = PIPELINE.indexOf(current);
+
+  return (
+    <ol className="admin-pipeline">
+      {PIPELINE.map((step, i) => {
+        const done = i < currentIndex;
+        const active = i === currentIndex;
+        return (
+          <li
+            key={step}
+            className={`admin-pipeline-step ${
+              done ? "is-done" : active ? "is-active" : "is-todo"
+            }`}
+          >
+            <span className="admin-pipeline-dot" aria-hidden />
+            <span className="admin-pipeline-label">{statusLabel(step)}</span>
+            {i < PIPELINE.length - 1 ? (
+              <span className="admin-pipeline-line" aria-hidden />
+            ) : null}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -349,6 +530,7 @@ function OrderExpand({
   suppliers,
   allowedStatuses,
   canAssignSupplier,
+  canDeleteSlip,
   payLabel,
   statusLabel,
   onClose,
@@ -357,12 +539,20 @@ function OrderExpand({
   suppliers: OrdersPanelSupplier[];
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
+  canDeleteSlip: boolean;
   payLabel: (m: PaymentMethod) => string;
   statusLabel: (s: OrderStatus) => string;
   onClose: () => void;
 }) {
   const { t } = useAdminI18n();
   const shipment = order.shipments[0];
+  const unpaid = !order.paymentPaid && order.status !== "CANCELLED";
+  const next = NEXT_STATUS[order.status] ?? null;
+  const canAdvance = Boolean(
+    next &&
+      allowedStatuses.includes(next) &&
+      !(unpaid && next === "CONFIRMED"),
+  );
   const canAssign =
     canAssignSupplier &&
     suppliers.length > 0 &&
@@ -373,7 +563,7 @@ function OrderExpand({
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-base font-semibold text-[var(--admin-text)]">
               {order.orderNumber}
@@ -390,21 +580,16 @@ function OrderExpand({
             <span className="font-medium text-[var(--admin-text)]">
               {money(order.total)}
             </span>
-            {order.supplierName ? (
-              <>
-                {" · "}
-                <span className="font-medium text-[var(--admin-text)]">
-                  {order.supplierName}
-                </span>
-              </>
-            ) : null}
             {order.placedByStaffName ? (
               <>
                 {" · "}
-                Placed by {order.placedByStaffName}
+                {t("orders.placedByStaff", { name: order.placedByStaffName })}
               </>
             ) : null}
           </p>
+          <div className="mt-3">
+            <OrderPipeline status={order.status} statusLabel={statusLabel} />
+          </div>
         </div>
         <button
           type="button"
@@ -416,104 +601,106 @@ function OrderExpand({
       </div>
 
       <div className="grid gap-4 px-5 py-4 lg:grid-cols-5">
-        <div className="lg:col-span-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-4">
-          <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
-            {t("orders.lineItems")}
-          </p>
-          <ul className="divide-y divide-[var(--admin-border)]">
-            {order.items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
-              >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--admin-gray-100)]">
-                  {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.image}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <Package className="h-4 w-4 text-[var(--admin-muted)]" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-[var(--admin-text)]">
-                    {item.name}
-                  </p>
-                  <p className="text-xs text-[var(--admin-muted)]">{item.sku}</p>
-                </div>
-                <div className="shrink-0 text-right text-sm">
-                  <p className="tabular-nums text-[var(--admin-muted)]">
-                    {t("orders.qty")} {item.quantity} × {money(item.unitPrice)}
-                  </p>
-                  <p className="font-medium tabular-nums text-[var(--admin-text)]">
-                    {money(item.quantity * item.unitPrice)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         <div className="lg:col-span-2 space-y-4">
-          <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-4">
-            <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
-              {t("orders.documents")}
+          <div className="rounded-xl border-2 border-[var(--admin-brand-200)] bg-[var(--admin-brand-25)] p-4">
+            <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-brand-700)] uppercase">
+              {t("orders.updateStatus")}
             </p>
-            <OrderDocLinks orderId={order.id} />
-            <div className="mt-4 space-y-2 text-sm">
-              <p>
-                <span className="text-[var(--admin-muted)]">
-                  {t("orders.paymentRef")}
-                </span>
-                <br />
-                <span className="font-medium text-[var(--admin-text)]">
-                  {order.paymentRef || t("orders.noRef")}
-                </span>
-              </p>
-              <p>
-                <span className="text-[var(--admin-muted)]">
-                  {t("orders.colSupplier")}
-                </span>
-                <br />
-                <span className="font-medium text-[var(--admin-text)]">
-                  {order.supplierName || t("orders.noSupplier")}
-                </span>
-                {order.supplierNote ? (
-                  <span className="mt-1 block text-xs text-[var(--admin-muted)]">
-                    {order.supplierNote}
-                  </span>
-                ) : null}
-              </p>
-              <p>
-                <span className="text-[var(--admin-muted)]">
-                  {t("orders.shipment")}
-                </span>
-                <br />
-                <span className="font-medium text-[var(--admin-text)]">
-                  {shipment
-                    ? [
-                        shipment.carrier,
-                        shipment.trackingNumber,
-                        shipment.status,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")
-                    : t("orders.noShipment")}
-                </span>
-              </p>
-              {order.notes ? (
-                <p>
-                  <span className="text-[var(--admin-muted)]">
-                    {t("orders.notes")}
-                  </span>
-                  <br />
-                  <span className="text-[var(--admin-text)]">{order.notes}</span>
+            {unpaid ? (
+              <form
+                action={async () => {
+                  await markPaymentReceived(
+                    order.id,
+                    order.paymentRef || "TT/CHECK received",
+                  );
+                  onClose();
+                }}
+                className="mb-3"
+              >
+                <p className="mb-2 text-xs text-[var(--admin-muted)]">
+                  {order.paymentSlipUrl
+                    ? t("orders.markPaidHint")
+                    : t("orders.markPaidNeedSlip")}
                 </p>
-              ) : null}
-            </div>
+                {order.paymentSlipUrl ? (
+                  <>
+                    <AdminSlipPhoto
+                      orderId={order.id}
+                      fileName={order.paymentSlipName}
+                    />
+                    <a
+                      href={slipHref(order.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mb-2 mt-2 block text-xs font-semibold text-[var(--admin-brand-700)] underline"
+                    >
+                      {t("orders.viewSlip")}
+                    </a>
+                  </>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={!order.paymentSlipUrl && order.paymentMethod !== "CREDIT"}
+                  className="admin-btn admin-btn-primary admin-btn-sm w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {t("orders.markPaid")}
+                </button>
+              </form>
+            ) : null}
+            {canAdvance ? (
+              <form
+                action={async () => {
+                  await updateOrderStatus(order.id, next!);
+                  onClose();
+                }}
+                className={unpaid ? "mb-3 border-t border-[var(--admin-brand-100)] pt-3" : "mb-3"}
+              >
+                <button
+                  type="submit"
+                  className={`admin-btn admin-btn-sm w-full sm:w-auto ${
+                    unpaid ? "admin-btn-secondary" : "admin-btn-primary"
+                  }`}
+                >
+                  {t("orders.advanceTo", { status: statusLabel(next!) })}
+                </button>
+              </form>
+            ) : null}
+            {allowedStatuses.length > 0 ? (
+              <form
+                action={async (fd) => {
+                  const nextStatus = String(fd.get("status") || "") as OrderStatus;
+                  if (!nextStatus) return;
+                  await updateOrderStatus(order.id, nextStatus);
+                  onClose();
+                }}
+                className="flex flex-wrap items-end gap-2 border-t border-[var(--admin-brand-100)] pt-3"
+              >
+                <label className="min-w-[10rem] flex-1 text-xs font-medium text-[var(--admin-muted)]">
+                  {t("orders.otherStatus")}
+                  <select
+                    name="status"
+                    defaultValue={
+                      order.status === "PICKING"
+                        ? "SENT_TO_SUPPLIER"
+                        : order.status
+                    }
+                    className="admin-input mt-1.5 w-full"
+                  >
+                    {allowedStatuses.map((s) => (
+                      <option key={s} value={s}>
+                        {statusLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  className="admin-btn admin-btn-secondary admin-btn-sm"
+                >
+                  {t("orders.applyStatus")}
+                </button>
+              </form>
+            ) : null}
           </div>
 
           {canAssign ? (
@@ -567,66 +754,152 @@ function OrderExpand({
               </form>
             </div>
           ) : null}
+        </div>
+
+        <div className="lg:col-span-3 space-y-4">
+          <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-4">
+            <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+              {t("orders.lineItems")}
+            </p>
+            <ul className="divide-y divide-[var(--admin-border)]">
+              {order.items.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--admin-gray-100)]">
+                    {item.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.image}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Package className="h-4 w-4 text-[var(--admin-muted)]" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-[var(--admin-text)]">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-[var(--admin-muted)]">{item.sku}</p>
+                  </div>
+                  <div className="shrink-0 text-right text-sm">
+                    <p className="tabular-nums text-[var(--admin-muted)]">
+                      {t("orders.qty")} {item.quantity} × {money(item.unitPrice)}
+                    </p>
+                    <p className="font-medium tabular-nums text-[var(--admin-text)]">
+                      {money(item.quantity * item.unitPrice)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-4">
             <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
-              {t("orders.updateStatus")}
+              {t("orders.documents")}
             </p>
-            {order.status === "PAYMENT_PENDING" ? (
-              <form
-                action={async () => {
-                  await markPaymentReceived(
-                    order.id,
-                    order.paymentRef || "TT/CHECK received",
-                  );
-                  onClose();
-                }}
-                className="mb-3"
-              >
-                <button
-                  type="submit"
-                  className="admin-btn admin-btn-primary admin-btn-sm w-full sm:w-auto"
-                >
-                  {t("orders.markPaid")}
-                </button>
-              </form>
-            ) : null}
-            {allowedStatuses.length > 0 ? (
-              <form
-                action={async (fd) => {
-                  const next = String(fd.get("status") || "") as OrderStatus;
-                  if (!next) return;
-                  await updateOrderStatus(order.id, next);
-                  onClose();
-                }}
-                className="flex flex-wrap items-end gap-2"
-              >
-                <label className="min-w-[10rem] flex-1 text-xs font-medium text-[var(--admin-muted)]">
-                  {t("orders.statusLabel")}
-                  <select
-                    name="status"
-                    defaultValue={
-                      order.status === "PICKING"
-                        ? "SENT_TO_SUPPLIER"
-                        : order.status
-                    }
-                    className="admin-input mt-1.5 w-full"
-                  >
-                    {allowedStatuses.map((s) => (
-                      <option key={s} value={s}>
-                        {statusLabel(s)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="submit"
-                  className="admin-btn admin-btn-secondary admin-btn-sm"
-                >
-                  {t("orders.applyStatus")}
-                </button>
-              </form>
-            ) : null}
+            <OrderDocLinks
+              orderId={order.id}
+              hasSlip={Boolean(order.paymentSlipUrl)}
+            />
+            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <span className="text-[var(--admin-muted)]">
+                  {t("orders.paymentSlip")}
+                </span>
+                {order.paymentSlipUrl ? (
+                  <>
+                    <AdminSlipPhoto
+                      orderId={order.id}
+                      fileName={order.paymentSlipName}
+                    />
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <a
+                        href={slipHref(order.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-[var(--admin-brand-700)] underline"
+                      >
+                        {order.paymentSlipName || t("orders.viewSlip")}
+                      </a>
+                      {canDeleteSlip ? (
+                        <form
+                          action={async () => {
+                            if (!confirm(t("orders.deleteSlipConfirm"))) return;
+                            await deletePaymentSlip(order.id);
+                            onClose();
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="admin-btn admin-btn-danger admin-btn-sm"
+                          >
+                            {t("orders.deleteSlip")}
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
+                  </>
+                ) : (
+                  <span className="mt-1 block font-medium text-[var(--admin-warning-700)]">
+                    {t("orders.noSlip")}
+                  </span>
+                )}
+              </div>
+              <p>
+                <span className="text-[var(--admin-muted)]">
+                  {t("orders.paymentRef")}
+                </span>
+                <br />
+                <span className="font-medium text-[var(--admin-text)]">
+                  {order.paymentRef || t("orders.noRef")}
+                </span>
+              </p>
+              <p>
+                <span className="text-[var(--admin-muted)]">
+                  {t("orders.colSupplier")}
+                </span>
+                <br />
+                <span className="font-medium text-[var(--admin-text)]">
+                  {order.supplierName || t("orders.noSupplier")}
+                </span>
+                {order.supplierNote ? (
+                  <span className="mt-1 block text-xs text-[var(--admin-muted)]">
+                    {order.supplierNote}
+                  </span>
+                ) : null}
+              </p>
+              <p>
+                <span className="text-[var(--admin-muted)]">
+                  {t("orders.shipment")}
+                </span>
+                <br />
+                <span className="font-medium text-[var(--admin-text)]">
+                  {shipment
+                    ? [
+                        shipment.carrier,
+                        shipment.trackingNumber,
+                        shipment.status,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : t("orders.noShipment")}
+                </span>
+              </p>
+              {order.notes ? (
+                <p>
+                  <span className="text-[var(--admin-muted)]">
+                    {t("orders.notes")}
+                  </span>
+                  <br />
+                  <span className="text-[var(--admin-text)]">{order.notes}</span>
+                </p>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>

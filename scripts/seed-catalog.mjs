@@ -35,9 +35,9 @@ async function main() {
         inventory: { create: { quantity: 500, reserved: 0 } },
         prices: {
           create: [
-            { level: "DISTRO", unitPrice: money(f.price * 0.7), moq: 50 },
-            { level: "WHOLESALER", unitPrice: money(f.price * 0.85), moq: 20 },
-            { level: "SHOP", unitPrice: money(f.price), moq: 5 },
+            { level: "DISTRO", unitPrice: money(f.price * 0.7), moq: 95 },
+            { level: "WHOLESALER", unitPrice: money(f.price * 0.85), moq: 95 },
+            { level: "SHOP", unitPrice: money(f.price), moq: 95 },
           ],
         },
       },
@@ -49,9 +49,9 @@ async function main() {
     });
 
     for (const [level, mult, moq] of [
-      ["DISTRO", 0.7, 50],
-      ["WHOLESALER", 0.85, 20],
-      ["SHOP", 1, 5],
+      ["DISTRO", 0.7, 95],
+      ["WHOLESALER", 0.85, 95],
+      ["SHOP", 1, 95],
     ]) {
       await prisma.priceByLevel.upsert({
         where: {

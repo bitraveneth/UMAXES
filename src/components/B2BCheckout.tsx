@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
+import { CASE_MOQ_PCS, formatPack } from "@/lib/pack";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 
 type Address = {
@@ -112,7 +113,7 @@ export default function B2BCheckout() {
       name: priced?.name || flavor?.name || item.flavorId,
       image: priced?.image || flavor?.image || null,
       unitPrice: priced?.unitPrice ?? flavor?.price ?? 0,
-      moq: priced?.moq ?? 1,
+      moq: priced?.moq ?? CASE_MOQ_PCS,
     };
   });
 
@@ -410,6 +411,10 @@ export default function B2BCheckout() {
               placeholder="TT / wire reference"
             />
           </label>
+          <p className="mt-3 font-body text-xs text-black/50">
+            After you place the order, open it and upload the bank slip (水单).
+            Info confirms 到账 before the order counts for rebate.
+          </p>
         </section>
 
         <section className="border border-black/10 bg-white p-6">
@@ -460,8 +465,8 @@ export default function B2BCheckout() {
               <div className="min-w-0 flex-1">
                 <p className="font-display text-sm font-semibold">{l.name}</p>
                 <p className="font-body text-xs text-black/55">
-                  Qty {l.quantity}
-                  {l.quantity < l.moq ? ` · MOQ ${l.moq}` : ""}
+                  {formatPack(l.quantity)}
+                  {l.quantity < l.moq ? ` · MOQ ${l.moq} pcs` : ""}
                 </p>
                 <p className="font-display text-sm">
                   <StorePrice amount={l.unitPrice * l.quantity} />

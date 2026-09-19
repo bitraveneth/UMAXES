@@ -44,8 +44,18 @@ const ACTION_META: Record<
     category: "orders",
     tone: "brand",
   },
+  PAYMENT_SLIP_UPLOADED: {
+    label: "Payment slip uploaded",
+    category: "payments",
+    tone: "warning",
+  },
+  PAYMENT_SLIP_DELETED: {
+    label: "Payment slip deleted",
+    category: "payments",
+    tone: "warning",
+  },
   PAYMENT_RECEIVED: {
-    label: "Payment marked paid",
+    label: "Funds confirmed (到账)",
     category: "payments",
     tone: "success",
   },

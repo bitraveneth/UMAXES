@@ -7,7 +7,8 @@ import { useAdminSidebar } from "./AdminSidebarContext";
 import { useAdminI18n } from "./AdminI18n";
 import { adminNavIcons, ExternalLink, LogOut, Package } from "./icons";
 import { logos } from "@/lib/assets";
-import type { AdminNavItem } from "@/lib/rbac";
+import type { AdminNavGroup, AdminNavItem } from "@/lib/rbac";
+import { ADMIN_NAV_GROUPS } from "@/lib/rbac";
 
 export function AdminSidebar({
   items,
@@ -22,16 +23,40 @@ export function AdminSidebar({
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
+    if (href === "/admin/orders/new") {
+      return pathname.startsWith("/admin/orders/new");
+    }
+    if (href === "/admin/orders") {
+      return (
+        pathname === "/admin/orders" ||
+        (pathname.startsWith("/admin/orders/") &&
+          !pathname.startsWith("/admin/orders/new"))
+      );
+    }
     if (href === "/admin/logistics") {
       if (pathname === "/admin/logistics" || pathname === "/admin/logistics/") {
         return true;
       }
       if (pathname.startsWith("/admin/logistics/shipments")) return false;
       if (pathname.startsWith("/admin/logistics/packing-lists")) return false;
-      // Order desk detail: /admin/logistics/orders/[id]
       return pathname.startsWith("/admin/logistics/orders/");
     }
     return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const sections = ADMIN_NAV_GROUPS.map((group) => ({
+    group,
+    items: items.filter((item) => (item.group || "home") === group),
+  })).filter((section) => section.items.length > 0);
+
+  const groupLabelKey: Record<AdminNavGroup, string | null> = {
+    home: null,
+    ops: "nav.groupOps",
+    customers: "nav.groupCustomers",
+    money: "nav.groupMoney",
+    catalog: "nav.groupCatalog",
+    insights: "nav.groupInsights",
+    admin: "nav.groupAdmin",
   };
 
   const widthClass = isExpanded ? "lg:w-[290px]" : "lg:w-[90px]";
@@ -117,42 +142,52 @@ export function AdminSidebar({
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 py-4">
-          <p
-            className={`mb-3 px-3 text-xs font-medium uppercase tracking-wider text-[var(--admin-muted)] ${
-              !isExpanded ? "lg:text-center lg:px-0" : ""
-            }`}
-          >
-            {showLabels ? t("brand.menu") : "···"}
-          </p>
-          <ul className="flex flex-col gap-1">
-            {items.map((item) => {
-              const active = isActive(item.href);
-              const Icon = adminNavIcons[item.href] || Package;
-              const navKey = item.navKey || item.href;
-              const label = t(`nav.${navKey}`) || item.label;
-              return (
-                <li key={`${item.href}:${navKey}`}>
-                  <Link
-                    href={item.href}
-                    onClick={closeMobile}
-                    title={label}
-                    className={[
-                      "admin-menu-item",
-                      active ? "admin-menu-item-active" : "",
-                      !isExpanded ? "lg:justify-center lg:px-2" : "",
-                    ].join(" ")}
-                  >
-                    <Icon
-                      className="h-5 w-5 shrink-0"
-                      strokeWidth={1.75}
-                      aria-hidden
-                    />
-                    {showLabels && <span className="truncate">{label}</span>}
-                  </Link>
-                </li>
-              );
-            })}
-            <li className="mt-1 border-t border-[var(--admin-border)] pt-2">
+          {sections.map((section) => {
+            const labelKey = groupLabelKey[section.group];
+            return (
+              <div
+                key={section.group}
+                className={section.group === "home" ? "" : "mt-4"}
+              >
+                {showLabels && labelKey ? (
+                  <p className="admin-menu-group">{t(labelKey)}</p>
+                ) : !showLabels && labelKey ? (
+                  <p className="admin-menu-group lg:text-center lg:px-0">···</p>
+                ) : null}
+                <ul className="flex flex-col gap-1">
+                  {section.items.map((item) => {
+                    const navKey = item.navKey || item.href;
+                    const active = isActive(item.href);
+                    const Icon = adminNavIcons[item.href] || Package;
+                    const label = t(`nav.${navKey}`) || item.label;
+                    return (
+                      <li key={`${item.href}:${navKey}`}>
+                        <Link
+                          href={item.href}
+                          onClick={closeMobile}
+                          title={label}
+                          className={[
+                            "admin-menu-item",
+                            active ? "admin-menu-item-active" : "",
+                            !isExpanded ? "lg:justify-center lg:px-2" : "",
+                          ].join(" ")}
+                        >
+                          <Icon
+                            className="h-5 w-5 shrink-0"
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
+                          {showLabels && <span className="truncate">{label}</span>}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+          <ul className="mt-4 flex flex-col gap-1 border-t border-[var(--admin-border)] pt-2">
+            <li>
               <form action={signOutAction}>
                 <button
                   type="submit"

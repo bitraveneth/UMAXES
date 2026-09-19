@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ShoppingBag, Store, UserRound } from "lucide-react";
 import MemberOnlyLink from "@/components/MemberOnlyLink";
 import { useCart } from "@/context/CartContext";
+import { formatCases } from "@/lib/pack";
 
 const HIDDEN = [
   "/admin",
@@ -20,7 +21,7 @@ function isHidden(pathname: string) {
 
 export default function BuyerMobileNav() {
   const pathname = usePathname() || "/";
-  const { quantity } = useCart();
+  const { quantity, cases } = useCart();
 
   if (isHidden(pathname)) return null;
 
@@ -52,14 +53,14 @@ export default function BuyerMobileNav() {
         <MemberOnlyLink
           href="/cart"
           className={itemClass(cartActive)}
-          aria-label={quantity ? `Cart, ${quantity} items` : "Cart"}
+          aria-label={quantity ? `Cart, ${formatCases(cases)}` : "Cart"}
           aria-current={cartActive ? "page" : undefined}
         >
           <span className="relative">
             <ShoppingBag className="h-5 w-5" strokeWidth={activeStroke(cartActive)} aria-hidden />
             {quantity > 0 ? (
               <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-umx-orange px-1 text-[9px] font-bold text-white">
-                {quantity > 99 ? "99+" : quantity}
+                {cases > 99 ? "99+" : cases}
               </span>
             ) : null}
           </span>

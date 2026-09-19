@@ -366,8 +366,8 @@ async function main() {
     return pool.map((p) => {
       const tier = p.prices.find((x) => x.level === level);
       const price = tier?.unitPrice ?? p.prices[0]?.unitPrice ?? 25;
-      const moq = tier?.moq || 5;
-      const qty = Math.max(5, Math.round(moq * qtyScale));
+      const moq = tier?.moq || 95;
+      const qty = Math.max(95, Math.round(moq * qtyScale));
       return {
         productId: p.id,
         sku: p.sku,

@@ -111,6 +111,11 @@
   color: inherit;
 }
 
+/* Storefront sets `p { color: #2a2824 }` which makes names vanish on admin cards. */
+.admin-shell p {
+  color: inherit;
+}
+
 .admin-shell ::selection {
   background: var(--admin-brand-100);
   color: var(--admin-gray-900);
@@ -196,6 +201,16 @@
 .admin-menu-item-active:hover {
   background: var(--admin-menu-active-bg);
   color: var(--admin-menu-active-text);
+}
+
+.admin-menu-group {
+  margin: 0 0 0.35rem;
+  padding: 0.15rem 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
 }
 
 /* Cards */
@@ -377,6 +392,136 @@
   vertical-align: middle;
 }
 
+.admin-table.admin-table-compact th {
+  padding: 0.55rem 0.7rem;
+  font-size: 0.8125rem;
+}
+
+.admin-table.admin-table-compact td {
+  padding: 0.6rem 0.7rem;
+}
+
+.admin-table.admin-table-compact th:first-child,
+.admin-table.admin-table-compact td:first-child {
+  padding-left: 1rem;
+}
+
+.admin-table.admin-table-compact th:last-child,
+.admin-table.admin-table-compact td:last-child {
+  padding-right: 1rem;
+}
+
+.admin-table.admin-table-compact .admin-badge {
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.admin-doc-pills {
+  display: inline-flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.5rem;
+  background: #ffffff;
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.04);
+}
+
+.admin-doc-pills a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #0b1220;
+  text-decoration: none;
+  border-right: 1px solid var(--admin-border);
+  background: #ffffff;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.admin-doc-pills a:last-child {
+  border-right: none;
+}
+
+.admin-doc-pills a:hover {
+  background: var(--admin-gray-50);
+  color: #0b1220;
+}
+
+.admin-shell.dark .admin-doc-pills,
+.admin-shell.dark .admin-doc-pills a {
+  background: #ffffff;
+  color: #0b1220;
+}
+
+.admin-shell.dark .admin-doc-pills a:hover {
+  background: #e8eef5;
+  color: #0b1220;
+}
+
+.admin-pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.admin-pipeline-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: var(--admin-gray-200);
+  flex-shrink: 0;
+}
+
+.admin-pipeline-step.is-done .admin-pipeline-dot,
+.admin-pipeline-step.is-active .admin-pipeline-dot {
+  background: var(--admin-brand-500);
+}
+
+.admin-pipeline-step.is-active .admin-pipeline-dot {
+  box-shadow: 0 0 0 4px var(--admin-brand-100);
+}
+
+.admin-pipeline-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--admin-muted);
+  white-space: nowrap;
+}
+
+.admin-pipeline-step.is-done .admin-pipeline-label,
+.admin-pipeline-step.is-active .admin-pipeline-label {
+  color: var(--admin-brand-700);
+}
+
+.admin-pipeline-line {
+  width: 1.35rem;
+  height: 2px;
+  margin: 0 0.2rem;
+  background: var(--admin-gray-200);
+  flex-shrink: 0;
+}
+
+.admin-pipeline-step.is-done .admin-pipeline-line {
+  background: var(--admin-brand-200);
+}
+
 .admin-table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -394,6 +539,7 @@
   font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.35rem;
+  white-space: nowrap;
 }
 
 .admin-badge-neutral {

@@ -55,6 +55,7 @@ function orderTone(status: string) {
 }
 
 function statusLabelKey(status: string) {
+  if (status === "PAYMENT_PENDING") return "dashboard.statusPending";
   return `orders.status${status}`;
 }
 
@@ -275,7 +276,6 @@ export default async function AdminDashboard({
   const [
     paymentPending,
     openOrders,
-    needsSupplier,
     shippedInTransit,
     companies,
     openRmas,
@@ -304,9 +304,6 @@ export default async function AdminDashboard({
         },
         ...salesScope,
       },
-    }),
-    prisma.order.count({
-      where: { status: "CONFIRMED", supplierId: null, ...salesScope },
     }),
     prisma.order.count({
       where: { status: "SHIPPED", ...salesScope },
@@ -411,15 +408,6 @@ export default async function AdminDashboard({
       value: openOrders,
       href: "/admin/orders",
       icon: ShoppingBag,
-    });
-  }
-
-  if (isSales) {
-    cards.push({
-      label: "dashboard.needsSupplier",
-      value: needsSupplier,
-      href: "/admin/orders",
-      icon: Factory,
     });
   }
 
