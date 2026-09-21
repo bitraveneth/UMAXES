@@ -156,11 +156,7 @@ export default function ProductIntroduction() {
             </div>
 
             <div className="relative rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
-              <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
-                Introduction
-              </p>
-
-              <div className="mt-4 space-y-3.5 font-body text-base leading-relaxed text-black/65 sm:mt-5 sm:text-lg">
+              <div className="space-y-3.5 font-body text-base leading-relaxed text-black/65 sm:text-lg">
                 <p>
                   Umaxes HookaMax 80k Disposable Vape is a disposable vape with
                   at most{" "}
