@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
-import { Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
 import { PCS_PER_CASE, casesFromPcs, formatPack, snapToCasePcs } from "@/lib/pack";
 import { DualStorePrice, StorePrice, useShowStorePrices } from "@/components/StorePrice";
@@ -100,17 +100,16 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
 
   const unitPrice = unitPriceFor(flavor.id);
 
-  const gallery = useMemo(
-    () => [
-      { id: "product", src: flavor.image, alt: flavor.name },
-      {
-        id: "pack",
-        src: flavor.packageImage,
-        alt: `${flavor.name} package`,
-      },
-    ],
-    [flavor],
-  );
+  const gallery = useMemo(() => {
+    const head = flavors.filter((f) => f.id === flavor.id);
+    const tail = flavors.filter((f) => f.id !== flavor.id);
+    return [...head, ...tail].map((f) => ({
+      id: f.id,
+      src: f.image,
+      alt: f.name,
+      accent: f.accent,
+    }));
+  }, [flavor.id]);
 
   useEffect(() => {
     setShot(0);
@@ -152,6 +151,12 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const orderCases = casesFromPcs(totalQty);
   const stationQty = orderCases * testStationsPerCase;
   const activeShot = gallery[shot] ?? gallery[0];
+
+  function goShot(next: number) {
+    const count = gallery.length;
+    if (!count) return;
+    setShot(((next % count) + count) % count);
+  }
 
   async function validateCoupon(code: string, amount: number) {
     const trimmed = code.trim();
@@ -272,7 +277,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
           <div>
             <div
               className="relative mx-auto aspect-square w-full max-w-[22rem] overflow-hidden rounded-2xl bg-white ring-1 ring-black/8 sm:max-w-[28rem] lg:mx-0 lg:max-w-none"
-              style={{ backgroundColor: `${flavor.accent}14` }}
+              style={{ backgroundColor: `${activeShot.accent}14` }}
             >
               <Image
                 src={activeShot.src}
@@ -283,9 +288,30 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 quality={80}
                 sizes="(max-width: 1024px) 90vw, 560px"
               />
+              {activeShot.id !== flavor.id ? (
+                <p className="absolute bottom-3 left-3 rounded-full bg-black/70 px-3 py-1 font-display text-xs font-semibold text-white">
+                  {activeShot.alt}
+                </p>
+              ) : null}
+              <button
+                type="button"
+                aria-label="Previous flavor photo"
+                onClick={() => goShot(shot - 1)}
+                className="absolute top-1/2 left-2 z-[2] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white"
+              >
+                <ChevronLeft className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+              </button>
+              <button
+                type="button"
+                aria-label="Next flavor photo"
+                onClick={() => goShot(shot + 1)}
+                className="absolute top-1/2 right-2 z-[2] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-black shadow-sm transition hover:bg-umx-orange hover:text-white"
+              >
+                <ChevronRight className="h-5 w-5" strokeWidth={2.1} aria-hidden />
+              </button>
             </div>
 
-            <div className="mt-2.5 flex gap-2">
+            <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1">
               {gallery.map((item, i) => (
                 <button
                   key={item.id}
@@ -293,7 +319,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   onClick={() => setShot(i)}
                   aria-label={`Show ${item.alt}`}
                   aria-current={i === shot}
-                  className={`relative h-14 w-14 overflow-hidden rounded-lg bg-white ring-2 transition sm:h-16 sm:w-16 ${
+                  className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-white ring-2 transition sm:h-16 sm:w-16 ${
                     i === shot
                       ? "ring-umx-orange"
                       : "ring-black/10 hover:ring-black/25"
@@ -303,6 +329,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     src={item.src}
                     alt=""
                     fill
+                    loading="eager"
                     sizes="64px"
                     className="object-contain p-1"
                   />
