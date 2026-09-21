@@ -119,6 +119,8 @@ type CaseQtyStepperProps = {
   showHint?: boolean;
   /** Show live piece count under the stepper (1 case = 95 pcs). */
   showPcs?: boolean;
+  /** Max cases the shopper can enter (from available inventory pieces). */
+  maxCases?: number;
   align?: "end" | "center";
 };
 
@@ -132,10 +134,12 @@ export function CaseQtyStepper({
   size = "md",
   showHint = false,
   showPcs = false,
+  maxCases = 999,
   align = "end",
 }: CaseQtyStepperProps) {
   const canZero = allowRemove || allowZero;
-  const cases = Math.max(canZero ? 0 : 1, casesFromPcs(pcs));
+  const cap = Math.max(canZero ? 0 : 1, Math.floor(Number(maxCases) || 0));
+  const cases = Math.min(cap, Math.max(canZero ? 0 : 1, casesFromPcs(pcs)));
   return (
     <div
       className={`flex w-full flex-col gap-1 ${
@@ -146,7 +150,7 @@ export function CaseQtyStepper({
         value={canZero ? cases : cases || 1}
         onChange={(nextCases) => onChangePcs(pcsFromCases(nextCases))}
         min={canZero ? 0 : 1}
-        max={999}
+        max={cap}
         allowRemove={canZero}
         ariaLabel={ariaLabel}
         size={size}

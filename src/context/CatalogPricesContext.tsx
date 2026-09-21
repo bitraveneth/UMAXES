@@ -19,6 +19,8 @@ export type CatalogPrice = {
   sku: string;
   unitPrice: number;
   retailPrice: number;
+  /** Available pieces: Inventory.quantity − reserved. */
+  stock: number;
 };
 
 type CatalogPricesValue = {
@@ -29,6 +31,8 @@ type CatalogPricesValue = {
   pcsPerCase: number;
   unitPriceFor: (sku?: string) => number;
   retailPriceFor: (sku?: string) => number;
+  /** Available pieces from /api/catalog, or null if catalog has not loaded that SKU. */
+  stockFor: (sku?: string) => number | null;
 };
 
 function parseAccountLevel(value: unknown): AccountPriceLevel | null {
@@ -82,6 +86,7 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
             sku,
             unitPrice,
             retailPrice: FALLBACK_RETAIL_PRICE,
+            stock: Math.max(0, Math.floor(Number(row.stock) || 0)),
           });
         }
         const channelUnit = Number(data?.channel?.unitPrice);
@@ -124,6 +129,14 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
     [],
   );
 
+  const stockFor = useCallback(
+    (sku?: string) => {
+      if (!sku || !prices.has(sku)) return null;
+      return prices.get(sku)!.stock;
+    },
+    [prices],
+  );
+
   const value = useMemo(
     () => ({
       ready,
@@ -133,6 +146,7 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
       pcsPerCase,
       unitPriceFor,
       retailPriceFor,
+      stockFor,
     }),
     [
       ready,
@@ -142,6 +156,7 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
       pcsPerCase,
       unitPriceFor,
       retailPriceFor,
+      stockFor,
     ],
   );
 
@@ -163,6 +178,7 @@ export function useCatalogPrices() {
       pcsPerCase: 95,
       unitPriceFor: () => FALLBACK_RETAIL_PRICE,
       retailPriceFor: () => FALLBACK_RETAIL_PRICE,
+      stockFor: () => null,
     };
   }
   return ctx;

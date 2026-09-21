@@ -7,7 +7,13 @@ import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
-import { PCS_PER_CASE, casesFromPcs, formatPack, snapToCasePcs } from "@/lib/pack";
+import {
+  PCS_PER_CASE,
+  casesFromPcs,
+  formatPack,
+  pcsFromCases,
+  snapToCasePcs,
+} from "@/lib/pack";
 import { DualStorePrice, StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
 import { useCatalogPrices } from "@/context/CatalogPricesContext";
@@ -39,6 +45,17 @@ function newKey() {
 
 function defaultLine(flavorId: FlavorId): OrderLine {
   return { key: newKey(), flavorId, quantity: PCS_PER_CASE };
+}
+
+/** Whole cases that fit in available inventory pieces. Null = no catalog cap yet. */
+function maxCasesFromStock(stock: number | null) {
+  if (stock == null) return null;
+  return Math.max(0, Math.floor(stock / PCS_PER_CASE));
+}
+
+function formatStockPieces(stock: number | null) {
+  if (stock == null) return "—";
+  return stock.toLocaleString("en-US");
 }
 
 /** All catalog flavors as line items, with the current product flavor first. */
@@ -86,7 +103,8 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const router = useRouter();
   const { addMany, couponCode: savedCoupon, setCouponCode } = useCart();
   const showPrices = useShowStorePrices();
-  const { hideCoupon, unitPriceFor, testStationsPerCase } = useCatalogPrices();
+  const { hideCoupon, unitPriceFor, testStationsPerCase, stockFor, ready: catalogReady } =
+    useCatalogPrices();
   const [lines, setLines] = useState<OrderLine[]>(() => defaultLines(flavor.id));
   const [draftReady, setDraftReady] = useState(false);
   const [added, setAdded] = useState(false);
@@ -129,6 +147,22 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
       /* ignore */
     }
   }, [lines, draftReady]);
+
+  useEffect(() => {
+    if (!draftReady || !catalogReady) return;
+    setLines((prev) => {
+      let changed = false;
+      const next = prev.map((line) => {
+        const maxCases = maxCasesFromStock(stockFor(line.flavorId));
+        if (maxCases == null) return line;
+        const maxPcs = pcsFromCases(maxCases);
+        if (line.quantity <= maxPcs) return line;
+        changed = true;
+        return { ...line, quantity: maxPcs };
+      });
+      return changed ? next : prev;
+    });
+  }, [catalogReady, draftReady, stockFor]);
 
   const usedFlavorIds = useMemo(
     () => new Set(lines.map((l) => l.flavorId)),
@@ -407,12 +441,12 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             )}
 
             <div className="mt-6 overflow-hidden rounded-2xl ring-1 ring-black/10">
-              <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_8.75rem_2.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
+              <div className="hidden grid-cols-[minmax(0,1fr)_7.75rem_8.75rem_2.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
                 <p className="font-display text-sm font-bold text-black">
                   Flavor
                 </p>
                 <p className="text-right font-display text-sm font-bold text-black">
-                  Price / pc
+                  Stock
                 </p>
                 <p className="text-center font-display text-sm font-bold text-black">
                   Cases
@@ -429,10 +463,13 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   {lines.map((line) => {
                     const item =
                       flavors.find((f) => f.id === line.flavorId) ?? flavor;
+                    const stock = stockFor(item.id);
+                    const maxCases = maxCasesFromStock(stock);
+                    const stockLabel = formatStockPieces(stock);
                     return (
                       <li
                         key={line.key}
-                        className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_6.5rem_8.75rem_2.75rem] sm:items-center sm:gap-4"
+                        className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_7.75rem_8.75rem_2.75rem] sm:items-center sm:gap-4"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-black/5 ring-1 ring-black/8">
@@ -444,14 +481,9 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                               className="object-cover"
                             />
                           </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-display text-sm font-semibold text-black">
-                              {item.name}
-                            </p>
-                            <p className="mt-0.5 font-display text-sm font-semibold text-black sm:hidden">
-                              <StorePrice amount={unitPriceFor(item.id)} />
-                            </p>
-                          </div>
+                          <p className="min-w-0 flex-1 truncate font-display text-sm font-semibold text-black">
+                            {item.name}
+                          </p>
                           <button
                             type="button"
                             aria-label={`Remove ${item.name}`}
@@ -465,26 +497,45 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                             />
                           </button>
                         </div>
-                        <p className="hidden font-display text-sm font-semibold text-black sm:block sm:text-right">
-                          <StorePrice amount={unitPriceFor(item.id)} />
-                        </p>
-                        <div className="min-w-0">
-                          <p className="mb-1.5 text-center font-display text-sm font-bold text-black sm:hidden">
-                            Cases
-                          </p>
-                          <CaseQtyStepper
-                            pcs={line.quantity}
-                            onChangePcs={(next) =>
-                              updateLine(line.key, {
-                                quantity: snapToCasePcs(next),
-                              })
-                            }
-                            allowZero
-                            showPcs
-                            size="sm"
-                            align="center"
-                            ariaLabel={`${item.name} cases`}
-                          />
+                        <div className="grid min-w-0 grid-cols-[minmax(4.75rem,1fr)_auto] items-start gap-3 sm:contents">
+                          <div className="min-w-0">
+                            <p className="mb-1.5 font-display text-sm font-bold text-black sm:hidden">
+                              Stock
+                            </p>
+                            <p
+                              className={`truncate font-display text-sm font-semibold tabular-nums tracking-tight sm:text-right ${
+                                stock === 0 ? "text-black/40" : "text-black"
+                              }`}
+                              title={
+                                stock == null
+                                  ? undefined
+                                  : `${stockLabel} available`
+                              }
+                            >
+                              {stockLabel}
+                            </p>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="mb-1.5 text-center font-display text-sm font-bold text-black sm:hidden">
+                              Cases
+                            </p>
+                            <CaseQtyStepper
+                              pcs={line.quantity}
+                              onChangePcs={(next) => {
+                                const snapped = snapToCasePcs(next);
+                                const capPcs =
+                                  maxCases == null
+                                    ? snapped
+                                    : Math.min(snapped, pcsFromCases(maxCases));
+                                updateLine(line.key, { quantity: capPcs });
+                              }}
+                              allowZero
+                              maxCases={maxCases ?? 999}
+                              size="sm"
+                              align="center"
+                              ariaLabel={`${item.name} cases`}
+                            />
+                          </div>
                         </div>
                         <button
                           type="button"
