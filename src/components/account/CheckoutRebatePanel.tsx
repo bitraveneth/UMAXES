@@ -183,7 +183,7 @@ export default function CheckoutRebatePanel({
                     ? `${channel.nextTierQty.toLocaleString()} more to ${formatRate(channel.nextTierRate)}/pc`
                     : channel?.eligible
                       ? "Top rebate rate unlocked"
-                      : "Ladder unlocks after payment clears"}
+                      : "Rebate starts after you pay"}
                 </p>
               </div>
               {currentRate != null ? (
@@ -219,7 +219,7 @@ export default function CheckoutRebatePanel({
             </div>
             {barAfterPct > barPaidPct ? (
               <p className="mt-1.5 font-body text-[11px] text-black/50">
-                Orange = this order after payment clears
+                Orange shows this order after you pay
               </p>
             ) : null}
           </div>

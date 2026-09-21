@@ -12,7 +12,6 @@ import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { Package } from "@/components/admin/icons";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { useAppFeedback } from "@/components/ui/AppFeedback";
-import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 
 export type OrdersPanelSupplier = {
   id: string;
@@ -426,27 +425,26 @@ function OrderDocLinks({
     { type: "invoice" as const, short: t("orders.docCi"), full: t("orders.viewCi") },
   ];
 
+  const btnClass = compact
+    ? "admin-btn admin-btn-secondary admin-btn-sm"
+    : "admin-btn admin-btn-secondary admin-btn-sm !px-2.5 !text-xs";
+
   return (
     <div
       className="flex flex-wrap items-center gap-2"
       onClick={(e) => e.stopPropagation()}
     >
       {docs.map((doc) => (
-        <div
+        <a
           key={doc.type}
-          className="inline-flex items-center gap-1.5"
+          href={`/api/orders/${orderId}/docs?type=${doc.type}`}
+          target="_blank"
+          rel="noopener noreferrer"
           title={doc.full}
+          className={btnClass}
         >
-          <span className="font-display text-[10px] font-bold tracking-wide text-[var(--admin-muted)] uppercase">
-            {doc.short}
-          </span>
-          <DocumentDownloadMenu
-            orderId={orderId}
-            type={doc.type}
-            compact
-            variant="admin"
-          />
-        </div>
+          {compact ? doc.short : doc.full}
+        </a>
       ))}
       {hasSlip ? (
         <a
@@ -454,11 +452,7 @@ function OrderDocLinks({
           target="_blank"
           rel="noopener noreferrer"
           title={t("orders.viewSlip")}
-          className={
-            compact
-              ? "admin-btn admin-btn-secondary admin-btn-sm"
-              : "admin-btn admin-btn-secondary admin-btn-sm !px-2.5 !text-xs"
-          }
+          className={btnClass}
         >
           {compact ? t("orders.docSlip") : t("orders.viewSlip")}
         </a>
