@@ -338,37 +338,38 @@ export default function OrdersPanel({
                             </p>
                           </div>
                         </td>
-                        <td className="max-w-[9.5rem]">
-                          <p className="truncate font-medium text-[var(--admin-text)]">
+                        <td className="max-w-[10rem]">
+                          <p
+                            className="truncate font-medium text-[var(--admin-text)]"
+                            title={order.companyName}
+                          >
                             {order.companyName}
                           </p>
-                          <p className="mt-0.5 truncate text-xs text-[var(--admin-muted)]">
-                            {order.supplierName
-                              ? order.supplierName
-                              : t("orders.noSupplier")}
-                          </p>
+                          {order.supplierName ? (
+                            <p
+                              className="mt-0.5 truncate text-xs text-[var(--admin-muted)]"
+                              title={order.supplierName}
+                            >
+                              {order.supplierName}
+                            </p>
+                          ) : null}
                         </td>
                         <td className="whitespace-nowrap">
-                          <p className="text-xs font-medium text-[var(--admin-muted)]">
-                            {payLabel(order.paymentMethod, true)}
-                          </p>
-                          <div className="mt-1">
-                            <AdminBadge
-                              tone={paymentTone(
-                                order.paymentMethod === "CREDIT"
-                                  ? order.paymentPaid
-                                    ? "paid"
-                                    : "on_terms"
-                                  : order.paymentStatus,
-                              )}
-                            >
-                              {order.paymentMethod === "CREDIT"
+                          <AdminBadge
+                            tone={paymentTone(
+                              order.paymentMethod === "CREDIT"
                                 ? order.paymentPaid
-                                  ? t("orders.payStatusPaid")
-                                  : t("orders.payCredit")
-                                : t(paymentStatusLabelKey(order.paymentStatus))}
-                            </AdminBadge>
-                          </div>
+                                  ? "paid"
+                                  : "on_terms"
+                                : order.paymentStatus,
+                            )}
+                          >
+                            {order.paymentMethod === "CREDIT"
+                              ? order.paymentPaid
+                                ? t("orders.payStatusPaid")
+                                : t("orders.payCredit")
+                              : t(paymentStatusLabelKey(order.paymentStatus))}
+                          </AdminBadge>
                         </td>
                         <td className="whitespace-nowrap">
                           <AdminBadge tone={orderTone(order.status)}>
