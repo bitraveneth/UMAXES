@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { CircleCheck, Gift, Pencil, Plus, Trash2, Wallet } from "lucide-react";
+import { CircleCheck, Pencil, Plus, Trash2 } from "lucide-react";
 import PiNumberBlock from "@/components/account/PiNumberBlock";
+import CheckoutRebatePanel from "@/components/account/CheckoutRebatePanel";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
 import { CASE_MOQ_PCS, casesFromPcs, formatPack } from "@/lib/pack";
@@ -64,6 +65,7 @@ type ChannelQuote = {
   monthProjectedRate: number;
   nextTierQty: number | null;
   nextTierRate: number | null;
+  tiers?: { minQty: number; rateUsd: number }[];
 };
 
 export default function B2BCheckout() {
@@ -685,106 +687,11 @@ export default function B2BCheckout() {
         </section>
 
         {isChannelBuyer ? (
-          <section className="overflow-hidden rounded-2xl border border-black/8 bg-white shadow-[0_12px_32px_rgba(61,22,5,0.04)]">
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/8 bg-[#eef3f7] px-5 py-4 sm:px-6">
-              <div>
-                <p className="font-display text-[0.65rem] font-semibold tracking-[0.18em] text-[#1b4f72] uppercase">
-                  Channel program
-                </p>
-                <h2 className="mt-1 font-display text-lg font-semibold text-black">
-                  This order
-                </h2>
-              </div>
-              <Link
-                href="/account/rebate"
-                className="font-display text-sm font-semibold text-[#1b4f72] transition hover:text-umx-orange"
-              >
-                Rebate status →
-              </Link>
-            </div>
-            <div className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
-              <div className="flex gap-3 border border-black/8 bg-umx-cream-bright p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-white text-[#1b4f72]">
-                  <Wallet className="h-4 w-4" strokeWidth={1.85} />
-                </span>
-                <div className="min-w-0">
-                  {channel?.isFirstOrder ? (
-                    <>
-                      <p className="font-display text-sm font-bold text-black">
-                        First order
-                      </p>
-                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        {channel.firstOrderUnpaidPcs
-                          ? `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pcs on this order`
-                          : "First-order gift applies when the case count qualifies"}
-                        {showPrices && channel.firstOrderDiscountUsd
-                          ? ` (−$${channel.firstOrderDiscountUsd.toFixed(2)})`
-                          : ""}
-                        . Monthly rebate starts after this order is paid.
-                      </p>
-                    </>
-                  ) : channel && channel.rebateBalanceUsd > 0 ? (
-                    <>
-                      <p className="font-display text-sm font-bold text-black">
-                        ${channel.rebateAppliedUsd.toFixed(2)} credit
-                      </p>
-                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        Applying from ${channel.rebateBalanceUsd.toFixed(2)} on
-                        account. Credit is not cash.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="font-display text-sm font-bold text-black">
-                        No credit on this order
-                      </p>
-                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        Wallet and monthly volume live on your Rebate page.
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-3 border border-black/8 bg-umx-cream-bright p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-white text-[#1b4f72]">
-                  <Gift className="h-4 w-4" strokeWidth={1.85} />
-                </span>
-                <div className="min-w-0">
-                  {stationQty > 0 ? (
-                    <>
-                      <p className="font-display text-sm font-bold text-black">
-                        {stationQty === 1
-                          ? "1 test station"
-                          : `${stationQty} test stations`}
-                      </p>
-                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        {stationQty === 1 ? "1 piece" : `${stationQty} pieces`} ·
-                        free · 1 per case
-                      </p>
-                    </>
-                  ) : (channel?.testStationsPerCase || 0) > 0 ? (
-                    <>
-                      <p className="font-display text-sm font-bold text-black">
-                        Test stations
-                      </p>
-                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        1 free kit per case when you order full cases
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="font-display text-sm font-bold text-black">
-                        Test stations
-                      </p>
-                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        Qualifying channel orders include one kit per case.
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
+          <CheckoutRebatePanel
+            channel={channel}
+            stationQty={stationQty}
+            showPrices={showPrices}
+          />
         ) : null}
 
         <section className="rounded-2xl border border-black/8 bg-white p-5 shadow-[0_12px_32px_rgba(61,22,5,0.04)] sm:p-6">

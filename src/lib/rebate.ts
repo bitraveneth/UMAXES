@@ -65,6 +65,7 @@ export type ChannelQuote = {
   nextTierQty: number | null;
   nextTierRate: number | null;
   monthKey: string;
+  tiers: { minQty: number; rateUsd: number }[];
 };
 
 const WHOLESALER_TIERS: RebateTier[] = [
@@ -316,6 +317,7 @@ export function emptyQuote(sellingQty: number): ChannelQuote {
     nextTierQty: null,
     nextTierRate: null,
     monthKey: "",
+    tiers: [],
   };
 }
 
@@ -425,6 +427,7 @@ export async function quoteForCompany(
       pcsPerCase: policy?.pcsPerCase || 95,
       testStationsPerCase: policy?.testStationsPerCase || 0,
       testStationQty: stations,
+      tiers: policy?.tiers ?? [],
     };
   }
 
@@ -469,6 +472,7 @@ export async function quoteForCompany(
     nextTierQty: nxt.qty,
     nextTierRate: nxt.rate,
     monthKey,
+    tiers: policy.tiers,
   };
 }
 
