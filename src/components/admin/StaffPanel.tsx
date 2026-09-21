@@ -21,6 +21,7 @@ import {
   ArrowUpCircle,
 } from "lucide-react";
 import type { UserRole, UserStatus } from "@/generated/prisma/enums";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 
 export type StaffRow = {
   id: string;
@@ -90,6 +91,7 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
   const [roleEdit, setRoleEdit] = useState<StaffRow | null>(null);
   const [nextRole, setNextRole] = useState<UserRole>("SALES");
   const [query, setQuery] = useState("");
+  const { confirm, showToast, ui } = useAppFeedback();
 
   const counts = useMemo(() => {
     const active = staff.filter((s) => s.status === "APPROVED").length;
@@ -132,6 +134,7 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
         });
         setCreating(false);
         flashOk("Staff account created.");
+        showToast("Staff account created", "success");
       } catch (e) {
         flashErr(e);
       }
@@ -153,6 +156,7 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
         });
         setEditing(null);
         flashOk("Staff updated.");
+        showToast("Staff updated successfully", "success");
       } catch (e) {
         flashErr(e);
       }
@@ -172,9 +176,15 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
     });
   }
 
-  function onDelete(row: StaffRow) {
+  async function onDelete(row: StaffRow) {
     if (!canManage(row) || row.id === currentUserId) return;
-    if (!window.confirm(`Delete ${row.name || row.email}?`)) return;
+    const ok = await confirm({
+      title: "Delete staff?",
+      message: `Delete ${row.name || row.email}?`,
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     startTransition(async () => {
       try {
         const result = await deleteStaffUser(row.id);
@@ -183,21 +193,27 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
             ? "Disabled (linked records)."
             : "Staff deleted.",
         );
+        showToast(
+          "disabled" in result && result.disabled
+            ? "Staff disabled"
+            : "Staff deleted",
+          "danger",
+        );
       } catch (e) {
         flashErr(e);
       }
     });
   }
 
-  function onDemote(row: StaffRow) {
+  async function onDemote(row: StaffRow) {
     if (!canManage(row) || row.id === currentUserId) return;
-    if (
-      !window.confirm(
-        `Move ${row.name || row.email} back to Customers? They will lose admin access.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Move to customers?",
+      message: `Move ${row.name || row.email} back to Customers? They will lose admin access.`,
+      confirmLabel: "Move",
+      tone: "danger",
+    });
+    if (!ok) return;
     startTransition(async () => {
       try {
         await setUserRole({ id: row.id, role: "CUSTOMER" });
@@ -210,6 +226,7 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
 
   return (
     <div className="space-y-6">
+      {ui}
       {(message || error) && (
         <div
           className={`rounded-xl border px-4 py-3 text-sm ${

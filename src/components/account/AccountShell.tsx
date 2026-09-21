@@ -16,8 +16,11 @@ import {
   Store,
   Truck,
   UserRound,
+  Wallet,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { isChannelBuyerLevel } from "@/lib/channel-level";
 import {
   storeStickyTopClass,
   storeTopPadClass,
@@ -45,6 +48,13 @@ const NAV_PRIMARY = [
     labelKey: "nav.orders",
     icon: Package,
     exact: false,
+  },
+  {
+    href: "/account/rebate",
+    labelKey: "nav.rebate",
+    icon: Wallet,
+    exact: false,
+    channelOnly: true,
   },
   {
     href: "/account/documents",
@@ -108,7 +118,7 @@ function NavItem({
 }: {
   href: string;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: LucideIcon;
   active: boolean;
   onNavigate?: () => void;
 }) {
@@ -167,7 +177,11 @@ export default function AccountShell({
           <p className="mb-2 px-3 font-display text-[10px] font-semibold tracking-[0.16em] text-black uppercase">
             {t("nav.menu")}
           </p>
-          {NAV_PRIMARY.map((item) => (
+          {NAV_PRIMARY.filter(
+            (item) =>
+              !("channelOnly" in item && item.channelOnly) ||
+              isChannelBuyerLevel(user.companyLevel),
+          ).map((item) => (
             <NavItem
               key={item.href}
               href={item.href}

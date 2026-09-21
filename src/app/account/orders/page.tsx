@@ -155,7 +155,7 @@ export default async function OrdersPage() {
                           {shortPayment(order.paymentMethod)}
                         </span>
                         {order.piNumber ? (
-                          <span className="font-display text-[10px] font-semibold text-umx-orange">
+                          <span className="break-all font-display text-[10px] font-semibold text-[#1b4f72]">
                             {order.piNumber}
                           </span>
                         ) : null}

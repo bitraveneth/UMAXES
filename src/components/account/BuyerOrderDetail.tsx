@@ -17,6 +17,8 @@ import {
   type BuyerDocType,
 } from "@/lib/buyer-order";
 import BuyerPaymentSlip from "@/components/account/BuyerPaymentSlip";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
+import PiNumberBlock from "@/components/account/PiNumberBlock";
 import OrderProgressBar from "@/components/account/OrderProgressBar";
 import type { OrderStatus } from "@/generated/prisma/enums";
 
@@ -50,12 +52,6 @@ const DOCS: {
     type: "pi",
     label: "Proforma invoice",
     description: "Quote / PI for payment",
-    icon: FileText,
-  },
-  {
-    type: "invoice",
-    label: "Commercial invoice",
-    description: "Final invoice",
     icon: FileText,
   },
   {
@@ -132,14 +128,6 @@ export default function BuyerOrderDetail({
               {order.createdAt.slice(0, 10)}
               <span className="mx-2 text-black">·</span>
               {paymentLabel}
-              {order.piNumber ? (
-                <>
-                  <span className="mx-2 text-black">·</span>
-                  <span className="font-display font-semibold text-umx-orange">
-                    {order.piNumber}
-                  </span>
-                </>
-              ) : null}
             </p>
           </div>
 
@@ -153,6 +141,8 @@ export default function BuyerOrderDetail({
           </div>
         </div>
       </header>
+
+      {order.piNumber ? <PiNumberBlock value={order.piNumber} /> : null}
 
       {order.status !== "CANCELLED" ? (
         <BuyerPaymentSlip
@@ -202,10 +192,9 @@ export default function BuyerOrderDetail({
       {tab === "documents" ? (
         <section className="space-y-5">
           <p className="font-body text-sm text-black">
-            Open a document to view, print, or download. Locked items unlock as
-            the order moves forward.
+            Open a document to view it, or download PDF / Excel.
           </p>
-          <ul className="grid gap-4 sm:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2">
             {DOCS.map((doc) => {
               const state = docs[doc.type];
               const Icon = doc.icon;
@@ -227,27 +216,34 @@ export default function BuyerOrderDetail({
               }
               return (
                 <li key={doc.type}>
-                  <a
-                    href={`/api/orders/${order.id}/docs?type=${doc.type}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex h-full flex-col border border-black/10 bg-white p-5 transition hover:border-umx-orange"
-                  >
+                  <div className="flex h-full flex-col border border-black/10 bg-white p-5">
                     <Icon
-                      className="h-5 w-5 text-umx-orange transition group-hover:scale-105"
+                      className="h-5 w-5 text-umx-orange"
                       strokeWidth={1.75}
                     />
                     <p className="mt-4 font-display text-sm font-bold text-black">
                       {doc.label}
                     </p>
-                    <p className="mt-1 font-body text-xs text-black">
-                      {doc.description}
+                    <p className="mt-1 font-body text-xs text-black/55">
+                      Download as PDF or Excel
                     </p>
-                    <span className="mt-5 inline-flex items-center gap-1.5 font-display text-xs font-semibold text-umx-orange">
-                      Open document
-                      <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
-                    </span>
-                  </a>
+                    <div className="mt-5 flex flex-wrap items-center gap-2.5">
+                      <DocumentDownloadMenu
+                        orderId={order.id}
+                        type={doc.type}
+                        compact
+                      />
+                      <a
+                        href={`/api/orders/${order.id}/docs?type=${doc.type}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 border border-transparent px-2 py-1.5 font-display text-xs font-semibold text-umx-orange transition hover:border-umx-orange/25 hover:bg-umx-orange-wash/50"
+                      >
+                        Open
+                        <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
+                      </a>
+                    </div>
+                  </div>
                 </li>
               );
             })}

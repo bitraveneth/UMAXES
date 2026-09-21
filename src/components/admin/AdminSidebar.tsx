@@ -26,6 +26,16 @@ export function AdminSidebar({
     if (href === "/admin/orders/new") {
       return pathname.startsWith("/admin/orders/new");
     }
+    if (href === "/admin/users/new") {
+      return pathname.startsWith("/admin/users/new");
+    }
+    if (href === "/admin/users") {
+      return (
+        pathname === "/admin/users" ||
+        (pathname.startsWith("/admin/users/") &&
+          !pathname.startsWith("/admin/users/new"))
+      );
+    }
     if (href === "/admin/orders") {
       return (
         pathname === "/admin/orders" ||

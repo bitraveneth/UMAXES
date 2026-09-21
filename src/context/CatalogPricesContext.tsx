@@ -19,14 +19,20 @@ export type CatalogPrice = {
   sku: string;
   unitPrice: number;
   retailPrice: number;
+  /** Available pieces: Inventory.quantity − reserved. */
+  stock: number;
 };
 
 type CatalogPricesValue = {
   ready: boolean;
   hideCoupon: boolean;
   accountLevel: AccountPriceLevel | null;
+  testStationsPerCase: number;
+  pcsPerCase: number;
   unitPriceFor: (sku?: string) => number;
   retailPriceFor: (sku?: string) => number;
+  /** Available pieces from /api/catalog, or null if catalog has not loaded that SKU. */
+  stockFor: (sku?: string) => number | null;
 };
 
 function parseAccountLevel(value: unknown): AccountPriceLevel | null {
@@ -48,6 +54,8 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
   const [accountUnit, setAccountUnit] = useState<number>(FALLBACK_RETAIL_PRICE);
   const [accountLevel, setAccountLevel] = useState<AccountPriceLevel | null>(null);
   const [hideCoupon, setHideCoupon] = useState(false);
+  const [testStationsPerCase, setTestStationsPerCase] = useState(0);
+  const [pcsPerCase, setPcsPerCase] = useState(95);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -57,6 +65,8 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
       setAccountUnit(FALLBACK_RETAIL_PRICE);
       setAccountLevel(null);
       setHideCoupon(false);
+      setTestStationsPerCase(0);
+      setPcsPerCase(95);
       setReady(true);
       return;
     }
@@ -76,6 +86,7 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
             sku,
             unitPrice,
             retailPrice: FALLBACK_RETAIL_PRICE,
+            stock: Math.max(0, Math.floor(Number(row.stock) || 0)),
           });
         }
         const channelUnit = Number(data?.channel?.unitPrice);
@@ -88,6 +99,12 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
         setPrices(map);
         setAccountLevel(parseAccountLevel(data?.level));
         setHideCoupon(Boolean(data?.channel?.hideCoupon));
+        setTestStationsPerCase(
+          Math.max(0, Math.floor(Number(data?.channel?.testStationsPerCase) || 0)),
+        );
+        setPcsPerCase(
+          Math.max(1, Math.floor(Number(data?.channel?.pcsPerCase) || 95)),
+        );
         setReady(true);
       })
       .catch(() => {
@@ -112,9 +129,35 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
     [],
   );
 
+  const stockFor = useCallback(
+    (sku?: string) => {
+      if (!sku || !prices.has(sku)) return null;
+      return prices.get(sku)!.stock;
+    },
+    [prices],
+  );
+
   const value = useMemo(
-    () => ({ ready, hideCoupon, accountLevel, unitPriceFor, retailPriceFor }),
-    [ready, hideCoupon, accountLevel, unitPriceFor, retailPriceFor],
+    () => ({
+      ready,
+      hideCoupon,
+      accountLevel,
+      testStationsPerCase,
+      pcsPerCase,
+      unitPriceFor,
+      retailPriceFor,
+      stockFor,
+    }),
+    [
+      ready,
+      hideCoupon,
+      accountLevel,
+      testStationsPerCase,
+      pcsPerCase,
+      unitPriceFor,
+      retailPriceFor,
+      stockFor,
+    ],
   );
 
   return (
@@ -131,8 +174,11 @@ export function useCatalogPrices() {
       ready: true,
       hideCoupon: false,
       accountLevel: null,
+      testStationsPerCase: 0,
+      pcsPerCase: 95,
       unitPriceFor: () => FALLBACK_RETAIL_PRICE,
       retailPriceFor: () => FALLBACK_RETAIL_PRICE,
+      stockFor: () => null,
     };
   }
   return ctx;

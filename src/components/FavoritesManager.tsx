@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
 import { StorePrice } from "@/components/StorePrice";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 import { useCart } from "@/context/CartContext";
 import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { getFlavor, product, type FlavorId } from "@/lib/assets";
@@ -24,6 +25,7 @@ export default function FavoritesManager() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
+  const { confirm, showToast, ui } = useAppFeedback();
 
   async function load() {
     const res = await fetch("/api/account/favorites");
@@ -36,7 +38,14 @@ export default function FavoritesManager() {
     load();
   }, []);
 
-  async function remove(productId: string, sku: string) {
+  async function remove(productId: string, sku: string, name: string) {
+    const ok = await confirm({
+      title: "Remove from wishlist?",
+      message: `${name} will be removed from your saved items.`,
+      confirmLabel: "Remove",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusyId(productId);
     setFavorites((prev) => prev.filter((f) => f.productId !== productId));
     try {
@@ -45,6 +54,7 @@ export default function FavoritesManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId, sku }),
       });
+      showToast("Removed from wishlist", "danger");
     } catch {
       await load();
     } finally {
@@ -80,29 +90,34 @@ export default function FavoritesManager() {
 
   if (favorites.length === 0) {
     return (
-      <div className="border border-dashed border-black/15 bg-white px-6 py-16 text-center sm:px-10">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center bg-umx-orange-wash text-umx-orange">
-          <Heart className="h-5 w-5" strokeWidth={1.75} fill="currentColor" />
-        </span>
-        <h2 className="mt-5 font-display text-xl font-bold text-black">
-          No saved flavors yet
-        </h2>
-        <p className="mx-auto mt-2 max-w-md font-body text-sm leading-relaxed text-black">
-          Tap the heart on any product in the shop to save it here for quick
-          reorders.
-        </p>
-        <Link
-          href="/shop"
-          className="mt-7 inline-flex items-center gap-2 bg-umx-orange px-6 py-3 font-display text-sm font-semibold text-white transition hover:bg-umx-orange-deep"
-        >
-          Browse shop
-        </Link>
-      </div>
+      <>
+        {ui}
+        <div className="border border-dashed border-black/15 bg-white px-6 py-16 text-center sm:px-10">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center bg-umx-orange-wash text-umx-orange">
+            <Heart className="h-5 w-5" strokeWidth={1.75} fill="currentColor" />
+          </span>
+          <h2 className="mt-5 font-display text-xl font-bold text-black">
+            No saved flavors yet
+          </h2>
+          <p className="mx-auto mt-2 max-w-md font-body text-sm leading-relaxed text-black">
+            Tap the heart on any product in the shop to save it here for quick
+            reorders.
+          </p>
+          <Link
+            href="/shop"
+            className="mt-7 inline-flex items-center gap-2 bg-umx-orange px-6 py-3 font-display text-sm font-semibold text-white transition hover:bg-umx-orange-deep"
+          >
+            Browse shop
+          </Link>
+        </div>
+      </>
     );
   }
 
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <>
+      {ui}
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {favorites.map((f) => {
         const flavor = getFlavor(f.sku as FlavorId);
         const href = `/product/${f.sku}`;
@@ -129,7 +144,7 @@ export default function FavoritesManager() {
               <button
                 type="button"
                 disabled={busyId === f.productId}
-                onClick={() => remove(f.productId, f.sku)}
+                onClick={() => remove(f.productId, f.sku, f.name)}
                 aria-label={`Remove ${f.name} from wishlist`}
                 className="absolute top-3 right-3 flex h-10 w-10 items-center justify-center bg-white text-umx-orange ring-1 ring-black/10 transition hover:bg-umx-orange hover:text-white disabled:opacity-60"
               >
@@ -166,7 +181,7 @@ export default function FavoritesManager() {
                 <button
                   type="button"
                   disabled={busyId === f.productId}
-                  onClick={() => remove(f.productId, f.sku)}
+                  onClick={() => remove(f.productId, f.sku, f.name)}
                   aria-label="Remove from wishlist"
                   className="flex h-12 w-12 shrink-0 items-center justify-center border border-black/12 text-black transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-60"
                 >
@@ -177,6 +192,7 @@ export default function FavoritesManager() {
           </li>
         );
       })}
-    </ul>
+      </ul>
+    </>
   );
 }

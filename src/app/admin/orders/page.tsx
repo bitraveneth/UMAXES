@@ -105,16 +105,19 @@ export default async function AdminOrdersPage({
   const shipped = orders.filter((o) => o.status === "SHIPPED").length;
   const completed = orders.filter((o) => o.status === "COMPLETED").length;
 
-  const panelOrders = orders.map((o) => ({
+  const panelOrders = orders.map((o) => {
+    const payment = o.payments[0];
+    return {
     id: o.id,
     orderNumber: o.orderNumber,
     status: o.status,
     paymentMethod: o.paymentMethod,
     paymentRef: o.paymentRef,
+    paymentStatus: payment?.status ?? "pending",
     paymentPaid: o.payments.some((p) => p.status === "paid" && p.paidAt),
-    paymentSlipUrl: o.payments.find((p) => p.slipUrl)?.slipUrl ?? null,
-    paymentSlipName: o.payments.find((p) => p.slipUrl)?.slipFileName ?? null,
-    paymentSlipMime: o.payments.find((p) => p.slipUrl)?.slipMime ?? null,
+    paymentSlipUrl: payment?.slipUrl ?? null,
+    paymentSlipName: payment?.slipFileName ?? null,
+    paymentSlipMime: payment?.slipMime ?? null,
     notes: o.notes,
     total: o.total,
     createdAt: o.createdAt.toISOString(),
@@ -137,7 +140,8 @@ export default async function AdminOrdersPage({
       trackingNumber: s.trackingNumber,
       status: s.status,
     })),
-  }));
+  };
+  });
 
   return (
     <div className="space-y-6">

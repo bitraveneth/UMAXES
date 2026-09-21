@@ -34,6 +34,8 @@ export function invoicePuffsLabel() {
 
 export type InvoiceAddress = {
   label?: string | null;
+  recipientName?: string | null;
+  phone?: string | null;
   line1: string;
   line2?: string | null;
   city: string;
@@ -48,7 +50,8 @@ export function parseAddressSnap(snap: string): InvoiceAddress {
 
 function addressLines(a: InvoiceAddress) {
   const cityLine = [a.city, a.region, a.postalCode].filter(Boolean).join(", ");
-  return [a.label, a.line1, a.line2, cityLine, a.country]
+  const nameLine = [a.recipientName, a.phone].filter(Boolean).join(" · ");
+  return [a.label, nameLine, a.line1, a.line2, cityLine, a.country]
     .map((v) => (v || "").trim())
     .filter(Boolean);
 }
@@ -178,6 +181,8 @@ type BuildInvoiceHtmlInput = {
   total?: number;
   packingMetaHtml?: string;
   forceDownloadHref?: string;
+  pdfHref?: string;
+  xlsxHref?: string;
   showToolbar?: boolean;
   bank?: InvoiceBankDetails | null;
   origin?: string;
@@ -344,11 +349,26 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
 
   const toolbar = showToolbar
     ? `<div class="toolbar no-print">
-  <p><strong>${titles[input.type]}</strong> · ${escapeHtml(input.orderNumber)}</p>
+  <p><strong>${titles[input.type]}</strong> · ${escapeHtml(input.docNumber)}</p>
   <div class="actions">
     <button type="button" class="primary" onclick="window.print()">Print</button>
     ${
-      input.forceDownloadHref
+      input.pdfHref || input.xlsxHref
+        ? `<span class="format-label">Choose format</span>`
+        : ""
+    }
+    ${
+      input.pdfHref
+        ? `<a href="${escapeHtml(input.pdfHref)}">PDF</a>`
+        : ""
+    }
+    ${
+      input.xlsxHref
+        ? `<a href="${escapeHtml(input.xlsxHref)}">Excel</a>`
+        : ""
+    }
+    ${
+      !input.pdfHref && input.forceDownloadHref
         ? `<a href="${escapeHtml(input.forceDownloadHref)}">Download</a>`
         : ""
     }
@@ -364,7 +384,7 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
       ? `<span><strong>Coupon</strong> · ${escapeHtml(input.couponCode)}</span>`
       : "",
     input.testStationQty
-      ? `<span><strong>Test stations</strong> · ${input.testStationQty} free</span>`
+      ? `<span><strong>Test stations</strong> · ${input.testStationQty} free · 1 device each</span>`
       : "",
     input.firstOrderUnpaidPcs
       ? `<span><strong>First-order unpaid</strong> · ${input.firstOrderUnpaidPcs} pcs</span>`
@@ -404,7 +424,8 @@ body{
   padding:12px 20px;background:#111;color:#fff;
 }
 .toolbar p{margin:0;font-size:13px;opacity:.9}
-.toolbar .actions{display:flex;flex-wrap:wrap;gap:8px}
+.toolbar .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .format-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.7;padding:0 4px}
 .toolbar a,.toolbar button{
   appearance:none;border:0;border-radius:999px;padding:10px 16px;
   font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;color:#111;background:#fff;

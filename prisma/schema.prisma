@@ -165,19 +165,21 @@ model StaffProfile {
 }
 
 model Address {
-  id         String   @id @default(cuid())
-  companyId  String
-  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  label      String?
-  line1      String
-  line2      String?
-  city       String
-  region     String?
-  postalCode String
-  country    String
-  isDefault  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(cuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  label         String?
+  recipientName String?
+  phone         String?
+  line1         String
+  line2         String?
+  city          String
+  region        String?
+  postalCode    String
+  country       String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([companyId])
 }
@@ -339,7 +341,7 @@ model Payment {
   method         PaymentMethod
   amount         Float
   reference      String?
-  /// pending = waiting for slip · submitted = 水单 uploaded · paid = Info confirmed 到账 · on_terms = credit
+  /// pending · submitted (slip uploaded) · paid · rejected · on_terms (credit)
   status         String        @default("pending")
   paidAt         DateTime?
   slipUrl        String?

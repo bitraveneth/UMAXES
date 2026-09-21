@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Features from "@/components/Features";
 import ProductDetail from "@/components/ProductDetail";
 import ProductFlavorLineup from "@/components/ProductFlavorLineup";
+import ProductIntroduction from "@/components/ProductIntroduction";
 import ProductKeyFeatures from "@/components/ProductKeyFeatures";
 import { flavors, getFlavor, product } from "@/lib/assets";
 import { requireMember } from "@/lib/require-member";
@@ -40,6 +41,7 @@ export default async function ProductPage({ params }: Props) {
       <Header />
       <main className="flex-1">
         <ProductDetail flavor={flavor} />
+        <ProductIntroduction />
         <ProductKeyFeatures flavor={flavor} />
         <Features />
         <ProductFlavorLineup flavor={flavor} />

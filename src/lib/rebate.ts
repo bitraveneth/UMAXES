@@ -2,9 +2,33 @@ import type { CustomerLevel } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { roundMoney } from "@/lib/catalog";
+import {
+  TEST_STATION_NAME,
+  TEST_STATION_PER_CASE_COPY,
+  TEST_STATION_SKU,
+  formatTestStationLine,
+  formatTestStationMessage,
+  formatTestStationQty,
+} from "@/lib/test-station";
+import type { BuyerRebateStatus } from "@/lib/rebate-types";
 
-export const TEST_STATION_SKU = "test-station";
-export const TEST_STATION_NAME = "Test Station (incl. 1 device)";
+export {
+  TEST_STATION_NAME,
+  TEST_STATION_PER_CASE_COPY,
+  TEST_STATION_SKU,
+  formatTestStationLine,
+  formatTestStationMessage,
+  formatTestStationQty,
+};
+export type { BuyerRebateLedger, BuyerRebateMonth, BuyerRebateStatus } from "@/lib/rebate-types";
+
+export function grantsTestStations(policy: ChannelPolicy | null | undefined) {
+  return Boolean(
+    policy &&
+      isChannelLevel(policy.level) &&
+      policy.testStationsPerCase > 0,
+  );
+}
 
 export type RebateTier = { minQty: number; rateUsd: number };
 
@@ -27,6 +51,8 @@ export type ChannelQuote = {
   isFirstOrder: boolean;
   sellingQty: number;
   cases: number;
+  pcsPerCase: number;
+  testStationsPerCase: number;
   testStationQty: number;
   firstOrderUnpaidPcs: number;
   firstOrderDiscountUsd: number;
@@ -39,6 +65,7 @@ export type ChannelQuote = {
   nextTierQty: number | null;
   nextTierRate: number | null;
   monthKey: string;
+  tiers: { minQty: number; rateUsd: number }[];
 };
 
 const WHOLESALER_TIERS: RebateTier[] = [
@@ -276,6 +303,8 @@ export function emptyQuote(sellingQty: number): ChannelQuote {
     isFirstOrder: false,
     sellingQty,
     cases: 0,
+    pcsPerCase: 95,
+    testStationsPerCase: 0,
     testStationQty: 0,
     firstOrderUnpaidPcs: 0,
     firstOrderDiscountUsd: 0,
@@ -288,6 +317,74 @@ export function emptyQuote(sellingQty: number): ChannelQuote {
     nextTierQty: null,
     nextTierRate: null,
     monthKey: "",
+    tiers: [],
+  };
+}
+
+export async function getBuyerRebateStatus(
+  companyId: string,
+): Promise<BuyerRebateStatus | null> {
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: {
+      id: true,
+      level: true,
+      rebateBalanceUsd: true,
+    },
+  });
+  if (!company || !isChannelLevel(company.level)) return null;
+
+  const policy = await getPolicyForLevel(company.level);
+  const quote = await quoteForCompany(company.id, 0);
+  const [months, ledger] = await Promise.all([
+    prisma.rebateMonth.findMany({
+      where: { companyId: company.id },
+      orderBy: { yearMonth: "desc" },
+      take: 12,
+      select: {
+        yearMonth: true,
+        paidQty: true,
+        tierRate: true,
+        rebateAmount: true,
+        issuedAmount: true,
+        status: true,
+      },
+    }),
+    prisma.rebateLedger.findMany({
+      where: { companyId: company.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        type: true,
+        amount: true,
+        note: true,
+        createdAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    level: company.level,
+    live: isPolicyLive(policy),
+    walletUsd: roundMoney(company.rebateBalanceUsd),
+    monthKey: quote.monthKey,
+    monthPaidQty: quote.monthPaidQty,
+    monthProjectedRate: quote.monthProjectedRate,
+    nextTierQty: quote.nextTierQty,
+    nextTierRate: quote.nextTierRate,
+    isFirstOrder: quote.isFirstOrder,
+    pcsPerCase: policy?.pcsPerCase || 95,
+    testStationsPerCase: policy?.testStationsPerCase || 0,
+    firstOrderCases: policy?.firstOrderCases || 5,
+    firstOrderUnpaidPcs: policy?.firstOrderUnpaidPcs || 20,
+    unitPrice: policy?.unitPrice ?? null,
+    tiers: policy?.tiers ?? [],
+    months,
+    ledger: ledger.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+    })),
   };
 }
 
@@ -311,17 +408,30 @@ export async function quoteForCompany(
 
   const policy = await getPolicyForLevel(company.level);
   const live = isPolicyLive(policy);
+  const stations = grantsTestStations(policy)
+    ? testStationQty(
+        sellingQty,
+        policy!.pcsPerCase,
+        policy!.testStationsPerCase,
+      )
+    : 0;
+  const cases = policy
+    ? caseCount(sellingQty, policy.pcsPerCase)
+    : 0;
+
   if (!policy || !live) {
-    return { ...emptyQuote(sellingQty), hideCoupon: false };
+    return {
+      ...emptyQuote(sellingQty),
+      hideCoupon: false,
+      cases,
+      pcsPerCase: policy?.pcsPerCase || 95,
+      testStationsPerCase: policy?.testStationsPerCase || 0,
+      testStationQty: stations,
+      tiers: policy?.tiers ?? [],
+    };
   }
 
   const isFirst = await companyIsFirstOrder(company.id);
-  const cases = caseCount(sellingQty, policy.pcsPerCase);
-  const stations = testStationQty(
-    sellingQty,
-    policy.pcsPerCase,
-    policy.testStationsPerCase,
-  );
   const unpaid = firstOrderUnpaidPcs(sellingQty, policy, isFirst);
   const unit = policy.unitPrice ?? unitPriceHint ?? 0;
   const firstDiscount = roundMoney(unpaid * unit);
@@ -348,6 +458,8 @@ export async function quoteForCompany(
     isFirstOrder: isFirst,
     sellingQty,
     cases,
+    pcsPerCase: policy.pcsPerCase,
+    testStationsPerCase: policy.testStationsPerCase,
     testStationQty: stations,
     firstOrderUnpaidPcs: unpaid,
     firstOrderDiscountUsd: firstDiscount,
@@ -360,6 +472,7 @@ export async function quoteForCompany(
     nextTierQty: nxt.qty,
     nextTierRate: nxt.rate,
     monthKey,
+    tiers: policy.tiers,
   };
 }
 

@@ -55,7 +55,7 @@ const ACTION_META: Record<
     tone: "warning",
   },
   PAYMENT_RECEIVED: {
-    label: "Funds confirmed (到账)",
+    label: "Funds confirmed",
     category: "payments",
     tone: "success",
   },
@@ -322,6 +322,14 @@ export function formatActivityMeta(
       if (m.email) parts.push(String(m.email));
       else if (m.phone) parts.push(String(m.phone));
       if (m.reason) parts.push(String(m.reason));
+    }
+    if (action === "INVENTORY_ADJUST") {
+      if (m.name || m.sku) parts.push(String(m.name || m.sku));
+      if (m.previousQuantity != null && m.quantity != null) {
+        parts.push(`${m.previousQuantity} → ${m.quantity}`);
+      } else if (m.quantity != null) {
+        parts.push(`Qty ${m.quantity}`);
+      }
     }
     if (m.note && typeof m.note === "string") parts.push(m.note);
     if (m.levels && Array.isArray(m.levels)) {

@@ -94,7 +94,7 @@ export default function BuyerPaymentSlip({
       <p className="mt-1 font-body text-sm text-black/60">
         {hasSlip
           ? "Slip received. UMAXES Info will confirm after finance sees the funds — then the order is complete for rebate."
-          : "Pay the proforma by TT / wire, then upload a photo of the bank slip (水单). Uploading does not finish the order — Info confirms arrival."}
+          : "Pay the proforma by TT / wire, then upload a photo of the bank slip. Uploading does not finish the order — finance confirms funds received."}
       </p>
 
       {hasSlip ? (

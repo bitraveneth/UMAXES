@@ -11,6 +11,7 @@ import {
 } from "@/lib/admin-i18n";
 import { AdminSidebarProvider } from "@/components/admin/AdminSidebarContext";
 import { AdminI18nProvider } from "@/components/admin/AdminI18n";
+import { AdminToastProvider } from "@/components/admin/AdminToast";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminMain } from "@/components/admin/AdminMain";
@@ -65,19 +66,21 @@ export default async function AdminLayout({
     >
       <AdminSidebarProvider>
         <AdminI18nProvider initialLocale={initialLocale}>
-          <AdminSidebar items={items} signOutAction={signOutAction} />
-          <AdminMain>
-            <AdminHeader
-              email={email}
-              name={session.user.name}
-              role={role}
-              unreadCount={unreadCount}
-              signOutAction={signOutAction}
-            />
-            <main className="w-full px-3 py-5 sm:px-4 md:px-5 md:py-6 xl:px-6">
-              {children}
-            </main>
-          </AdminMain>
+          <AdminToastProvider>
+            <AdminSidebar items={items} signOutAction={signOutAction} />
+            <AdminMain>
+              <AdminHeader
+                email={email}
+                name={session.user.name}
+                role={role}
+                unreadCount={unreadCount}
+                signOutAction={signOutAction}
+              />
+              <main className="w-full px-3 py-5 sm:px-4 md:px-5 md:py-6 xl:px-6">
+                {children}
+              </main>
+            </AdminMain>
+          </AdminToastProvider>
         </AdminI18nProvider>
       </AdminSidebarProvider>
     </div>
