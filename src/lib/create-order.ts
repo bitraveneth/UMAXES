@@ -7,6 +7,11 @@ import {
 } from "@/lib/catalog";
 import { prisma } from "@/lib/db";
 import {
+  isCasePackedSku,
+  isWholeCases,
+  minOrderPcs,
+} from "@/lib/pack";
+import {
   TEST_STATION_NAME,
   TEST_STATION_SKU,
   applyWalletInTx,
@@ -135,12 +140,21 @@ export async function createOrder(
         error: `No price for ${sku} at company level (${company.level})`,
       };
     }
-    // Staff order desk can place sample / exception qty below catalog MOQ.
-    if (!input.placedByStaffId && quantity < price.moq) {
+    // Same as storefront: case-packed SKUs sell in whole cases (95 pcs).
+    if (isCasePackedSku(sku)) {
+      const minPcs = minOrderPcs(sku, price.moq);
+      if (quantity < minPcs || !isWholeCases(quantity)) {
+        return {
+          ok: false,
+          status: 400,
+          error: `${product.name} is sold by the case (${minPcs} pcs / case)`,
+        };
+      }
+    } else if (quantity < Math.max(1, Math.floor(Number(price.moq) || 1))) {
       return {
         ok: false,
         status: 400,
-        error: `${product.name} MOQ is ${price.moq} pcs (1 case)`,
+        error: `${product.name} MOQ is ${price.moq}`,
       };
     }
     const available =
