@@ -633,7 +633,6 @@ export default function LogisticsOrderDesk({
                   orderId={order.id}
                   type="packing"
                   variant="admin"
-                  label={t("packingLists.download")}
                 />
               </div>
             </AdminCard>

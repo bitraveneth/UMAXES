@@ -293,7 +293,6 @@ export default function ShipmentDeliveryDetail({
                   orderId={order.id}
                   type="packing"
                   variant="admin"
-                  label={t("packingLists.download")}
                 />
               </div>
         </AdminCard>

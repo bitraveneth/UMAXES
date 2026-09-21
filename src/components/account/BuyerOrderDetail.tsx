@@ -230,21 +230,20 @@ export default function BuyerOrderDetail({
                     <p className="mt-4 font-display text-sm font-bold text-black">
                       {doc.label}
                     </p>
-                    <p className="mt-1 font-body text-xs text-black">
-                      Choose PDF or Excel
+                    <p className="mt-1 font-body text-xs text-black/55">
+                      Download as PDF or Excel
                     </p>
-                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                    <div className="mt-5 flex flex-wrap items-center gap-2.5">
                       <DocumentDownloadMenu
                         orderId={order.id}
                         type={doc.type}
                         compact
-                        label="Choose format"
                       />
                       <a
                         href={`/api/orders/${order.id}/docs?type=${doc.type}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 font-display text-xs font-semibold text-umx-orange"
+                        className="inline-flex items-center gap-1.5 border border-transparent px-2 py-1.5 font-display text-xs font-semibold text-umx-orange transition hover:border-umx-orange/25 hover:bg-umx-orange-wash/50"
                       >
                         Open
                         <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />

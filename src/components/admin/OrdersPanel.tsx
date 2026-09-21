@@ -428,18 +428,25 @@ function OrderDocLinks({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5"
+      className="flex flex-wrap items-center gap-2"
       onClick={(e) => e.stopPropagation()}
     >
       {docs.map((doc) => (
-        <DocumentDownloadMenu
+        <div
           key={doc.type}
-          orderId={orderId}
-          type={doc.type}
-          compact
-          variant="admin"
-          label={compact ? doc.short : doc.full}
-        />
+          className="inline-flex items-center gap-1.5"
+          title={doc.full}
+        >
+          <span className="font-display text-[10px] font-bold tracking-wide text-[var(--admin-muted)] uppercase">
+            {doc.short}
+          </span>
+          <DocumentDownloadMenu
+            orderId={orderId}
+            type={doc.type}
+            compact
+            variant="admin"
+          />
+        </div>
       ))}
       {hasSlip ? (
         <a
@@ -449,7 +456,7 @@ function OrderDocLinks({
           title={t("orders.viewSlip")}
           className={
             compact
-              ? undefined
+              ? "admin-btn admin-btn-secondary admin-btn-sm"
               : "admin-btn admin-btn-secondary admin-btn-sm !px-2.5 !text-xs"
           }
         >

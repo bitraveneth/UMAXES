@@ -72,7 +72,7 @@ export default async function DocumentsPage() {
             return (
               <li
                 key={order.id}
-                className="group/card overflow-hidden border border-black/10 bg-white shadow-[0_8px_20px_rgba(14,36,56,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-umx-orange/50 hover:shadow-[0_14px_32px_rgba(27,79,114,0.12)]"
+                className="group/card border border-black/10 bg-white shadow-[0_8px_20px_rgba(14,36,56,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-umx-orange/50 hover:shadow-[0_14px_32px_rgba(27,79,114,0.12)]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/8 px-5 py-4 sm:px-6">
                   <div className="min-w-0">
@@ -154,21 +154,20 @@ export default async function DocumentsPage() {
                             <p className="font-display text-sm font-bold text-black">
                               {doc.label}
                             </p>
-                            <p className="mt-0.5 font-body text-xs text-black">
-                              Choose PDF or Excel
+                            <p className="mt-0.5 font-body text-xs text-black/55">
+                              Download as PDF or Excel
                             </p>
-                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                            <div className="mt-3 flex flex-wrap items-center gap-2.5">
                               <DocumentDownloadMenu
                                 orderId={order.id}
                                 type={doc.type}
                                 compact
-                                label="Choose format"
                               />
                               <a
                                 href={`/api/orders/${order.id}/docs?type=${doc.type}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 font-display text-xs font-semibold text-umx-orange"
+                                className="inline-flex items-center gap-1 border border-transparent px-2 py-1.5 font-display text-xs font-semibold text-umx-orange transition hover:border-umx-orange/25 hover:bg-umx-orange-wash/50"
                               >
                                 Open
                                 <ExternalLink className="h-3 w-3" strokeWidth={2} />

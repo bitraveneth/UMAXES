@@ -384,14 +384,10 @@ export default function B2BCheckout() {
                   Download PI
                 </p>
                 <p className="mt-0.5 font-body text-xs text-black/55">
-                  Choose PDF or Excel.
+                  Download as PDF or Excel.
                 </p>
               </div>
-              <DocumentDownloadMenu
-                orderId={doneOrderId}
-                type="pi"
-                label="Choose format"
-              />
+              <DocumentDownloadMenu orderId={doneOrderId} type="pi" />
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">

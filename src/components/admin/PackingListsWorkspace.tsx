@@ -204,7 +204,6 @@ export default function PackingListsWorkspace({
                             orderId={row.id}
                             type="packing"
                             variant="admin"
-                            label={t("packingLists.download")}
                           />
                         </div>
                       </div>
