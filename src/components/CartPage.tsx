@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { EmptyCart } from "@/components/EmptyCart";
 import { CaseQtyStepper } from "@/components/QtyStepper";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
-import { formatCases, formatPack } from "@/lib/pack";
+import { formatCases, casesFromPcs } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
 import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import OrderQtySummary from "@/components/account/OrderQtySummary";
@@ -102,8 +102,11 @@ export default function CartPage() {
                                 "On request"
                               )}
                             </p>
-                            <p className="mt-0.5 font-body text-xs text-black/45">
-                              {formatPack(line.quantity)}
+                            <p className="mt-0.5 font-body text-xs text-black/55">
+                              <span className="mr-1.5 inline-block rounded bg-black/[0.06] px-1.5 py-0.5 font-display text-[11px] font-bold tabular-nums text-black">
+                                Qty {casesFromPcs(line.quantity)}
+                              </span>
+                              {line.quantity.toLocaleString()} pcs
                             </p>
                           </div>
                           <p className="shrink-0 text-right font-display text-base font-bold text-black">

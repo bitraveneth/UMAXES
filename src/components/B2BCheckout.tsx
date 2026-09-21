@@ -14,7 +14,6 @@ import { isChannelBuyerLevel } from "@/lib/channel-level";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import {
   TEST_STATION_NAME,
-  formatTestStationMessage,
   formatTestStationQty,
 } from "@/lib/test-station";
 import {
@@ -762,8 +761,7 @@ export default function B2BCheckout() {
                         {formatTestStationQty(stationQty)}
                       </p>
                       <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        {formatTestStationMessage(stationQty)} Added
-                        automatically from Test Station stock.
+                        Free kits · 1 per case · taken from stock
                       </p>
                     </>
                   ) : (channel?.testStationsPerCase || 0) > 0 ? (
@@ -772,8 +770,7 @@ export default function B2BCheckout() {
                         Test stations
                       </p>
                       <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        {formatTestStationMessage(0)} Kits add when this order
-                        includes full cases.
+                        1 free kit per case when you order full cases
                       </p>
                     </>
                   ) : (
@@ -845,9 +842,12 @@ export default function B2BCheckout() {
                         <StorePrice amount={l.unitPrice * l.quantity} />
                       </p>
                     </div>
-                    <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                      <p className="font-body text-xs text-black/55">
-                        {formatPack(l.quantity)}
+                    <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                      <p className="font-body text-xs text-black/65">
+                        <span className="mr-1.5 inline-block rounded bg-black/[0.06] px-1.5 py-0.5 font-display text-[11px] font-bold tabular-nums text-black">
+                          Qty {casesFromPcs(l.quantity)}
+                        </span>
+                        {l.quantity.toLocaleString()} pcs
                         {l.quantity < l.moq ? ` · MOQ ${l.moq} pcs` : ""}
                       </p>
                       {showPrices ? (
@@ -868,15 +868,18 @@ export default function B2BCheckout() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <p className="font-display text-sm font-semibold leading-snug text-black">
-                      {TEST_STATION_NAME} · {formatTestStationQty(stationQty)}
+                      {TEST_STATION_NAME}
                     </p>
                     <p className="shrink-0 font-display text-sm font-semibold tabular-nums text-black">
                       $0
                     </p>
                   </div>
-                  <p className="mt-1.5 font-body text-xs leading-relaxed text-black/55">
-                    {formatTestStationMessage(stationQty)}
-                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 font-body text-xs text-black/55">
+                    <span className="rounded bg-[#eef3f7] px-1.5 py-0.5 font-display text-[11px] font-bold tabular-nums text-[#1b4f72]">
+                      Qty {stationQty}
+                    </span>
+                    <span>1 device each · free</span>
+                  </div>
                 </div>
               </li>
             ) : null}

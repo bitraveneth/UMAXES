@@ -23,7 +23,7 @@ import {
 } from "@/hooks/useStoreChrome";
 import { flavors, product, type Flavor, type FlavorId } from "@/lib/assets";
 import {
-  formatTestStationMessage,
+  TEST_STATION_PER_CASE_COPY,
   formatTestStationQty,
 } from "@/lib/test-station";
 
@@ -568,9 +568,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                         : "Add a case to include a test station"}
                     </p>
                     <p className="mt-1 font-body text-sm text-black/55">
-                      {stationQty > 0
-                        ? `${formatTestStationMessage(stationQty)} Free with this order — taken from Test Station stock.`
-                        : formatTestStationMessage(0)}
+                      {TEST_STATION_PER_CASE_COPY}. Free with this order.
                     </p>
                   </div>
                 ) : null}

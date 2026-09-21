@@ -1,10 +1,7 @@
 "use client";
 
 import { formatPack } from "@/lib/pack";
-import {
-  formatTestStationMessage,
-  formatTestStationQty,
-} from "@/lib/test-station";
+import { formatTestStationQty } from "@/lib/test-station";
 
 export default function OrderQtySummary({
   pcs,
@@ -29,21 +26,10 @@ export default function OrderQtySummary({
       >
         {formatPack(pcs)}
       </p>
-      <p className="mt-2 font-body text-xs text-black/50">
-        1 case = 95 pieces. Sold by the case.
-      </p>
       {stationQty > 0 ? (
-        <div className="mt-3 border-t border-black/8 pt-3">
-          <p className="font-display text-[0.7rem] font-semibold tracking-[0.16em] text-black/45 uppercase">
-            Test stations
-          </p>
-          <p className="mt-1 font-display text-lg font-bold tracking-tight text-black">
-            {formatTestStationQty(stationQty)}
-          </p>
-          <p className="mt-1 font-body text-sm leading-relaxed text-black/60">
-            {formatTestStationMessage(stationQty)}
-          </p>
-        </div>
+        <p className="mt-2 font-body text-sm text-black/60">
+          Incl. {formatTestStationQty(stationQty)}
+        </p>
       ) : null}
     </div>
   );
