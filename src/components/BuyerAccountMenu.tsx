@@ -11,7 +11,9 @@ import {
   Package,
   Truck,
   UserRound,
+  Wallet,
 } from "lucide-react";
+import { isChannelBuyerLevel } from "@/lib/channel-level";
 
 type MePayload = {
   name: string | null;
@@ -49,6 +51,12 @@ const MENU_LINKS = [
   { href: "/account/profile", label: "Profile", icon: UserRound },
   { href: "/account", label: "Overview", icon: LayoutDashboard },
   { href: "/account/orders", label: "Orders", icon: Package },
+  {
+    href: "/account/rebate",
+    label: "Rebate",
+    icon: Wallet,
+    channelOnly: true,
+  },
   { href: "/account/documents", label: "Documents", icon: FileText },
   { href: "/account/tracking", label: "Tracking", icon: Truck },
 ] as const;
@@ -149,7 +157,11 @@ export default function BuyerAccountMenu() {
           </div>
 
           <nav className="flex flex-col p-2">
-            {MENU_LINKS.map((item) => {
+            {MENU_LINKS.filter(
+              (item) =>
+                !("channelOnly" in item && item.channelOnly) ||
+                isChannelBuyerLevel(level),
+            ).map((item) => {
               const Icon = item.icon;
               return (
                 <Link

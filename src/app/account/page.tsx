@@ -13,7 +13,8 @@ import {
   buyerStatusLabel,
 } from "@/lib/buyer-order";
 import { Package } from "lucide-react";
-import { quoteForCompany } from "@/lib/rebate";
+import OverviewRebateCard from "@/components/account/OverviewRebateCard";
+import { isChannelBuyerLevel } from "@/lib/channel-level";
 
 export const metadata = {
   title: "Account · UMAXES",
@@ -59,7 +60,7 @@ export default async function AccountPage() {
     );
   }
 
-  const [company, openOrders, paymentPending, wishlistCount, recentOrders, addresses, rebate] =
+  const [company, openOrders, paymentPending, wishlistCount, recentOrders, addresses] =
     await Promise.all([
       companyId
         ? prisma.company.findUnique({
@@ -130,7 +131,6 @@ export default async function AccountPage() {
             },
           })
         : [],
-      companyId ? quoteForCompany(companyId, 0) : Promise.resolve(null),
     ]);
 
   return (
@@ -143,36 +143,8 @@ export default async function AccountPage() {
         wishlistCount={wishlistCount}
       />
 
-      {rebate?.eligible ? (
-        <section className="mt-8 rounded-2xl border border-black/10 bg-white p-5 sm:p-6">
-          <p className="font-display text-[10px] font-semibold tracking-[0.16em] text-umx-orange uppercase">
-            Volume rebate
-          </p>
-          <h2 className="mt-1 font-display text-xl font-extrabold">
-            ${rebate.rebateBalanceUsd.toFixed(2)} available
-          </h2>
-          <p className="mt-2 font-body text-sm text-black/70">
-            Auto-applied to your next order. Not cash.
-            {rebate.testStationsPerCase
-              ? ` Each case includes 1 test station with 1 device.`
-              : ""}
-          </p>
-          <p className="mt-2 font-body text-sm text-black/70">
-            Paid this month: {rebate.monthPaidQty.toLocaleString()} pcs
-            {rebate.monthProjectedRate
-              ? ` · $${rebate.monthProjectedRate.toFixed(2)}/pc`
-              : " · under the first rebate tier"}
-            {rebate.nextTierQty != null
-              ? ` · ${rebate.nextTierQty.toLocaleString()} more paid pcs to $${(rebate.nextTierRate ?? 0).toFixed(2)}/pc`
-              : ""}
-            .
-          </p>
-          {rebate.isFirstOrder ? (
-            <p className="mt-2 font-body text-sm text-black/70">
-              First order: 20 unpaid pcs per 5 cases, and no rebate on that order.
-            </p>
-          ) : null}
-        </section>
+      {isChannelBuyerLevel(company?.level) ? (
+        <OverviewRebateCard walletUsd={company?.rebateBalanceUsd ?? 0} />
       ) : null}
 
       <section className="mt-10">

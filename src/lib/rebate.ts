@@ -8,8 +8,10 @@ import {
   TEST_STATION_SKU,
   formatTestStationLine,
 } from "@/lib/test-station";
+import type { BuyerRebateStatus } from "@/lib/rebate-types";
 
 export { TEST_STATION_NAME, TEST_STATION_PER_CASE_COPY, TEST_STATION_SKU, formatTestStationLine };
+export type { BuyerRebateLedger, BuyerRebateMonth, BuyerRebateStatus } from "@/lib/rebate-types";
 
 export function grantsTestStations(policy: ChannelPolicy | null | undefined) {
   return Boolean(
@@ -305,6 +307,73 @@ export function emptyQuote(sellingQty: number): ChannelQuote {
     nextTierQty: null,
     nextTierRate: null,
     monthKey: "",
+  };
+}
+
+export async function getBuyerRebateStatus(
+  companyId: string,
+): Promise<BuyerRebateStatus | null> {
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: {
+      id: true,
+      level: true,
+      rebateBalanceUsd: true,
+    },
+  });
+  if (!company || !isChannelLevel(company.level)) return null;
+
+  const policy = await getPolicyForLevel(company.level);
+  const quote = await quoteForCompany(company.id, 0);
+  const [months, ledger] = await Promise.all([
+    prisma.rebateMonth.findMany({
+      where: { companyId: company.id },
+      orderBy: { yearMonth: "desc" },
+      take: 12,
+      select: {
+        yearMonth: true,
+        paidQty: true,
+        tierRate: true,
+        rebateAmount: true,
+        issuedAmount: true,
+        status: true,
+      },
+    }),
+    prisma.rebateLedger.findMany({
+      where: { companyId: company.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        type: true,
+        amount: true,
+        note: true,
+        createdAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    level: company.level,
+    live: isPolicyLive(policy),
+    walletUsd: roundMoney(company.rebateBalanceUsd),
+    monthKey: quote.monthKey,
+    monthPaidQty: quote.monthPaidQty,
+    monthProjectedRate: quote.monthProjectedRate,
+    nextTierQty: quote.nextTierQty,
+    nextTierRate: quote.nextTierRate,
+    isFirstOrder: quote.isFirstOrder,
+    pcsPerCase: policy?.pcsPerCase || 95,
+    testStationsPerCase: policy?.testStationsPerCase || 0,
+    firstOrderCases: policy?.firstOrderCases || 5,
+    firstOrderUnpaidPcs: policy?.firstOrderUnpaidPcs || 20,
+    unitPrice: policy?.unitPrice ?? null,
+    tiers: policy?.tiers ?? [],
+    months,
+    ledger: ledger.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+    })),
   };
 }
 

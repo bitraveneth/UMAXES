@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Gift, Pencil, Plus, Trash2, Wallet } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
 import { CASE_MOQ_PCS, casesFromPcs, formatCases } from "@/lib/pack";
+import { isChannelBuyerLevel } from "@/lib/channel-level";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import {
   TEST_STATION_NAME,
@@ -69,6 +70,7 @@ export default function B2BCheckout() {
   const showPrices = useShowStorePrices();
   const { items, clear, quantity, cases } = useCart();
   const canManageAddresses = session?.user?.companyRole !== "FINANCE";
+  const isChannelBuyer = isChannelBuyerLevel(session?.user?.companyLevel);
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
@@ -567,60 +569,109 @@ export default function B2BCheckout() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-black/8 bg-white p-5 shadow-[0_12px_32px_rgba(61,22,5,0.04)] sm:p-6">
-          {channel?.hideCoupon ? (
-            <>
-              <h2 className="font-display text-lg font-semibold">Channel rebate</h2>
-              <div className="mt-3 space-y-2 font-body text-sm text-black/70">
-                {channel.isFirstOrder ? (
-                  <p>
-                    First order: {channel.firstOrderUnpaidPcs} pcs not charged
-                    {showPrices && channel.firstOrderDiscountUsd
-                      ? ` (−$${channel.firstOrderDiscountUsd.toFixed(2)})`
-                      : ""}
-                    . No monthly rebate on this order.
-                  </p>
-                ) : channel.rebateBalanceUsd > 0 ? (
-                  <p>
-                    Rebate on account: ${channel.rebateBalanceUsd.toFixed(2)}. This
-                    order applies ${channel.rebateAppliedUsd.toFixed(2)}.
-                  </p>
-                ) : (
-                  <p>No rebate balance yet. Volume counts after payment is confirmed.</p>
-                )}
-                {stationQty > 0 ? (
-                  <p>
-                    This order includes {formatTestStationLine(stationQty)}.{" "}
-                    {TEST_STATION_PER_CASE_COPY}. Taken from Test Station stock.
-                  </p>
-                ) : (channel?.testStationsPerCase || 0) > 0 ? (
-                  <p>
-                    {TEST_STATION_PER_CASE_COPY}. Kits are added automatically
-                    and deducted from Test Station stock.
-                  </p>
-                ) : null}
-                {channel.nextTierQty != null ? (
-                  <p>
-                    Paid this month: {channel.monthPaidQty.toLocaleString()} pcs.
-                    {channel.monthProjectedRate
-                      ? ` Current rate $${channel.monthProjectedRate.toFixed(2)}/pc.`
-                      : ""}{" "}
-                    {channel.nextTierQty.toLocaleString()} more paid pcs to $
-                    {(channel.nextTierRate ?? 0).toFixed(2)}/pc.
-                  </p>
-                ) : (
-                  <p>
-                    Paid this month: {channel.monthPaidQty.toLocaleString()} pcs
-                    {channel.monthProjectedRate
-                      ? ` · $${channel.monthProjectedRate.toFixed(2)}/pc`
-                      : ""}
-                    .
-                  </p>
-                )}
+        {isChannelBuyer ? (
+          <section className="overflow-hidden rounded-2xl border border-black/8 bg-white shadow-[0_12px_32px_rgba(61,22,5,0.04)]">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/8 bg-[#eef3f7] px-5 py-4 sm:px-6">
+              <div>
+                <p className="font-display text-[0.65rem] font-semibold tracking-[0.18em] text-[#1b4f72] uppercase">
+                  Channel program
+                </p>
+                <h2 className="mt-1 font-display text-lg font-semibold text-black">
+                  This order
+                </h2>
               </div>
-            </>
-          ) : null}
-          <label className={channel?.hideCoupon ? "mt-4 block" : "block"}>
+              <Link
+                href="/account/rebate"
+                className="font-display text-sm font-semibold text-[#1b4f72] transition hover:text-umx-orange"
+              >
+                Rebate status →
+              </Link>
+            </div>
+            <div className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
+              <div className="flex gap-3 border border-black/8 bg-umx-cream-bright p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-white text-[#1b4f72]">
+                  <Wallet className="h-4 w-4" strokeWidth={1.85} />
+                </span>
+                <div className="min-w-0">
+                  {channel?.isFirstOrder ? (
+                    <>
+                      <p className="font-display text-sm font-bold text-black">
+                        First order
+                      </p>
+                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
+                        {channel.firstOrderUnpaidPcs
+                          ? `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pcs on this order`
+                          : "First-order gift applies when the case count qualifies"}
+                        {showPrices && channel.firstOrderDiscountUsd
+                          ? ` (−$${channel.firstOrderDiscountUsd.toFixed(2)})`
+                          : ""}
+                        . Monthly rebate starts after this order is paid.
+                      </p>
+                    </>
+                  ) : channel && channel.rebateBalanceUsd > 0 ? (
+                    <>
+                      <p className="font-display text-sm font-bold text-black">
+                        ${channel.rebateAppliedUsd.toFixed(2)} credit
+                      </p>
+                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
+                        Applying from ${channel.rebateBalanceUsd.toFixed(2)} on
+                        account. Credit is not cash.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-display text-sm font-bold text-black">
+                        No credit on this order
+                      </p>
+                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
+                        Wallet and monthly volume live on your Rebate page.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-3 border border-black/8 bg-umx-cream-bright p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-white text-[#1b4f72]">
+                  <Gift className="h-4 w-4" strokeWidth={1.85} />
+                </span>
+                <div className="min-w-0">
+                  {stationQty > 0 ? (
+                    <>
+                      <p className="font-display text-sm font-bold text-black">
+                        {formatTestStationLine(stationQty)}
+                      </p>
+                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
+                        {TEST_STATION_PER_CASE_COPY}. Added automatically.
+                      </p>
+                    </>
+                  ) : (channel?.testStationsPerCase || 0) > 0 ? (
+                    <>
+                      <p className="font-display text-sm font-bold text-black">
+                        Test stations
+                      </p>
+                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
+                        {TEST_STATION_PER_CASE_COPY}. Kits add when this order
+                        includes full cases.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-display text-sm font-bold text-black">
+                        Test stations
+                      </p>
+                      <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
+                        Qualifying channel orders include one kit per case.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="rounded-2xl border border-black/8 bg-white p-5 shadow-[0_12px_32px_rgba(61,22,5,0.04)] sm:p-6">
+          <label className="block">
             <span className="font-display text-sm font-semibold">Notes</span>
             <textarea
               value={notes}
