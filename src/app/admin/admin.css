@@ -697,3 +697,160 @@
   gap: 2px;
   height: 2.5rem;
 }
+
+.admin-toast {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+  border-radius: 0.9rem;
+  padding: 0.85rem 1.05rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+  animation: admin-toast-in 0.22s ease;
+}
+
+.admin-toast-success {
+  border: 1px solid color-mix(in srgb, var(--admin-success-500) 35%, transparent);
+  background: var(--admin-success-50);
+  color: var(--admin-success-700);
+}
+
+.admin-toast-error {
+  border: 1px solid color-mix(in srgb, var(--admin-error-500) 35%, transparent);
+  background: var(--admin-error-50);
+  color: var(--admin-error-700);
+}
+
+@keyframes admin-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wh-pack-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.2;
+  background: var(--admin-brand-50);
+  color: var(--admin-brand-700);
+  border: 1px solid color-mix(in srgb, var(--admin-brand-500) 16%, transparent);
+}
+
+.wh-mode {
+  display: inline-flex;
+  padding: 0.2rem;
+  border-radius: 0.85rem;
+  background: var(--admin-gray-100);
+}
+
+.wh-mode button {
+  border: 0;
+  border-radius: 0.7rem;
+  padding: 0.42rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--admin-muted);
+  cursor: pointer;
+}
+
+.wh-mode button[aria-pressed="true"] {
+  background: var(--admin-card);
+  color: var(--admin-brand-700);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.wh-stepper {
+  display: flex;
+  align-items: stretch;
+  height: 4.35rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--admin-border);
+  overflow: hidden;
+  background: var(--admin-input-bg);
+}
+
+.wh-stepper button {
+  width: 3.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-brand-500);
+  background: var(--admin-brand-25);
+  cursor: pointer;
+  border: 0;
+}
+
+.wh-stepper button:hover:not(:disabled) {
+  background: var(--admin-brand-50);
+}
+
+.wh-stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wh-stepper input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  color: var(--admin-text);
+  outline: none;
+}
+
+.wh-flavor {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1.1rem;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--admin-border);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.wh-flavor:last-child {
+  border-bottom: 0;
+}
+
+.wh-flavor:hover {
+  background: var(--admin-hover);
+}
+
+.wh-flavor-on {
+  background: var(--admin-brand-50);
+  box-shadow: inset 3px 0 0 var(--admin-brand-500);
+}
+
+.wh-flavor-on:hover {
+  background: var(--admin-brand-50);
+}
+
+.wh-flavor-bonus {
+  background: var(--admin-gray-25);
+}

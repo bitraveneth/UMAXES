@@ -69,7 +69,7 @@ export type AdminNavItem = {
 const SA: UserRole = "SUPER_ADMIN";
 const AD: UserRole = "ADMIN";
 
-/** Dropship ops nav — warehouse pages removed from menu. */
+/** Dropship ops — multi-warehouse bins stay hidden; simple stock is on Warehouse. */
 export const adminNav: AdminNavItem[] = [
   {
     href: "/admin",
@@ -143,6 +143,7 @@ export const adminNav: AdminNavItem[] = [
   { href: "/admin/commissions", label: "Commissions", roles: [SA, AD, "SALES"], group: "money" },
   { href: "/admin/rma", label: "RMA", roles: [SA, AD, "SALES"], group: "money" },
   { href: "/admin/catalog", label: "Catalog", roles: [SA, AD], group: "catalog" },
+  { href: "/admin/warehouse", label: "Warehouse", roles: [SA, AD], group: "catalog" },
   { href: "/admin/faq", label: "FAQ", roles: [SA, AD], group: "catalog" },
   { href: "/admin/reports", label: "Reports", roles: [SA, AD, "SALES"], group: "insights" },
   { href: "/admin/activity", label: "Activity", roles: [SA, AD], group: "insights" },
