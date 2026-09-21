@@ -184,9 +184,8 @@ export default function CreateOrderPanel({
     if (autoSelected.current || !initialCompanyId) return;
     if (!companies.some((c) => c.id === initialCompanyId)) return;
     autoSelected.current = true;
-    void selectCompany(initialCompanyId);
-    // Intentionally run when the linked company list arrives.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const id = initialCompanyId;
+    void Promise.resolve().then(() => selectCompany(id));
   }, [initialCompanyId, companies]);
 
   function setQty(sku: string, stock: number, raw: string) {
