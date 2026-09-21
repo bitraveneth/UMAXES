@@ -7,8 +7,9 @@ import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
 import { PCS_PER_CASE, formatPack, snapToCasePcs } from "@/lib/pack";
-import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { DualStorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
@@ -76,6 +77,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const router = useRouter();
   const { addMany, couponCode: savedCoupon, setCouponCode } = useCart();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor, retailPriceFor } = useCatalogPrices();
   const [lines, setLines] = useState<OrderLine[]>(() => defaultLines(flavor.id));
   const [draftReady, setDraftReady] = useState(false);
   const [added, setAdded] = useState(false);
@@ -86,6 +88,8 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const [couponMessage, setCouponMessage] = useState("");
   const [couponBusy, setCouponBusy] = useState(false);
   const compactChrome = useCompactMobileStoreChrome();
+  const unitPrice = unitPriceFor(flavor.id);
+  const retailPrice = retailPriceFor(flavor.id);
 
   const gallery = useMemo(
     () => [
@@ -132,11 +136,13 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
 
   const subtotal = useMemo(
     () =>
-      lines.reduce((sum, l) => {
-        const item = flavors.find((f) => f.id === l.flavorId);
-        return sum + (item?.price ?? 0) * l.quantity;
-      }, 0),
-    [lines],
+      lines.reduce((sum, l) => sum + unitPriceFor(l.flavorId) * l.quantity, 0),
+    [lines, unitPriceFor],
+  );
+  const retailSubtotal = useMemo(
+    () =>
+      lines.reduce((sum, l) => sum + retailPriceFor(l.flavorId) * l.quantity, 0),
+    [lines, retailPriceFor],
   );
 
   const payable = Math.max(0, subtotal - discount);
@@ -313,9 +319,14 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 {product.name}
               </span>
             </div>
-            <p className="mt-2.5 font-display text-[1.75rem] font-bold tracking-tight text-black sm:mt-3 sm:text-4xl">
-              <StorePrice amount={flavor.price} />
-            </p>
+            <div className="mt-2.5 sm:mt-3">
+              <DualStorePrice
+                amount={unitPrice}
+                retailAmount={retailPrice}
+                className="font-display text-[1.75rem] font-bold tracking-tight text-black sm:text-4xl"
+                retailClassName="mt-1 block font-body text-sm font-medium tracking-normal text-black/45 sm:text-base"
+              />
+            </div>
             <p className="mt-1 font-body text-sm text-black/45">per piece</p>
             <PackNote className="mt-4" />
 
@@ -366,7 +377,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               </div>
 
               <div className="mt-6 overflow-hidden rounded-2xl ring-1 ring-black/10">
-                <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
+                <div className="hidden grid-cols-[minmax(0,1fr)_7.5rem_8.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
                   <p className="font-display text-sm font-bold text-black">
                     Flavor
                   </p>
@@ -387,7 +398,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     return (
                       <li
                         key={line.key}
-                        className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] sm:items-center sm:gap-4"
+                        className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_7.5rem_8.75rem] sm:items-center sm:gap-4"
                       >
                         <label className="min-w-0">
                           <span className="mb-1.5 block font-display text-sm font-bold text-black sm:sr-only">
@@ -426,7 +437,12 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                               Price / pc
                             </p>
                             <p className="font-display text-sm font-semibold text-black sm:text-right">
-                              <StorePrice amount={item.price} />
+                              <DualStorePrice
+                                amount={unitPriceFor(item.id)}
+                                retailAmount={retailPriceFor(item.id)}
+                                compact
+                                retailClassName="mt-0.5 block font-body text-[0.7rem] font-medium text-black/45"
+                              />
                             </p>
                           </div>
                           <div className="min-w-0">
@@ -466,7 +482,15 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   Total
                 </p>
                 <p className="mt-1 font-display text-2xl font-bold text-black sm:text-3xl">
-                  {showPrices ? <StorePrice amount={payable} /> : "On request"}
+                  {showPrices ? (
+                    <DualStorePrice
+                      amount={payable}
+                      retailAmount={retailSubtotal}
+                      retailClassName="mt-1 block font-body text-sm font-medium tracking-normal text-black/45"
+                    />
+                  ) : (
+                    "On request"
+                  )}
                 </p>
                 <p className="mt-1 font-body text-sm text-black/45">
                   {formatPack(totalQty)}

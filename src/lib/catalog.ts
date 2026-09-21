@@ -12,22 +12,30 @@ export async function getCatalogForLevel(level: CustomerLevel) {
       ],
     },
     include: {
-      prices: { where: { level } },
+      prices: { where: { level: { in: [level, "SHOP"] } } },
       inventory: true,
     },
     orderBy: { name: "asc" },
   });
 
-  return products.map((p) => ({
-    id: p.id,
-    sku: p.sku,
-    name: p.name,
-    description: p.description,
-    image: p.image,
-    unitPrice: p.prices[0]?.unitPrice ?? 0,
-    moq: p.prices[0]?.moq ?? CASE_MOQ_PCS,
-    stock: Math.max(0, (p.inventory?.quantity ?? 0) - (p.inventory?.reserved ?? 0)),
-  }));
+  return products.map((p) => {
+    const account = p.prices.find((row) => row.level === level) ?? p.prices[0];
+    const retail = p.prices.find((row) => row.level === "SHOP");
+    return {
+      id: p.id,
+      sku: p.sku,
+      name: p.name,
+      description: p.description,
+      image: p.image,
+      unitPrice: account?.unitPrice ?? 0,
+      retailPrice: retail?.unitPrice ?? account?.unitPrice ?? 0,
+      moq: account?.moq ?? CASE_MOQ_PCS,
+      stock: Math.max(
+        0,
+        (p.inventory?.quantity ?? 0) - (p.inventory?.reserved ?? 0),
+      ),
+    };
+  });
 }
 
 export function roundMoney(n: number) {

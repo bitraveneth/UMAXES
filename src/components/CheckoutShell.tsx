@@ -5,8 +5,9 @@ import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import B2BCheckout from "@/components/B2BCheckout";
-import { StorePrice } from "@/components/StorePrice";
+import { DualStorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { formatCases } from "@/lib/pack";
 import {
   storeTopPadClass,
@@ -14,7 +15,12 @@ import {
 } from "@/hooks/useStoreChrome";
 
 function CheckoutAuthGate() {
-  const { quantity, cases, total } = useCart();
+  const { items, quantity, cases, total } = useCart();
+  const { retailPriceFor } = useCatalogPrices();
+  const retailTotal = items.reduce(
+    (sum, line) => sum + retailPriceFor(line.flavorId) * line.quantity,
+    0,
+  );
 
   return (
     <div className="relative mx-auto max-w-md">
@@ -47,8 +53,13 @@ function CheckoutAuthGate() {
                   {formatCases(cases)}
                 </p>
               </div>
-              <p className="font-display text-lg font-bold text-black">
-                <StorePrice amount={total} />
+              <p className="text-right font-display text-lg font-bold text-black">
+                <DualStorePrice
+                  amount={total}
+                  retailAmount={retailTotal}
+                  compact
+                  retailClassName="mt-0.5 block font-body text-xs font-medium text-black/45"
+                />
               </p>
             </div>
           ) : null}

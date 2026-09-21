@@ -20,7 +20,8 @@ import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
-import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { DualStorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { flavors, product } from "@/lib/assets";
 import { PACK_COPY, formatCases } from "@/lib/pack";
 
@@ -221,9 +222,11 @@ function ComingSoonCard() {
 function ShopAside({
   cases,
   total,
+  retailTotal,
 }: {
   cases: number;
   total: number;
+  retailTotal: number;
 }) {
   const showPrices = useShowStorePrices();
   return (
@@ -249,7 +252,15 @@ function ShopAside({
               Subtotal
             </p>
             <p className="mt-1 font-display text-3xl font-extrabold tracking-tight text-black">
-              {showPrices ? `$${total.toFixed(2)}` : "On request"}
+              {showPrices ? (
+                <DualStorePrice
+                  amount={total}
+                  retailAmount={retailTotal}
+                  retailClassName="mt-1 block font-body text-sm font-medium tracking-normal text-black/45"
+                />
+              ) : (
+                "On request"
+              )}
             </p>
             <p className="mt-2 font-body text-sm text-black/55">
               {cases === 0
@@ -327,9 +338,16 @@ function ShopAside({
 }
 
 export default function ShopCatalog() {
-  const { quantity, cases, total } = useCart();
+  const { items, quantity, cases, total } = useCart();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor, retailPriceFor } = useCatalogPrices();
   const compactChrome = useCompactMobileStoreChrome();
+  const unitPrice = unitPriceFor(flavors[0].id);
+  const retailPrice = retailPriceFor(flavors[0].id);
+  const retailTotal = items.reduce(
+    (sum, line) => sum + retailPriceFor(line.flavorId) * line.quantity,
+    0,
+  );
 
   return (
     <div
@@ -399,7 +417,12 @@ export default function ShopCatalog() {
                       Price
                     </p>
                     <p className="mt-1 font-display text-4xl font-extrabold tracking-tight text-black">
-                      <StorePrice amount={product.price} />
+                      <DualStorePrice
+                        amount={unitPrice}
+                        retailAmount={retailPrice}
+                        className="font-display text-4xl font-extrabold tracking-tight text-black"
+                        retailClassName="mt-1 block font-body text-sm font-medium tracking-normal text-black/45 sm:text-base"
+                      />
                     </p>
                     <p className="mt-2 max-w-xs font-body text-sm text-black/50">
                       {PACK_COPY}
@@ -418,7 +441,7 @@ export default function ShopCatalog() {
           <ComingSoonCard />
           </div>
 
-          <ShopAside cases={cases} total={total} />
+          <ShopAside cases={cases} total={total} retailTotal={retailTotal} />
         </div>
       </div>
 

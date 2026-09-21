@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
 import { CASE_MOQ_PCS, formatPack } from "@/lib/pack";
-import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { DualStorePrice, useShowStorePrices } from "@/components/StorePrice";
 
 type Address = {
   id: string;
@@ -26,6 +26,7 @@ type CatalogProduct = {
   sku: string;
   name: string;
   unitPrice: number;
+  retailPrice: number;
   moq: number;
   image: string | null;
 };
@@ -113,12 +114,17 @@ export default function B2BCheckout() {
       name: priced?.name || flavor?.name || item.flavorId,
       image: priced?.image || flavor?.image || null,
       unitPrice: priced?.unitPrice ?? flavor?.price ?? 0,
+      retailPrice: priced?.retailPrice ?? flavor?.price ?? 0,
       moq: priced?.moq ?? CASE_MOQ_PCS,
     };
   });
 
   const subtotal = lines.reduce(
     (sum, l) => sum + l.unitPrice * l.quantity,
+    0,
+  );
+  const retailSubtotal = lines.reduce(
+    (sum, l) => sum + l.retailPrice * l.quantity,
     0,
   );
   const total = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
@@ -469,7 +475,12 @@ export default function B2BCheckout() {
                   {l.quantity < l.moq ? ` · MOQ ${l.moq} pcs` : ""}
                 </p>
                 <p className="font-display text-sm">
-                  <StorePrice amount={l.unitPrice * l.quantity} />
+                  <DualStorePrice
+                    amount={l.unitPrice * l.quantity}
+                    retailAmount={l.retailPrice * l.quantity}
+                    compact
+                    retailClassName="mt-0.5 block font-body text-xs font-medium text-black/45"
+                  />
                 </p>
               </div>
             </li>
@@ -479,7 +490,12 @@ export default function B2BCheckout() {
           <div className="flex justify-between">
             <span>Subtotal</span>
             <span>
-              <StorePrice amount={subtotal} />
+              <DualStorePrice
+                amount={subtotal}
+                retailAmount={retailSubtotal}
+                compact
+                retailClassName="mt-0.5 block font-body text-xs font-medium text-black/45"
+              />
             </span>
           </div>
           <div className="flex justify-between">
@@ -491,7 +507,12 @@ export default function B2BCheckout() {
           <div className="flex justify-between font-display text-base font-semibold">
             <span>Total</span>
             <span>
-              <StorePrice amount={total} />
+              <DualStorePrice
+                amount={total}
+                retailAmount={retailSubtotal}
+                compact
+                retailClassName="mt-0.5 block font-body text-xs font-medium text-black/45"
+              />
             </span>
           </div>
         </div>
@@ -531,7 +552,12 @@ export default function B2BCheckout() {
           <div className="min-w-0 flex-1">
             <p className="font-body text-xs text-black/55">Total</p>
             <p className="font-display text-lg font-bold tracking-tight text-black">
-              <StorePrice amount={total} />
+              <DualStorePrice
+                amount={total}
+                retailAmount={retailSubtotal}
+                compact
+                retailClassName="mt-0.5 block font-body text-[0.7rem] font-medium text-black/45"
+              />
             </p>
           </div>
           <button

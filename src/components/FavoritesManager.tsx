@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
-import { StorePrice } from "@/components/StorePrice";
+import { DualStorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { getFlavor, product, type FlavorId } from "@/lib/assets";
 
 type Fav = {
@@ -18,6 +19,7 @@ type Fav = {
 
 export default function FavoritesManager() {
   const { add } = useCart();
+  const { unitPriceFor, retailPriceFor } = useCatalogPrices();
   const [favorites, setFavorites] = useState<Fav[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -105,7 +107,8 @@ export default function FavoritesManager() {
         const flavor = getFlavor(f.sku as FlavorId);
         const href = `/product/${f.sku}`;
         const image = f.image || flavor?.image || null;
-        const price = flavor?.price;
+        const price = unitPriceFor(f.sku) || flavor?.price;
+        const retail = retailPriceFor(f.sku);
 
         return (
           <li
@@ -146,7 +149,11 @@ export default function FavoritesManager() {
               </Link>
               {price != null ? (
                 <p className="mt-2 font-display text-xl font-bold text-umx-orange">
-                  <StorePrice amount={price} />
+                  <DualStorePrice
+                    amount={price}
+                    retailAmount={retail}
+                    retailClassName="mt-0.5 block font-body text-sm font-medium tracking-normal text-black/45"
+                  />
                 </p>
               ) : (
                 <p className="mt-2 font-body text-sm text-black">{f.sku}</p>

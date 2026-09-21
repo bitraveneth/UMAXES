@@ -4,16 +4,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { EmptyCart } from "@/components/EmptyCart";
-import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { DualStorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
 import { formatPack } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { getFlavor, product } from "@/lib/assets";
 
 export default function CartDrawer() {
   const { items, quantity, open, setOpen, setQuantity, remove, total } =
     useCart();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor, retailPriceFor } = useCatalogPrices();
+  const retailTotal = items.reduce(
+    (sum, line) => sum + retailPriceFor(line.flavorId) * line.quantity,
+    0,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -95,7 +101,13 @@ export default function CartDrawer() {
                       </p>
                       <p className="mt-0.5 font-display text-sm text-black/60">
                         {showPrices ? (
-                          <>${flavor.price.toFixed(2)} / pc</>
+                          <DualStorePrice
+                            amount={unitPriceFor(flavor.id)}
+                            retailAmount={retailPriceFor(flavor.id)}
+                            suffix=" / pc"
+                            compact
+                            retailClassName="mt-0.5 block font-body text-xs font-medium text-black/45"
+                          />
                         ) : (
                           "On request"
                         )}
@@ -134,8 +146,13 @@ export default function CartDrawer() {
             <PackNote className="mb-3" />
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-sm text-black/60">Subtotal</span>
-              <span className="font-display text-lg font-semibold text-black">
-                <StorePrice amount={total} />
+              <span className="text-right font-display text-lg font-semibold text-black">
+                <DualStorePrice
+                  amount={total}
+                  retailAmount={retailTotal}
+                  compact
+                  retailClassName="mt-0.5 block font-body text-xs font-medium text-black/45"
+                />
               </span>
             </div>
             <Link
