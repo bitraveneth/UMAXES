@@ -152,8 +152,8 @@ export default function ProductIntroduction() {
             </div>
           </div>
 
-          {/* Right — 80K watermark + full-size body card */}
-          <div className="relative flex min-w-0 flex-col pt-[4.5rem] sm:pt-24 lg:pt-28">
+          {/* Right — 80K watermark + body card */}
+          <div className="relative min-w-0 pt-[4.5rem] sm:pt-24 lg:pt-28">
             <div
               aria-hidden
               className="pointer-events-none absolute top-0 right-0 select-none font-display text-[clamp(5.75rem,16vw,10rem)] font-extrabold leading-[0.82] tracking-[-0.07em] text-black/[0.07] sm:right-1"
@@ -161,8 +161,8 @@ export default function ProductIntroduction() {
               80K
             </div>
 
-            <div className="relative flex flex-1 flex-col justify-center rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-7 py-9 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-9 sm:py-11 lg:min-h-[28rem] lg:px-10 lg:py-12">
-              <div className="space-y-5 font-body text-base leading-relaxed text-black/65 sm:text-lg sm:leading-relaxed">
+            <div className="relative rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
+              <div className="space-y-3.5 font-body text-base leading-relaxed text-black/65 sm:text-lg">
                 <p>
                   Umaxes HookaMax 80k Disposable Vape is a disposable vape with
                   at most{" "}
