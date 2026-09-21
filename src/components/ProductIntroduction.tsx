@@ -70,6 +70,10 @@ export default function ProductIntroduction() {
         aria-hidden
         className="pointer-events-none absolute -top-20 right-0 h-72 w-72 translate-x-1/4 rounded-full bg-umx-cream-deep/50 blur-3xl"
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-10 bottom-8 h-64 w-64 rounded-full bg-umx-orange-wash/40 blur-3xl"
+      />
 
       <div className="relative mx-auto max-w-[1400px]">
         <header className="mx-auto mb-12 max-w-4xl text-center sm:mb-14 lg:mb-16">
@@ -92,11 +96,11 @@ export default function ProductIntroduction() {
           </h2>
         </header>
 
-        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 xl:gap-16">
+        <div className="grid items-stretch gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 xl:gap-16">
           {/* Left — devices; pills hover-reveal on fine pointers only */}
-          <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
+          <div className="relative mx-auto flex w-full max-w-2xl items-center lg:max-w-none">
             <div
-              className="group relative mx-auto aspect-[4/5] w-full max-w-[36rem] outline-none lg:max-w-none lg:min-h-[40rem] lg:aspect-auto"
+              className="group relative mx-auto aspect-[4/5] w-full max-w-[36rem] outline-none lg:max-w-none lg:min-h-[42rem] lg:aspect-auto"
               tabIndex={0}
             >
               <Image
@@ -148,8 +152,8 @@ export default function ProductIntroduction() {
             </div>
           </div>
 
-          {/* Right — clean 80K watermark + body card */}
-          <div className="relative min-w-0 pt-[4.5rem] sm:pt-24 lg:pt-28">
+          {/* Right — 80K watermark + full-size body card */}
+          <div className="relative flex min-w-0 flex-col pt-[4.5rem] sm:pt-24 lg:pt-28">
             <div
               aria-hidden
               className="pointer-events-none absolute top-0 right-0 select-none font-display text-[clamp(5.75rem,16vw,10rem)] font-extrabold leading-[0.82] tracking-[-0.07em] text-black/[0.07] sm:right-1"
@@ -157,21 +161,24 @@ export default function ProductIntroduction() {
               80K
             </div>
 
-            <div className="relative rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
-              <div className="space-y-4 font-body text-base leading-relaxed text-black/65 sm:text-lg">
+            <div className="relative flex flex-1 flex-col justify-center rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-7 py-9 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-9 sm:py-11 lg:min-h-[28rem] lg:px-10 lg:py-12">
+              <div className="space-y-5 font-body text-base leading-relaxed text-black/65 sm:text-lg sm:leading-relaxed">
                 <p>
-                  Umaxes HookaMax 80k is a disposable hookah vape with up to{" "}
+                  Umaxes HookaMax 80k Disposable Vape is a disposable vape with
+                  at most{" "}
                   <strong className="font-semibold text-black">80K puffs</strong>{" "}
-                  and a built-in{" "}
+                  and a{" "}
                   <strong className="font-semibold text-black">1600mAh</strong>{" "}
-                  battery for longer sessions. It is the flagship HookaMax
-                  experience from Umaxes.
+                  internal battery. The Umaxes HookaMax hookah vape is, so far,
+                  the best vape that Umaxes offers.
                 </p>
                 <p>
-                  Plenty of e-liquid keeps the draw consistent through the full
-                  puff life. Turn on the{" "}
+                  It features a built-in 1600mAh battery for extended use.
+                  Umaxes offers sufficient vape juice to make HookaMax satisfy
+                  up to 80K puffs. Moreover, you can turn on the{" "}
                   <strong className="font-semibold text-black">ARGB light</strong>{" "}
-                  for full-spectrum effects, and enjoy both{" "}
+                  to add full-spectrum fun of light effects to your vaping. You
+                  can enjoy both{" "}
                   <strong className="font-semibold text-black">MTL and DTL</strong>{" "}
                   with Umaxes HookaMax 80K.
                 </p>
