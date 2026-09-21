@@ -55,7 +55,8 @@ function maxCasesFromStock(stock: number | null) {
 
 function formatStockPieces(stock: number | null) {
   if (stock == null) return "—";
-  return stock.toLocaleString("en-US");
+  const unit = stock === 1 ? "piece" : "pieces";
+  return `${stock.toLocaleString("en-US")} ${unit}`;
 }
 
 /** All catalog flavors as line items, with the current product flavor first. */
@@ -441,17 +442,16 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             )}
 
             <div className="mt-6 overflow-hidden rounded-2xl ring-1 ring-black/10">
-              <div className="hidden grid-cols-[minmax(0,1fr)_7.75rem_8.75rem_2.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
+              <div className="hidden grid-cols-[minmax(0,1fr)_8.5rem_8.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
                 <p className="font-display text-sm font-bold text-black">
                   Flavor
                 </p>
-                <p className="text-right font-display text-sm font-bold text-black">
+                <p className="text-center font-display text-sm font-bold text-black">
                   Stock
                 </p>
                 <p className="text-center font-display text-sm font-bold text-black">
                   Cases
                 </p>
-                <span className="sr-only">Remove</span>
               </div>
 
               {lines.length === 0 ? (
@@ -469,7 +469,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     return (
                       <li
                         key={line.key}
-                        className="grid min-w-0 grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_7.75rem_8.75rem_2.75rem] sm:items-center sm:gap-4"
+                        className="grid min-w-0 grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_8.5rem_8.75rem] sm:items-center sm:gap-4"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-black/5 ring-1 ring-black/8">
@@ -481,29 +481,14 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                               className="object-cover"
                             />
                           </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-display text-sm font-semibold text-black">
-                              {item.name}
-                            </p>
-                            <p
-                              className={`mt-0.5 truncate font-display text-sm font-semibold tabular-nums tracking-tight sm:hidden ${
-                                stock === 0 ? "text-black/40" : "text-black"
-                              }`}
-                              title={
-                                stock == null
-                                  ? undefined
-                                  : `${stockLabel} available`
-                              }
-                            >
-                              <span className="mr-1.5 font-bold">Stock</span>{" "}
-                              {stockLabel}
-                            </p>
-                          </div>
+                          <p className="min-w-0 flex-1 truncate font-display text-sm font-semibold text-black">
+                            {item.name}
+                          </p>
                           <button
                             type="button"
                             aria-label={`Remove ${item.name}`}
                             onClick={() => removeLine(line.key)}
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-black/40 transition hover:bg-umx-orange/10 hover:text-umx-orange sm:hidden"
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-black/40 transition hover:bg-umx-orange/10 hover:text-umx-orange"
                           >
                             <Trash2
                               className="h-4 w-4"
@@ -513,7 +498,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                           </button>
                         </div>
                         <p
-                          className={`hidden min-w-0 truncate font-display text-sm font-semibold tabular-nums tracking-tight sm:block sm:text-right ${
+                          className={`text-center font-display text-sm font-semibold tabular-nums tracking-tight ${
                             stock === 0 ? "text-black/40" : "text-black"
                           }`}
                           title={
@@ -522,6 +507,9 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                               : `${stockLabel} available`
                           }
                         >
+                          <span className="mr-1.5 font-bold sm:hidden">
+                            Stock
+                          </span>
                           {stockLabel}
                         </p>
                         <div className="min-w-0">
@@ -545,18 +533,6 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                             ariaLabel={`${item.name} cases`}
                           />
                         </div>
-                        <button
-                          type="button"
-                          aria-label={`Remove ${item.name}`}
-                          onClick={() => removeLine(line.key)}
-                          className="hidden h-9 w-9 shrink-0 items-center justify-center justify-self-center rounded-lg text-black/40 transition hover:bg-umx-orange/10 hover:text-umx-orange sm:flex"
-                        >
-                          <Trash2
-                            className="h-4 w-4"
-                            strokeWidth={2.1}
-                            aria-hidden
-                          />
-                        </button>
                       </li>
                     );
                   })}

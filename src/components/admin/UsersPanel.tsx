@@ -20,6 +20,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import type {
   CustomerLevel,
   UserRole,
@@ -102,6 +103,9 @@ export default function UsersPanel({
   initialError = null,
 }: Props) {
   const { t } = useAdminI18n();
+  const { data: session } = useSession();
+  const showLoginAs =
+    canImpersonate && session?.user?.role === "SUPER_ADMIN";
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(initialError);
   const [message, setMessage] = useState<string | null>(null);
@@ -198,7 +202,7 @@ export default function UsersPanel({
   }
 
   function openLoginAs(row: CustomerUserRow) {
-    if (!canImpersonate) return;
+    if (!showLoginAs) return;
     if (row.status === "DISABLED" || row.status === "REJECTED") {
       setError("Cannot open a disabled account.");
       return;
@@ -369,7 +373,7 @@ export default function UsersPanel({
                     </td>
                     <td>
                       <div className="flex justify-end gap-1.5">
-                        {canImpersonate ? (
+                        {showLoginAs ? (
                           <button
                             type="button"
                             disabled={
