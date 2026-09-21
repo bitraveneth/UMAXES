@@ -89,11 +89,6 @@ export default function ProductIntroduction() {
                 Disposable Vape
               </span>
             </h2>
-
-            <p className="mx-auto mt-5 max-w-xl font-body text-base leading-relaxed text-black/60 sm:mt-6 sm:text-lg">
-              Flagship HookaMax — up to 80K puffs, 1600mAh power, ARGB glow, and
-              MTL & DTL in one device.
-            </p>
           </div>
         </header>
 
