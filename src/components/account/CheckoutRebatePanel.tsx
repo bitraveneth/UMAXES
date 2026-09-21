@@ -26,6 +26,10 @@ function clampPct(n: number) {
   return Math.max(0, Math.min(100, n));
 }
 
+function formatRate(rate: number) {
+  return `$${rate.toFixed(2)}`;
+}
+
 export default function CheckoutRebatePanel({
   channel,
   stationQty,
@@ -53,7 +57,6 @@ export default function CheckoutRebatePanel({
       : afterPaid > 0
         ? 100
         : 0;
-  // Progress bar uses the same scale as tier ticks (0 → top minQty).
   const ladderMax = top?.minQty && top.minQty > 0 ? top.minQty : nextMin;
   const barPaidPct =
     ladderMax && ladderMax > 0
@@ -68,19 +71,22 @@ export default function CheckoutRebatePanel({
         ? 100
         : 0;
 
-  const rateLabel =
-    channel && channel.monthProjectedRate > 0
-      ? `$${channel.monthProjectedRate.toFixed(2)}/pc`
-      : "No rate yet";
+  const currentRate =
+    channel && channel.monthProjectedRate > 0 ? channel.monthProjectedRate : null;
+  const activeTier = tiers.length
+    ? tiers
+    : currentRate != null
+      ? [{ minQty: 0, rateUsd: currentRate }]
+      : [];
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-black/8 bg-white shadow-[0_12px_32px_rgba(61,22,5,0.04)]">
+    <section className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_12px_32px_rgba(61,22,5,0.05)]">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/8 bg-[#eef3f7] px-5 py-4 sm:px-6">
         <div>
           <p className="font-display text-[0.65rem] font-semibold tracking-[0.18em] text-[#1b4f72] uppercase">
             Rebate
           </p>
-          <h2 className="mt-1 font-display text-lg font-semibold text-black">
+          <h2 className="mt-1 font-display text-xl font-semibold tracking-tight text-black">
             This month
           </h2>
         </div>
@@ -92,10 +98,10 @@ export default function CheckoutRebatePanel({
         </Link>
       </div>
 
-      <div className="grid gap-6 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:p-6">
-        <div className="mx-auto sm:mx-0">
+      <div className="grid gap-6 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start sm:gap-8 sm:p-6">
+        <div className="mx-auto sm:mx-0 sm:pt-1">
           <div
-            className="relative h-[7.5rem] w-[7.5rem] rounded-full"
+            className="relative h-[8.25rem] w-[8.25rem] rounded-full"
             style={{
               background: `conic-gradient(#1b4f72 ${towardNext}%, #dbe4ec 0)`,
             }}
@@ -105,52 +111,60 @@ export default function CheckoutRebatePanel({
             {afterTowardNext > towardNext ? (
               <span
                 aria-hidden
-                className="absolute inset-0 rounded-full opacity-40"
+                className="absolute inset-0 rounded-full opacity-45"
                 style={{
                   background: `conic-gradient(transparent ${towardNext}%, #f97316 ${towardNext}%, #f97316 ${afterTowardNext}%, transparent 0)`,
                 }}
               />
             ) : null}
-            <div className="absolute inset-[0.7rem] flex flex-col items-center justify-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]">
-              <p className="font-display text-2xl font-extrabold tabular-nums tracking-tight text-[#1b4f72]">
+            <div className="absolute inset-[0.75rem] flex flex-col items-center justify-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)]">
+              <p className="font-display text-[1.75rem] font-extrabold leading-none tabular-nums tracking-tight text-[#1b4f72]">
                 {Math.round(towardNext)}%
               </p>
-              <p className="mt-0.5 font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+              <p className="mt-1 font-display text-[10px] font-semibold tracking-[0.14em] text-black/50 uppercase">
                 to next
               </p>
             </div>
           </div>
         </div>
 
-        <div className="min-w-0 space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="font-display text-sm font-bold text-black">
-                {paid.toLocaleString()} paid pcs
+        <div className="min-w-0 space-y-5">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-display text-2xl font-extrabold tabular-nums tracking-tight text-black">
+                {paid.toLocaleString()}{" "}
+                <span className="font-display text-sm font-semibold text-black/55">
+                  paid pcs
+                </span>
               </p>
-              <p className="mt-0.5 font-body text-sm text-black/60">
+              <p className="mt-1 font-body text-sm leading-snug text-black/60">
                 {channel?.nextTierQty != null && channel.nextTierRate != null
-                  ? `${channel.nextTierQty.toLocaleString()} more to $${channel.nextTierRate.toFixed(2)}/pc`
+                  ? `${channel.nextTierQty.toLocaleString()} more to ${formatRate(channel.nextTierRate)}/pc`
                   : channel?.eligible
                     ? "Top rebate rate unlocked this month"
                     : "Rebate ladder activates after payment is confirmed"}
               </p>
             </div>
-            <div className="text-right">
-              <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-black/45 uppercase">
+            <div className="rounded-xl border border-[#1b4f72]/20 bg-[#eef3f7] px-3.5 py-2.5 text-right">
+              <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-[#1b4f72]/80 uppercase">
                 Current rate
               </p>
-              <p className="font-display text-base font-extrabold tabular-nums text-[#1b4f72]">
-                {rateLabel}
+              <p className="mt-0.5 font-display text-xl font-extrabold tabular-nums leading-none text-[#1b4f72]">
+                {currentRate != null ? `${formatRate(currentRate)}` : "—"}
+                {currentRate != null ? (
+                  <span className="ml-0.5 text-sm font-bold text-[#1b4f72]/70">
+                    /pc
+                  </span>
+                ) : null}
               </p>
             </div>
           </div>
 
           <div>
-            <div className="relative h-2.5 overflow-hidden rounded-full bg-black/8">
+            <div className="relative h-3 overflow-hidden rounded-full bg-black/10">
               {barAfterPct > barPaidPct ? (
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-umx-orange/55 transition-[width]"
+                  className="absolute inset-y-0 left-0 rounded-full bg-umx-orange/60 transition-[width]"
                   style={{ width: `${barAfterPct}%` }}
                 />
               ) : null}
@@ -159,30 +173,6 @@ export default function CheckoutRebatePanel({
                 style={{ width: `${barPaidPct}%` }}
               />
             </div>
-            {tiers.length > 0 && ladderMax ? (
-              <div className="relative mt-2 h-5">
-                {tiers.map((tier) => {
-                  const left = clampPct((tier.minQty / ladderMax) * 100);
-                  const reached = paid >= tier.minQty;
-                  return (
-                    <span
-                      key={tier.minQty}
-                      className="absolute top-0 -translate-x-1/2 text-center"
-                      style={{ left: `${left}%` }}
-                    >
-                      <span
-                        className={`mx-auto block h-1.5 w-1.5 rounded-full ${
-                          reached ? "bg-[#1b4f72]" : "bg-black/20"
-                        }`}
-                      />
-                      <span className="mt-0.5 block font-display text-[9px] font-semibold tabular-nums text-black/45">
-                        ${tier.rateUsd.toFixed(2)}
-                      </span>
-                    </span>
-                  );
-                })}
-              </div>
-            ) : null}
             {barAfterPct > barPaidPct ? (
               <p className="mt-2 font-body text-[11px] text-black/50">
                 Orange shows where this order lands after funds are confirmed.
@@ -190,23 +180,86 @@ export default function CheckoutRebatePanel({
             ) : null}
           </div>
 
+          {activeTier.length > 0 ? (
+            <div>
+              <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-black/45 uppercase">
+                Rebate rates
+              </p>
+              <div
+                className={`mt-2 grid gap-2 ${
+                  activeTier.length >= 3
+                    ? "grid-cols-3"
+                    : activeTier.length === 2
+                      ? "grid-cols-2"
+                      : "grid-cols-1"
+                }`}
+              >
+                {activeTier.map((tier) => {
+                  const reached = paid >= tier.minQty;
+                  const isCurrent =
+                    currentRate != null &&
+                    Math.abs(currentRate - tier.rateUsd) < 0.001;
+                  return (
+                    <div
+                      key={`${tier.minQty}-${tier.rateUsd}`}
+                      className={`rounded-xl border px-3 py-3 text-center transition ${
+                        isCurrent
+                          ? "border-[#1b4f72] bg-[#1b4f72] text-white shadow-[0_6px_16px_rgba(27,79,114,0.22)]"
+                          : reached
+                            ? "border-[#1b4f72]/35 bg-[#eef3f7]"
+                            : "border-black/12 bg-[#f7f8fa]"
+                      }`}
+                    >
+                      <p
+                        className={`font-display text-xl font-extrabold tabular-nums leading-none tracking-tight sm:text-2xl ${
+                          isCurrent
+                            ? "text-white"
+                            : reached
+                              ? "text-[#1b4f72]"
+                              : "text-black"
+                        }`}
+                      >
+                        {formatRate(tier.rateUsd)}
+                      </p>
+                      <p
+                        className={`mt-1.5 font-display text-[11px] font-semibold tracking-[0.06em] uppercase ${
+                          isCurrent
+                            ? "text-white/85"
+                            : reached
+                              ? "text-[#1b4f72]/75"
+                              : "text-black/55"
+                        }`}
+                      >
+                        {isCurrent
+                          ? "Current"
+                          : reached
+                            ? "Unlocked"
+                            : `${tier.minQty.toLocaleString()}+ pcs`}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-2 sm:grid-cols-2">
-            <div className="border border-black/8 bg-umx-cream-bright px-3 py-2.5">
+            <div className="rounded-xl border border-black/8 bg-umx-cream-bright px-3.5 py-3">
               <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-black/45 uppercase">
                 Wallet
               </p>
-              <p className="mt-0.5 font-display text-sm font-bold tabular-nums text-black">
+              <p className="mt-1 font-display text-base font-extrabold tabular-nums text-black">
                 ${(channel?.rebateBalanceUsd ?? 0).toFixed(2)}
                 {showPrices && channel && channel.rebateAppliedUsd > 0
                   ? ` · −$${channel.rebateAppliedUsd.toFixed(2)} here`
                   : ""}
               </p>
             </div>
-            <div className="border border-black/8 bg-umx-cream-bright px-3 py-2.5">
+            <div className="rounded-xl border border-black/8 bg-umx-cream-bright px-3.5 py-3">
               <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-black/45 uppercase">
                 This order
               </p>
-              <p className="mt-0.5 font-display text-sm font-bold text-black">
+              <p className="mt-1 font-display text-base font-bold leading-snug text-black">
                 {channel?.isFirstOrder
                   ? channel.firstOrderUnpaidPcs
                     ? `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pcs`
