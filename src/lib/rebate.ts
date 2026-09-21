@@ -2,8 +2,9 @@ import type { CustomerLevel } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { roundMoney } from "@/lib/catalog";
+import { TEST_STATION_SKU } from "@/lib/pack";
 
-export const TEST_STATION_SKU = "test-station";
+export { TEST_STATION_SKU };
 export const TEST_STATION_NAME = "Test Station (incl. 1 device)";
 
 export type RebateTier = { minQty: number; rateUsd: number };
