@@ -571,7 +571,7 @@ function OrderExpand({
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
       {ui}
-      <div className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
+      <div className="space-y-6 px-5 py-6 sm:px-6 sm:py-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -597,26 +597,6 @@ function OrderExpand({
                   : t(paymentStatusLabelKey(order.paymentStatus))}
               </AdminBadge>
             </div>
-            <div className="admin-order-meta">
-              <span className="admin-order-meta-chip" title={order.companyName}>
-                <span>{t("orders.colCompany")}</span>
-                <strong className="truncate">{order.companyName}</strong>
-              </span>
-              <span className="admin-order-meta-chip">
-                <span>{t("orders.colPayment")}</span>
-                <strong>{payLabel(order.paymentMethod)}</strong>
-              </span>
-              <span className="admin-order-meta-chip">
-                <span>{t("orders.colTotal")}</span>
-                <strong>{money(order.total)}</strong>
-              </span>
-              {order.placedByStaffName ? (
-                <span className="admin-order-meta-chip">
-                  <span>{t("orders.staffLabel")}</span>
-                  <strong className="truncate">{order.placedByStaffName}</strong>
-                </span>
-              ) : null}
-            </div>
           </div>
           <button
             type="button"
@@ -627,7 +607,9 @@ function OrderExpand({
           </button>
         </div>
 
-        <OrderPipeline status={order.status} statusLabel={statusLabel} />
+        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-4 py-5 sm:px-6 sm:py-6">
+          <OrderPipeline status={order.status} statusLabel={statusLabel} />
+        </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/50 p-4 sm:p-5">
@@ -791,6 +773,34 @@ function OrderExpand({
           </div>
 
           <div className="space-y-4">
+            <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/50 p-4 sm:p-5">
+              <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+                {t("orders.detail")}
+              </p>
+              <div className="admin-order-meta">
+                <div className="admin-order-meta-chip" title={order.companyName}>
+                  <span>{t("orders.colCompany")}</span>
+                  <strong>{order.companyName}</strong>
+                </div>
+                <div className="admin-order-meta-chip">
+                  <span>{t("orders.colPayment")}</span>
+                  <strong>{payLabel(order.paymentMethod)}</strong>
+                </div>
+                <div className="admin-order-meta-chip">
+                  <span>{t("orders.colTotal")}</span>
+                  <strong>{money(order.total)}</strong>
+                </div>
+                {order.placedByStaffName ? (
+                  <div className="admin-order-meta-chip">
+                    <span>{t("orders.staffLabel")}</span>
+                    <strong title={order.placedByStaffName}>
+                      {order.placedByStaffName}
+                    </strong>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
             <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/50 p-4 sm:p-5">
               <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
                 {t("orders.documents")}
