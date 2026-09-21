@@ -614,6 +614,7 @@ const en: AdminMessages = {
     setStock: "Set on hand",
     afterUpdate: "After this update",
     converting: "{cases} cases = {pcs} pieces",
+    convertingOne: "1 case = {pcs} pieces",
     stationTitle: "Test station",
     stationMissing:
       "Not in the catalog yet. Add it here so warehouse can count bonus kits separately from HOOKAMAX cases. Not sold by the case.",

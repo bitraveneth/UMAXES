@@ -396,10 +396,14 @@ export default function WarehouseStockPanel({
 
                 {packed ? (
                   <p className="text-center text-sm font-semibold tabular-nums text-[var(--admin-brand-700)]">
-                    {t("warehouse.converting", {
-                      cases: entered,
-                      pcs: enteredPcs.toLocaleString(),
-                    })}
+                    {entered === 1
+                      ? t("warehouse.convertingOne", {
+                          pcs: enteredPcs.toLocaleString(),
+                        })
+                      : t("warehouse.converting", {
+                          cases: entered,
+                          pcs: enteredPcs.toLocaleString(),
+                        })}
                   </p>
                 ) : null}
 

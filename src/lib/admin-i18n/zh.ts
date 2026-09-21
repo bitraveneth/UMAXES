@@ -597,6 +597,7 @@ const zh: AdminMessages = {
     setStock: "设为在库",
     afterUpdate: "更新后",
     converting: "{cases} 箱 = {pcs} 支",
+    convertingOne: "1 箱 = {pcs} 支",
     stationTitle: "试抽台",
     stationMissing:
       "目录中还没有试抽台。在此添加后可单独清点赠品数量，不按箱销售。",
