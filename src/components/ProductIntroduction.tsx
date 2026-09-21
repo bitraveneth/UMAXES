@@ -14,39 +14,34 @@ const HIGHLIGHTS: {
   detail: string;
   icon: LucideIcon;
   spot: string;
-  delay: string;
 }[] = [
-  {
-    label: "Draw",
-    value: "MTL & DTL",
-    detail: "Your style, either way",
-    icon: ArrowLeftRight,
-    spot: "left-1/2 top-[3%] z-20 -translate-x-1/2 sm:top-[4%]",
-    delay: "delay-0",
-  },
   {
     label: "Puffs",
     value: "Up to 80K",
     detail: "Long session life",
     icon: Wind,
-    spot: "left-[2%] top-[36%] sm:left-[4%] lg:left-0",
-    delay: "delay-75",
-  },
-  {
-    label: "Lights",
-    value: "ARGB",
-    detail: "Full-spectrum glow",
-    icon: Lightbulb,
-    spot: "right-[2%] top-[36%] sm:right-[4%] lg:right-0",
-    delay: "delay-100",
+    spot: "left-[2%] top-[14%] sm:left-[4%] sm:top-[16%] lg:left-0 lg:top-[18%]",
   },
   {
     label: "Battery",
     value: "1600mAh",
     detail: "Rechargeable power",
     icon: BatteryCharging,
-    spot: "bottom-[3%] left-1/2 z-20 -translate-x-1/2 sm:bottom-[4%]",
-    delay: "delay-150",
+    spot: "right-[1%] top-[22%] sm:right-[3%] sm:top-[20%] lg:right-0 lg:top-[22%]",
+  },
+  {
+    label: "Lights",
+    value: "ARGB",
+    detail: "Full-spectrum glow",
+    icon: Lightbulb,
+    spot: "left-[4%] bottom-[18%] sm:left-[6%] sm:bottom-[16%] lg:left-2 lg:bottom-[18%]",
+  },
+  {
+    label: "Draw",
+    value: "MTL & DTL",
+    detail: "Your style, either way",
+    icon: ArrowLeftRight,
+    spot: "right-[2%] bottom-[14%] sm:right-[4%] sm:bottom-[14%] lg:right-1 lg:bottom-[16%]",
   },
 ];
 
@@ -63,9 +58,9 @@ export default function ProductIntroduction() {
       />
 
       <div className="relative mx-auto grid max-w-[1400px] items-center gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)] lg:gap-12 xl:gap-16">
-        {/* Left — devices; simple floating pills on hover */}
+        {/* Left — larger devices + floating info pills */}
         <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
-          <div className="group relative mx-auto aspect-[4/5] w-full max-w-[36rem] outline-none lg:max-w-none lg:min-h-[40rem] lg:aspect-auto">
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-[36rem] lg:max-w-none lg:min-h-[40rem] lg:aspect-auto">
             <Image
               src={product.deviceDuoImage}
               alt="UMAXES HookaMax 80K disposable hookah devices"
@@ -73,7 +68,7 @@ export default function ProductIntroduction() {
               priority
               quality={100}
               sizes="(max-width: 1024px) 95vw, 720px"
-              className="object-contain object-center drop-shadow-[0_24px_48px_rgba(0,0,0,0.12)] transition duration-500 ease-out group-hover:scale-[1.015]"
+              className="object-contain object-center drop-shadow-[0_24px_48px_rgba(0,0,0,0.12)]"
             />
 
             {HIGHLIGHTS.map((item) => {
@@ -81,19 +76,13 @@ export default function ProductIntroduction() {
               return (
                 <div
                   key={item.label}
-                  className={`pointer-events-none absolute z-10 max-w-[11.5rem] sm:max-w-[13rem] ${item.spot}`}
+                  className={`absolute z-10 max-w-[11.5rem] sm:max-w-[13rem] ${item.spot}`}
                 >
-                  <div
-                    className={`flex translate-y-2 items-start gap-2.5 rounded-2xl border border-black/8 bg-umx-cream-warm/95 px-3 py-2.5 opacity-100 shadow-[0_14px_32px_rgba(61,22,5,0.1)] ring-1 ring-white/60 backdrop-blur-sm transition duration-500 ease-out sm:gap-3 sm:px-3.5 sm:py-3 lg:translate-y-3 lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100 lg:group-focus-within:translate-y-0 lg:group-focus-within:opacity-100 ${item.delay}`}
-                  >
+                  <div className="flex items-start gap-2.5 rounded-2xl border border-black/8 bg-umx-cream-warm/95 px-3 py-2.5 shadow-[0_14px_32px_rgba(61,22,5,0.1)] ring-1 ring-white/60 backdrop-blur-sm sm:gap-3 sm:px-3.5 sm:py-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black text-umx-cream sm:h-10 sm:w-10">
-                      <Icon
-                        className="h-4 w-4 sm:h-5 sm:w-5"
-                        strokeWidth={1.75}
-                        aria-hidden
-                      />
+                      <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.75} aria-hidden />
                     </div>
-                    <div className="min-w-0 text-left">
+                    <div className="min-w-0">
                       <p className="font-display text-[0.58rem] font-semibold tracking-[0.14em] text-black/40 uppercase">
                         {item.label}
                       </p>
@@ -108,23 +97,12 @@ export default function ProductIntroduction() {
                 </div>
               );
             })}
-
-            <p className="pointer-events-none absolute inset-x-0 bottom-2 hidden text-center font-display text-[0.65rem] font-semibold tracking-[0.16em] text-black/30 uppercase transition duration-300 lg:block lg:opacity-70 lg:group-hover:opacity-0">
-              Hover for specs
-            </p>
           </div>
         </div>
 
-        {/* Right — Introduction box + visible 80K watermark */}
-        <div className="relative min-w-0">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -top-8 -right-2 select-none font-display text-[clamp(5.5rem,15vw,9rem)] font-extrabold leading-none tracking-[-0.06em] text-umx-orange/15 sm:-top-10 sm:right-0"
-          >
-            80K
-          </div>
-
-          <div className="relative rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
+        {/* Right — Introduction box with title */}
+        <div className="min-w-0">
+          <div className="rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
             <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
               Introduction
             </p>
