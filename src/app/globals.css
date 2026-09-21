@@ -457,6 +457,26 @@ body {
   animation: icon-bob 3.2s ease-in-out infinite;
 }
 
+@keyframes product-intro-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.product-intro-device {
+  animation: product-intro-float 5.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-intro-device {
+    animation: none;
+  }
+}
+
 @keyframes flavor-shine {
   from {
     transform: translateX(-120%) skewX(-18deg);
