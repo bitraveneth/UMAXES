@@ -243,23 +243,23 @@ export default function CheckoutRebatePanel({
             </div>
           ) : null}
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="rounded-xl border border-black/8 bg-umx-cream-bright px-3.5 py-3">
-              <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-black/45 uppercase">
+          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 font-body text-sm text-black/65">
+            <p>
+              <span className="font-display text-[11px] font-semibold tracking-[0.12em] text-black/45 uppercase">
                 Wallet
-              </p>
-              <p className="mt-1 font-display text-base font-extrabold tabular-nums text-black">
+              </span>{" "}
+              <span className="font-display text-sm font-bold tabular-nums text-black">
                 ${(channel?.rebateBalanceUsd ?? 0).toFixed(2)}
                 {showPrices && channel && channel.rebateAppliedUsd > 0
                   ? ` · −$${channel.rebateAppliedUsd.toFixed(2)} here`
                   : ""}
-              </p>
-            </div>
-            <div className="rounded-xl border border-black/8 bg-umx-cream-bright px-3.5 py-3">
-              <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-black/45 uppercase">
+              </span>
+            </p>
+            <p>
+              <span className="font-display text-[11px] font-semibold tracking-[0.12em] text-black/45 uppercase">
                 This order
-              </p>
-              <p className="mt-1 font-display text-base font-bold leading-snug text-black">
+              </span>{" "}
+              <span className="font-display text-sm font-semibold text-black">
                 {channel?.isFirstOrder
                   ? channel.firstOrderUnpaidPcs
                     ? `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pcs`
@@ -267,8 +267,8 @@ export default function CheckoutRebatePanel({
                   : channel && channel.chargedQty > 0
                     ? `+${channel.chargedQty.toLocaleString()} pcs after paid`
                     : "Counts after funds confirmed"}
-              </p>
-            </div>
+              </span>
+            </p>
           </div>
 
           {stationQty > 0 ? (
