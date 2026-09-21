@@ -9,7 +9,9 @@ import type {
 } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { CASE_MOQ_PCS } from "@/lib/pack";
 import { canAccessAdmin } from "@/lib/rbac";
+import { deleteOrderPaymentSlip } from "@/lib/payment-slip-ops";
 
 async function requireRoles(roles: UserRole[]) {
   const session = await auth();
@@ -508,6 +510,27 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   });
   if (!before) throw new Error("Order not found");
 
+  if (
+    before.status === "PAYMENT_PENDING" &&
+    status !== "PAYMENT_PENDING" &&
+    status !== "CANCELLED" &&
+    status !== "SUBMITTED"
+  ) {
+    const paid = await prisma.payment.findFirst({
+      where: { orderId, status: "paid", paidAt: { not: null } },
+      select: { id: true },
+    });
+    const method = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { paymentMethod: true },
+    });
+    if (method?.paymentMethod !== "CREDIT" && !paid) {
+      throw new Error(
+        "Confirm funds received (到账) after the payment slip before moving this order forward",
+      );
+    }
+  }
+
   await prisma.$transaction([
     prisma.order.update({ where: { id: orderId }, data: { status } }),
     prisma.auditLog.create({
@@ -688,6 +711,10 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
     const alreadyPaid = order.payments.some(
       (p) => p.status === "paid" && p.paidAt,
     );
+    const hasSlip = order.payments.some((p) => p.slipUrl);
+    if (!alreadyPaid && !hasSlip && order.paymentMethod !== "CREDIT") {
+      throw new Error("Wait for the buyer to upload a payment slip (水单) first");
+    }
 
     await tx.order.update({
       where: { id: orderId },
@@ -757,6 +784,8 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
   revalidatePath("/admin/orders");
   revalidatePath("/admin/credit");
   revalidatePath("/admin/rebates");
+  revalidatePath("/account/orders");
+  revalidatePath(`/account/orders/${orderId}`);
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -770,6 +799,11 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
       paymentMethod: order.paymentMethod,
     });
   }
+}
+
+export async function deletePaymentSlip(orderId: string) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  await deleteOrderPaymentSlip(orderId, session.user.id);
 }
 
 export async function upsertShipment(
@@ -1255,7 +1289,7 @@ export async function saveRebatePolicy(input: {
           productId: product.id,
           level: input.level,
           unitPrice,
-          moq: input.level === "DISTRO" ? 50 : 20,
+          moq: CASE_MOQ_PCS,
         },
         update: { unitPrice },
       });
@@ -2393,17 +2427,17 @@ export async function createProduct(input: {
           {
             level: "DISTRO",
             unitPrice: Number(input.distroPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.distroMoq ?? 50)),
+            moq: Math.max(1, Math.floor(input.distroMoq ?? CASE_MOQ_PCS)),
           },
           {
             level: "WHOLESALER",
             unitPrice: Number(input.wholesalerPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.wholesalerMoq ?? 20)),
+            moq: Math.max(1, Math.floor(input.wholesalerMoq ?? CASE_MOQ_PCS)),
           },
           {
             level: "SHOP",
             unitPrice: Number(input.shopPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.shopMoq ?? 5)),
+            moq: Math.max(1, Math.floor(input.shopMoq ?? CASE_MOQ_PCS)),
           },
         ],
       },

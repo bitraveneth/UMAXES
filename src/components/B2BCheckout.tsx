@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
+import { CASE_MOQ_PCS, formatPack } from "@/lib/pack";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 
 type Address = {
@@ -25,6 +26,7 @@ type CatalogProduct = {
   sku: string;
   name: string;
   unitPrice: number;
+  retailPrice: number;
   moq: number;
   image: string | null;
 };
@@ -57,8 +59,7 @@ export default function B2BCheckout() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const showPrices = useShowStorePrices();
-  const { items, clear, quantity, couponCode: savedCoupon, setCouponCode: persistCoupon } =
-    useCart();
+  const { items, clear, quantity } = useCart();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
@@ -71,9 +72,6 @@ export default function B2BCheckout() {
   const [addressId, setAddressId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PayMethod>("TT");
   const [paymentRef, setPaymentRef] = useState("");
-  const [couponCode, setCouponCode] = useState("");
-  const [discount, setDiscount] = useState(0);
-  const [appliedCoupon, setAppliedCoupon] = useState("");
   const [notes, setNotes] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,10 +111,6 @@ export default function B2BCheckout() {
     });
   }, [status, session, router]);
 
-  useEffect(() => {
-    if (savedCoupon && !couponCode) setCouponCode(savedCoupon);
-  }, [savedCoupon, couponCode]);
-
   const priceMap = useMemo(() => {
     const map = new Map<string, CatalogProduct>();
     for (const p of catalog) map.set(p.sku, p);
@@ -132,7 +126,7 @@ export default function B2BCheckout() {
       name: priced?.name || flavor?.name || item.flavorId,
       image: priced?.image || flavor?.image || null,
       unitPrice: priced?.unitPrice ?? flavor?.price ?? 0,
-      moq: priced?.moq ?? 1,
+      moq: priced?.moq ?? CASE_MOQ_PCS,
     };
   });
 
@@ -144,7 +138,7 @@ export default function B2BCheckout() {
   const firstDiscount = channel?.eligible ? channel.firstOrderDiscountUsd : 0;
   const rebateApplied = channel?.eligible ? channel.rebateAppliedUsd : 0;
   const channelDiscount = firstDiscount + rebateApplied;
-  const displayDiscount = channel?.hideCoupon ? channelDiscount : discount;
+  const displayDiscount = channel?.eligible ? channelDiscount : 0;
   const total = Math.max(0, Math.round((subtotal - displayDiscount) * 100) / 100);
 
   useEffect(() => {
@@ -165,46 +159,6 @@ export default function B2BCheckout() {
     };
   }, [sellingQty, channel?.eligible]);
 
-  useEffect(() => {
-    if (channel?.hideCoupon) return;
-    if (!savedCoupon || appliedCoupon || subtotal <= 0) return;
-    let cancelled = false;
-    (async () => {
-      const res = await fetch("/api/coupons/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: savedCoupon, subtotal }),
-      });
-      const data = await res.json();
-      if (cancelled || !res.ok) return;
-      setCouponCode(data.code);
-      setAppliedCoupon(data.code);
-      setDiscount(data.discount);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [savedCoupon, appliedCoupon, subtotal]);
-
-  async function applyCoupon() {
-    setError(null);
-    const res = await fetch("/api/coupons/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: couponCode, subtotal }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setDiscount(0);
-      setAppliedCoupon("");
-      setError(data.error || "Coupon failed");
-      return;
-    }
-    setDiscount(data.discount);
-    setAppliedCoupon(data.code);
-    persistCoupon(data.code);
-  }
-
   async function placeOrder() {
     setError(null);
     if (!ageConfirmed) {
@@ -223,7 +177,6 @@ export default function B2BCheckout() {
         addressId,
         paymentMethod,
         paymentRef,
-        couponCode: channel?.hideCoupon ? undefined : appliedCoupon || undefined,
         notes,
         items: lines.map((l) => ({
           sku: l.sku,
@@ -454,6 +407,10 @@ export default function B2BCheckout() {
               placeholder="TT / wire reference"
             />
           </label>
+          <p className="mt-3 font-body text-xs text-black/50">
+            After you place the order, open it and upload the bank slip (水单).
+            Info confirms 到账 before the order counts for rebate.
+          </p>
         </section>
 
         <section className="border border-black/10 bg-white p-6">
@@ -505,33 +462,8 @@ export default function B2BCheckout() {
                 )}
               </div>
             </>
-          ) : (
-            <>
-          <h2 className="font-display text-lg font-semibold">Coupon</h2>
-          <div className="mt-3 flex gap-2">
-            <input
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-              className="flex-1 border border-black/15 px-4 py-3"
-              placeholder="UMAXES10"
-            />
-            <button
-              type="button"
-              onClick={applyCoupon}
-              className="border border-black px-4 font-display text-sm font-semibold"
-            >
-              Apply
-            </button>
-          </div>
-          {appliedCoupon && (
-            <p className="mt-2 font-body text-sm text-umx-orange">
-              Applied {appliedCoupon}
-              {showPrices ? ` (−$${discount.toFixed(2)})` : ""}
-            </p>
-          )}
-            </>
-          )}
-          <label className="mt-4 block">
+          ) : null}
+          <label className={channel?.hideCoupon ? "mt-4 block" : "block"}>
             <span className="font-display text-sm font-semibold">Notes</span>
             <textarea
               value={notes}
@@ -556,8 +488,8 @@ export default function B2BCheckout() {
               <div className="min-w-0 flex-1">
                 <p className="font-display text-sm font-semibold">{l.name}</p>
                 <p className="font-body text-xs text-black/55">
-                  Qty {l.quantity}
-                  {l.quantity < l.moq ? ` · MOQ ${l.moq}` : ""}
+                  {formatPack(l.quantity)}
+                  {l.quantity < l.moq ? ` · MOQ ${l.moq} pcs` : ""}
                 </p>
                 <p className="font-display text-sm">
                   <StorePrice amount={l.unitPrice * l.quantity} />
@@ -585,12 +517,14 @@ export default function B2BCheckout() {
               <span>{channel.firstOrderUnpaidPcs}</span>
             </div>
           ) : null}
-          <div className="flex justify-between">
-            <span>Discount</span>
-            <span>
-              {showPrices ? `−$${displayDiscount.toFixed(2)}` : "On request"}
-            </span>
-          </div>
+          {displayDiscount > 0 ? (
+            <div className="flex justify-between">
+              <span>Channel rebate</span>
+              <span>
+                {showPrices ? `−$${displayDiscount.toFixed(2)}` : "On request"}
+              </span>
+            </div>
+          ) : null}
           <div className="flex justify-between font-display text-base font-semibold">
             <span>Total</span>
             <span>

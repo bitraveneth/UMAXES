@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  PCS_PER_CASE,
+  casesFromPcs,
+  pcsFromCases,
+} from "@/lib/pack";
 
 type QtyStepperProps = {
   value: number;
@@ -99,6 +104,83 @@ export function QtyStepper({
       >
         +
       </button>
+    </div>
+  );
+}
+
+type CaseQtyStepperProps = {
+  pcs: number;
+  onChangePcs: (pcs: number) => void;
+  allowRemove?: boolean;
+  /** Let the stepper sit at 0 cases (keep the flavor row). */
+  allowZero?: boolean;
+  ariaLabel?: string;
+  size?: "sm" | "md";
+  showHint?: boolean;
+  /** Show live piece count under the stepper (1 case = 95 pcs). */
+  showPcs?: boolean;
+  align?: "end" | "center";
+};
+
+/** +/- stepper in cases. Cart still stores pieces (95 pcs per case). */
+export function CaseQtyStepper({
+  pcs,
+  onChangePcs,
+  allowRemove = false,
+  allowZero = false,
+  ariaLabel = "Cases",
+  size = "md",
+  showHint = false,
+  showPcs = false,
+  align = "end",
+}: CaseQtyStepperProps) {
+  const canZero = allowRemove || allowZero;
+  const cases = Math.max(canZero ? 0 : 1, casesFromPcs(pcs));
+  return (
+    <div
+      className={`flex w-full flex-col gap-1 ${
+        align === "center" ? "items-center" : "items-end"
+      }`}
+    >
+      <QtyStepper
+        value={canZero ? cases : cases || 1}
+        onChange={(nextCases) => onChangePcs(pcsFromCases(nextCases))}
+        min={canZero ? 0 : 1}
+        max={999}
+        allowRemove={canZero}
+        ariaLabel={ariaLabel}
+        size={size}
+      />
+      {showPcs ? (
+        <p className="font-display text-sm font-bold tabular-nums tracking-tight text-black sm:text-base">
+          {pcsFromCases(cases).toLocaleString()} pcs
+        </p>
+      ) : null}
+      {showHint ? (
+        <p className="font-body text-[11px] leading-tight text-black/45">
+          {PCS_PER_CASE} pcs / case
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function PackNote({ className }: { className?: string }) {
+  return (
+    <div
+      className={`flex items-center gap-3 rounded-2xl bg-[#eef3f7] px-3.5 py-3 ${className ?? ""}`}
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1b4f72] font-display text-sm font-bold text-white">
+        {PCS_PER_CASE}
+      </span>
+      <div className="min-w-0">
+        <p className="font-display text-sm font-bold leading-tight text-black">
+          1 case = {PCS_PER_CASE} pieces
+        </p>
+        <p className="mt-0.5 font-body text-xs leading-snug text-black/55">
+          Sold by the case. + adds one case.
+        </p>
+      </div>
     </div>
   );
 }

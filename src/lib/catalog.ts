@@ -1,17 +1,12 @@
 import type { CustomerLevel, PaymentMethod } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { CASE_MOQ_PCS } from "@/lib/pack";
 
 export async function getCatalogForLevel(level: CustomerLevel) {
   const products = await prisma.product.findMany({
-    where: {
-      active: true,
-      OR: [
-        { visibleLevels: { isEmpty: true } },
-        { visibleLevels: { has: level } },
-      ],
-    },
+    where: { active: true },
     include: {
-      prices: { where: { level } },
+      prices: { where: { level: { in: [level, "SHOP"] } } },
       inventory: true,
     },
     orderBy: { name: "asc" },
@@ -19,19 +14,27 @@ export async function getCatalogForLevel(level: CustomerLevel) {
 
   return products
     .filter((p) => p.sku !== "test-station")
-    .map((p) => ({
-      id: p.id,
-      sku: p.sku,
-      name: p.name,
-      description: p.description,
-      image: p.image,
-      unitPrice: p.prices[0]?.unitPrice ?? 0,
-      moq: p.prices[0]?.moq ?? 1,
-      stock: Math.max(
-        0,
-        (p.inventory?.quantity ?? 0) - (p.inventory?.reserved ?? 0),
-      ),
-    }));
+    .filter(
+      (p) =>
+        p.visibleLevels.length === 0 || p.visibleLevels.includes(level),
+    )
+    .map((p) => {
+      const account = p.prices.find((row) => row.level === level);
+      const shop = p.prices.find((row) => row.level === "SHOP");
+      return {
+        id: p.id,
+        sku: p.sku,
+        name: p.name,
+        description: p.description,
+        image: p.image,
+        unitPrice: account?.unitPrice ?? shop?.unitPrice ?? 0,
+        moq: account?.moq ?? shop?.moq ?? CASE_MOQ_PCS,
+        stock: Math.max(
+          0,
+          (p.inventory?.quantity ?? 0) - (p.inventory?.reserved ?? 0),
+        ),
+      };
+    });
 }
 
 export function roundMoney(n: number) {

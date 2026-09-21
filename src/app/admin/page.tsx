@@ -55,6 +55,7 @@ function orderTone(status: string) {
 }
 
 function statusLabelKey(status: string) {
+  if (status === "PAYMENT_PENDING") return "dashboard.statusPending";
   return `orders.status${status}`;
 }
 

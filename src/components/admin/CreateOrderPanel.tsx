@@ -160,14 +160,14 @@ export default function CreateOrderPanel({
     }
   }
 
-  function setQty(sku: string, moq: number, stock: number, raw: string) {
+  function setQty(sku: string, stock: number, raw: string) {
     const n = Math.floor(Number(raw) || 0);
     setQtyBySku((prev) => {
       const next = { ...prev };
       if (n <= 0) {
         delete next[sku];
       } else {
-        next[sku] = Math.min(stock, Math.max(moq, n));
+        next[sku] = Math.min(stock, Math.max(1, n));
       }
       return next;
     });
@@ -360,7 +360,8 @@ export default function CreateOrderPanel({
               <div>
                 <h2 className="text-base font-semibold">2. Add products</h2>
                 <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                  Qty must meet MOQ and available stock.
+                  Catalog MOQ is 1 case (95 pcs). Staff can enter any qty up to
+                  stock.
                 </p>
               </div>
               <label className="relative block w-full max-w-xs">
@@ -402,10 +403,10 @@ export default function CreateOrderPanel({
                           type="number"
                           min={0}
                           step={1}
-                          disabled={p.stock < p.moq || p.unitPrice <= 0}
+                          disabled={p.stock < 1 || p.unitPrice <= 0}
                           value={qtyBySku[p.sku] ?? ""}
                           onChange={(e) =>
-                            setQty(p.sku, p.moq, p.stock, e.target.value)
+                            setQty(p.sku, p.stock, e.target.value)
                           }
                           placeholder="0"
                           className="admin-input w-full"

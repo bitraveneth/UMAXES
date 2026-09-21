@@ -5,16 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
-import { QtyStepper } from "@/components/QtyStepper";
-import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
+import { PCS_PER_CASE, formatPack, snapToCasePcs } from "@/lib/pack";
+import { DualStorePrice, StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
 import { flavors, product, type Flavor, type FlavorId } from "@/lib/assets";
 
-const DRAFT_KEY = "umaxes-product-order-lines-v2";
+const DRAFT_KEY = "umaxes-product-order-lines-v3";
 
 type OrderLine = {
   key: string;
@@ -31,7 +33,7 @@ function newKey() {
 }
 
 function defaultLine(flavorId: FlavorId): OrderLine {
-  return { key: newKey(), flavorId, quantity: 1 };
+  return { key: newKey(), flavorId, quantity: PCS_PER_CASE };
 }
 
 /** All catalog flavors as line items, with the current product flavor first. */
@@ -41,7 +43,7 @@ function defaultLines(preferred: FlavorId): OrderLine[] {
   return [...head, ...tail].map((f) => ({
     key: `line-${f.id}`,
     flavorId: f.id,
-    quantity: 1,
+    quantity: PCS_PER_CASE,
   }));
 }
 
@@ -58,7 +60,7 @@ function loadLines(fallback: FlavorId): OrderLine[] {
       if (!entry || typeof entry !== "object") continue;
       const row = entry as Record<string, unknown>;
       if (!isFlavorId(String(row.flavorId))) continue;
-      const quantity = Math.max(1, Math.floor(Number(row.quantity) || 1));
+      const quantity = snapToCasePcs(Number(row.quantity) || PCS_PER_CASE);
       lines.push({
         key: String(row.key || newKey()),
         flavorId: row.flavorId as FlavorId,
@@ -75,6 +77,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const router = useRouter();
   const { addMany, couponCode: savedCoupon, setCouponCode } = useCart();
   const showPrices = useShowStorePrices();
+  const { hideCoupon, unitPriceFor } = useCatalogPrices();
   const [lines, setLines] = useState<OrderLine[]>(() => defaultLines(flavor.id));
   const [draftReady, setDraftReady] = useState(false);
   const [added, setAdded] = useState(false);
@@ -84,8 +87,9 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const [discount, setDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState("");
   const [couponBusy, setCouponBusy] = useState(false);
-  const [hideCoupon, setHideCoupon] = useState(false);
   const compactChrome = useCompactMobileStoreChrome();
+
+  const unitPrice = unitPriceFor(flavor.id);
 
   const gallery = useMemo(
     () => [
@@ -102,20 +106,6 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   useEffect(() => {
     setShot(0);
   }, [flavor.id]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/catalog")
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        if (data?.channel?.hideCoupon) setHideCoupon(true);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     setLines(loadLines(flavor.id));
@@ -146,13 +136,9 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
 
   const subtotal = useMemo(
     () =>
-      lines.reduce((sum, l) => {
-        const item = flavors.find((f) => f.id === l.flavorId);
-        return sum + (item?.price ?? 0) * l.quantity;
-      }, 0),
-    [lines],
+      lines.reduce((sum, l) => sum + unitPriceFor(l.flavorId) * l.quantity, 0),
+    [lines, unitPriceFor],
   );
-
   const payable = Math.max(0, subtotal - discount);
   const activeShot = gallery[shot] ?? gallery[0];
 
@@ -226,13 +212,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
     setLines((prev) => [...prev, defaultLine(availableExtra.id)]);
   }
 
-  function removeLine(key: string) {
-    setLines((prev) => (prev.length <= 1 ? prev : prev.filter((l) => l.key !== key)));
-  }
-
   function cartLines() {
     const merged = new Map<FlavorId, number>();
     for (const line of lines) {
+      if (line.quantity <= 0) continue;
       merged.set(line.flavorId, (merged.get(line.flavorId) ?? 0) + line.quantity);
     }
     return [...merged.entries()].map(([flavorId, quantity]) => ({
@@ -329,19 +312,23 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 {product.name}
               </span>
             </div>
-            <p className="mt-2.5 font-display text-[1.75rem] font-bold tracking-tight text-black sm:mt-3 sm:text-4xl">
-              <StorePrice amount={flavor.price} />
-            </p>
+            <div className="mt-2.5 sm:mt-3">
+              <DualStorePrice
+                amount={unitPrice}
+                className="font-display text-[1.75rem] font-bold tracking-tight text-black sm:text-4xl"
+              />
+            </div>
+            <PackNote className="mt-4" />
 
             {hideCoupon ? (
-              <p className="font-body text-sm text-black/60">
+              <p className="mt-4 font-body text-sm text-black/60">
                 Channel rebate and test stations apply automatically at checkout. No coupon code.
               </p>
             ) : (
-              <div>
+              <div className="mt-4">
                 <label
                   htmlFor="product-coupon"
-                  className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase"
+                  className="font-display text-sm font-bold text-black"
                 >
                   Coupon code
                 </label>
@@ -361,7 +348,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     }}
                     placeholder="Enter code"
                     autoComplete="off"
-                    className="min-w-0 flex-1 rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/35 focus:border-black sm:px-3.5"
+                    className="min-w-0 flex-1 rounded-lg border border-black/25 bg-white px-3 py-2.5 font-display text-sm font-semibold uppercase tracking-wide text-black outline-none placeholder:normal-case placeholder:tracking-normal placeholder:text-black/45 focus:border-black sm:px-3.5"
                   />
                   <button
                     type="button"
@@ -384,20 +371,20 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
               </div>
             )}
 
-            <div className="mt-5 sm:mt-6">
-              <div className="mt-5 hidden grid-cols-[minmax(0,1fr)_6.75rem_9rem] items-center gap-3 pb-2 sm:grid">
-                <p className="font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
+            <div className="mt-6 overflow-hidden rounded-2xl ring-1 ring-black/10">
+              <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
+                <p className="font-display text-sm font-bold text-black">
                   Flavor
                 </p>
-                <p className="text-right font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
-                  Unit price
+                <p className="text-right font-display text-sm font-bold text-black">
+                  Price / pc
                 </p>
-                <p className="text-right font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase">
-                  Quantity
+                <p className="text-center font-display text-sm font-bold text-black">
+                  Cases
                 </p>
               </div>
 
-              <ul className="space-y-4 sm:space-y-2">
+              <ul className="divide-y divide-black/8">
                 {lines.map((line) => {
                   const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
                   const options = flavors.filter(
@@ -406,10 +393,10 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   return (
                     <li
                       key={line.key}
-                      className="grid grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,1fr)_6.75rem_9rem] sm:items-center sm:gap-3"
+                      className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] sm:items-center sm:gap-4"
                     >
                       <label className="min-w-0">
-                        <span className="mb-1.5 block font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:sr-only">
+                        <span className="mb-1.5 block font-display text-sm font-bold text-black sm:sr-only">
                           Flavor
                         </span>
                         <div className="flex min-w-0 items-center gap-2">
@@ -427,41 +414,33 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                               </option>
                             ))}
                           </select>
-                          {lines.length > 1 ? (
-                            <button
-                              type="button"
-                              onClick={() => removeLine(line.key)}
-                              className="shrink-0 font-display text-xs font-semibold text-black/40 transition hover:text-black"
-                              aria-label={`Remove ${item.name}`}
-                            >
-                              Remove
-                            </button>
-                          ) : null}
                         </div>
                       </label>
-                      <div className="grid grid-cols-2 items-end gap-3 sm:contents">
+                      <div className="grid grid-cols-2 items-center gap-3 sm:contents">
                         <div className="min-w-0 sm:text-right">
-                          <p className="mb-1.5 font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:hidden">
-                            Unit price
+                          <p className="mb-1.5 font-display text-sm font-bold text-black sm:hidden">
+                            Price / pc
                           </p>
                           <p className="font-display text-sm font-semibold text-black sm:text-right">
-                            <StorePrice amount={item.price} />
+                            <StorePrice amount={unitPriceFor(item.id)} />
                           </p>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <p className="mb-1.5 font-display text-xs font-bold tracking-[0.1em] text-black/70 uppercase sm:hidden">
-                            Quantity
+                        <div className="min-w-0">
+                          <p className="mb-1.5 text-center font-display text-sm font-bold text-black sm:hidden">
+                            Cases
                           </p>
-                          <QtyStepper
-                            value={line.quantity}
-                            onChange={(next) =>
+                          <CaseQtyStepper
+                            pcs={line.quantity}
+                            onChangePcs={(next) =>
                               updateLine(line.key, {
-                                quantity: Math.max(1, next),
+                                quantity: snapToCasePcs(next),
                               })
                             }
-                            min={1}
+                            allowZero
+                            showPcs
                             size="sm"
-                            ariaLabel={`${item.name} quantity`}
+                            align="center"
+                            ariaLabel={`${item.name} cases`}
                           />
                         </div>
                       </div>
@@ -469,6 +448,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   );
                 })}
               </ul>
+            </div>
 
               <button
                 type="button"
@@ -479,19 +459,21 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 + Add another flavor
               </button>
 
-              <div className="mt-6 text-right">
-                <p className="font-display text-[0.65rem] font-semibold tracking-[0.12em] text-black/40 uppercase">
-                  Total
+              <div className="mt-6 rounded-2xl bg-[#eef3f7] px-4 py-4 sm:px-5 sm:py-5">
+                <p className="font-display text-[0.7rem] font-semibold tracking-[0.16em] text-black/45 uppercase">
+                  Order size
                 </p>
-                <p className="mt-1 font-display text-2xl font-bold text-black sm:text-3xl">
+                <p className="mt-1.5 font-display text-[1.65rem] font-extrabold leading-none tracking-[-0.04em] text-black tabular-nums sm:text-[2.15rem]">
+                  {formatPack(totalQty)}
+                </p>
+                <p className="mt-3 font-display text-2xl font-bold tracking-tight text-black sm:text-3xl">
                   {showPrices ? <StorePrice amount={payable} /> : "On request"}
                 </p>
-                <p className="mt-1 font-body text-sm text-black/45">
-                  {totalQty} {totalQty === 1 ? "item" : "items"}
-                  {showPrices && discount > 0 && appliedCoupon
-                    ? ` · ${appliedCoupon} −$${discount.toFixed(2)}`
-                    : ""}
-                </p>
+                {showPrices && discount > 0 && appliedCoupon ? (
+                  <p className="mt-1.5 font-body text-sm text-black/50">
+                    {appliedCoupon} −${discount.toFixed(2)}
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3">
@@ -522,7 +504,6 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                   Buy now
                 </button>
               </div>
-            </div>
           </div>
         </div>
       </div>

@@ -38,17 +38,28 @@ export async function ensureDefaultFaqs() {
   const missing = DEFAULT_FAQS.filter(
     (item) => !have.has(item.q.trim().toLowerCase()),
   );
-  if (!missing.length) return;
+  if (missing.length) {
+    await prisma.faq.createMany({
+      data: missing.map((item, i) => ({
+        question: item.q,
+        answer: item.a,
+        keywords: item.keys.join(", "),
+        sortOrder: existing.length + i,
+        published: true,
+      })),
+    });
+  }
 
-  await prisma.faq.createMany({
-    data: missing.map((item, i) => ({
-      question: item.q,
-      answer: item.a,
-      keywords: item.keys.join(", "),
-      sortOrder: existing.length + i,
-      published: true,
-    })),
-  });
+  const hookamaxFaq = DEFAULT_FAQS.find((item) => item.q === "What is HOOKAMAX?");
+  if (hookamaxFaq) {
+    await prisma.faq.updateMany({
+      where: {
+        question: "What is HOOKAMAX?",
+        answer: { contains: "flavor options" },
+      },
+      data: { answer: hookamaxFaq.a },
+    });
+  }
 }
 
 export async function listPublishedFaqs(): Promise<SupportFaq[]> {

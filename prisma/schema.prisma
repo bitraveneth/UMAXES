@@ -333,15 +333,20 @@ model OrderItem {
 }
 
 model Payment {
-  id        String        @id @default(cuid())
-  orderId   String
-  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  method    PaymentMethod
-  amount    Float
-  reference String?
-  status    String        @default("pending")
-  paidAt    DateTime?
-  createdAt DateTime      @default(now())
+  id             String        @id @default(cuid())
+  orderId        String
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method         PaymentMethod
+  amount         Float
+  reference      String?
+  /// pending = waiting for slip · submitted = 水单 uploaded · paid = Info confirmed 到账 · on_terms = credit
+  status         String        @default("pending")
+  paidAt         DateTime?
+  slipUrl        String?
+  slipFileName   String?
+  slipMime       String?
+  slipUploadedAt DateTime?
+  createdAt      DateTime      @default(now())
 }
 
 model CreditLedger {

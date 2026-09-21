@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, ShoppingBag } from "lucide-react";
 import { StorePrice } from "@/components/StorePrice";
 import { flavors, product } from "@/lib/assets";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 
 const SUGGESTED = flavors.slice(0, 4);
 
@@ -15,6 +16,7 @@ type EmptyCartProps = {
 };
 
 export function EmptyCart({ compact = false, onShopClick }: EmptyCartProps) {
+  const { unitPriceFor } = useCatalogPrices();
   if (compact) {
     return (
       <div className="flex h-full flex-col items-center justify-center px-2 text-center">
@@ -185,7 +187,7 @@ export function EmptyCart({ compact = false, onShopClick }: EmptyCartProps) {
                     {f.tagline}
                   </span>
                   <span className="mt-1 block font-display text-sm font-bold text-black">
-                    <StorePrice amount={f.price} />
+                    <StorePrice amount={unitPriceFor(f.id)} />
                   </span>
                 </span>
               </Link>

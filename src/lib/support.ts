@@ -1,4 +1,4 @@
-import { flavors, product } from "@/lib/assets";
+import { product } from "@/lib/assets";
 
 export type SupportFaq = {
   q: string;
@@ -49,8 +49,13 @@ export const faqs: SupportFaq[] = [
   },
   {
     q: "What is HOOKAMAX?",
-    a: `${product.name} is UMAXES’ premium hookah-inspired disposable line — ${product.tagline} One device family with ${flavors.length} flavor options. Adults 21+ only.`,
+    a: `${product.name} is UMAXES’ premium hookah-inspired disposable line — ${product.tagline} One device family. Adults 21+ only.`,
     keys: ["what is hookamax", "hookamax", "product", "device", "disposable", "what is umaxes"],
+  },
+  {
+    q: "How is HOOKAMAX packed?",
+    a: "HOOKAMAX is sold by the case. Minimum order is 1 case (95 pieces). On the product page, + / − adds one case at a time — 1 case, 2 cases, and so on.",
+    keys: ["case", "pack", "95", "quantity", "pcs", "piece", "carton", "how many", "moq"],
   },
   {
     q: "Where can I shop?",

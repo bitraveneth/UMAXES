@@ -131,11 +131,12 @@ export async function createOrder(
         error: `No price for ${sku} at company level (${company.level})`,
       };
     }
-    if (quantity < price.moq) {
+    // Staff order desk can place sample / exception qty below catalog MOQ.
+    if (!input.placedByStaffId && quantity < price.moq) {
       return {
         ok: false,
         status: 400,
-        error: `${product.name} MOQ is ${price.moq}`,
+        error: `${product.name} MOQ is ${price.moq} pcs (1 case)`,
       };
     }
     const available =
