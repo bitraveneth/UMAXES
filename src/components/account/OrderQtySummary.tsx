@@ -1,7 +1,6 @@
 "use client";
 
 import { formatPack } from "@/lib/pack";
-import { formatTestStationQty } from "@/lib/test-station";
 
 export default function OrderQtySummary({
   pcs,
@@ -28,7 +27,8 @@ export default function OrderQtySummary({
       </p>
       {stationQty > 0 ? (
         <p className="mt-2 font-body text-sm text-black/60">
-          Incl. {formatTestStationQty(stationQty)}
+          Test Station ·{" "}
+          {stationQty === 1 ? "1 piece" : `${stationQty} pieces`}
         </p>
       ) : null}
     </div>

@@ -24,7 +24,6 @@ import {
 import { flavors, product, type Flavor, type FlavorId } from "@/lib/assets";
 import {
   TEST_STATION_PER_CASE_COPY,
-  formatTestStationQty,
 } from "@/lib/test-station";
 
 const DRAFT_KEY = "umaxes-product-order-lines-v3";
@@ -564,7 +563,9 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     </p>
                     <p className="mt-1 font-display text-lg font-bold tracking-tight text-black">
                       {stationQty > 0
-                        ? formatTestStationQty(stationQty)
+                        ? stationQty === 1
+                          ? "1 piece"
+                          : `${stationQty} pieces`
                         : "Add a case to include a test station"}
                     </p>
                     <p className="mt-1 font-body text-sm text-black/55">

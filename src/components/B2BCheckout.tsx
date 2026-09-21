@@ -14,7 +14,6 @@ import { isChannelBuyerLevel } from "@/lib/channel-level";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import {
   TEST_STATION_NAME,
-  formatTestStationQty,
 } from "@/lib/test-station";
 import {
   EMPTY_ADDRESS_FORM,
@@ -758,10 +757,13 @@ export default function B2BCheckout() {
                   {stationQty > 0 ? (
                     <>
                       <p className="font-display text-sm font-bold text-black">
-                        {formatTestStationQty(stationQty)}
+                        {stationQty === 1
+                          ? "1 test station"
+                          : `${stationQty} test stations`}
                       </p>
                       <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        Free kits · 1 per case · taken from stock
+                        {stationQty === 1 ? "1 piece" : `${stationQty} pieces`} ·
+                        free · 1 per case
                       </p>
                     </>
                   ) : (channel?.testStationsPerCase || 0) > 0 ? (
@@ -843,11 +845,8 @@ export default function B2BCheckout() {
                       </p>
                     </div>
                     <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                      <p className="font-body text-xs text-black/65">
-                        <span className="mr-1.5 inline-block rounded bg-black/[0.06] px-1.5 py-0.5 font-display text-[11px] font-bold tabular-nums text-black">
-                          Qty {casesFromPcs(l.quantity)}
-                        </span>
-                        {l.quantity.toLocaleString()} pcs
+                      <p className="font-body text-xs text-black/55">
+                        {formatPack(l.quantity)}
                         {l.quantity < l.moq ? ` · MOQ ${l.moq} pcs` : ""}
                       </p>
                       {showPrices ? (
@@ -874,12 +873,9 @@ export default function B2BCheckout() {
                       $0
                     </p>
                   </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 font-body text-xs text-black/55">
-                    <span className="rounded bg-[#eef3f7] px-1.5 py-0.5 font-display text-[11px] font-bold tabular-nums text-[#1b4f72]">
-                      Qty {stationQty}
-                    </span>
-                    <span>1 device each · free</span>
-                  </div>
+                  <p className="mt-1.5 font-body text-xs text-black/55">
+                    {stationQty === 1 ? "1 piece" : `${stationQty} pieces`} · free
+                  </p>
                 </div>
               </li>
             ) : null}
