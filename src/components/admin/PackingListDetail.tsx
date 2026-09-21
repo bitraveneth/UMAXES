@@ -8,7 +8,6 @@ import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import {
   Building2,
-  Download,
   ExternalLink,
   MapPin,
   Package,
@@ -16,6 +15,7 @@ import {
   Printer,
   X,
 } from "lucide-react";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 
 export type PackingListDetailOrder = {
   id: string;
@@ -103,7 +103,6 @@ export default function PackingListDetail({
 
   const totalUnits = order.lines.reduce((n, l) => n + l.quantity, 0);
   const printHref = `/api/orders/${order.id}/docs?type=packing`;
-  const downloadHref = `/api/orders/${order.id}/docs?type=packing&download=1`;
 
   function statusLabel(status: OrderStatus) {
     const key = `logistics.status${status}`;
@@ -235,13 +234,12 @@ export default function PackingListDetail({
               <Printer className="h-3.5 w-3.5" />
               {t("packingLists.printView")}
             </a>
-            <a
-              href={downloadHref}
-              className="admin-btn admin-btn-primary admin-btn-sm"
-            >
-              <Download className="h-3.5 w-3.5" />
-              {t("packingLists.download")}
-            </a>
+            <DocumentDownloadMenu
+              orderId={order.id}
+              type="packing"
+              variant="admin"
+              label={t("packingLists.download")}
+            />
           </div>
         </div>
 

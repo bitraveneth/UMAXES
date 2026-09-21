@@ -91,13 +91,17 @@ export default function AddressManager() {
       setError(result.error);
       return;
     }
+    const wasEdit = Boolean(editingId);
     setForm(EMPTY_ADDRESS_FORM);
     setEditingId(null);
     setShowForm(false);
     await load();
     showToast(
-      editingId ? "Address updated successfully" : "Address saved successfully",
+      wasEdit ? "Updated successfully" : "Saved successfully",
       "success",
+      wasEdit
+        ? "Shipping address has been updated."
+        : "Shipping address has been saved.",
     );
   }
 
@@ -135,7 +139,7 @@ export default function AddressManager() {
     }
     if (editingId === id) cancelForm();
     await load();
-    showToast("Address deleted", "danger");
+    showToast("Address deleted", "danger", "This ship-to was removed.");
   }
 
   return (

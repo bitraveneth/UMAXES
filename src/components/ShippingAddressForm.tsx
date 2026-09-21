@@ -198,29 +198,32 @@ export function ShippingAddressForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="font-display text-xs font-semibold tracking-wide text-black uppercase">
-              Full name *
+              Person name *
             </span>
             <input
               required
+              id="shipping-name"
               name="name"
-              autoComplete="name"
+              autoComplete="shipping name"
+              autoCapitalize="words"
               value={form.recipientName}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, recipientName: e.target.value }))
               }
-              placeholder="Recipient name"
+              placeholder="Person who receives the shipment"
               className={ADDRESS_FIELD_CLASS}
             />
           </label>
           <label className="block">
             <span className="font-display text-xs font-semibold tracking-wide text-black uppercase">
-              Phone number *
+              Telephone number *
             </span>
             <input
               required
+              id="shipping-tel"
               type="tel"
               name="tel"
-              autoComplete="tel"
+              autoComplete="shipping tel"
               inputMode="tel"
               value={form.phone}
               onChange={(e) =>
@@ -239,7 +242,7 @@ export function ShippingAddressForm({
           <input
             required
             name="address-line1"
-            autoComplete="address-line1"
+            autoComplete="shipping address-line1"
             value={form.line1}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, line1: e.target.value }))
@@ -256,7 +259,7 @@ export function ShippingAddressForm({
             <input
               required
               name="city"
-              autoComplete="address-level2"
+              autoComplete="shipping address-level2"
               value={form.city}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, city: e.target.value }))
@@ -270,7 +273,7 @@ export function ShippingAddressForm({
             </span>
             <input
               name="state"
-              autoComplete="address-level1"
+              autoComplete="shipping address-level1"
               value={form.region}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, region: e.target.value }))
@@ -285,7 +288,7 @@ export function ShippingAddressForm({
             <input
               required
               name="postal-code"
-              autoComplete="postal-code"
+              autoComplete="shipping postal-code"
               value={form.postalCode}
               onChange={(e) =>
                 setForm((prev) => ({
@@ -305,7 +308,7 @@ export function ShippingAddressForm({
           <input
             required
             name="country"
-            autoComplete="country-name"
+            autoComplete="shipping country-name"
             value={form.country}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, country: e.target.value }))

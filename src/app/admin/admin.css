@@ -732,18 +732,32 @@
   transform: translateX(-50%);
   z-index: 200;
   display: flex;
+  position: relative;
   align-items: center;
   gap: 0.85rem;
   min-width: min(20rem, calc(100vw - 2rem));
   max-width: min(34rem, calc(100vw - 2rem));
+  overflow: hidden;
   border-radius: 1.15rem;
-  padding: 1rem 1.3rem;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: #fff;
+  padding: 1rem 1.3rem 1rem 1.15rem;
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.35;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.2);
+  color: #111;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
   animation: admin-toast-in 0.22s ease;
   pointer-events: none;
+}
+
+.admin-toast::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6px;
 }
 
 .admin-toast-icon {
@@ -753,7 +767,7 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: 0.85rem;
 }
 
 .admin-toast-copy {
@@ -767,34 +781,31 @@
   font-size: 1.08rem;
   font-weight: 750;
   letter-spacing: -0.01em;
+  color: #111;
 }
 
 .admin-toast-detail {
   font-size: 0.875rem;
   font-weight: 500;
-  opacity: 0.92;
+  color: rgba(17, 17, 17, 0.65);
 }
 
-.admin-toast-success {
-  border: 1px solid #12b76a;
+.admin-toast-success::before {
+  background: #12b76a;
+}
+
+.admin-toast-success .admin-toast-icon {
   background: #ecfdf3;
   color: #027a48;
 }
 
-.admin-toast-success .admin-toast-icon {
-  background: #12b76a;
-  color: #fff;
-}
-
-.admin-toast-error {
-  border: 1px solid #f04438;
-  background: #fef3f2;
-  color: #b42318;
+.admin-toast-error::before {
+  background: #f04438;
 }
 
 .admin-toast-error .admin-toast-icon {
-  background: #f04438;
-  color: #fff;
+  background: #fef3f2;
+  color: #b42318;
 }
 
 .admin-save-banner {
@@ -805,18 +816,14 @@
   font-size: 0.95rem;
   font-weight: 550;
   line-height: 1.35;
-}
-
-.admin-save-banner-success {
-  border-bottom: 1px solid #aae8c5;
-  background: #ecfdf3;
-  color: #027a48;
+  background: #fff;
+  color: #111;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: inset 6px 0 0 #12b76a;
 }
 
 .admin-save-banner-error {
-  border-bottom: 1px solid #fecdca;
-  background: #fef3f2;
-  color: #b42318;
+  box-shadow: inset 6px 0 0 #f04438;
 }
 
 @keyframes admin-toast-in {

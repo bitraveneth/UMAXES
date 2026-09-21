@@ -556,7 +556,7 @@ function CustomerExpand({
                   <input
                     name="recipientName"
                     required
-                    autoComplete="name"
+                    autoComplete="shipping name"
                     className="admin-input mt-1.5 w-full"
                   />
                 </label>
@@ -566,7 +566,7 @@ function CustomerExpand({
                     name="phone"
                     required
                     type="tel"
-                    autoComplete="tel"
+                    autoComplete="shipping tel"
                     className="admin-input mt-1.5 w-full"
                   />
                 </label>

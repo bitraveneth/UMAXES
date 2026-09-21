@@ -82,7 +82,7 @@ export async function createOrder(
 
   const customerUser = await prisma.user.findUnique({
     where: { id: input.customerUserId },
-    select: { email: true, phone: true },
+    select: { email: true, phone: true, name: true },
   });
   const orderEmail =
     input.customerEmail?.trim() || customerUser?.email || null;
@@ -274,6 +274,7 @@ export async function createOrder(
   const orderNumber = nextOrderNumber();
   const piNumber = nextPiNumber({
     companyName: company.name,
+    customerName: address.recipientName || customerUser?.name,
     region: address.region,
     orderNumber,
   });

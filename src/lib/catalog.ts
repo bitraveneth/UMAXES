@@ -2,6 +2,17 @@ import type { CustomerLevel, PaymentMethod } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { CASE_MOQ_PCS } from "@/lib/pack";
 
+export {
+  formatDocDate,
+  nextOrderNumber,
+  nextPiNumber,
+  nextSystemId,
+  parseDocNumber,
+  siblingDocNumber,
+  slugCompany,
+  slugState,
+} from "@/lib/doc-number";
+
 export async function getCatalogForLevel(level: CustomerLevel) {
   const products = await prisma.product.findMany({
     where: { active: true },
@@ -63,79 +74,6 @@ export async function resolveCoupon(code: string, level: CustomerLevel, subtotal
       : roundMoney(Math.min(coupon.value, subtotal));
 
   return { coupon, discount };
-}
-
-export function nextSystemId() {
-  return String(Math.floor(Math.random() * 9000 + 1000));
-}
-
-export function formatDocDate(date = new Date()) {
-  const months = [
-    "JAN",
-    "FEB",
-    "MAR",
-    "APR",
-    "MAY",
-    "JUN",
-    "JUL",
-    "AUG",
-    "SEP",
-    "OCT",
-    "NOV",
-    "DEC",
-  ];
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const mon = months[date.getUTCMonth()] || "JAN";
-  return `${day}${mon}${date.getUTCFullYear()}`;
-}
-
-export function slugState(region?: string | null) {
-  const raw = (region || "").trim().toUpperCase();
-  if (!raw) return "";
-  if (/^[A-Z]{2}$/.test(raw)) return raw;
-  return raw.replace(/[^A-Z0-9]+/g, "").slice(0, 8);
-}
-
-export function slugCompany(name: string) {
-  const slug = (name || "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "")
-    .slice(0, 16);
-  return slug || "CUSTOMER";
-}
-
-export function nextOrderNumber() {
-  const d = new Date();
-  const stamp = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-  return `UMX-${stamp}-${nextSystemId()}`;
-}
-
-export function nextPiNumber(opts: {
-  companyName: string;
-  region?: string | null;
-  orderNumber: string;
-  date?: Date;
-}) {
-  const systemId = opts.orderNumber.split("-").pop() || nextSystemId();
-  const parts = [
-    "PI",
-    slugState(opts.region),
-    slugCompany(opts.companyName),
-    formatDocDate(opts.date),
-    systemId,
-  ].filter(Boolean);
-  return parts.join("-");
-}
-
-export function siblingDocNumber(
-  piNumber: string | null | undefined,
-  prefix: "PI" | "CI" | "PL",
-  orderNumber: string,
-) {
-  if (piNumber && piNumber.startsWith("PI-")) {
-    return `${prefix}-${piNumber.slice(3)}`;
-  }
-  return `${prefix}-${orderNumber.replace(/^UMX-/, "")}`;
 }
 
 export const paymentLabels: Record<PaymentMethod, string> = {

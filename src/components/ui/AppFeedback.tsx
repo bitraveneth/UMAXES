@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -42,43 +43,59 @@ export function ConfirmDialog({
   onCancel: () => void;
 }) {
   const titleId = useId();
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  const danger = tone === "danger";
 
   useEffect(() => {
     if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const t = window.setTimeout(() => confirmRef.current?.focus(), 20);
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onCancel();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onCancel();
+      }
+      if (e.key === "Enter" && !pending) {
+        const tag = (e.target as HTMLElement | null)?.tagName;
+        if (tag === "BUTTON" || tag === "A" || tag === "TEXTAREA") return;
+        e.preventDefault();
+        onConfirm();
+      }
     }
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
+    return () => {
+      window.clearTimeout(t);
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onCancel, onConfirm, pending]);
 
   if (!open) return null;
-
-  const danger = tone === "danger";
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
       <button
         type="button"
         aria-label="Close"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-slate-900/45 backdrop-blur-[3px]"
         onClick={onCancel}
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative w-full max-w-md overflow-hidden border border-black/10 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.22)]"
+        className="relative w-full max-w-[26rem] overflow-hidden rounded-2xl border border-black/8 bg-white shadow-[0_28px_80px_rgba(15,23,42,0.28)]"
       >
         <span
           aria-hidden
-          className={`absolute inset-y-0 left-0 w-1 ${
+          className={`absolute inset-y-0 left-0 w-1.5 ${
             danger ? "bg-red-600" : "bg-emerald-600"
           }`}
         />
-        <div className="px-6 py-6 pl-7">
+        <div className="px-6 py-6 pl-8">
           <span
-            className={`flex h-11 w-11 items-center justify-center ${
+            className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
               danger ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"
             }`}
           >
@@ -90,11 +107,11 @@ export function ConfirmDialog({
           </span>
           <h2
             id={titleId}
-            className="mt-4 font-display text-xl font-extrabold text-black"
+            className="mt-4 font-display text-xl font-extrabold tracking-tight text-black"
           >
             {title}
           </h2>
-          <p className="mt-2 font-body text-sm leading-relaxed text-black/70">
+          <p className="mt-2 font-body text-sm leading-relaxed text-black/68">
             {message}
           </p>
           <div className="mt-6 flex flex-wrap justify-end gap-2">
@@ -102,18 +119,19 @@ export function ConfirmDialog({
               type="button"
               onClick={onCancel}
               disabled={pending}
-              className="border border-black/15 bg-white px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-black/30 disabled:opacity-50"
+              className="rounded-xl border border-black/12 bg-white px-4 py-2.5 font-display text-sm font-semibold text-black transition hover:border-black/28 hover:bg-black/[0.02] disabled:opacity-50"
             >
               {cancelLabel}
             </button>
             <button
+              ref={confirmRef}
               type="button"
               onClick={onConfirm}
               disabled={pending}
-              className={`px-4 py-2.5 font-display text-sm font-semibold text-white transition disabled:opacity-50 ${
+              className={`rounded-xl px-4 py-2.5 font-display text-sm font-semibold text-white shadow-sm transition disabled:opacity-50 ${
                 danger
-                  ? "bg-red-700 hover:bg-red-800"
-                  : "bg-emerald-700 hover:bg-emerald-800"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-emerald-600 hover:bg-emerald-700"
               }`}
             >
               {pending ? "Working…" : confirmLabel}
@@ -137,17 +155,17 @@ export function FeedbackToast({
       role="status"
       aria-live="polite"
       onClick={onClose}
-      className="pointer-events-auto fixed top-4 left-1/2 z-[90] w-[min(24rem,calc(100vw-1.5rem))] -translate-x-1/2 cursor-pointer overflow-hidden border border-black/10 bg-white shadow-[0_16px_40px_rgba(15,23,42,0.16)]"
+      className="pointer-events-auto fixed top-4 left-1/2 z-[90] w-[min(24rem,calc(100vw-1.5rem))] -translate-x-1/2 cursor-pointer overflow-hidden rounded-2xl border border-black/8 bg-white shadow-[0_16px_44px_rgba(15,23,42,0.16)]"
     >
       <span
         aria-hidden
-        className={`absolute inset-y-0 left-0 w-1 ${
+        className={`absolute inset-y-0 left-0 w-1.5 ${
           danger ? "bg-red-600" : "bg-emerald-600"
         }`}
       />
       <div className="flex items-start gap-3 px-4 py-3.5 pl-5">
         <span
-          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center ${
+          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
             danger ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"
           }`}
         >

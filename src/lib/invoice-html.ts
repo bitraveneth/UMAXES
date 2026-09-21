@@ -353,6 +353,11 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
   <div class="actions">
     <button type="button" class="primary" onclick="window.print()">Print</button>
     ${
+      input.pdfHref || input.xlsxHref
+        ? `<span class="format-label">Choose format</span>`
+        : ""
+    }
+    ${
       input.pdfHref
         ? `<a href="${escapeHtml(input.pdfHref)}">PDF</a>`
         : ""
@@ -419,7 +424,8 @@ body{
   padding:12px 20px;background:#111;color:#fff;
 }
 .toolbar p{margin:0;font-size:13px;opacity:.9}
-.toolbar .actions{display:flex;flex-wrap:wrap;gap:8px}
+.toolbar .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .format-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.7;padding:0 4px}
 .toolbar a,.toolbar button{
   appearance:none;border:0;border-radius:999px;padding:10px 16px;
   font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;color:#111;background:#fff;

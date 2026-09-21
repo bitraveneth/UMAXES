@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
-import { Download, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 
 export type PackingListRow = {
   id: string;
@@ -195,14 +196,17 @@ export default function PackingListsWorkspace({
                           <Eye className="h-3.5 w-3.5" />
                           {t("packingLists.view")}
                         </button>
-                        <a
-                          href={`/api/orders/${row.id}/docs?type=packing&download=1`}
+                        <div
                           onClick={(e) => e.stopPropagation()}
-                          className="admin-btn admin-btn-secondary admin-btn-sm"
+                          className="inline-flex"
                         >
-                          <Download className="h-3.5 w-3.5" />
-                          {t("packingLists.download")}
-                        </a>
+                          <DocumentDownloadMenu
+                            orderId={row.id}
+                            type="packing"
+                            variant="admin"
+                            label={t("packingLists.download")}
+                          />
+                        </div>
                       </div>
                     </td>
                   </tr>

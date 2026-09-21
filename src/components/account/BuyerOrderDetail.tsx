@@ -18,6 +18,7 @@ import {
 } from "@/lib/buyer-order";
 import BuyerPaymentSlip from "@/components/account/BuyerPaymentSlip";
 import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
+import PiNumberBlock from "@/components/account/PiNumberBlock";
 import OrderProgressBar from "@/components/account/OrderProgressBar";
 import type { OrderStatus } from "@/generated/prisma/enums";
 
@@ -133,14 +134,6 @@ export default function BuyerOrderDetail({
               {order.createdAt.slice(0, 10)}
               <span className="mx-2 text-black">·</span>
               {paymentLabel}
-              {order.piNumber ? (
-                <>
-                  <span className="mx-2 text-black">·</span>
-                  <span className="font-display font-semibold text-umx-orange">
-                    {order.piNumber}
-                  </span>
-                </>
-              ) : null}
             </p>
           </div>
 
@@ -154,6 +147,8 @@ export default function BuyerOrderDetail({
           </div>
         </div>
       </header>
+
+      {order.piNumber ? <PiNumberBlock value={order.piNumber} /> : null}
 
       {order.status !== "CANCELLED" ? (
         <BuyerPaymentSlip
@@ -236,13 +231,14 @@ export default function BuyerOrderDetail({
                       {doc.label}
                     </p>
                     <p className="mt-1 font-body text-xs text-black">
-                      {doc.description}
+                      Choose PDF or Excel
                     </p>
                     <div className="mt-5 flex flex-wrap items-center gap-3">
                       <DocumentDownloadMenu
                         orderId={order.id}
                         type={doc.type}
                         compact
+                        label="Choose format"
                       />
                       <a
                         href={`/api/orders/${order.id}/docs?type=${doc.type}`}

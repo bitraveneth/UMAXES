@@ -7,6 +7,7 @@ import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { ShipmentProgressHorizontal } from "@/components/admin/LogisticsShipmentProgress";
 import { Building2, MapPin, Package, Phone, Mail, User } from "lucide-react";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 
 export type ShipmentDeliveryOrder = {
   id: string;
@@ -288,12 +289,12 @@ export default function ShipmentDeliveryDetail({
                 >
                   {t("packingLists.view")}
                 </a>
-                <a
-                  href={`/api/orders/${order.id}/docs?type=packing&download=1`}
-                  className="admin-btn admin-btn-secondary admin-btn-sm"
-                >
-                  {t("packingLists.download")}
-                </a>
+                <DocumentDownloadMenu
+                  orderId={order.id}
+                  type="packing"
+                  variant="admin"
+                  label={t("packingLists.download")}
+                />
               </div>
         </AdminCard>
       </div>

@@ -461,7 +461,7 @@ export default function AddUserForm({
             >
               <input
                 name="recipientName"
-                autoComplete="name"
+                autoComplete="shipping name"
                 required
                 className="admin-input mt-0 w-full"
               />
@@ -474,7 +474,7 @@ export default function AddUserForm({
               <input
                 name="shipPhone"
                 type="tel"
-                autoComplete="tel"
+                autoComplete="shipping tel"
                 required
                 className="admin-input mt-0 w-full"
               />

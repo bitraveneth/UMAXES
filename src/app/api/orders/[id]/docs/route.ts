@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getActiveBankAccount } from "@/lib/bank-accounts";
 import { buildInvoiceHtml, type InvoiceDocType } from "@/lib/invoice-html";
-import { siblingDocNumber } from "@/lib/catalog";
+import { siblingDocNumber } from "@/lib/doc-number";
 import { buildInvoicePdf, buildInvoiceXlsx } from "@/lib/document-file";
 import { prisma } from "@/lib/db";
 

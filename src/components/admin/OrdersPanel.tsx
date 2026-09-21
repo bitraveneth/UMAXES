@@ -12,6 +12,7 @@ import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { Package } from "@/components/admin/icons";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { useAppFeedback } from "@/components/ui/AppFeedback";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 
 export type OrdersPanelSupplier = {
   id: string;
@@ -415,70 +416,46 @@ function OrderDocLinks({
   hasSlip?: boolean;
 }) {
   const { t } = useAdminI18n();
-  const links = [
+  const docs = [
+    { type: "pi" as const, short: t("orders.docPi"), full: t("orders.viewPi") },
     {
-      type: "pi",
-      short: t("orders.docPi"),
-      full: t("orders.viewPi"),
-      href: `/api/orders/${orderId}/docs?type=pi`,
-    },
-    {
-      type: "packing",
+      type: "packing" as const,
       short: t("orders.docPackShort"),
       full: t("orders.viewPacking"),
-      href: `/api/orders/${orderId}/docs?type=packing`,
     },
-    {
-      type: "invoice",
-      short: t("orders.docCi"),
-      full: t("orders.viewCi"),
-      href: `/api/orders/${orderId}/docs?type=invoice`,
-    },
-    ...(hasSlip
-      ? [
-          {
-            type: "slip",
-            short: t("orders.docSlip"),
-            full: t("orders.viewSlip"),
-            href: slipHref(orderId),
-          },
-        ]
-      : []),
+    { type: "invoice" as const, short: t("orders.docCi"), full: t("orders.viewCi") },
   ];
 
-  if (compact) {
-    return (
-      <div className="admin-doc-pills">
-        {links.map((link) => (
-          <a
-            key={link.type}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={link.full}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {link.short}
-          </a>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {links.map((link) => (
+    <div
+      className="flex flex-wrap items-center gap-1.5"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {docs.map((doc) => (
+        <DocumentDownloadMenu
+          key={doc.type}
+          orderId={orderId}
+          type={doc.type}
+          compact
+          variant="admin"
+          label={compact ? doc.short : doc.full}
+        />
+      ))}
+      {hasSlip ? (
         <a
-          key={link.type}
-          href={link.href}
+          href={slipHref(orderId)}
           target="_blank"
           rel="noopener noreferrer"
-          title={link.full}
-          className="admin-btn admin-btn-secondary admin-btn-sm !px-2.5 !text-xs"
+          title={t("orders.viewSlip")}
+          className={
+            compact
+              ? undefined
+              : "admin-btn admin-btn-secondary admin-btn-sm !px-2.5 !text-xs"
+          }
         >
-          {link.full}
+          {compact ? t("orders.docSlip") : t("orders.viewSlip")}
         </a>
-      ))}
+      ) : null}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { CircleCheck, Gift, Pencil, Plus, Trash2, Wallet } from "lucide-react";
+import PiNumberBlock from "@/components/account/PiNumberBlock";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
 import { CASE_MOQ_PCS, casesFromPcs, formatCases } from "@/lib/pack";
@@ -235,13 +236,15 @@ export default function B2BCheckout() {
       setError(result.error);
       return;
     }
+    const wasEdit = Boolean(editingAddressId);
     cancelAddressForm();
     await refreshAddresses(result.address.id);
     showToast(
-      editingAddressId
-        ? "Address updated successfully"
-        : "Address saved successfully",
+      wasEdit ? "Updated successfully" : "Saved successfully",
       "success",
+      wasEdit
+        ? "Shipping address has been updated."
+        : "Shipping address has been saved.",
     );
   }
 
@@ -266,7 +269,7 @@ export default function B2BCheckout() {
     }
     if (editingAddressId === id) cancelAddressForm();
     await refreshAddresses();
-    showToast("Address deleted", "danger");
+    showToast("Address deleted", "danger", "This ship-to was removed.");
   }
 
   async function placeOrder() {
@@ -317,38 +320,37 @@ export default function B2BCheckout() {
     return (
       <div className="mx-auto max-w-2xl py-10 sm:py-16">
         {ui}
-        <div className="overflow-hidden border border-black/10 bg-white shadow-[0_16px_40px_rgba(14,36,56,0.06)]">
-          <div className="border-b border-black/8 bg-[#eef3f7] px-6 py-5 sm:px-8">
-            <p className="font-display text-[0.65rem] font-semibold tracking-[0.18em] text-[#1b4f72] uppercase">
-              Order placed
-            </p>
-            <div className="mt-3 flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-emerald-50 text-emerald-700">
-                <CircleCheck className="h-6 w-6" strokeWidth={1.9} />
+        <div className="relative overflow-hidden border border-black/10 bg-white shadow-[0_18px_48px_rgba(14,36,56,0.07)]">
+          <span
+            aria-hidden
+            className="absolute inset-y-0 left-0 w-1.5 bg-emerald-600"
+          />
+          <div className="px-6 py-7 pl-7 sm:px-9 sm:py-9">
+            <div className="flex items-start gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                <CircleCheck className="h-7 w-7" strokeWidth={1.9} />
               </span>
-              <div>
-                <h1 className="font-display text-3xl font-extrabold text-black">
+              <div className="min-w-0">
+                <p className="font-display text-[0.65rem] font-semibold tracking-[0.2em] text-emerald-800 uppercase">
+                  Order placed
+                </p>
+                <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
                   Thank you
                 </h1>
-                <p className="mt-1 font-body text-sm text-black/70">
-                  Your order is recorded. Download the proforma and send the TT
-                  when you are ready.
+                <p className="mt-2 max-w-md font-body text-sm leading-relaxed text-black/68">
+                  Your order is recorded. Download the proforma, send the TT,
+                  then we confirm payment.
                 </p>
               </div>
             </div>
-          </div>
-          <div className="px-6 py-6 sm:px-8">
+
             {piNumber ? (
-              <div className="border border-black/10 bg-umx-cream-bright px-4 py-4">
-                <p className="font-display text-[10px] font-semibold tracking-[0.16em] text-black/55 uppercase">
-                  Proforma invoice
-                </p>
-                <p className="mt-1 break-all font-display text-lg font-extrabold tracking-tight text-[#1b4f72] sm:text-xl">
-                  {piNumber}
-                </p>
+              <div className="mt-7">
+                <PiNumberBlock value={piNumber} />
               </div>
             ) : null}
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+            <div className="mt-6 flex flex-col gap-3 border border-black/8 bg-[#f7f9fb] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-display text-sm font-semibold text-black">
                   Download PI
@@ -357,8 +359,13 @@ export default function B2BCheckout() {
                   Choose PDF or Excel.
                 </p>
               </div>
-              <DocumentDownloadMenu orderId={doneOrderId} type="pi" />
+              <DocumentDownloadMenu
+                orderId={doneOrderId}
+                type="pi"
+                label="Choose format"
+              />
             </div>
+
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={`/account/orders/${doneOrderId}`}

@@ -93,14 +93,14 @@ export default async function DocumentsPage() {
                       {order.createdAt.toISOString().slice(0, 10)}
                       <span className="mx-2">·</span>
                       {readyCount} of {DOC_META.length} ready
-                      {order.piNumber ? (
-                        <>
-                          <span className="mx-2">·</span>
-                          <span className="font-display font-semibold text-umx-orange">
-                            {order.piNumber}
-                          </span>
-                        </>
-                      ) : null}
+                              {order.piNumber ? (
+                                <>
+                                  <span className="mx-2">·</span>
+                                  <span className="break-all font-display font-semibold text-[#1b4f72]">
+                                    {order.piNumber}
+                                  </span>
+                                </>
+                              ) : null}
                     </p>
                   </div>
                   <Link
@@ -155,13 +155,14 @@ export default async function DocumentsPage() {
                               {doc.label}
                             </p>
                             <p className="mt-0.5 font-body text-xs text-black">
-                              Download PDF or Excel
+                              Choose PDF or Excel
                             </p>
                             <div className="mt-3 flex flex-wrap items-center gap-3">
                               <DocumentDownloadMenu
                                 orderId={order.id}
                                 type={doc.type}
                                 compact
+                                label="Choose format"
                               />
                               <a
                                 href={`/api/orders/${order.id}/docs?type=${doc.type}`}
