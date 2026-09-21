@@ -77,6 +77,7 @@ export const product = {
   deviceImage: "/images/product/device-transparent.png",
   deviceDuoImage: "/images/product/device-duo.webp",
   featuresHero: "/images/product/features-hero.webp",
+  introductionImage: "/images/product/hookamax-introduction.jpg",
 } as const;
 
 /** Full-bleed detail panels after Specs (shared on every flavor page) */
