@@ -271,17 +271,25 @@ export default function CheckoutRebatePanel({
           </div>
         ) : null}
 
-        <dl className="mt-5 divide-y divide-black/8 border-t border-black/8">
+        <dl className="mt-5 space-y-2 border-t border-black/8 pt-4">
           {detailRows.map((row) => (
             <div
               key={row.label}
-              className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-3 py-3 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:gap-4"
+              className={`grid grid-cols-1 gap-1 rounded-xl px-3.5 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center sm:gap-4 ${
+                row.accent
+                  ? "border border-[#1b4f72]/20 bg-[#eef3f7]"
+                  : "bg-[#f7f8fa]"
+              }`}
             >
-              <dt className="font-display text-[11px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+              <dt
+                className={`font-display text-sm font-bold tracking-tight ${
+                  row.accent ? "text-[#1b4f72]" : "text-black"
+                }`}
+              >
                 {row.label}
               </dt>
               <dd
-                className={`min-w-0 font-display text-sm font-semibold tabular-nums sm:text-base ${
+                className={`min-w-0 font-display text-base font-extrabold tabular-nums leading-snug sm:text-right ${
                   row.accent ? "text-[#1b4f72]" : "text-black"
                 }`}
               >
