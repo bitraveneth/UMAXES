@@ -9,7 +9,12 @@ export const PAYMENT_SLIP = {
   acceptAttr: "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp",
 };
 
-export type PaymentSlipStatus = "pending" | "submitted" | "paid" | "on_terms";
+export type PaymentSlipStatus =
+  | "pending"
+  | "submitted"
+  | "paid"
+  | "rejected"
+  | "on_terms";
 
 export function guessSlipMime(file: { type?: string; name?: string }) {
   const mime = (file.type || "").toLowerCase();
@@ -39,6 +44,19 @@ export function isSlipSubmitted(status: string | null | undefined) {
   return status === "submitted";
 }
 
+export function isPaymentRejected(status: string | null | undefined) {
+  return status === "rejected";
+}
+
+export const ADMIN_PAYMENT_STATUSES = [
+  "pending",
+  "submitted",
+  "paid",
+  "rejected",
+] as const;
+
+export type AdminPaymentStatus = (typeof ADMIN_PAYMENT_STATUSES)[number];
+
 export function formatMaxSlipSize() {
   return "1 MB";
 }
@@ -50,11 +68,14 @@ export function buyerPaymentLabel(opts: {
   paid: boolean;
 }) {
   if (opts.paid) return "Payment confirmed";
+  if (isPaymentRejected(opts.paymentStatus)) {
+    return "Payment rejected — upload a new slip";
+  }
   if (opts.hasSlip || isSlipSubmitted(opts.paymentStatus)) {
     return "Slip uploaded — awaiting confirmation";
   }
   if (opts.orderStatus === "PAYMENT_PENDING" || opts.orderStatus === "SUBMITTED") {
-    return "Upload payment slip";
+    return "Pending payment";
   }
   return "Payment";
 }

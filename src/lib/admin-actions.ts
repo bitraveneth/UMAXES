@@ -760,10 +760,24 @@ export async function upsertSupplier(input: {
 }
 
 export async function markPaymentReceived(orderId: string, reference?: string) {
+  return updateOrderPaymentStatus(orderId, "paid", reference);
+}
+
+export async function updateOrderPaymentStatus(
+  orderId: string,
+  status: "pending" | "submitted" | "paid" | "rejected",
+  reference?: string,
+) {
   const session = await requireRoles(["ADMIN", "SALES"]);
   const role = session.user.role;
   const canConfirmWithoutSlip =
     role === "ADMIN" || role === "SUPER_ADMIN";
+
+  if (!["pending", "submitted", "paid", "rejected"].includes(status)) {
+    throw new Error("Invalid payment status");
+  }
+
+  let shouldRunRebate = false;
 
   await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
@@ -772,83 +786,143 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
     });
     if (!order) throw new Error("Order not found");
 
+    const payment = order.payments[0];
     const alreadyPaid = order.payments.some(
       (p) => p.status === "paid" && p.paidAt,
     );
     const hasSlip = order.payments.some((p) => p.slipUrl);
-    if (
-      !alreadyPaid &&
-      !hasSlip &&
-      order.paymentMethod !== "CREDIT" &&
-      !canConfirmWithoutSlip
-    ) {
-      throw new Error("Wait for the buyer to upload a payment slip first");
+
+    if (order.paymentMethod === "CREDIT" && status !== "paid") {
+      throw new Error("Credit orders use terms — not bank-slip payment status");
     }
 
-    await tx.order.update({
-      where: { id: orderId },
-      data: {
-        status: order.status === "PAYMENT_PENDING" ? "CONFIRMED" : order.status,
-        paymentRef: reference || order.paymentRef,
-      },
-    });
+    if (status === "paid") {
+      if (
+        order.paymentMethod !== "CREDIT" &&
+        !alreadyPaid &&
+        !hasSlip &&
+        !canConfirmWithoutSlip
+      ) {
+        throw new Error("Wait for the buyer to upload a payment slip first");
+      }
 
-    await tx.payment.updateMany({
-      where: { orderId },
-      data: alreadyPaid
-        ? {
-            status: "paid",
-            reference: reference || undefined,
-          }
-        : {
-            status: "paid",
-            reference: reference || undefined,
-            paidAt: new Date(),
-          },
-    });
-
-    if (
-      !alreadyPaid &&
-      order.paymentMethod === "CREDIT" &&
-      order.payments.some((p) => p.status === "on_terms")
-    ) {
-      await tx.company.update({
-        where: { id: order.companyId },
-        data: { creditUsed: { decrement: order.total } },
-      });
-      await tx.creditLedger.create({
+      await tx.order.update({
+        where: { id: orderId },
         data: {
-          companyId: order.companyId,
-          orderId: order.id,
-          type: "payment",
-          amount: -order.total,
-          note: `Payment received for ${order.orderNumber}`,
+          status:
+            order.status === "PAYMENT_PENDING" ? "CONFIRMED" : order.status,
+          paymentRef: reference || order.paymentRef,
         },
       });
+
+      if (payment) {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: "paid",
+            reference: reference || payment.reference || undefined,
+            paidAt: alreadyPaid ? payment.paidAt : new Date(),
+          },
+        });
+      } else {
+        await tx.payment.create({
+          data: {
+            orderId,
+            method: order.paymentMethod,
+            amount: order.total,
+            status: "paid",
+            reference: reference || order.paymentRef,
+            paidAt: new Date(),
+          },
+        });
+      }
+
+      if (
+        !alreadyPaid &&
+        order.paymentMethod === "CREDIT" &&
+        order.payments.some((p) => p.status === "on_terms")
+      ) {
+        await tx.company.update({
+          where: { id: order.companyId },
+          data: { creditUsed: { decrement: order.total } },
+        });
+        await tx.creditLedger.create({
+          data: {
+            companyId: order.companyId,
+            orderId: order.id,
+            type: "payment",
+            amount: -order.total,
+            note: `Payment received for ${order.orderNumber}`,
+          },
+        });
+      }
+
+      shouldRunRebate = !alreadyPaid;
+    } else {
+      const nextPaymentStatus =
+        status === "submitted" && !hasSlip && !canConfirmWithoutSlip
+          ? "pending"
+          : status;
+
+      if (status === "submitted" && !hasSlip && !canConfirmWithoutSlip) {
+        throw new Error("No payment slip on this order yet");
+      }
+
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          // If unpaid again after paid, move back to pending payment when still early
+          status:
+            alreadyPaid &&
+            (order.status === "CONFIRMED" || order.status === "PAYMENT_PENDING")
+              ? "PAYMENT_PENDING"
+              : order.status,
+          paymentRef: reference || order.paymentRef,
+        },
+      });
+
+      if (payment) {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: nextPaymentStatus,
+            paidAt: null,
+            reference: reference || payment.reference || undefined,
+          },
+        });
+      } else {
+        await tx.payment.create({
+          data: {
+            orderId,
+            method: order.paymentMethod,
+            amount: order.total,
+            status: nextPaymentStatus,
+            reference: reference || order.paymentRef,
+          },
+        });
+      }
     }
 
     await tx.auditLog.create({
       data: {
         userId: session.user.id,
-        action: "PAYMENT_RECEIVED",
+        action: "PAYMENT_STATUS",
         entity: "Order",
         entityId: orderId,
         meta: JSON.stringify({
           orderNumber: order.orderNumber,
+          paymentStatus: status,
           reference: reference || order.paymentRef || null,
-          previousStatus: order.status,
-          status: "CONFIRMED",
-          amount: order.total,
-          paymentMethod: order.paymentMethod,
-          companyId: order.companyId,
-          alreadyPaid,
+          previousOrderStatus: order.status,
         }),
       },
     });
   });
 
-  const { onPaymentReceived } = await import("@/lib/rebate");
-  await onPaymentReceived(orderId);
+  if (shouldRunRebate) {
+    const { onPaymentReceived } = await import("@/lib/rebate");
+    await onPaymentReceived(orderId);
+  }
 
   revalidatePath("/admin/orders");
   revalidatePath("/admin/credit");
@@ -856,17 +930,19 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
   revalidatePath("/account/orders");
   revalidatePath(`/account/orders/${orderId}`);
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { company: { select: { name: true } } },
-  });
-  if (order) {
-    const { notifyNeedsSupplierAssign } = await import("@/lib/notify");
-    await notifyNeedsSupplierAssign({
-      orderNumber: order.orderNumber,
-      companyName: order.company.name,
-      paymentMethod: order.paymentMethod,
+  if (status === "paid") {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { company: { select: { name: true } } },
     });
+    if (order) {
+      const { notifyNeedsSupplierAssign } = await import("@/lib/notify");
+      await notifyNeedsSupplierAssign({
+        orderNumber: order.orderNumber,
+        companyName: order.company.name,
+        paymentMethod: order.paymentMethod,
+      });
+    }
   }
 }
 

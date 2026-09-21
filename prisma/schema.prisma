@@ -341,7 +341,7 @@ model Payment {
   method         PaymentMethod
   amount         Float
   reference      String?
-  /// pending = waiting for slip · submitted = 水单 uploaded · paid = Info confirmed 到账 · on_terms = credit
+  /// pending · submitted (slip uploaded) · paid · rejected · on_terms (credit)
   status         String        @default("pending")
   paidAt         DateTime?
   slipUrl        String?

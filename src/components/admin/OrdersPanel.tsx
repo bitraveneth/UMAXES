@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from "react";
 import {
   markPaymentReceived,
+  updateOrderPaymentStatus,
   updateOrderStatus,
   assignOrderToSupplier,
   deletePaymentSlip,
@@ -12,6 +13,10 @@ import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { Package } from "@/components/admin/icons";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { useAppFeedback } from "@/components/ui/AppFeedback";
+import {
+  ADMIN_PAYMENT_STATUSES,
+  type AdminPaymentStatus,
+} from "@/lib/payment-slip";
 
 export type OrdersPanelSupplier = {
   id: string;
@@ -24,6 +29,7 @@ export type OrdersPanelItem = {
   status: OrderStatus;
   paymentMethod: PaymentMethod;
   paymentRef: string | null;
+  paymentStatus: string;
   paymentPaid: boolean;
   paymentSlipUrl: string | null;
   paymentSlipName: string | null;
@@ -106,7 +112,32 @@ const FILTERS: { key: FilterKey; labelKey: string }[] = [
 ];
 
 function waitingSlip(order: OrdersPanelItem) {
-  return Boolean(order.paymentSlipUrl) && !order.paymentPaid;
+  return (
+    (order.paymentStatus === "submitted" || Boolean(order.paymentSlipUrl)) &&
+    !order.paymentPaid
+  );
+}
+
+function paymentTone(status: string) {
+  if (status === "paid" || status === "on_terms") return "success" as const;
+  if (status === "rejected") return "error" as const;
+  if (status === "submitted") return "brand" as const;
+  return "warning" as const;
+}
+
+function normalizePaymentStatus(status: string): AdminPaymentStatus {
+  if (status === "submitted" || status === "paid" || status === "rejected") {
+    return status;
+  }
+  return "pending";
+}
+
+function paymentStatusLabelKey(status: string) {
+  const normalized = normalizePaymentStatus(status);
+  if (normalized === "submitted") return "orders.payStatusSubmitted" as const;
+  if (normalized === "paid") return "orders.payStatusPaid" as const;
+  if (normalized === "rejected") return "orders.payStatusRejected" as const;
+  return "orders.payStatusPending" as const;
 }
 
 function matchesFilter(order: OrdersPanelItem, filter: FilterKey) {
@@ -274,8 +305,6 @@ export default function OrdersPanel({
                 {filtered.map((order) => {
                   const open = editingId === order.id;
                   const thumb = order.items[0]?.image;
-                  const unpaid =
-                    !order.paymentPaid && order.status !== "CANCELLED";
                   return (
                     <Fragment key={order.id}>
                       <tr
@@ -325,20 +354,22 @@ export default function OrdersPanel({
                           <p className="whitespace-nowrap text-sm">
                             {payLabel(order.paymentMethod, true)}
                           </p>
-                          <span
-                            className={`mt-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                              unpaid
-                                ? order.paymentSlipUrl
-                                  ? "bg-[var(--admin-brand-50)] text-[var(--admin-brand-700)]"
-                                  : "bg-[var(--admin-warning-50)] text-[var(--admin-warning-700)]"
-                                : "bg-[var(--admin-success-50)] text-[var(--admin-success-700)]"
-                            }`}
-                          >
-                            {unpaid
-                              ? order.paymentSlipUrl
-                                ? t("orders.slipIn")
-                                : t("orders.unpaid")
-                              : t("orders.paid")}
+                          <span className="mt-1 inline-flex">
+                            <AdminBadge
+                              tone={paymentTone(
+                                order.paymentMethod === "CREDIT"
+                                  ? order.paymentPaid
+                                    ? "paid"
+                                    : "on_terms"
+                                  : order.paymentStatus,
+                              )}
+                            >
+                              {order.paymentMethod === "CREDIT"
+                                ? order.paymentPaid
+                                  ? t("orders.payStatusPaid")
+                                  : t("orders.payCredit")
+                                : t(paymentStatusLabelKey(order.paymentStatus))}
+                            </AdminBadge>
                           </span>
                         </td>
                         <td className="whitespace-nowrap tabular-nums text-sm font-semibold">
@@ -529,12 +560,7 @@ function OrderExpand({
   const { t } = useAdminI18n();
   const { confirm, ui } = useAppFeedback();
   const shipment = order.shipments[0];
-  const unpaid = !order.paymentPaid && order.status !== "CANCELLED";
-  const canConfirmPaid =
-    unpaid &&
-    (order.paymentMethod === "CREDIT" ||
-      Boolean(order.paymentSlipUrl) ||
-      canConfirmWithoutSlip);
+  const isCredit = order.paymentMethod === "CREDIT";
   const canAssign =
     canAssignSupplier &&
     suppliers.length > 0 &&
@@ -542,12 +568,16 @@ function OrderExpand({
       order.status,
     );
 
-  const defaultStatus =
-    order.status === "PICKING"
-      ? "SENT_TO_SUPPLIER"
-      : unpaid && allowedStatuses.includes("CONFIRMED")
-        ? "CONFIRMED"
-        : order.status;
+  const fulfillmentStatuses: OrderStatus[] = allowedStatuses.filter(
+    (s) => s !== "PAYMENT_PENDING" && s !== "SUBMITTED",
+  );
+  const preferredStatus: OrderStatus =
+    order.status === "PICKING" ? "SENT_TO_SUPPLIER" : order.status;
+  const defaultFulfillment = fulfillmentStatuses.includes(preferredStatus)
+    ? preferredStatus
+    : fulfillmentStatuses[0] || preferredStatus;
+
+  const currentPayStatus = normalizePaymentStatus(order.paymentStatus);
 
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
@@ -561,11 +591,21 @@ function OrderExpand({
             <AdminBadge tone={orderTone(order.status)}>
               {statusLabel(order.status)}
             </AdminBadge>
-            {unpaid ? (
-              <AdminBadge tone="warning">{t("orders.unpaid")}</AdminBadge>
-            ) : (
-              <AdminBadge tone="success">{t("orders.paid")}</AdminBadge>
-            )}
+            <AdminBadge
+              tone={paymentTone(
+                isCredit
+                  ? order.paymentPaid
+                    ? "paid"
+                    : "on_terms"
+                  : order.paymentStatus,
+              )}
+            >
+              {isCredit
+                ? order.paymentPaid
+                  ? t("orders.payStatusPaid")
+                  : t("orders.payCredit")
+                : t(paymentStatusLabelKey(order.paymentStatus))}
+            </AdminBadge>
           </div>
           <p className="mt-1 text-sm text-[var(--admin-muted)]">
             {order.companyName}
@@ -603,67 +643,99 @@ function OrderExpand({
             </p>
 
             <div className="space-y-3">
-              {unpaid ? (
-                <div className="flex flex-wrap items-center gap-2">
-                  <form
-                    action={async () => {
-                      await markPaymentReceived(
-                        order.id,
-                        order.paymentRef || "TT/CHECK received",
-                      );
-                      onClose();
-                    }}
+              {!isCredit ? (
+                <form
+                  action={async (fd) => {
+                    const nextPay = String(
+                      fd.get("paymentStatus") || "",
+                    ) as AdminPaymentStatus;
+                    if (!ADMIN_PAYMENT_STATUSES.includes(nextPay)) return;
+                    await updateOrderPaymentStatus(
+                      order.id,
+                      nextPay,
+                      order.paymentRef || undefined,
+                    );
+                    onClose();
+                  }}
+                  className="flex flex-wrap items-end gap-2"
+                >
+                  <label className="min-w-[12rem] flex-1 text-sm font-medium text-[var(--admin-text)]">
+                    {t("orders.paymentStatus")}
+                    <select
+                      name="paymentStatus"
+                      defaultValue={currentPayStatus}
+                      className="admin-input mt-1.5 w-full"
+                    >
+                      {ADMIN_PAYMENT_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {t(paymentStatusLabelKey(s))}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    className="admin-btn admin-btn-primary admin-btn-sm"
                   >
-                    <button
-                      type="submit"
-                      disabled={!canConfirmPaid}
-                      className="admin-btn admin-btn-primary admin-btn-sm disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {t("orders.markPaid")}
-                    </button>
-                  </form>
-                  {order.paymentSlipUrl ? (
-                    <a
-                      href={slipHref(order.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-semibold text-[var(--admin-brand-600)] underline underline-offset-2"
-                    >
-                      {t("orders.viewSlip")}
-                    </a>
-                  ) : !canConfirmWithoutSlip ? (
-                    <span className="text-xs text-[var(--admin-muted)]">
-                      {t("orders.noSlip")}
-                    </span>
-                  ) : null}
+                    {t("orders.savePayment")}
+                  </button>
+                </form>
+              ) : !order.paymentPaid ? (
+                <form
+                  action={async () => {
+                    await markPaymentReceived(
+                      order.id,
+                      order.paymentRef || "Credit settlement",
+                    );
+                    onClose();
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className="admin-btn admin-btn-primary admin-btn-sm"
+                  >
+                    {t("orders.markPaid")}
+                  </button>
+                </form>
+              ) : null}
+
+              {order.paymentSlipUrl ? (
+                <div className="space-y-2">
+                  <a
+                    href={slipHref(order.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-[var(--admin-brand-600)] underline underline-offset-2"
+                  >
+                    {t("orders.viewSlip")}
+                  </a>
+                  <AdminSlipPhoto
+                    orderId={order.id}
+                    fileName={order.paymentSlipName}
+                  />
                 </div>
               ) : null}
 
-              {order.paymentSlipUrl && unpaid ? (
-                <AdminSlipPhoto
-                  orderId={order.id}
-                  fileName={order.paymentSlipName}
-                />
-              ) : null}
-
-              {allowedStatuses.length > 0 ? (
+              {fulfillmentStatuses.length > 0 ? (
                 <form
                   action={async (fd) => {
-                    const nextStatus = String(fd.get("status") || "") as OrderStatus;
+                    const nextStatus = String(
+                      fd.get("status") || "",
+                    ) as OrderStatus;
                     if (!nextStatus) return;
                     await updateOrderStatus(order.id, nextStatus);
                     onClose();
                   }}
-                  className="flex flex-wrap items-end gap-2"
+                  className="flex flex-wrap items-end gap-2 border-t border-[var(--admin-border)] pt-3"
                 >
                   <label className="min-w-[11rem] flex-1 text-sm font-medium text-[var(--admin-text)]">
                     {t("orders.statusLabel")}
                     <select
                       name="status"
-                      defaultValue={defaultStatus}
+                      defaultValue={defaultFulfillment}
                       className="admin-input mt-1.5 w-full"
                     >
-                      {allowedStatuses.map((s) => (
+                      {fulfillmentStatuses.map((s) => (
                         <option key={s} value={s}>
                           {statusLabel(s)}
                         </option>
