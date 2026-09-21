@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
+import { Trash2 } from "lucide-react";
 import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
 import { PCS_PER_CASE, casesFromPcs, formatPack, snapToCasePcs } from "@/lib/pack";
 import { DualStorePrice, StorePrice, useShowStorePrices } from "@/components/StorePrice";
@@ -60,14 +61,18 @@ function loadLines(fallback: FlavorId): OrderLine[] {
       return defaultLines(fallback);
     }
     const lines: OrderLine[] = [];
+    const seen = new Set<FlavorId>();
     for (const entry of parsed) {
       if (!entry || typeof entry !== "object") continue;
       const row = entry as Record<string, unknown>;
       if (!isFlavorId(String(row.flavorId))) continue;
+      const flavorId = row.flavorId as FlavorId;
+      if (seen.has(flavorId)) continue;
+      seen.add(flavorId);
       const quantity = snapToCasePcs(Number(row.quantity) || PCS_PER_CASE);
       lines.push({
         key: String(row.key || newKey()),
-        flavorId: row.flavorId as FlavorId,
+        flavorId,
         quantity,
       });
     }
@@ -206,11 +211,8 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
     );
   }
 
-  function changeFlavor(line: OrderLine, nextId: FlavorId) {
-    updateLine(line.key, { flavorId: nextId });
-    if (line.key === lines[0]?.key) {
-      router.replace(`/product/${nextId}`, { scroll: false });
-    }
+  function removeLine(key: string) {
+    setLines((prev) => prev.filter((line) => line.key !== key));
   }
 
   function addFlavorRow() {
@@ -378,7 +380,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             )}
 
             <div className="mt-6 overflow-hidden rounded-2xl ring-1 ring-black/10">
-              <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
+              <div className="hidden grid-cols-[minmax(0,1fr)_6.5rem_8.75rem_2.75rem] items-center gap-4 bg-[#eef3f7] px-4 py-3 sm:grid">
                 <p className="font-display text-sm font-bold text-black">
                   Flavor
                 </p>
@@ -388,49 +390,57 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 <p className="text-center font-display text-sm font-bold text-black">
                   Cases
                 </p>
+                <span className="sr-only">Remove</span>
               </div>
 
-              <ul className="divide-y divide-black/8">
-                {lines.map((line) => {
-                  const item = flavors.find((f) => f.id === line.flavorId) ?? flavor;
-                  const options = flavors.filter(
-                    (f) => f.id === line.flavorId || !usedFlavorIds.has(f.id),
-                  );
-                  return (
-                    <li
-                      key={line.key}
-                      className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_6.5rem_8.75rem] sm:items-center sm:gap-4"
-                    >
-                      <label className="min-w-0">
-                        <span className="mb-1.5 block font-display text-sm font-bold text-black sm:sr-only">
-                          Flavor
-                        </span>
-                        <div className="flex min-w-0 items-center gap-2">
-                          <select
-                            value={line.flavorId}
-                            onChange={(e) =>
-                              changeFlavor(line, e.target.value as FlavorId)
-                            }
-                            aria-label="Flavor"
-                            className="min-w-0 w-full rounded-lg border border-black/15 bg-white px-3 py-2.5 font-display text-sm font-semibold text-black outline-none focus:border-black"
+              {lines.length === 0 ? (
+                <p className="px-4 py-6 font-body text-sm text-black/55">
+                  No flavors on this order. Add one below.
+                </p>
+              ) : (
+                <ul className="divide-y divide-black/8">
+                  {lines.map((line) => {
+                    const item =
+                      flavors.find((f) => f.id === line.flavorId) ?? flavor;
+                    return (
+                      <li
+                        key={line.key}
+                        className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_6.5rem_8.75rem_2.75rem] sm:items-center sm:gap-4"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-black/5 ring-1 ring-black/8">
+                            <Image
+                              src={item.image}
+                              alt=""
+                              fill
+                              sizes="44px"
+                              className="object-cover"
+                            />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-display text-sm font-semibold text-black">
+                              {item.name}
+                            </p>
+                            <p className="mt-0.5 font-display text-sm font-semibold text-black sm:hidden">
+                              <StorePrice amount={unitPriceFor(item.id)} />
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${item.name}`}
+                            onClick={() => removeLine(line.key)}
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-black/40 transition hover:bg-umx-orange/10 hover:text-umx-orange sm:hidden"
                           >
-                            {options.map((f) => (
-                              <option key={f.id} value={f.id}>
-                                {f.name}
-                              </option>
-                            ))}
-                          </select>
+                            <Trash2
+                              className="h-4 w-4"
+                              strokeWidth={2.1}
+                              aria-hidden
+                            />
+                          </button>
                         </div>
-                      </label>
-                      <div className="grid grid-cols-2 items-center gap-3 sm:contents">
-                        <div className="min-w-0 sm:text-right">
-                          <p className="mb-1.5 font-display text-sm font-bold text-black sm:hidden">
-                            Price / pc
-                          </p>
-                          <p className="font-display text-sm font-semibold text-black sm:text-right">
-                            <StorePrice amount={unitPriceFor(item.id)} />
-                          </p>
-                        </div>
+                        <p className="hidden font-display text-sm font-semibold text-black sm:block sm:text-right">
+                          <StorePrice amount={unitPriceFor(item.id)} />
+                        </p>
                         <div className="min-w-0">
                           <p className="mb-1.5 text-center font-display text-sm font-bold text-black sm:hidden">
                             Cases
@@ -449,21 +459,34 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                             ariaLabel={`${item.name} cases`}
                           />
                         </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${item.name}`}
+                          onClick={() => removeLine(line.key)}
+                          className="hidden h-9 w-9 shrink-0 items-center justify-center justify-self-center rounded-lg text-black/40 transition hover:bg-umx-orange/10 hover:text-umx-orange sm:flex"
+                        >
+                          <Trash2
+                            className="h-4 w-4"
+                            strokeWidth={2.1}
+                            aria-hidden
+                          />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
 
-              <button
-                type="button"
-                onClick={addFlavorRow}
-                disabled={!availableExtra}
-                className="mt-3 font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep disabled:cursor-not-allowed disabled:text-black/30 disabled:hover:text-black/30"
-              >
-                + Add another flavor
-              </button>
+              {availableExtra ? (
+                <button
+                  type="button"
+                  onClick={addFlavorRow}
+                  className="mt-3 font-display text-sm font-semibold text-umx-orange transition hover:text-umx-orange-deep"
+                >
+                  + Add another flavor
+                </button>
+              ) : null}
 
               <div className="mt-6 rounded-2xl bg-[#eef3f7] px-4 py-4 sm:px-5 sm:py-5">
                 <p className="font-display text-[0.7rem] font-semibold tracking-[0.16em] text-black/45 uppercase">
