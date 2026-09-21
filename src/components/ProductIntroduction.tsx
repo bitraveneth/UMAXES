@@ -1,7 +1,5 @@
 import Image from "next/image";
-
-/** Full-res HookaMax intro art — served unoptimized at native 1920×1080. */
-export const HOOKAMAX_INTRO_IMAGE = "/images/product/hookamax-introduction.jpg";
+import { product } from "@/lib/assets";
 
 const HIGHLIGHTS = [
   { label: "Puffs", value: "Up to 80K" },
@@ -19,26 +17,23 @@ export default function ProductIntroduction() {
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(201,166,90,0.14),transparent_55%),radial-gradient(ellipse_at_90%_20%,rgba(180,140,200,0.12),transparent_45%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(201,166,90,0.12),transparent_55%),radial-gradient(ellipse_at_90%_20%,rgba(180,140,200,0.1),transparent_45%)]"
       />
 
       <div className="relative mx-auto grid max-w-[1500px] lg:grid-cols-2 lg:items-stretch">
-        {/* Left: device art only (left side of banner) */}
-        <div className="relative min-h-[22rem] overflow-hidden sm:min-h-[28rem] lg:min-h-[38rem]">
-          <Image
-            src={HOOKAMAX_INTRO_IMAGE}
-            alt="UMAXES HookaMax 80K disposable hookah devices"
-            fill
-            priority
-            quality={100}
-            unoptimized
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover object-left"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-[#f4ebe1] lg:w-24"
-          />
+        {/* Left: vape devices only (transparent cutout, no banner bg) */}
+        <div className="relative flex min-h-[22rem] items-center justify-center px-6 py-10 sm:min-h-[28rem] sm:px-10 lg:min-h-[38rem] lg:px-12">
+          <div className="relative aspect-[3/4] w-full max-w-[28rem]">
+            <Image
+              src={product.deviceDuoImage}
+              alt="UMAXES HookaMax 80K disposable hookah devices"
+              fill
+              priority
+              quality={100}
+              sizes="(max-width: 1024px) 90vw, 480px"
+              className="object-contain object-center drop-shadow-[0_28px_50px_rgba(61,40,15,0.18)]"
+            />
+          </div>
         </div>
 
         {/* Right: custom introduction box */}
