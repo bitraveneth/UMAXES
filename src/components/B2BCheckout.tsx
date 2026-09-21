@@ -26,6 +26,7 @@ type CatalogProduct = {
   sku: string;
   name: string;
   unitPrice: number;
+  retailPrice: number;
   moq: number;
   image: string | null;
 };
@@ -36,26 +37,41 @@ type CreditInfo = {
   allowed: boolean;
 };
 
+type ChannelQuote = {
+  eligible: boolean;
+  hideCoupon: boolean;
+  isFirstOrder: boolean;
+  sellingQty: number;
+  cases: number;
+  testStationQty: number;
+  firstOrderUnpaidPcs: number;
+  firstOrderDiscountUsd: number;
+  rebateBalanceUsd: number;
+  rebateAppliedUsd: number;
+  chargedQty: number;
+  monthPaidQty: number;
+  monthProjectedRate: number;
+  nextTierQty: number | null;
+  nextTierRate: number | null;
+};
+
 export default function B2BCheckout() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const showPrices = useShowStorePrices();
-  const { items, clear, quantity, couponCode: savedCoupon, setCouponCode: persistCoupon } =
-    useCart();
+  const { items, clear, quantity } = useCart();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [credit, setCredit] = useState<CreditInfo>({
     allowed: false,
   });
+  const [channel, setChannel] = useState<ChannelQuote | null>(null);
   const [creditReady, setCreditReady] = useState(false);
   const [canPlaceOrder, setCanPlaceOrder] = useState(true);
   const [addressId, setAddressId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PayMethod>("TT");
   const [paymentRef, setPaymentRef] = useState("");
-  const [couponCode, setCouponCode] = useState("");
-  const [discount, setDiscount] = useState(0);
-  const [appliedCoupon, setAppliedCoupon] = useState("");
   const [notes, setNotes] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,13 +106,10 @@ export default function B2BCheckout() {
         }
       }
       if (typeof cat.canOrder === "boolean") setCanPlaceOrder(cat.canOrder);
+      if (cat.channel) setChannel(cat.channel);
       setCreditReady(true);
     });
   }, [status, session, router]);
-
-  useEffect(() => {
-    if (savedCoupon && !couponCode) setCouponCode(savedCoupon);
-  }, [savedCoupon, couponCode]);
 
   const priceMap = useMemo(() => {
     const map = new Map<string, CatalogProduct>();
@@ -121,46 +134,30 @@ export default function B2BCheckout() {
     (sum, l) => sum + l.unitPrice * l.quantity,
     0,
   );
-  const total = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
+  const sellingQty = lines.reduce((sum, l) => sum + l.quantity, 0);
+  const firstDiscount = channel?.eligible ? channel.firstOrderDiscountUsd : 0;
+  const rebateApplied = channel?.eligible ? channel.rebateAppliedUsd : 0;
+  const channelDiscount = firstDiscount + rebateApplied;
+  const displayDiscount = channel?.eligible ? channelDiscount : 0;
+  const total = Math.max(0, Math.round((subtotal - displayDiscount) * 100) / 100);
 
   useEffect(() => {
-    if (!savedCoupon || appliedCoupon || subtotal <= 0) return;
+    if (!channel?.eligible) return;
     let cancelled = false;
+    const unit = lines[0]?.unitPrice;
     (async () => {
-      const res = await fetch("/api/coupons/validate", {
+      const res = await fetch("/api/rebate/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: savedCoupon, subtotal }),
+        body: JSON.stringify({ sellingQty, unitPrice: unit }),
       });
       const data = await res.json();
-      if (cancelled || !res.ok) return;
-      setCouponCode(data.code);
-      setAppliedCoupon(data.code);
-      setDiscount(data.discount);
+      if (!cancelled && res.ok) setChannel(data);
     })();
     return () => {
       cancelled = true;
     };
-  }, [savedCoupon, appliedCoupon, subtotal]);
-
-  async function applyCoupon() {
-    setError(null);
-    const res = await fetch("/api/coupons/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: couponCode, subtotal }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setDiscount(0);
-      setAppliedCoupon("");
-      setError(data.error || "Coupon failed");
-      return;
-    }
-    setDiscount(data.discount);
-    setAppliedCoupon(data.code);
-    persistCoupon(data.code);
-  }
+  }, [sellingQty, channel?.eligible]);
 
   async function placeOrder() {
     setError(null);
@@ -180,7 +177,6 @@ export default function B2BCheckout() {
         addressId,
         paymentMethod,
         paymentRef,
-        couponCode: appliedCoupon || undefined,
         notes,
         items: lines.map((l) => ({
           sku: l.sku,
@@ -418,29 +414,56 @@ export default function B2BCheckout() {
         </section>
 
         <section className="border border-black/10 bg-white p-6">
-          <h2 className="font-display text-lg font-semibold">Coupon</h2>
-          <div className="mt-3 flex gap-2">
-            <input
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-              className="flex-1 border border-black/15 px-4 py-3"
-              placeholder="UMAXES10"
-            />
-            <button
-              type="button"
-              onClick={applyCoupon}
-              className="border border-black px-4 font-display text-sm font-semibold"
-            >
-              Apply
-            </button>
-          </div>
-          {appliedCoupon && (
-            <p className="mt-2 font-body text-sm text-umx-orange">
-              Applied {appliedCoupon}
-              {showPrices ? ` (−$${discount.toFixed(2)})` : ""}
-            </p>
-          )}
-          <label className="mt-4 block">
+          {channel?.hideCoupon ? (
+            <>
+              <h2 className="font-display text-lg font-semibold">Channel rebate</h2>
+              <div className="mt-3 space-y-2 font-body text-sm text-black/70">
+                {channel.isFirstOrder ? (
+                  <p>
+                    First order: {channel.firstOrderUnpaidPcs} pcs not charged
+                    {showPrices && channel.firstOrderDiscountUsd
+                      ? ` (−$${channel.firstOrderDiscountUsd.toFixed(2)})`
+                      : ""}
+                    . No monthly rebate on this order.
+                  </p>
+                ) : channel.rebateBalanceUsd > 0 ? (
+                  <p>
+                    Rebate on account: ${channel.rebateBalanceUsd.toFixed(2)}. This
+                    order applies ${channel.rebateAppliedUsd.toFixed(2)}.
+                  </p>
+                ) : (
+                  <p>No rebate balance yet. Volume counts after payment is confirmed.</p>
+                )}
+                {channel.testStationQty > 0 ? (
+                  <p>
+                    This order includes {channel.testStationQty} free test station
+                    {channel.testStationQty === 1 ? "" : "s"} (95+1).
+                  </p>
+                ) : (
+                  <p>Every 95 pcs adds 1 free test station on this order.</p>
+                )}
+                {channel.nextTierQty != null ? (
+                  <p>
+                    Paid this month: {channel.monthPaidQty.toLocaleString()} pcs.
+                    {channel.monthProjectedRate
+                      ? ` Current rate $${channel.monthProjectedRate.toFixed(2)}/pc.`
+                      : ""}{" "}
+                    {channel.nextTierQty.toLocaleString()} more paid pcs to $
+                    {(channel.nextTierRate ?? 0).toFixed(2)}/pc.
+                  </p>
+                ) : (
+                  <p>
+                    Paid this month: {channel.monthPaidQty.toLocaleString()} pcs
+                    {channel.monthProjectedRate
+                      ? ` · $${channel.monthProjectedRate.toFixed(2)}/pc`
+                      : ""}
+                    .
+                  </p>
+                )}
+              </div>
+            </>
+          ) : null}
+          <label className={channel?.hideCoupon ? "mt-4 block" : "block"}>
             <span className="font-display text-sm font-semibold">Notes</span>
             <textarea
               value={notes}
@@ -482,12 +505,26 @@ export default function B2BCheckout() {
               <StorePrice amount={subtotal} />
             </span>
           </div>
-          <div className="flex justify-between">
-            <span>Discount</span>
-            <span>
-              {showPrices ? `−$${discount.toFixed(2)}` : "On request"}
-            </span>
-          </div>
+          {channel?.testStationQty ? (
+            <div className="flex justify-between">
+              <span>Test stations</span>
+              <span>{channel.testStationQty} free</span>
+            </div>
+          ) : null}
+          {channel?.firstOrderUnpaidPcs ? (
+            <div className="flex justify-between">
+              <span>First-order unpaid pcs</span>
+              <span>{channel.firstOrderUnpaidPcs}</span>
+            </div>
+          ) : null}
+          {displayDiscount > 0 ? (
+            <div className="flex justify-between">
+              <span>Channel rebate</span>
+              <span>
+                {showPrices ? `−$${displayDiscount.toFixed(2)}` : "On request"}
+              </span>
+            </div>
+          ) : null}
           <div className="flex justify-between font-display text-base font-semibold">
             <span>Total</span>
             <span>

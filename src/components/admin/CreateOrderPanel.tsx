@@ -188,7 +188,8 @@ export default function CreateOrderPanel({
             paymentMethod,
             paymentRef: paymentRef || undefined,
             notes: notes || undefined,
-            couponCode: couponCode || undefined,
+            couponCode:
+              ctx.company.level === "SHOP" ? couponCode || undefined : undefined,
             items: lines.map((l) => ({ sku: l.sku, quantity: l.quantity })),
           }),
         });
@@ -475,13 +476,19 @@ export default function CreateOrderPanel({
               </label>
 
               <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                Coupon code
+                {ctx.company.level === "SHOP" ? "Coupon code" : "Channel rebate"}
+                {ctx.company.level === "SHOP" ? (
                 <input
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="admin-input mt-1.5 w-full"
                   placeholder="Optional"
                 />
+                ) : (
+                  <p className="mt-1.5 text-sm text-[var(--admin-gray-700)]">
+                    Test stations and first-order unpaid pcs apply automatically. No coupon code.
+                  </p>
+                )}
               </label>
 
               <label className="block text-xs font-medium text-[var(--admin-muted)] lg:col-span-2">

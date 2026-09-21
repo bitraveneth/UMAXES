@@ -9,6 +9,7 @@ import { CaseQtyStepper } from "@/components/QtyStepper";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { formatCases, formatPack } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
@@ -19,6 +20,7 @@ export default function CartPage() {
   const { items, quantity, cases, setQuantity, remove, total } = useCart();
   const compactChrome = useCompactMobileStoreChrome();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor } = useCatalogPrices();
 
   return (
     <>
@@ -90,7 +92,10 @@ export default function CartPage() {
                             </Link>
                             <p className="mt-0.5 font-display text-sm text-black/55">
                               {showPrices ? (
-                                <>${flavor.price.toFixed(2)} / pc</>
+                                <StorePrice
+                                  amount={unitPriceFor(flavor.id)}
+                                  suffix=" / pc"
+                                />
                               ) : (
                                 "On request"
                               )}
@@ -99,8 +104,10 @@ export default function CartPage() {
                               {formatPack(line.quantity)}
                             </p>
                           </div>
-                          <p className="shrink-0 font-display text-base font-bold text-black">
-                            <StorePrice amount={flavor.price * line.quantity} />
+                          <p className="shrink-0 text-right font-display text-base font-bold text-black">
+                            <StorePrice
+                              amount={unitPriceFor(flavor.id) * line.quantity}
+                            />
                           </p>
                         </div>
 
@@ -132,7 +139,7 @@ export default function CartPage() {
                   <span className="font-display text-sm text-black/60">
                     Subtotal
                   </span>
-                  <span className="font-display text-2xl font-bold text-black">
+                  <span className="text-right font-display text-2xl font-bold text-black">
                     <StorePrice amount={total} />
                   </span>
                 </div>

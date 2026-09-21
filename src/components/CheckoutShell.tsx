@@ -47,7 +47,7 @@ function CheckoutAuthGate() {
                   {formatCases(cases)}
                 </p>
               </div>
-              <p className="font-display text-lg font-bold text-black">
+              <p className="text-right font-display text-lg font-bold text-black">
                 <StorePrice amount={total} />
               </p>
             </div>

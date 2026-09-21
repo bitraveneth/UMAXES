@@ -14,7 +14,7 @@ import { usePathname } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import FloatingShopBadge from "@/components/FloatingShopBadge";
 import { logos } from "@/lib/assets";
-import { findSupportAnswer } from "@/lib/support";
+import { faqs as DEFAULT_FAQS, findSupportAnswer, type SupportFaq } from "@/lib/support";
 
 type ChatMessage = {
   id: string;
@@ -61,9 +61,26 @@ export default function SupportAssistant() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [faqItems, setFaqItems] = useState<SupportFaq[]>(DEFAULT_FAQS);
   const listRef = useRef<HTMLDivElement>(null);
   const hello = useMemo(() => greeting(), []);
   const chatting = messages.length > 0;
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/faqs")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.faqs?.length) return;
+        setFaqItems(data.faqs);
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -96,7 +113,7 @@ export default function SupportAssistant() {
       ...prev,
       { id: `u-${Date.now()}-${prev.length}`, role: "user", text: trimmed },
     ]);
-    window.setTimeout(() => pushBot(findSupportAnswer(trimmed)), 280);
+    window.setTimeout(() => pushBot(findSupportAnswer(trimmed, faqItems)), 280);
   }
 
   function onSubmit(e: FormEvent) {

@@ -20,7 +20,8 @@ import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
-import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { DualStorePrice, StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { flavors, product } from "@/lib/assets";
 import { PACK_COPY, formatCases } from "@/lib/pack";
 
@@ -249,7 +250,7 @@ function ShopAside({
               Subtotal
             </p>
             <p className="mt-1 font-display text-3xl font-extrabold tracking-tight text-black">
-              {showPrices ? `$${total.toFixed(2)}` : "On request"}
+              {showPrices ? <StorePrice amount={total} /> : "On request"}
             </p>
             <p className="mt-2 font-body text-sm text-black/55">
               {cases === 0
@@ -329,7 +330,9 @@ function ShopAside({
 export default function ShopCatalog() {
   const { quantity, cases, total } = useCart();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor } = useCatalogPrices();
   const compactChrome = useCompactMobileStoreChrome();
+  const unitPrice = unitPriceFor(flavors[0].id);
 
   return (
     <div
@@ -398,8 +401,14 @@ export default function ShopCatalog() {
                     <p className="font-display text-[0.65rem] font-semibold tracking-[0.16em] text-black/40 uppercase">
                       Price
                     </p>
-                    <p className="mt-1 font-display text-4xl font-extrabold tracking-tight text-black">
-                      <StorePrice amount={product.price} />
+                    <div className="mt-1">
+                      <DualStorePrice
+                        amount={unitPrice}
+                        className="font-display text-4xl font-extrabold tracking-tight text-black"
+                      />
+                    </div>
+                    <p className="mt-2 max-w-xs font-body text-sm text-black/50">
+                      {PACK_COPY}
                     </p>
                     <p className="mt-2 max-w-xs font-body text-sm text-black/50">
                       {PACK_COPY}

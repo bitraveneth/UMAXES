@@ -75,7 +75,15 @@ export default async function AdminOrdersPage({
         supplier: true,
         items: true,
         shipments: true,
-        payments: true,
+        payments: {
+          select: {
+            status: true,
+            paidAt: true,
+            slipUrl: true,
+            slipFileName: true,
+            slipMime: true,
+          },
+        },
         placedByStaff: { select: { name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },

@@ -8,12 +8,14 @@ import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
 import { formatPack } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { getFlavor, product } from "@/lib/assets";
 
 export default function CartDrawer() {
   const { items, quantity, open, setOpen, setQuantity, remove, total } =
     useCart();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor } = useCatalogPrices();
 
   useEffect(() => {
     if (!open) return;
@@ -95,7 +97,10 @@ export default function CartDrawer() {
                       </p>
                       <p className="mt-0.5 font-display text-sm text-black/60">
                         {showPrices ? (
-                          <>${flavor.price.toFixed(2)} / pc</>
+                          <StorePrice
+                            amount={unitPriceFor(flavor.id)}
+                            suffix=" / pc"
+                          />
                         ) : (
                           "On request"
                         )}
@@ -134,7 +139,7 @@ export default function CartDrawer() {
             <PackNote className="mb-3" />
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-sm text-black/60">Subtotal</span>
-              <span className="font-display text-lg font-semibold text-black">
+              <span className="text-right font-display text-lg font-semibold text-black">
                 <StorePrice amount={total} />
               </span>
             </div>

@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { flavors, getFlavor, type FlavorId } from "@/lib/assets";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import {
   PCS_PER_CASE,
   casesFromPcs,
@@ -58,6 +59,7 @@ function normalizeLine(raw: unknown): CartLine | null {
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { unitPriceFor } = useCatalogPrices();
   const [items, setItems] = useState<CartLine[]>([]);
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
@@ -197,9 +199,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     () =>
       items.reduce((sum, l) => {
         const flavor = getFlavor(l.flavorId);
-        return sum + (flavor?.price ?? 0) * l.quantity;
+        const unit = unitPriceFor(l.flavorId) || flavor?.price || 0;
+        return sum + unit * l.quantity;
       }, 0),
-    [items],
+    [items, unitPriceFor],
   );
 
   const value = useMemo(

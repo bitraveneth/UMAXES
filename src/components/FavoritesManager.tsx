@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Heart, ShoppingBag, Trash2 } from "lucide-react";
 import { StorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { getFlavor, product, type FlavorId } from "@/lib/assets";
 
 type Fav = {
@@ -18,6 +19,7 @@ type Fav = {
 
 export default function FavoritesManager() {
   const { add } = useCart();
+  const { unitPriceFor } = useCatalogPrices();
   const [favorites, setFavorites] = useState<Fav[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -105,7 +107,7 @@ export default function FavoritesManager() {
         const flavor = getFlavor(f.sku as FlavorId);
         const href = `/product/${f.sku}`;
         const image = f.image || flavor?.image || null;
-        const price = flavor?.price;
+        const price = unitPriceFor(f.sku) || flavor?.price;
 
         return (
           <li

@@ -112,9 +112,13 @@ type CaseQtyStepperProps = {
   pcs: number;
   onChangePcs: (pcs: number) => void;
   allowRemove?: boolean;
+  /** Let the stepper sit at 0 cases (keep the flavor row). */
+  allowZero?: boolean;
   ariaLabel?: string;
   size?: "sm" | "md";
   showHint?: boolean;
+  /** Show live piece count under the stepper (1 case = 95 pcs). */
+  showPcs?: boolean;
   align?: "end" | "center";
 };
 
@@ -123,12 +127,15 @@ export function CaseQtyStepper({
   pcs,
   onChangePcs,
   allowRemove = false,
+  allowZero = false,
   ariaLabel = "Cases",
   size = "md",
   showHint = false,
+  showPcs = false,
   align = "end",
 }: CaseQtyStepperProps) {
-  const cases = Math.max(allowRemove ? 0 : 1, casesFromPcs(pcs));
+  const canZero = allowRemove || allowZero;
+  const cases = Math.max(canZero ? 0 : 1, casesFromPcs(pcs));
   return (
     <div
       className={`flex w-full flex-col gap-1 ${
@@ -136,14 +143,19 @@ export function CaseQtyStepper({
       }`}
     >
       <QtyStepper
-        value={cases || 1}
+        value={canZero ? cases : cases || 1}
         onChange={(nextCases) => onChangePcs(pcsFromCases(nextCases))}
-        min={1}
+        min={canZero ? 0 : 1}
         max={999}
-        allowRemove={allowRemove}
+        allowRemove={canZero}
         ariaLabel={ariaLabel}
         size={size}
       />
+      {showPcs ? (
+        <p className="font-display text-sm font-bold tabular-nums tracking-tight text-black sm:text-base">
+          {pcsFromCases(cases).toLocaleString()} pcs
+        </p>
+      ) : null}
       {showHint ? (
         <p className="font-body text-[11px] leading-tight text-black/45">
           {PCS_PER_CASE} pcs / case
