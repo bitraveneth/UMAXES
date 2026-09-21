@@ -146,8 +146,8 @@ export default function ProductIntroduction() {
             </div>
           </div>
 
-          {/* Right — copy card + higher 80K watermark */}
-          <div className="relative min-w-0 pt-10 sm:pt-12">
+          {/* Right — copy card + higher 80K watermark (~80% visible above card) */}
+          <div className="relative min-w-0 pt-[4.5rem] sm:pt-24 lg:pt-28">
             <div
               aria-hidden
               className="pointer-events-none absolute top-0 right-0 select-none font-display text-[clamp(5.5rem,15vw,9.5rem)] font-extrabold leading-none tracking-[-0.06em] text-umx-orange/25 sm:right-2"
@@ -155,7 +155,7 @@ export default function ProductIntroduction() {
               80K
             </div>
 
-            <div className="relative mt-2 rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:mt-3 sm:px-8 sm:py-9 lg:px-9 lg:py-10">
+            <div className="relative rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
               <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
                 Introduction
               </p>
