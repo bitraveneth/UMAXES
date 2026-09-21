@@ -8,7 +8,7 @@ import {
 } from "@/lib/admin-actions";
 import { AdminBadge, AdminCard, AdminTable } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
-import { AdminToast, useAdminToast } from "@/components/admin/AdminToast";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import {
   TEST_STATION_SKU,
   casesFromPcs,
@@ -86,7 +86,7 @@ export default function WarehouseStockPanel({
 }) {
   const { t } = useAdminI18n();
   const [pending, startTransition] = useTransition();
-  const { toast, showToast } = useAdminToast();
+  const { showToast } = useAdminToast();
   const flavors = useMemo(
     () => products.filter((p) => isCasePackedSku(p.sku)),
     [products],
@@ -144,7 +144,7 @@ export default function WarehouseStockPanel({
     startTransition(async () => {
       try {
         await adjustInventory(selected.id, Math.max(0, nextPcs));
-        showToast(t("common.saved"));
+        showToast(t("common.saved"), "success", t("warehouse.packHint"));
         if (mode === "add") setQty("1");
       } catch (e) {
         showToast(
@@ -159,7 +159,7 @@ export default function WarehouseStockPanel({
     startTransition(async () => {
       try {
         await addTestStationProduct();
-        showToast(t("common.saved"));
+        showToast(t("common.saved"), "success", t("warehouse.stationTitle"));
       } catch (e) {
         showToast(
           e instanceof Error ? e.message : t("common.saveFailed"),
@@ -179,11 +179,6 @@ export default function WarehouseStockPanel({
 
   return (
     <div className="space-y-6">
-      <AdminToast
-        message={toast?.message ?? null}
-        tone={toast?.tone ?? "success"}
-      />
-
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="admin-card admin-card-pad flex items-start gap-4">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">

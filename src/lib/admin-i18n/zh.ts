@@ -76,7 +76,8 @@ const zh: AdminMessages = {
   common: {
     save: "保存",
     saving: "保存中…",
-    saved: "已保存。",
+    saved: "已保存",
+    savedDetail: "更改已写入。",
     saveFailed: "保存失败。",
     edit: "编辑",
     close: "收起",
@@ -305,6 +306,7 @@ const zh: AdminMessages = {
     descriptionLabel: "商品描述",
     image: "商品图片",
     saveDetails: "保存资料",
+    savedDetail: "该商品已更新到目录。",
     productOptions: "商品规格",
     optionsHelp: "如：尼古丁浓度、包装规格等，多个取值用英文逗号分隔。",
     noOptions: "暂无规格，请在下方添加。",

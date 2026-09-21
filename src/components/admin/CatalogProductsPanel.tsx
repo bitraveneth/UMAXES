@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useState, useTransition } from "react";
 import {
   updateProductPrice,
   setProductVisibility,
@@ -12,8 +12,10 @@ import type { CustomerLevel } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { ProductImageField } from "@/components/admin/ProductImageField";
 import { Package } from "@/components/admin/icons";
+import { Check } from "lucide-react";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
-import { CASE_MOQ_PCS } from "@/lib/pack";
+import { AdminSaveBanner, useAdminToast } from "@/components/admin/AdminToast";
+import { CASE_MOQ_CASES, TEST_STATION_SKU, caseMoqFromStored } from "@/lib/pack";
 
 const levels: CustomerLevel[] = ["DISTRO", "WHOLESALER", "SHOP"];
 
@@ -65,8 +67,44 @@ function ProductEditPanel({
   onClose: () => void;
 }) {
   const { t } = useAdminI18n();
+  const [pending, startTransition] = useTransition();
+  const { toast, showToast } = useAdminToast();
+  const justSaved = toast?.tone === "success";
+
+  function runSave(task: () => Promise<void>) {
+    startTransition(async () => {
+      try {
+        await task();
+        showToast(t("common.saved"), "success", t("catalog.savedDetail"));
+      } catch (e) {
+        showToast(
+          e instanceof Error ? e.message : t("common.saveFailed"),
+          "error",
+        );
+      }
+    });
+  }
+
+  function saveLabel(idle: string) {
+    if (pending) return t("common.saving");
+    if (justSaved) return t("common.saved");
+    return idle;
+  }
+
+  function SaveCaption({ idle }: { idle: string }) {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        {justSaved && !pending ? (
+          <Check className="h-4 w-4" strokeWidth={2.6} />
+        ) : null}
+        {saveLabel(idle)}
+      </span>
+    );
+  }
+
   return (
     <AdminCard padded={false} className="overflow-hidden border-0 shadow-none">
+      <AdminSaveBanner />
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
         <div className="flex items-start gap-3">
           <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--admin-gray-100)]">
@@ -116,12 +154,14 @@ function ProductEditPanel({
       <div className="space-y-4 px-5 py-4">
         <form
           action={async (fd) => {
-            await updateProductDetails(product.id, {
-              name: String(fd.get("name") || ""),
-              description: String(fd.get("description") || ""),
-              image: String(fd.get("image") || ""),
-              active: fd.get("active") === "on",
-            });
+            runSave(() =>
+              updateProductDetails(product.id, {
+                name: String(fd.get("name") || ""),
+                description: String(fd.get("description") || ""),
+                image: String(fd.get("image") || ""),
+                active: fd.get("active") === "on",
+              }),
+            );
           }}
           className="grid gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-4 sm:grid-cols-2"
         >
@@ -166,9 +206,12 @@ function ProductEditPanel({
           <div className="flex justify-end">
             <button
               type="submit"
-              className="admin-btn admin-btn-primary admin-btn-sm"
+              disabled={pending}
+              className={`admin-btn admin-btn-sm disabled:opacity-50 ${
+                justSaved ? "admin-btn-saved" : "admin-btn-primary"
+              }`}
             >
-              {t("catalog.saveDetails")}
+              <SaveCaption idle={t("catalog.saveDetails")} />
             </button>
           </div>
         </form>
@@ -193,7 +236,11 @@ function ProductEditPanel({
                   <strong className="text-[var(--admin-text)]">{opt.name}</strong>
                   <span className="admin-muted"> · {opt.valuesLabel}</span>
                 </span>
-                <form action={deleteProductOption.bind(null, opt.id)}>
+                <form
+                  action={() => {
+                    runSave(() => deleteProductOption(opt.id));
+                  }}
+                >
                   <button
                     type="submit"
                     className="admin-btn admin-btn-danger admin-btn-sm"
@@ -206,10 +253,12 @@ function ProductEditPanel({
           </ul>
           <form
             action={async (fd) => {
-              await addProductOption(
-                product.id,
-                String(fd.get("optionName") || ""),
-                String(fd.get("optionValues") || ""),
+              runSave(() =>
+                addProductOption(
+                  product.id,
+                  String(fd.get("optionName") || ""),
+                  String(fd.get("optionValues") || ""),
+                ),
               );
             }}
             className="mt-3 flex flex-wrap gap-2"
@@ -228,9 +277,10 @@ function ProductEditPanel({
             />
             <button
               type="submit"
-              className="admin-btn admin-btn-secondary admin-btn-sm"
+              disabled={pending}
+              className="admin-btn admin-btn-secondary admin-btn-sm disabled:opacity-50"
             >
-              {t("catalog.addOption")}
+              <SaveCaption idle={t("catalog.addOption")} />
             </button>
           </form>
         </div>
@@ -238,7 +288,7 @@ function ProductEditPanel({
         <form
           action={async (fd) => {
             const selected = levels.filter((l) => fd.get(l) === "on");
-            await setProductVisibility(product.id, selected);
+            runSave(() => setProductVisibility(product.id, selected));
           }}
           className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-4"
         >
@@ -263,9 +313,12 @@ function ProductEditPanel({
           ))}
           <button
             type="submit"
-            className="admin-btn admin-btn-primary admin-btn-sm"
+            disabled={pending}
+            className={`admin-btn admin-btn-sm disabled:opacity-50 ${
+              justSaved ? "admin-btn-saved" : "admin-btn-primary"
+            }`}
           >
-            {t("catalog.saveVisibility")}
+            <SaveCaption idle={t("catalog.saveVisibility")} />
           </button>
         </form>
 
@@ -276,11 +329,13 @@ function ProductEditPanel({
               <form
                 key={level}
                 action={async (fd) => {
-                  await updateProductPrice(
-                    product.id,
-                    level,
-                    Number(fd.get("unitPrice")),
-                    Number(fd.get("moq")),
+                  runSave(() =>
+                    updateProductPrice(
+                      product.id,
+                      level,
+                      Number(fd.get("unitPrice")),
+                      Number(fd.get("moq")),
+                    ),
                   );
                 }}
                 className="rounded-xl border border-[var(--admin-border)] p-4"
@@ -306,16 +361,28 @@ function ProductEditPanel({
                     name="moq"
                     type="number"
                     min={1}
-                    defaultValue={price?.moq ?? CASE_MOQ_PCS}
+                    defaultValue={
+                      product.sku === TEST_STATION_SKU
+                        ? (price?.moq ?? 1)
+                        : caseMoqFromStored(price?.moq ?? CASE_MOQ_CASES)
+                    }
                     className="admin-input mt-1 w-full"
                     required
                   />
                 </label>
+                <p className="mt-1 text-[11px] leading-snug text-[var(--admin-muted)]">
+                  {product.sku === TEST_STATION_SKU
+                    ? t("catalog.bonusMoqHint")
+                    : t("catalog.moqHint")}
+                </p>
                 <button
                   type="submit"
-                  className="admin-btn admin-btn-primary admin-btn-sm mt-3"
+                  disabled={pending}
+                  className={`admin-btn admin-btn-sm mt-3 disabled:opacity-50 ${
+                    justSaved ? "admin-btn-saved" : "admin-btn-primary"
+                  }`}
                 >
-                  {t("common.save")}
+                  <SaveCaption idle={t("common.save")} />
                 </button>
               </form>
             );
@@ -388,8 +455,17 @@ export default function CatalogProductsPanel({
                           />
                         )}
                       </div>
-                      <span className="font-semibold text-[var(--admin-gray-800)]">
-                        {p.name}
+                      <span className="min-w-0">
+                        <span className="font-semibold text-[var(--admin-gray-800)]">
+                          {p.name}
+                        </span>
+                        {p.sku === TEST_STATION_SKU ? (
+                          <span className="ml-2">
+                            <AdminBadge tone="neutral">
+                              {t("catalog.bonusSku")}
+                            </AdminBadge>
+                          </span>
+                        ) : null}
                       </span>
                     </div>
                   </td>

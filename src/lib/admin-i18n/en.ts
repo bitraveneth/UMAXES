@@ -75,7 +75,8 @@ const en: AdminMessages = {
   common: {
     save: "Save",
     saving: "Saving…",
-    saved: "Saved.",
+    saved: "Saved",
+    savedDetail: "Your changes are stored.",
     saveFailed: "Could not save.",
     edit: "Edit",
     close: "Close",
@@ -309,6 +310,7 @@ const en: AdminMessages = {
     descriptionLabel: "Description",
     image: "Image",
     saveDetails: "Save details",
+    savedDetail: "This product is updated in the catalog.",
     productOptions: "Product options",
     optionsHelp:
       "Attributes for this SKU (e.g. Nicotine · Pack size). Comma-separate values.",
