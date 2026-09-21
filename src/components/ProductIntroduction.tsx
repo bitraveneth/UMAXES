@@ -1,115 +1,125 @@
 import Image from "next/image";
 
-/** Full-bleed HookaMax intro art — keep native 1920×1080, do not downscale. */
+/** Full-res HookaMax intro art — served unoptimized at native 1920×1080. */
 export const HOOKAMAX_INTRO_IMAGE = "/images/product/hookamax-introduction.jpg";
+
+const HIGHLIGHTS = [
+  { label: "Puffs", value: "Up to 80K" },
+  { label: "Battery", value: "1600mAh" },
+  { label: "Lights", value: "ARGB" },
+  { label: "Draw", value: "MTL & DTL" },
+] as const;
 
 export default function ProductIntroduction() {
   return (
     <section
       id="introduction"
-      className="relative w-full bg-[#f3ebe0]"
+      className="relative overflow-hidden bg-[#f4ebe1]"
       aria-labelledby="product-intro-heading"
     >
-      {/* Desktop / tablet: full native banner with copy in the white box */}
-      <div className="relative hidden w-full md:block">
-        <Image
-          src={HOOKAMAX_INTRO_IMAGE}
-          alt="UMAXES HookaMax 80K disposable hookah"
-          width={1920}
-          height={1080}
-          priority
-          quality={100}
-          sizes="100vw"
-          className="block h-auto w-full max-w-none"
-          unoptimized
-        />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_40%,rgba(201,166,90,0.14),transparent_55%),radial-gradient(ellipse_at_90%_20%,rgba(180,140,200,0.12),transparent_45%)]"
+      />
 
-        <div className="pointer-events-none absolute inset-0">
+      <div className="relative mx-auto grid max-w-[1500px] lg:grid-cols-2 lg:items-stretch">
+        {/* Left: device art only (left side of banner) */}
+        <div className="relative min-h-[22rem] overflow-hidden sm:min-h-[28rem] lg:min-h-[38rem]">
+          <Image
+            src={HOOKAMAX_INTRO_IMAGE}
+            alt="UMAXES HookaMax 80K disposable hookah devices"
+            fill
+            priority
+            quality={100}
+            unoptimized
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover object-left"
+          />
           <div
-            className="pointer-events-auto absolute flex flex-col justify-center overflow-hidden pl-[2.6%] pr-[5.5%] pt-[2.2%] pb-[7%] text-[#2a2118]"
-            style={{
-              left: "45.8%",
-              top: "22.8%",
-              width: "48.8%",
-              height: "53.5%",
-            }}
-          >
-            <IntroCopy />
-          </div>
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-[#f4ebe1] lg:w-24"
+          />
         </div>
-      </div>
 
-      {/* Mobile: full-width art, then matching white-box panel for readable copy */}
-      <div className="md:hidden">
-        <Image
-          src={HOOKAMAX_INTRO_IMAGE}
-          alt="UMAXES HookaMax 80K disposable hookah"
-          width={1920}
-          height={1080}
-          priority
-          quality={100}
-          sizes="100vw"
-          className="block h-auto w-full max-w-none"
-          unoptimized
-        />
-        <div className="relative z-10 -mt-2 px-4 pb-10">
-          <div className="rounded-2xl border border-[#c9a65a]/70 bg-[#fbf8f1] px-5 py-6 shadow-[0_18px_40px_rgba(61,40,15,0.12)] ring-1 ring-[#e8d7a8]/80">
-            <IntroCopy compact />
+        {/* Right: custom introduction box */}
+        <div className="relative flex items-center px-5 py-10 sm:px-8 sm:py-14 lg:px-10 xl:px-14">
+          <div className="relative w-full max-w-xl xl:max-w-2xl">
+            <div
+              aria-hidden
+              className="absolute -inset-px rounded-[1.6rem] bg-gradient-to-br from-[#e0c274] via-[#c9a65a] to-[#a8843a] opacity-90"
+            />
+            <div className="relative rounded-[1.5rem] border border-[#f7efd8] bg-[#fbf8f1] px-6 py-7 shadow-[0_22px_55px_rgba(61,40,15,0.1)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute top-4 right-5 h-8 w-8 rounded-full border border-[#c9a65a]/45"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute top-[1.15rem] right-[1.35rem] h-5 w-5 rounded-full border border-[#c9a65a]/30"
+              />
+
+              <p className="font-display text-xs font-semibold tracking-[0.22em] text-[#b8862d] uppercase sm:text-sm">
+                Introduction
+              </p>
+              <h2
+                id="product-intro-heading"
+                className="mt-3 font-display text-[clamp(1.65rem,3.4vw,2.55rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-[#1f1812]"
+              >
+                Umaxes HookaMax 80k
+                <span className="mt-1 block text-[0.72em] font-bold tracking-[-0.02em] text-[#5c4a38]">
+                  Disposable Hookah
+                </span>
+              </h2>
+
+              <div className="mt-5 space-y-3.5 font-body text-[0.95rem] leading-relaxed text-[#3d3228]/90 sm:mt-6 sm:text-base sm:leading-relaxed">
+                <p>
+                  Umaxes HookaMax 80k Disposable Vape is a disposable vape with
+                  at most{" "}
+                  <strong className="font-semibold text-[#1f1812]">
+                    80K puffs
+                  </strong>{" "}
+                  and a{" "}
+                  <strong className="font-semibold text-[#1f1812]">
+                    1600mAh
+                  </strong>{" "}
+                  internal battery. The Umaxes HookaMax hookah vape is, so far,
+                  the best vape that Umaxes offers.
+                </p>
+                <p>
+                  It features a built-in 1600mAh battery for extended use.
+                  Umaxes offers sufficient vape juice to make HookaMax satisfy
+                  up to 80K puffs. Moreover, you can turn on the{" "}
+                  <strong className="font-semibold text-[#1f1812]">
+                    ARGB light
+                  </strong>{" "}
+                  to add full-spectrum fun of light effects to your vaping. You
+                  can enjoy both{" "}
+                  <strong className="font-semibold text-[#1f1812]">
+                    MTL and DTL
+                  </strong>{" "}
+                  with Umaxes HookaMax 80K.
+                </p>
+              </div>
+
+              <dl className="mt-7 grid grid-cols-2 gap-3 sm:mt-8 sm:grid-cols-4 sm:gap-3.5">
+                {HIGHLIGHTS.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-xl border border-[#e8d7a8]/80 bg-[#f7f1e6]/80 px-3 py-2.5"
+                  >
+                    <dt className="font-display text-[0.62rem] font-semibold tracking-[0.14em] text-[#9a7a3a] uppercase">
+                      {item.label}
+                    </dt>
+                    <dd className="mt-1 font-display text-sm font-bold tracking-tight text-[#1f1812] sm:text-[0.95rem]">
+                      {item.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function IntroCopy({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className={compact ? "space-y-3" : "space-y-2.5 xl:space-y-3.5"}>
-      <p
-        className={`font-display font-semibold tracking-[0.22em] text-[#b8862d] uppercase ${
-          compact ? "text-[11px]" : "text-[clamp(0.65rem,1.05vw,0.85rem)]"
-        }`}
-      >
-        Introduction
-      </p>
-      <h2
-        id="product-intro-heading"
-        className={`font-display font-extrabold leading-[1.05] tracking-[-0.03em] text-[#1f1812] ${
-          compact
-            ? "text-[1.55rem]"
-            : "text-[clamp(1.15rem,2.35vw,2.15rem)]"
-        }`}
-      >
-        Umaxes HookaMax 80k Disposable Hookah
-      </h2>
-      <div
-        className={`font-body leading-relaxed text-[#3d3228]/88 ${
-          compact
-            ? "space-y-2.5 text-sm"
-            : "space-y-2 text-[clamp(0.7rem,1.05vw,0.95rem)] xl:space-y-2.5"
-        }`}
-      >
-        <p>
-          Umaxes HookaMax 80k Disposable Vape is a disposable vape with at most{" "}
-          <strong className="font-semibold text-[#1f1812]">80K puffs</strong>{" "}
-          and a{" "}
-          <strong className="font-semibold text-[#1f1812]">
-            1600mAh
-          </strong>{" "}
-          internal battery. The Umaxes HookaMax hookah vape is, so far, the
-          best vape that Umaxes offers.
-        </p>
-        <p>
-          It features a built-in 1600mAh battery for extended use. Umaxes offers
-          sufficient vape juice to make HookaMax satisfy up to 80K puffs.
-          Moreover, you can turn on the{" "}
-          <strong className="font-semibold text-[#1f1812]">ARGB light</strong>{" "}
-          to add full-spectrum fun of light effects to your vaping. You can
-          enjoy both{" "}
-          <strong className="font-semibold text-[#1f1812]">MTL and DTL</strong>{" "}
-          with Umaxes HookaMax 80K.
-        </p>
-      </div>
-    </div>
   );
 }
