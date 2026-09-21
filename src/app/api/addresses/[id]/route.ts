@@ -55,6 +55,33 @@ export async function PATCH(request: Request, { params }: Params) {
     }
   }
 
+  const line1 = data.line1 as string | undefined;
+  const city = data.city as string | undefined;
+  const postalCode = data.postalCode as string | undefined;
+  const country = data.country as string | undefined;
+
+  if (
+    (line1 !== undefined && !line1) ||
+    (city !== undefined && !city) ||
+    (postalCode !== undefined && !postalCode) ||
+    (country !== undefined && !country)
+  ) {
+    return NextResponse.json(
+      { error: "Address, city, postal code, and country are required" },
+      { status: 400 },
+    );
+  }
+
+  if (
+    typeof country === "string" &&
+    (country.toLowerCase().includes("china") || country.toUpperCase() === "CN")
+  ) {
+    return NextResponse.json(
+      { error: "Shipping to China is not available" },
+      { status: 400 },
+    );
+  }
+
   if (typeof body.isDefault === "boolean" && body.isDefault) {
     await prisma.address.updateMany({
       where: { companyId: gate.session.user.companyId! },
@@ -76,6 +103,23 @@ export async function DELETE(_request: Request, { params }: Params) {
   const gate = await requireOwner(id, true);
   if ("error" in gate && gate.error) return gate.error;
 
+  const companyId = gate.session.user.companyId!;
+  const wasDefault = gate.address.isDefault;
+
   await prisma.address.delete({ where: { id } });
+
+  if (wasDefault) {
+    const next = await prisma.address.findFirst({
+      where: { companyId },
+      orderBy: { createdAt: "asc" },
+    });
+    if (next) {
+      await prisma.address.update({
+        where: { id: next.id },
+        data: { isDefault: true },
+      });
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }
