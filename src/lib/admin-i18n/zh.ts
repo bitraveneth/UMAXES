@@ -519,6 +519,7 @@ const zh: AdminMessages = {
     applyStatus: "保存",
     statusLabel: "物流状态",
     placedByStaff: "员工 · {name}",
+    staffLabel: "员工",
     assignSupplier: "指定供应方",
     sendToSupplier: "交给供应方",
     supplierNote: "备注",

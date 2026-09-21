@@ -499,12 +499,26 @@ function OrderPipeline({
               done ? "is-done" : active ? "is-active" : "is-todo"
             }`}
           >
-            <div className="flex w-full items-center justify-between gap-2">
-              <span className="admin-pipeline-dot" aria-hidden />
-              <span className="admin-pipeline-index">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-            </div>
+            <span className="admin-pipeline-node" aria-hidden>
+              {done ? (
+                <svg
+                  className="admin-pipeline-check"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3.5 8.2 6.4 11l6.1-6.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                String(i + 1).padStart(2, "0")
+              )}
+            </span>
             <span className="admin-pipeline-label">{statusLabel(step)}</span>
           </li>
         );
@@ -583,23 +597,26 @@ function OrderExpand({
                   : t(paymentStatusLabelKey(order.paymentStatus))}
               </AdminBadge>
             </div>
-            <p className="text-sm text-[var(--admin-muted)]">
-              <span className="font-medium text-[var(--admin-text)]">
-                {order.companyName}
+            <div className="admin-order-meta">
+              <span className="admin-order-meta-chip" title={order.companyName}>
+                <span>{t("orders.colCompany")}</span>
+                <strong className="truncate">{order.companyName}</strong>
               </span>
-              {" · "}
-              {payLabel(order.paymentMethod)}
-              {" · "}
-              <span className="font-semibold tabular-nums text-[var(--admin-text)]">
-                {money(order.total)}
+              <span className="admin-order-meta-chip">
+                <span>{t("orders.colPayment")}</span>
+                <strong>{payLabel(order.paymentMethod)}</strong>
+              </span>
+              <span className="admin-order-meta-chip">
+                <span>{t("orders.colTotal")}</span>
+                <strong>{money(order.total)}</strong>
               </span>
               {order.placedByStaffName ? (
-                <>
-                  {" · "}
-                  {t("orders.placedByStaff", { name: order.placedByStaffName })}
-                </>
+                <span className="admin-order-meta-chip">
+                  <span>{t("orders.staffLabel")}</span>
+                  <strong className="truncate">{order.placedByStaffName}</strong>
+                </span>
               ) : null}
-            </p>
+            </div>
           </div>
           <button
             type="button"

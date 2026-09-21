@@ -534,6 +534,7 @@ const en: AdminMessages = {
     applyStatus: "Save",
     statusLabel: "Shipping status",
     placedByStaff: "Staff · {name}",
+    staffLabel: "Staff",
     assignSupplier: "Assign supplier",
     sendToSupplier: "Send to supplier",
     supplierNote: "Note",
