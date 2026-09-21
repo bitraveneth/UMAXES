@@ -274,7 +274,9 @@ export default function OrdersPanel({
                   <th>{t("orders.colTotal")}</th>
                   <th>{t("orders.colStatus")}</th>
                   <th className="text-center">{t("orders.colDocs")}</th>
-                  <th className="text-right">{t("orders.updateStatus")}</th>
+                  <th className="w-[1%] whitespace-nowrap pr-5 text-right">
+                    {t("orders.updateStatus")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -357,19 +359,21 @@ export default function OrdersPanel({
                           </AdminBadge>
                         </td>
                         <td className="text-center">
-                          <OrderDocLinks
-                            orderId={order.id}
-                            compact
-                            hasSlip={Boolean(order.paymentSlipUrl)}
-                          />
+                          <div className="inline-flex max-w-[14rem] flex-wrap justify-center gap-1.5">
+                            <OrderDocLinks
+                              orderId={order.id}
+                              compact
+                              hasSlip={Boolean(order.paymentSlipUrl)}
+                            />
+                          </div>
                         </td>
-                        <td className="text-right">
+                        <td className="w-[1%] whitespace-nowrap pr-5 text-right align-middle">
                           <button
                             type="button"
                             onClick={() =>
                               setEditingId(open ? null : order.id)
                             }
-                            className={`admin-btn admin-btn-sm ${
+                            className={`admin-btn admin-btn-sm ml-auto ${
                               open
                                 ? "admin-btn-secondary"
                                 : "admin-btn-primary"

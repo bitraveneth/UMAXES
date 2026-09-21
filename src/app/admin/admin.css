@@ -435,7 +435,8 @@
 
 .admin-table.admin-table-compact th:last-child,
 .admin-table.admin-table-compact td:last-child {
-  padding-right: 1rem;
+  padding-right: 1.25rem;
+  text-align: right;
 }
 
 .admin-table.admin-table-compact .admin-badge {
