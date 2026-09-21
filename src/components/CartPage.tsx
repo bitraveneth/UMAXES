@@ -10,10 +10,7 @@ import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { formatCases, formatPack } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
 import { useCatalogPrices } from "@/context/CatalogPricesContext";
-import {
-  TEST_STATION_PER_CASE_COPY,
-  formatTestStationLine,
-} from "@/lib/test-station";
+import OrderQtySummary from "@/components/account/OrderQtySummary";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
@@ -140,7 +137,8 @@ export default function CartPage() {
               </ul>
 
               <div className="rounded-2xl border border-black/10 bg-white p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-4">
+                <OrderQtySummary pcs={quantity} stationQty={stationQty} compact />
+                <div className="mt-4 flex items-center justify-between gap-4">
                   <span className="font-display text-sm text-black/60">
                     Subtotal
                   </span>
@@ -149,14 +147,8 @@ export default function CartPage() {
                   </span>
                 </div>
                 <p className="mt-2 font-body text-sm text-black/50">
-                  1 case = 95 pieces. Shipping calculated at checkout.
+                  Shipping calculated at checkout.
                 </p>
-                {stationQty > 0 ? (
-                  <p className="mt-2 font-body text-sm text-black/60">
-                    {formatTestStationLine(stationQty)}. {TEST_STATION_PER_CASE_COPY}.
-                    Free — deducted from Test Station stock at checkout.
-                  </p>
-                ) : null}
                 <Link
                   href="/checkout"
                   className="mt-5 block w-full rounded-full bg-umx-orange py-3.5 text-center font-display text-sm font-semibold !text-white transition hover:bg-umx-orange-deep sm:text-base"

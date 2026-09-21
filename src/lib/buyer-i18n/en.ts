@@ -138,7 +138,7 @@ const en: BuyerMessages = {
       "{unpaid} unpaid pcs per {cases} cases. First orders do not earn monthly rebate.",
     howPay: "When it counts",
     howPayBody:
-      "Upload the bank slip after you order. Volume counts after Info confirms the funds. Credit is not cash — it applies on later orders.",
+      "You can attach a bank slip at checkout or later on the order page. Volume counts after finance confirms the funds. Credit is not cash — it applies on later orders.",
     monthsTitle: "Monthly rebates",
     monthsEmpty: "No rebate month yet. Confirmed paid orders will show here.",
     activityTitle: "Wallet activity",

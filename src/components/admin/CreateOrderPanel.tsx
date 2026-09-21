@@ -9,7 +9,7 @@ import { casesFromPcs, formatCases } from "@/lib/pack";
 import {
   TEST_STATION_NAME,
   TEST_STATION_PER_CASE_COPY,
-  formatTestStationLine,
+  formatTestStationQty,
 } from "@/lib/test-station";
 
 export type CreateOrderCompanyOption = {
@@ -556,7 +556,7 @@ export default function CreateOrderPanel({
                   {stationQty > 0 ? (
                     <li className="flex justify-between gap-3 tabular-nums">
                       <span>
-                        {TEST_STATION_NAME} · {formatTestStationLine(stationQty)}
+                        {TEST_STATION_NAME} · {formatTestStationQty(stationQty)}
                       </span>
                       <span className="font-medium">{money(0)}</span>
                     </li>

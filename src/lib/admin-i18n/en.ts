@@ -460,7 +460,7 @@ const en: AdminMessages = {
   orders: {
     title: "Orders",
     description:
-      "When a buyer uploads a 水单 on their order, it shows here. Open the row to see the photo, then confirm 到账.",
+      "When a buyer uploads a payment slip on their order, it shows here. Open the row to see the photo, then confirm funds received.",
     createOrder: "Create order",
     exportOrders: "Export orders CSV",
     exportCustomers: "Export customers CSV",
@@ -470,7 +470,7 @@ const en: AdminMessages = {
     completed: "Completed",
     listed: "Orders",
     listedHint:
-      "{count} shown · buyer 水单 is here. Filter Slip in, open the row, check the photo, then confirm 到账.",
+      "{count} shown · buyer payment slips are here. Filter Slip in, open the row, check the photo, then confirm funds received.",
     noOrders: "No orders match this filter.",
     filterAll: "All",
     filterPending: "Pending",
@@ -512,9 +512,9 @@ const en: AdminMessages = {
       "Delete this payment slip file? The buyer can upload again. This frees storage.",
     markPaid: "Confirm funds received",
     markPaidHint:
-      "Finance has the 水单. Confirm 到账 only after the money is in the account. That is when rebate quantity counts.",
+      "Finance has the payment slip. Confirm funds received only after the money is in the account. That is when rebate quantity counts.",
     markPaidNeedSlip:
-      "Waiting for the buyer to upload a payment slip (水单). You can confirm 到账 after it is on this order.",
+      "Waiting for the buyer to upload a payment slip. You can confirm funds received after it is on this order.",
     shipment: "Shipment",
     noShipment: "No shipment yet",
     unpaid: "Unpaid",

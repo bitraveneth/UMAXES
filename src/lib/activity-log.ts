@@ -55,7 +55,7 @@ const ACTION_META: Record<
     tone: "warning",
   },
   PAYMENT_RECEIVED: {
-    label: "Funds confirmed (到账)",
+    label: "Funds confirmed",
     category: "payments",
     tone: "success",
   },

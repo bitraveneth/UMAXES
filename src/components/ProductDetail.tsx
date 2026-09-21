@@ -23,8 +23,8 @@ import {
 } from "@/hooks/useStoreChrome";
 import { flavors, product, type Flavor, type FlavorId } from "@/lib/assets";
 import {
-  TEST_STATION_PER_CASE_COPY,
-  formatTestStationLine,
+  formatTestStationMessage,
+  formatTestStationQty,
 } from "@/lib/test-station";
 
 const DRAFT_KEY = "umaxes-product-order-lines-v3";
@@ -564,12 +564,13 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     </p>
                     <p className="mt-1 font-display text-lg font-bold tracking-tight text-black">
                       {stationQty > 0
-                        ? formatTestStationLine(stationQty)
+                        ? formatTestStationQty(stationQty)
                         : "Add a case to include a test station"}
                     </p>
                     <p className="mt-1 font-body text-sm text-black/55">
-                      {TEST_STATION_PER_CASE_COPY}. Free with this order — taken
-                      from Test Station stock.
+                      {stationQty > 0
+                        ? `${formatTestStationMessage(stationQty)} Free with this order — taken from Test Station stock.`
+                        : formatTestStationMessage(0)}
                     </p>
                   </div>
                 ) : null}

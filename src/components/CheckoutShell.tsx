@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import B2BCheckout from "@/components/B2BCheckout";
 import { StorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
-import { formatCases } from "@/lib/pack";
+import { formatCases, formatPack } from "@/lib/pack";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
@@ -103,6 +103,7 @@ function CheckoutAuthGate() {
 export default function CheckoutShell() {
   const compactChrome = useCompactMobileStoreChrome();
   const { status } = useSession();
+  const { quantity } = useCart();
 
   return (
     <>
@@ -121,9 +122,17 @@ export default function CheckoutShell() {
         ) : (
           <>
             <div className="mx-auto mb-8 max-w-6xl sm:mb-10">
-              <h1 className="font-display text-3xl font-bold tracking-tight text-black">
+              <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase">
+                Your order
+              </p>
+              <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-black">
                 Checkout
               </h1>
+              {quantity > 0 ? (
+                <p className="mt-2 font-body text-black/65">
+                  {formatPack(quantity)} ready to place.
+                </p>
+              ) : null}
             </div>
             <B2BCheckout />
           </>

@@ -256,7 +256,7 @@ export async function POST(request: Request, { params }: Params) {
   const { notifyStaff } = await import("@/lib/notify");
   await notifyStaff({
     subject: `Payment slip uploaded · ${order.orderNumber}`,
-    body: `${order.company.name} uploaded a bank slip for ${order.orderNumber}. Confirm 到账 in Orders after finance verifies the funds.`,
+    body: `${order.company.name} uploaded a bank slip for ${order.orderNumber}. Confirm funds received in Orders after finance verifies the funds.`,
     type: "order",
     href: `/admin/orders?open=${order.id}`,
     includeSales: true,

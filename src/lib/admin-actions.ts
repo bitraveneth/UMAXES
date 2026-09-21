@@ -585,7 +585,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     });
     if (method?.paymentMethod !== "CREDIT" && !paid) {
       throw new Error(
-        "Confirm funds received (到账) after the payment slip before moving this order forward",
+        "Confirm funds received after the payment slip before moving this order forward",
       );
     }
   }
@@ -772,7 +772,7 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
     );
     const hasSlip = order.payments.some((p) => p.slipUrl);
     if (!alreadyPaid && !hasSlip && order.paymentMethod !== "CREDIT") {
-      throw new Error("Wait for the buyer to upload a payment slip (水单) first");
+      throw new Error("Wait for the buyer to upload a payment slip first");
     }
 
     await tx.order.update({

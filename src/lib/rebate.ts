@@ -7,10 +7,19 @@ import {
   TEST_STATION_PER_CASE_COPY,
   TEST_STATION_SKU,
   formatTestStationLine,
+  formatTestStationMessage,
+  formatTestStationQty,
 } from "@/lib/test-station";
 import type { BuyerRebateStatus } from "@/lib/rebate-types";
 
-export { TEST_STATION_NAME, TEST_STATION_PER_CASE_COPY, TEST_STATION_SKU, formatTestStationLine };
+export {
+  TEST_STATION_NAME,
+  TEST_STATION_PER_CASE_COPY,
+  TEST_STATION_SKU,
+  formatTestStationLine,
+  formatTestStationMessage,
+  formatTestStationQty,
+};
 export type { BuyerRebateLedger, BuyerRebateMonth, BuyerRebateStatus } from "@/lib/rebate-types";
 
 export function grantsTestStations(policy: ChannelPolicy | null | undefined) {

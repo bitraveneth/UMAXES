@@ -9,13 +9,13 @@ import { CircleCheck, Gift, Pencil, Plus, Trash2, Wallet } from "lucide-react";
 import PiNumberBlock from "@/components/account/PiNumberBlock";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
-import { CASE_MOQ_PCS, casesFromPcs, formatCases } from "@/lib/pack";
+import { CASE_MOQ_PCS, casesFromPcs, formatPack } from "@/lib/pack";
 import { isChannelBuyerLevel } from "@/lib/channel-level";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import {
   TEST_STATION_NAME,
-  TEST_STATION_PER_CASE_COPY,
-  formatTestStationLine,
+  formatTestStationMessage,
+  formatTestStationQty,
 } from "@/lib/test-station";
 import {
   EMPTY_ADDRESS_FORM,
@@ -28,6 +28,8 @@ import {
 } from "@/components/ShippingAddressForm";
 import { useAppFeedback } from "@/components/ui/AppFeedback";
 import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
+import CheckoutSlipField from "@/components/account/CheckoutSlipField";
+import OrderQtySummary from "@/components/account/OrderQtySummary";
 
 type Address = ShippingAddress;
 
@@ -96,6 +98,9 @@ export default function B2BCheckout() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressSaving, setAddressSaving] = useState(false);
   const [addressBusyId, setAddressBusyId] = useState<string | null>(null);
+  const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [slipError, setSlipError] = useState<string | null>(null);
+  const [slipAttached, setSlipAttached] = useState(false);
   const { confirm, showToast, ui } = useAppFeedback();
 
   function applyAddressList(next: Address[], preferId?: string) {
@@ -298,14 +303,38 @@ export default function B2BCheckout() {
       }),
     });
     const data = await res.json();
-    setLoading(false);
     if (!res.ok) {
+      setLoading(false);
       setError(data.error || "Could not place order");
       return;
     }
+
+    let attached = false;
+    if (slipFile && data.order?.id) {
+      const fd = new FormData();
+      fd.set("file", slipFile);
+      if (paymentRef.trim()) fd.set("reference", paymentRef.trim());
+      const slipRes = await fetch(
+        `/api/orders/${data.order.id}/payment-slip`,
+        { method: "POST", body: fd },
+      );
+      attached = slipRes.ok;
+      if (!slipRes.ok) {
+        const slipData = await slipRes.json().catch(() => ({}));
+        showToast(
+          "Order placed — slip not attached",
+          "danger",
+          slipData.error ||
+            "You can upload the bank slip from the order page.",
+        );
+      }
+    }
+
     clear();
+    setLoading(false);
     setDoneOrderId(data.order.id);
     setPiNumber(data.order.piNumber);
+    setSlipAttached(attached);
   }
 
   if (status === "loading") {
@@ -338,8 +367,9 @@ export default function B2BCheckout() {
                   Thank you
                 </h1>
                 <p className="mt-2 max-w-md font-body text-sm leading-relaxed text-black/68">
-                  Your order is recorded. Download the proforma, send the TT,
-                  then we confirm payment.
+                  {slipAttached
+                    ? "Your order is recorded and the bank slip is attached. Finance confirms funds received before this order counts toward rebate."
+                    : "Your order is recorded. Download the proforma and send the transfer. You can upload a bank slip from the order page — it is not required to place the order. Finance confirms funds received before this order counts toward rebate."}
                 </p>
               </div>
             </div>
@@ -630,7 +660,10 @@ export default function B2BCheckout() {
 
           <label className="mt-4 block">
             <span className="font-display text-sm font-semibold">
-              Payment reference (optional)
+              Payment reference
+              <span className="ml-2 font-body text-xs font-normal text-black/45">
+                Optional
+              </span>
             </span>
             <input
               value={paymentRef}
@@ -639,9 +672,21 @@ export default function B2BCheckout() {
               placeholder="TT / wire reference"
             />
           </label>
-          <p className="mt-3 font-body text-xs text-black/50">
-            After you place the order, open it and upload the bank slip (水单).
-            Info confirms 到账 before the order counts for rebate.
+          <CheckoutSlipField
+            file={slipFile}
+            disabled={loading}
+            onChange={(next, err) => {
+              setSlipFile(err ? null : next);
+              setSlipError(err);
+            }}
+          />
+          {slipError ? (
+            <p className="mt-2 font-body text-sm text-red-700">{slipError}</p>
+          ) : null}
+          <p className="mt-3 font-body text-xs leading-relaxed text-black/50">
+            After you place the order, finance confirms funds received before
+            this order counts toward rebate. You can pay now or later, and you
+            can upload the bank slip here or from the order page.
           </p>
         </section>
 
@@ -714,10 +759,11 @@ export default function B2BCheckout() {
                   {stationQty > 0 ? (
                     <>
                       <p className="font-display text-sm font-bold text-black">
-                        {formatTestStationLine(stationQty)}
+                        {formatTestStationQty(stationQty)}
                       </p>
                       <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        {TEST_STATION_PER_CASE_COPY}. Added automatically.
+                        {formatTestStationMessage(stationQty)} Added
+                        automatically from Test Station stock.
                       </p>
                     </>
                   ) : (channel?.testStationsPerCase || 0) > 0 ? (
@@ -726,7 +772,7 @@ export default function B2BCheckout() {
                         Test stations
                       </p>
                       <p className="mt-1 font-body text-sm leading-relaxed text-black/70">
-                        {TEST_STATION_PER_CASE_COPY}. Kits add when this order
+                        {formatTestStationMessage(0)} Kits add when this order
                         includes full cases.
                       </p>
                     </>
@@ -769,15 +815,15 @@ export default function B2BCheckout() {
               Order summary
             </h2>
             <p className="font-body text-xs text-black/55">
-              {formatCases(cases)} · {quantity.toLocaleString()} pcs
+              {formatPack(quantity)}
             </p>
           </div>
         </div>
 
         <div className="px-5 py-5 sm:px-6">
-          <ul className="divide-y divide-black/8">
+          <OrderQtySummary pcs={quantity} stationQty={stationQty} compact />
+          <ul className="mt-4 divide-y divide-black/8">
             {lines.map((l) => {
-              const lineCases = casesFromPcs(l.quantity);
               return (
                 <li key={l.sku} className="flex gap-3 py-4 first:pt-0">
                   {l.image ? (
@@ -801,8 +847,7 @@ export default function B2BCheckout() {
                     </div>
                     <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                       <p className="font-body text-xs text-black/55">
-                        {formatCases(lineCases)} · {l.quantity.toLocaleString()}{" "}
-                        pcs
+                        {formatPack(l.quantity)}
                         {l.quantity < l.moq ? ` · MOQ ${l.moq} pcs` : ""}
                       </p>
                       {showPrices ? (
@@ -823,14 +868,14 @@ export default function B2BCheckout() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <p className="font-display text-sm font-semibold leading-snug text-black">
-                      {TEST_STATION_NAME}
+                      {TEST_STATION_NAME} · {formatTestStationQty(stationQty)}
                     </p>
                     <p className="shrink-0 font-display text-sm font-semibold tabular-nums text-black">
                       $0
                     </p>
                   </div>
-                  <p className="mt-1.5 font-body text-xs text-black/55">
-                    {formatTestStationLine(stationQty)} · {TEST_STATION_PER_CASE_COPY}
+                  <p className="mt-1.5 font-body text-xs leading-relaxed text-black/55">
+                    {formatTestStationMessage(stationQty)}
                   </p>
                 </div>
               </li>
