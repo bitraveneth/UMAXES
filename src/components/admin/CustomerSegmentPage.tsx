@@ -84,6 +84,8 @@ export async function CustomerSegmentPage({
     addresses: c.addresses.map((a) => ({
       id: a.id,
       label: a.label,
+      recipientName: a.recipientName,
+      phone: a.phone,
       line1: a.line1,
       line2: a.line2,
       city: a.city,

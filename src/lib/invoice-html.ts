@@ -34,6 +34,8 @@ export function invoicePuffsLabel() {
 
 export type InvoiceAddress = {
   label?: string | null;
+  recipientName?: string | null;
+  phone?: string | null;
   line1: string;
   line2?: string | null;
   city: string;
@@ -48,7 +50,8 @@ export function parseAddressSnap(snap: string): InvoiceAddress {
 
 function addressLines(a: InvoiceAddress) {
   const cityLine = [a.city, a.region, a.postalCode].filter(Boolean).join(", ");
-  return [a.label, a.line1, a.line2, cityLine, a.country]
+  const nameLine = [a.recipientName, a.phone].filter(Boolean).join(" · ");
+  return [a.label, nameLine, a.line1, a.line2, cityLine, a.country]
     .map((v) => (v || "").trim())
     .filter(Boolean);
 }
@@ -178,6 +181,8 @@ type BuildInvoiceHtmlInput = {
   total?: number;
   packingMetaHtml?: string;
   forceDownloadHref?: string;
+  pdfHref?: string;
+  xlsxHref?: string;
   showToolbar?: boolean;
   bank?: InvoiceBankDetails | null;
   origin?: string;
@@ -344,11 +349,21 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
 
   const toolbar = showToolbar
     ? `<div class="toolbar no-print">
-  <p><strong>${titles[input.type]}</strong> · ${escapeHtml(input.orderNumber)}</p>
+  <p><strong>${titles[input.type]}</strong> · ${escapeHtml(input.docNumber)}</p>
   <div class="actions">
     <button type="button" class="primary" onclick="window.print()">Print</button>
     ${
-      input.forceDownloadHref
+      input.pdfHref
+        ? `<a href="${escapeHtml(input.pdfHref)}">PDF</a>`
+        : ""
+    }
+    ${
+      input.xlsxHref
+        ? `<a href="${escapeHtml(input.xlsxHref)}">Excel</a>`
+        : ""
+    }
+    ${
+      !input.pdfHref && input.forceDownloadHref
         ? `<a href="${escapeHtml(input.forceDownloadHref)}">Download</a>`
         : ""
     }

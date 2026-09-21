@@ -165,19 +165,21 @@ model StaffProfile {
 }
 
 model Address {
-  id         String   @id @default(cuid())
-  companyId  String
-  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  label      String?
-  line1      String
-  line2      String?
-  city       String
-  region     String?
-  postalCode String
-  country    String
-  isDefault  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id            String   @id @default(cuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  label         String?
+  recipientName String?
+  phone         String?
+  line1         String
+  line2         String?
+  city          String
+  region        String?
+  postalCode    String
+  country       String
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([companyId])
 }

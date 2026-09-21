@@ -17,6 +17,7 @@ import {
   type BuyerDocType,
 } from "@/lib/buyer-order";
 import BuyerPaymentSlip from "@/components/account/BuyerPaymentSlip";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 import OrderProgressBar from "@/components/account/OrderProgressBar";
 import type { OrderStatus } from "@/generated/prisma/enums";
 
@@ -202,8 +203,7 @@ export default function BuyerOrderDetail({
       {tab === "documents" ? (
         <section className="space-y-5">
           <p className="font-body text-sm text-black">
-            Open a document to view, print, or download. Locked items unlock as
-            the order moves forward.
+            Open a document to view it, or download PDF / Excel.
           </p>
           <ul className="grid gap-4 sm:grid-cols-3">
             {DOCS.map((doc) => {
@@ -227,14 +227,9 @@ export default function BuyerOrderDetail({
               }
               return (
                 <li key={doc.type}>
-                  <a
-                    href={`/api/orders/${order.id}/docs?type=${doc.type}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex h-full flex-col border border-black/10 bg-white p-5 transition hover:border-umx-orange"
-                  >
+                  <div className="flex h-full flex-col border border-black/10 bg-white p-5">
                     <Icon
-                      className="h-5 w-5 text-umx-orange transition group-hover:scale-105"
+                      className="h-5 w-5 text-umx-orange"
                       strokeWidth={1.75}
                     />
                     <p className="mt-4 font-display text-sm font-bold text-black">
@@ -243,11 +238,23 @@ export default function BuyerOrderDetail({
                     <p className="mt-1 font-body text-xs text-black">
                       {doc.description}
                     </p>
-                    <span className="mt-5 inline-flex items-center gap-1.5 font-display text-xs font-semibold text-umx-orange">
-                      Open document
-                      <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
-                    </span>
-                  </a>
+                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                      <DocumentDownloadMenu
+                        orderId={order.id}
+                        type={doc.type}
+                        compact
+                      />
+                      <a
+                        href={`/api/orders/${order.id}/docs?type=${doc.type}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 font-display text-xs font-semibold text-umx-orange"
+                      >
+                        Open
+                        <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
+                      </a>
+                    </div>
+                  </div>
                 </li>
               );
             })}

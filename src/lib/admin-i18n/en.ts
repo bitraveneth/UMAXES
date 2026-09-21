@@ -426,6 +426,8 @@ const en: AdminMessages = {
     shipAddress: "Ship-to address",
     shipAddressHint:
       "Optional now. Required before you can place an order for them.",
+    fullName: "Full name",
+    phoneNumber: "Phone number",
     line1: "Address line 1",
     line2: "Address line 2",
     city: "City",

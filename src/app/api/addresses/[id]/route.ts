@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageCompanyAddresses } from "@/lib/rbac";
+import { isValidPhone } from "@/lib/phone";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -49,27 +50,56 @@ export async function PATCH(request: Request, { params }: Params) {
   const body = await request.json();
   const data: Record<string, unknown> = {};
 
-  for (const key of ["label", "line1", "line2", "city", "region", "postalCode", "country"] as const) {
+  for (const key of [
+    "label",
+    "recipientName",
+    "phone",
+    "line1",
+    "line2",
+    "city",
+    "region",
+    "postalCode",
+    "country",
+  ] as const) {
     if (body[key] !== undefined) {
       data[key] = body[key] === null ? null : String(body[key]).trim();
     }
+  }
+  if (body.fullName !== undefined && data.recipientName === undefined) {
+    data.recipientName = String(body.fullName).trim();
   }
 
   const line1 = data.line1 as string | undefined;
   const city = data.city as string | undefined;
   const postalCode = data.postalCode as string | undefined;
   const country = data.country as string | undefined;
+  const recipientName = data.recipientName as string | undefined;
+  const phone = data.phone as string | undefined;
 
   if (
+    (recipientName !== undefined && !recipientName) ||
+    (phone !== undefined && !phone) ||
     (line1 !== undefined && !line1) ||
     (city !== undefined && !city) ||
     (postalCode !== undefined && !postalCode) ||
     (country !== undefined && !country)
   ) {
     return NextResponse.json(
-      { error: "Address, city, postal code, and country are required" },
+      {
+        error:
+          "Full name, phone number, address, city, postal code, and country are required",
+      },
       { status: 400 },
     );
+  }
+
+  if (typeof phone === "string") {
+    if (!isValidPhone(phone)) {
+      return NextResponse.json(
+        { error: "Enter a valid phone number (7–15 digits)" },
+        { status: 400 },
+      );
+    }
   }
 
   if (

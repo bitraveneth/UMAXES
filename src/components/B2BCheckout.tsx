@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Gift, Pencil, Plus, Trash2, Wallet } from "lucide-react";
+import { CircleCheck, Gift, Pencil, Plus, Trash2, Wallet } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { getFlavor } from "@/lib/assets";
 import { CASE_MOQ_PCS, casesFromPcs, formatCases } from "@/lib/pack";
@@ -19,13 +19,14 @@ import {
 import {
   EMPTY_ADDRESS_FORM,
   ShippingAddressForm,
-  confirmDeleteAddress,
   deleteAddress,
   formFromAddress,
   saveAddress,
   type AddressFormValues,
   type ShippingAddress,
 } from "@/components/ShippingAddressForm";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 
 type Address = ShippingAddress;
 
@@ -94,6 +95,7 @@ export default function B2BCheckout() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressSaving, setAddressSaving] = useState(false);
   const [addressBusyId, setAddressBusyId] = useState<string | null>(null);
+  const { confirm, showToast, ui } = useAppFeedback();
 
   function applyAddressList(next: Address[], preferId?: string) {
     setAddresses(next);
@@ -235,10 +237,25 @@ export default function B2BCheckout() {
     }
     cancelAddressForm();
     await refreshAddresses(result.address.id);
+    showToast(
+      editingAddressId
+        ? "Address updated successfully"
+        : "Address saved successfully",
+      "success",
+    );
   }
 
   async function onDeleteAddress(id: string) {
-    if (!confirmDeleteAddress(addresses.length === 1)) return;
+    const ok = await confirm({
+      title: "Delete shipping address?",
+      message:
+        addresses.length === 1
+          ? "This is your only saved address. You will need to add a new one before placing an order."
+          : "This ship-to location will be removed from your account.",
+      confirmLabel: "Delete address",
+      tone: "danger",
+    });
+    if (!ok) return;
     setAddressBusyId(id);
     setError(null);
     const result = await deleteAddress(id);
@@ -249,6 +266,7 @@ export default function B2BCheckout() {
     }
     if (editingAddressId === id) cancelAddressForm();
     await refreshAddresses();
+    showToast("Address deleted", "danger");
   }
 
   async function placeOrder() {
@@ -297,28 +315,65 @@ export default function B2BCheckout() {
 
   if (doneOrderId) {
     return (
-      <div className="mx-auto max-w-lg py-16 text-center">
-        <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase">
-          Order placed
-        </p>
-        <h1 className="mt-3 font-display text-3xl font-bold">Thank you</h1>
-        <p className="mt-3 font-body text-black/65">
-          Your order is recorded
-          {piNumber ? ` · ${piNumber}` : ""}.
-        </p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <a
-            href={`/api/orders/${doneOrderId}/pi`}
-            className="border border-black bg-black px-5 py-3 font-display text-sm font-semibold text-umx-cream"
-          >
-            Download PI
-          </a>
-          <Link
-            href="/account/orders"
-            className="border border-black/20 px-5 py-3 font-display text-sm font-semibold"
-          >
-            View orders
-          </Link>
+      <div className="mx-auto max-w-2xl py-10 sm:py-16">
+        {ui}
+        <div className="overflow-hidden border border-black/10 bg-white shadow-[0_16px_40px_rgba(14,36,56,0.06)]">
+          <div className="border-b border-black/8 bg-[#eef3f7] px-6 py-5 sm:px-8">
+            <p className="font-display text-[0.65rem] font-semibold tracking-[0.18em] text-[#1b4f72] uppercase">
+              Order placed
+            </p>
+            <div className="mt-3 flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-emerald-50 text-emerald-700">
+                <CircleCheck className="h-6 w-6" strokeWidth={1.9} />
+              </span>
+              <div>
+                <h1 className="font-display text-3xl font-extrabold text-black">
+                  Thank you
+                </h1>
+                <p className="mt-1 font-body text-sm text-black/70">
+                  Your order is recorded. Download the proforma and send the TT
+                  when you are ready.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-6 sm:px-8">
+            {piNumber ? (
+              <div className="border border-black/10 bg-umx-cream-bright px-4 py-4">
+                <p className="font-display text-[10px] font-semibold tracking-[0.16em] text-black/55 uppercase">
+                  Proforma invoice
+                </p>
+                <p className="mt-1 break-all font-display text-lg font-extrabold tracking-tight text-[#1b4f72] sm:text-xl">
+                  {piNumber}
+                </p>
+              </div>
+            ) : null}
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-display text-sm font-semibold text-black">
+                  Download PI
+                </p>
+                <p className="mt-0.5 font-body text-xs text-black/55">
+                  Choose PDF or Excel.
+                </p>
+              </div>
+              <DocumentDownloadMenu orderId={doneOrderId} type="pi" />
+            </div>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href={`/account/orders/${doneOrderId}`}
+                className="inline-flex items-center justify-center bg-umx-orange px-5 py-3 font-display text-sm font-semibold text-white"
+              >
+                View this order
+              </Link>
+              <Link
+                href="/account/orders"
+                className="inline-flex items-center justify-center border border-black/15 px-5 py-3 font-display text-sm font-semibold text-black"
+              >
+                All orders
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -336,7 +391,9 @@ export default function B2BCheckout() {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,28rem)] xl:grid-cols-[minmax(0,1fr)_minmax(24rem,32rem)]">
+    <>
+      {ui}
+      <div className="mx-auto grid max-w-6xl items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,28rem)] xl:grid-cols-[minmax(0,1fr)_minmax(24rem,32rem)]">
       <div className="space-y-6 lg:space-y-8">
         <section className="rounded-2xl border border-black/8 bg-white p-5 shadow-[0_12px_32px_rgba(61,22,5,0.04)] sm:p-6">
           <div className="flex items-center justify-between gap-3">
@@ -402,8 +459,20 @@ export default function B2BCheckout() {
                       onChange={() => setAddressId(a.id)}
                     />
                     <span className="min-w-0 flex-1 font-body text-sm leading-relaxed">
-                      {a.label ? (
+                      {a.recipientName ? (
+                        <strong className="block font-display">
+                          {a.recipientName}
+                        </strong>
+                      ) : a.label ? (
                         <strong className="block font-display">{a.label}</strong>
+                      ) : null}
+                      {a.recipientName && a.label ? (
+                        <span className="block text-xs text-black/55">
+                          {a.label}
+                        </span>
+                      ) : null}
+                      {a.phone ? (
+                        <span className="block text-black/70">{a.phone}</span>
                       ) : null}
                       {a.line1}
                       <br />
@@ -835,5 +904,6 @@ export default function B2BCheckout() {
         ) : null}
       </div>
     </div>
+    </>
   );
 }

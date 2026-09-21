@@ -122,6 +122,8 @@ export default async function AccountPage() {
             select: {
               id: true,
               label: true,
+              recipientName: true,
+              phone: true,
               line1: true,
               city: true,
               region: true,
@@ -196,9 +198,10 @@ export default async function AccountPage() {
                   </p>
                 ) : null}
                 <p className="mt-1 font-display text-sm font-bold text-black">
-                  {a.label || "Shipping address"}
+                  {a.recipientName || a.label || "Shipping address"}
                 </p>
                 <div className="mt-2 space-y-0.5 font-body text-sm leading-relaxed text-black/75">
+                  {a.phone ? <p>{a.phone}</p> : null}
                   <p>{a.line1}</p>
                   <p>
                     {a.city}

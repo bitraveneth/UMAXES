@@ -5,6 +5,8 @@ import { FormEvent } from "react";
 export type ShippingAddress = {
   id: string;
   label: string | null;
+  recipientName: string | null;
+  phone: string | null;
   line1: string;
   line2: string | null;
   city: string;
@@ -16,6 +18,8 @@ export type ShippingAddress = {
 
 export type AddressFormValues = {
   label: string;
+  recipientName: string;
+  phone: string;
   line1: string;
   city: string;
   region: string;
@@ -26,6 +30,8 @@ export type AddressFormValues = {
 
 export const EMPTY_ADDRESS_FORM: AddressFormValues = {
   label: "",
+  recipientName: "",
+  phone: "",
   line1: "",
   city: "",
   region: "",
@@ -40,6 +46,8 @@ export const ADDRESS_FIELD_CLASS =
 export function formFromAddress(a: ShippingAddress): AddressFormValues {
   return {
     label: a.label || "",
+    recipientName: a.recipientName || "",
+    phone: a.phone || "",
     line1: a.line1,
     city: a.city,
     region: a.region || "",
@@ -52,6 +60,9 @@ export function formFromAddress(a: ShippingAddress): AddressFormValues {
 export function addressPayload(form: AddressFormValues) {
   return {
     label: form.label.trim() || null,
+    recipientName: form.recipientName.trim(),
+    phone: form.phone.trim(),
+    fullName: form.recipientName.trim(),
     line1: form.line1.trim(),
     line2: null as string | null,
     city: form.city.trim(),
@@ -125,15 +136,6 @@ export async function setDefaultAddress(
   return { ok: true };
 }
 
-export function confirmDeleteAddress(isLast: boolean) {
-  if (isLast) {
-    return window.confirm(
-      "Delete this shipping address? It is your only saved address. You will need to add a new one before placing an order.",
-    );
-  }
-  return window.confirm("Delete this shipping address?");
-}
-
 export function ShippingAddressForm({
   form,
   setForm,
@@ -180,9 +182,10 @@ export function ShippingAddressForm({
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <label className="block">
           <span className="font-display text-xs font-semibold tracking-wide text-black uppercase">
-            Label
+            Location label
           </span>
           <input
+            name="address-label"
             value={form.label}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, label: e.target.value }))
@@ -192,12 +195,51 @@ export function ShippingAddressForm({
           />
         </label>
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="font-display text-xs font-semibold tracking-wide text-black uppercase">
+              Full name *
+            </span>
+            <input
+              required
+              name="name"
+              autoComplete="name"
+              value={form.recipientName}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, recipientName: e.target.value }))
+              }
+              placeholder="Recipient name"
+              className={ADDRESS_FIELD_CLASS}
+            />
+          </label>
+          <label className="block">
+            <span className="font-display text-xs font-semibold tracking-wide text-black uppercase">
+              Phone number *
+            </span>
+            <input
+              required
+              type="tel"
+              name="tel"
+              autoComplete="tel"
+              inputMode="tel"
+              value={form.phone}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, phone: e.target.value }))
+              }
+              placeholder="+1 555 123 4567"
+              className={ADDRESS_FIELD_CLASS}
+            />
+          </label>
+        </div>
+
         <label className="block">
           <span className="font-display text-xs font-semibold tracking-wide text-black uppercase">
             Address *
           </span>
           <input
             required
+            name="address-line1"
+            autoComplete="address-line1"
             value={form.line1}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, line1: e.target.value }))
@@ -213,6 +255,8 @@ export function ShippingAddressForm({
             </span>
             <input
               required
+              name="city"
+              autoComplete="address-level2"
               value={form.city}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, city: e.target.value }))
@@ -225,6 +269,8 @@ export function ShippingAddressForm({
               State / region
             </span>
             <input
+              name="state"
+              autoComplete="address-level1"
               value={form.region}
               onChange={(e) =>
                 setForm((prev) => ({ ...prev, region: e.target.value }))
@@ -238,6 +284,8 @@ export function ShippingAddressForm({
             </span>
             <input
               required
+              name="postal-code"
+              autoComplete="postal-code"
               value={form.postalCode}
               onChange={(e) =>
                 setForm((prev) => ({
@@ -256,6 +304,8 @@ export function ShippingAddressForm({
           </span>
           <input
             required
+            name="country"
+            autoComplete="country-name"
             value={form.country}
             onChange={(e) =>
               setForm((prev) => ({ ...prev, country: e.target.value }))

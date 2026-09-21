@@ -61,6 +61,8 @@ export async function GET(request: Request, { params }: Params) {
     total: order.total,
     showToolbar: true,
     forceDownloadHref: `/api/orders/${order.id}/docs?type=pi&download=1`,
+    pdfHref: `/api/orders/${order.id}/docs?type=pi&format=pdf`,
+    xlsxHref: `/api/orders/${order.id}/docs?type=pi&format=xlsx`,
     bank,
     origin: new URL(request.url).origin,
   });

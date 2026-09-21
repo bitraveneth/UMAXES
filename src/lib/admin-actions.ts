@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db";
 import { CASE_MOQ_CASES, TEST_STATION_SKU, caseMoqFromStored, isCasePackedSku } from "@/lib/pack";
 import { canAccessAdmin } from "@/lib/rbac";
 import { deleteOrderPaymentSlip } from "@/lib/payment-slip-ops";
+import { isValidPhone } from "@/lib/phone";
 
 async function requireRoles(roles: UserRole[]) {
   const session = await auth();
@@ -248,6 +249,8 @@ export async function createCustomerOnBehalf(input: {
     postalCode: string;
     country: string;
     label?: string;
+    recipientName?: string;
+    phone?: string;
   };
 }) {
   const session = await requireRoles(["ADMIN"]);
@@ -342,6 +345,9 @@ export async function createCustomerOnBehalf(input: {
       data: {
         companyId: co.id,
         label: input.address?.label?.trim() || "Default",
+        recipientName:
+          input.address?.recipientName?.trim() || contactName,
+        phone: input.address?.phone?.trim() || phone,
         line1,
         line2: input.address?.line2?.trim() || null,
         city,
@@ -402,6 +408,8 @@ function revalidateCustomerDirs() {
 export async function addCompanyShipTo(input: {
   companyId: string;
   label?: string;
+  recipientName?: string;
+  phone?: string;
   line1: string;
   line2?: string;
   city: string;
@@ -420,8 +428,15 @@ export async function addCompanyShipTo(input: {
   const city = input.city.trim();
   const postalCode = input.postalCode.trim();
   const country = input.country.trim();
-  if (!line1 || !city || !postalCode || !country) {
-    throw new Error("Address, city, postal code, and country are required");
+  const recipientName = (input.recipientName || "").trim();
+  const phone = (input.phone || "").trim();
+  if (!recipientName || !phone || !line1 || !city || !postalCode || !country) {
+    throw new Error(
+      "Full name, phone number, address, city, postal code, and country are required",
+    );
+  }
+  if (!isValidPhone(phone)) {
+    throw new Error("Enter a valid phone number (7–15 digits)");
   }
   if (country.toLowerCase().includes("china") || country.toUpperCase() === "CN") {
     throw new Error("Shipping to China is not available");
@@ -447,6 +462,8 @@ export async function addCompanyShipTo(input: {
       data: {
         companyId: input.companyId,
         label: input.label?.trim() || null,
+        recipientName,
+        phone,
         line1,
         line2: input.line2?.trim() || null,
         city,

@@ -11,6 +11,7 @@ import type { OrderStatus, PaymentMethod } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { Package } from "@/components/admin/icons";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 
 export type OrdersPanelSupplier = {
   id: string;
@@ -545,6 +546,7 @@ function OrderExpand({
   onClose: () => void;
 }) {
   const { t } = useAdminI18n();
+  const { confirm, ui } = useAppFeedback();
   const shipment = order.shipments[0];
   const unpaid = !order.paymentPaid && order.status !== "CANCELLED";
   const next = NEXT_STATUS[order.status] ?? null;
@@ -562,6 +564,7 @@ function OrderExpand({
 
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
+      {ui}
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -827,20 +830,23 @@ function OrderExpand({
                         {order.paymentSlipName || t("orders.viewSlip")}
                       </a>
                       {canDeleteSlip ? (
-                        <form
-                          action={async () => {
-                            if (!confirm(t("orders.deleteSlipConfirm"))) return;
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-danger admin-btn-sm"
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: t("orders.deleteSlip"),
+                              message: t("orders.deleteSlipConfirm"),
+                              confirmLabel: t("orders.deleteSlip"),
+                              tone: "danger",
+                            });
+                            if (!ok) return;
                             await deletePaymentSlip(order.id);
                             onClose();
                           }}
                         >
-                          <button
-                            type="submit"
-                            className="admin-btn admin-btn-danger admin-btn-sm"
-                          >
-                            {t("orders.deleteSlip")}
-                          </button>
-                        </form>
+                          {t("orders.deleteSlip")}
+                        </button>
                       ) : null}
                     </div>
                   </>

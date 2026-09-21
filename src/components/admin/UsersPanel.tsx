@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 import type {
   CustomerLevel,
   UserRole,
@@ -114,6 +115,7 @@ export default function UsersPanel({
   const [assignment, setAssignment] = useState<AssignmentValue>("buyer:DISTRO");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | UserStatus>("all");
+  const { confirm, showToast, ui } = useAppFeedback();
 
   const counts = useMemo(() => {
     const active = users.filter((u) => u.status === "APPROVED").length;
@@ -176,15 +178,15 @@ export default function UsersPanel({
     });
   }
 
-  function onDelete(row: CustomerUserRow) {
+  async function onDelete(row: CustomerUserRow) {
     const label = row.name || row.email || row.phone || "this user";
-    if (
-      !window.confirm(
-        `Delete ${label}? If they have orders or RMA history, the account will be disabled instead.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete customer?",
+      message: `Delete ${label}? If they have orders or RMA history, the account will be disabled instead.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     startTransition(async () => {
       try {
         const result = await deleteCustomerUser(row.id);
@@ -193,6 +195,12 @@ export default function UsersPanel({
           "disabled" in result && result.disabled
             ? "Disabled (linked orders/RMA)."
             : "Customer deleted.",
+        );
+        showToast(
+          "disabled" in result && result.disabled
+            ? "Customer disabled"
+            : "Customer deleted",
+          "danger",
         );
       } catch (e) {
         setMessage(null);
@@ -238,6 +246,7 @@ export default function UsersPanel({
 
   return (
     <div className="space-y-6">
+      {ui}
       {(message || error) && (
         <div
           className={`rounded-xl border px-4 py-3 text-sm ${

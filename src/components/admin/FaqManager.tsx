@@ -7,6 +7,7 @@ import { createFaq, deleteFaq, updateFaq } from "@/lib/admin-actions";
 import { faqs as DEFAULT_FAQS } from "@/lib/support";
 import { AdminBadge } from "@/components/admin/ui";
 import { useAdminI18n } from "./AdminI18n";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 
 export type FaqItem = {
   id: string;
@@ -43,6 +44,7 @@ export default function FaqManager({ items }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const { confirm, showToast, ui } = useAppFeedback();
 
   const rows = useMemo<FaqItem[]>(() => {
     if (items.length > 0) return items;
@@ -105,14 +107,18 @@ export default function FaqManager({ items }: Props) {
     });
   }
 
-  function remove(row: FaqItem) {
+  async function remove(row: FaqItem) {
     if (row.id.startsWith("default-")) {
       setError("Save this FAQ once so it is stored, then you can delete it.");
       return;
     }
-    if (!window.confirm(t("faq.deleteConfirm", { question: row.question }))) {
-      return;
-    }
+    const ok = await confirm({
+      title: t("common.remove"),
+      message: t("faq.deleteConfirm", { question: row.question }),
+      confirmLabel: t("common.remove"),
+      tone: "danger",
+    });
+    if (!ok) return;
     startTransition(async () => {
       setError(null);
       setMessage(null);
@@ -120,6 +126,7 @@ export default function FaqManager({ items }: Props) {
         await deleteFaq(row.id);
         if (draft?.id === row.id) setDraft(null);
         setMessage(t("faq.deleted"));
+        showToast(t("faq.deleted"), "danger");
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : t("faq.saveFailed"));
@@ -128,6 +135,8 @@ export default function FaqManager({ items }: Props) {
   }
 
   return (
+    <>
+      {ui}
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
       <div>
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -270,5 +279,6 @@ export default function FaqManager({ items }: Props) {
         </form>
       ) : null}
     </div>
+    </>
   );
 }

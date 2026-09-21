@@ -14,7 +14,6 @@ import {
 import {
   EMPTY_ADDRESS_FORM,
   ShippingAddressForm,
-  confirmDeleteAddress,
   deleteAddress,
   fetchAddresses,
   formFromAddress,
@@ -23,6 +22,7 @@ import {
   type AddressFormValues,
   type ShippingAddress,
 } from "@/components/ShippingAddressForm";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 
 export default function AddressManager() {
   const { data: session } = useSession();
@@ -36,6 +36,7 @@ export default function AddressManager() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const { confirm, showToast, ui } = useAppFeedback();
 
   async function load() {
     const data = await fetchAddresses();
@@ -94,6 +95,10 @@ export default function AddressManager() {
     setEditingId(null);
     setShowForm(false);
     await load();
+    showToast(
+      editingId ? "Address updated successfully" : "Address saved successfully",
+      "success",
+    );
   }
 
   async function setDefault(id: string) {
@@ -106,10 +111,20 @@ export default function AddressManager() {
       return;
     }
     await load();
+    showToast("Default shipping address updated", "success");
   }
 
   async function remove(id: string) {
-    if (!confirmDeleteAddress(addresses.length === 1)) return;
+    const ok = await confirm({
+      title: "Delete shipping address?",
+      message:
+        addresses.length === 1
+          ? "This is your only saved address. You will need to add a new one before placing an order."
+          : "This ship-to location will be removed from your account.",
+      confirmLabel: "Delete address",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusyId(id);
     setError(null);
     const result = await deleteAddress(id);
@@ -120,10 +135,12 @@ export default function AddressManager() {
     }
     if (editingId === id) cancelForm();
     await load();
+    showToast("Address deleted", "danger");
   }
 
   return (
     <div className="space-y-8">
+      {ui}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-display text-sm font-semibold text-black">
@@ -233,9 +250,15 @@ export default function AddressManager() {
                     </div>
 
                     <p className="mt-4 font-display text-base font-bold text-black">
-                      {a.label || "Shipping address"}
+                      {a.recipientName || a.label || "Shipping address"}
                     </p>
+                    {a.recipientName && a.label ? (
+                      <p className="mt-0.5 font-body text-xs text-black/55">
+                        {a.label}
+                      </p>
+                    ) : null}
                     <div className="mt-2 space-y-0.5 font-body text-sm leading-relaxed text-black">
+                      {a.phone ? <p>{a.phone}</p> : null}
                       <p>{a.line1}</p>
                       <p>
                         {a.city}

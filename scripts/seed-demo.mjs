@@ -19,6 +19,8 @@ const BUYER_PW = "Demo1234!";
 
 const ADDRESSES = {
   coastal: {
+    recipientName: "Alex Rivera",
+    phone: "+1 213 555 0140",
     line1: "1200 Commerce Ave",
     line2: "Suite 400",
     city: "Los Angeles",
@@ -27,6 +29,8 @@ const ADDRESSES = {
     country: "US",
   },
   pacific: {
+    recipientName: "Jordan Lee",
+    phone: "+1 562 555 0198",
     line1: "880 Harbor Blvd",
     line2: "Dock 12",
     city: "Long Beach",
@@ -35,6 +39,8 @@ const ADDRESSES = {
     country: "US",
   },
   national: {
+    recipientName: "Sam Patel",
+    phone: "+1 214 555 0172",
     line1: "4550 Industrial Pkwy",
     line2: null,
     city: "Dallas",
@@ -43,6 +49,8 @@ const ADDRESSES = {
     country: "US",
   },
   metro: {
+    recipientName: "Casey Nguyen",
+    phone: "+1 404 555 0116",
     line1: "210 Peachtree St NW",
     line2: "Floor 8",
     city: "Atlanta",

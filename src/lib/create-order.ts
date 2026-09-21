@@ -86,8 +86,6 @@ export async function createOrder(
   });
   const orderEmail =
     input.customerEmail?.trim() || customerUser?.email || null;
-  const orderPhone =
-    input.customerPhone?.trim() || customerUser?.phone || null;
 
   const address = await prisma.address.findFirst({
     where: { id: input.addressId, companyId: company.id },
@@ -95,6 +93,11 @@ export async function createOrder(
   if (!address) {
     return { ok: false, status: 400, error: "Select a valid shipping address" };
   }
+  const orderPhone =
+    address.phone?.trim() ||
+    input.customerPhone?.trim() ||
+    customerUser?.phone ||
+    null;
 
   const skus = lines.map((l) => String(l.sku || l.flavorId || ""));
   const products = await prisma.product.findMany({
@@ -269,9 +272,15 @@ export async function createOrder(
   }
 
   const orderNumber = nextOrderNumber();
-  const piNumber = nextPiNumber(orderNumber);
+  const piNumber = nextPiNumber({
+    companyName: company.name,
+    region: address.region,
+    orderNumber,
+  });
   const addressSnap = JSON.stringify({
     label: address.label,
+    recipientName: address.recipientName,
+    phone: address.phone,
     line1: address.line1,
     line2: address.line2,
     city: address.city,

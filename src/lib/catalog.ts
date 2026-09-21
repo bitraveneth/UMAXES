@@ -65,15 +65,77 @@ export async function resolveCoupon(code: string, level: CustomerLevel, subtotal
   return { coupon, discount };
 }
 
+export function nextSystemId() {
+  return String(Math.floor(Math.random() * 9000 + 1000));
+}
+
+export function formatDocDate(date = new Date()) {
+  const months = [
+    "JAN",
+    "FEB",
+    "MAR",
+    "APR",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEP",
+    "OCT",
+    "NOV",
+    "DEC",
+  ];
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const mon = months[date.getUTCMonth()] || "JAN";
+  return `${day}${mon}${date.getUTCFullYear()}`;
+}
+
+export function slugState(region?: string | null) {
+  const raw = (region || "").trim().toUpperCase();
+  if (!raw) return "";
+  if (/^[A-Z]{2}$/.test(raw)) return raw;
+  return raw.replace(/[^A-Z0-9]+/g, "").slice(0, 8);
+}
+
+export function slugCompany(name: string) {
+  const slug = (name || "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "")
+    .slice(0, 16);
+  return slug || "CUSTOMER";
+}
+
 export function nextOrderNumber() {
   const d = new Date();
   const stamp = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-  const rand = Math.floor(Math.random() * 9000 + 1000);
-  return `UMX-${stamp}-${rand}`;
+  return `UMX-${stamp}-${nextSystemId()}`;
 }
 
-export function nextPiNumber(orderNumber: string) {
-  return `PI-${orderNumber.replace("UMX-", "")}`;
+export function nextPiNumber(opts: {
+  companyName: string;
+  region?: string | null;
+  orderNumber: string;
+  date?: Date;
+}) {
+  const systemId = opts.orderNumber.split("-").pop() || nextSystemId();
+  const parts = [
+    "PI",
+    slugState(opts.region),
+    slugCompany(opts.companyName),
+    formatDocDate(opts.date),
+    systemId,
+  ].filter(Boolean);
+  return parts.join("-");
+}
+
+export function siblingDocNumber(
+  piNumber: string | null | undefined,
+  prefix: "PI" | "CI" | "PL",
+  orderNumber: string,
+) {
+  if (piNumber && piNumber.startsWith("PI-")) {
+    return `${prefix}-${piNumber.slice(3)}`;
+  }
+  return `${prefix}-${orderNumber.replace(/^UMX-/, "")}`;
 }
 
 export const paymentLabels: Record<PaymentMethod, string> = {

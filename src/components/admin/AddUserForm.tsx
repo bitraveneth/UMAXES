@@ -48,6 +48,8 @@ function isCustomerLevel(value: string): value is CustomerLevel {
 
 function readAddress(fd: FormData) {
   return {
+    recipientName: String(fd.get("recipientName") || "").trim() || undefined,
+    phone: String(fd.get("shipPhone") || "").trim() || undefined,
     line1: String(fd.get("line1") || "").trim(),
     line2: String(fd.get("line2") || "").trim() || undefined,
     city: String(fd.get("city") || "").trim(),
@@ -451,6 +453,32 @@ export default function AddUserForm({
             </span>
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Field
+              icon={<UserRound className="h-3.5 w-3.5" strokeWidth={1.9} />}
+              label={t("customers.fullName")}
+              required
+              className="sm:col-span-1"
+            >
+              <input
+                name="recipientName"
+                autoComplete="name"
+                required
+                className="admin-input mt-0 w-full"
+              />
+            </Field>
+            <Field
+              icon={<Phone className="h-3.5 w-3.5" strokeWidth={1.9} />}
+              label={t("customers.phoneNumber")}
+              required
+            >
+              <input
+                name="shipPhone"
+                type="tel"
+                autoComplete="tel"
+                required
+                className="admin-input mt-0 w-full"
+              />
+            </Field>
             <Field
               icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.9} />}
               label={t("customers.line1")}

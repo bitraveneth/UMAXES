@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Download, ExternalLink, FileText, Package } from "lucide-react";
+import { ExternalLink, FileText, Package } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import AccountHeaderI18n from "@/components/account/AccountHeaderI18n";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 import {
   buyerDocAvailability,
   buyerStatusClass,
@@ -145,32 +146,35 @@ export default async function DocumentsPage() {
 
                     return (
                       <li key={doc.type} className={border}>
-                        <a
-                          href={`/api/orders/${order.id}/docs?type=${doc.type}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group/doc flex h-full items-start gap-3 px-5 py-4 transition duration-200 hover:bg-umx-orange-wash/70 sm:px-5"
-                        >
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-umx-orange-wash text-umx-orange transition duration-200 group-hover/doc:scale-105 group-hover/doc:bg-umx-orange group-hover/doc:text-white">
+                        <div className="flex h-full items-start gap-3 px-5 py-4 sm:px-5">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-umx-orange-wash text-umx-orange">
                             <Icon className="h-3.5 w-3.5" strokeWidth={1.85} />
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="font-display text-sm font-bold text-black transition group-hover/doc:text-umx-orange">
+                            <p className="font-display text-sm font-bold text-black">
                               {doc.label}
                             </p>
                             <p className="mt-0.5 font-body text-xs text-black">
-                              Ready to open
+                              Download PDF or Excel
                             </p>
-                            <span className="mt-2 inline-flex items-center gap-1 font-display text-xs font-semibold text-umx-orange transition duration-200 group-hover/doc:gap-1.5">
-                              <Download className="h-3 w-3" strokeWidth={2} />
-                              Open
-                              <ExternalLink
-                                className="h-3 w-3 transition group-hover/doc:translate-x-0.5"
-                                strokeWidth={2}
+                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                              <DocumentDownloadMenu
+                                orderId={order.id}
+                                type={doc.type}
+                                compact
                               />
-                            </span>
+                              <a
+                                href={`/api/orders/${order.id}/docs?type=${doc.type}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 font-display text-xs font-semibold text-umx-orange"
+                              >
+                                Open
+                                <ExternalLink className="h-3 w-3" strokeWidth={2} />
+                              </a>
+                            </div>
                           </div>
-                        </a>
+                        </div>
                       </li>
                     );
                   })}

@@ -8,6 +8,7 @@ import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { Building2, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 
 export type CustomerDirectoryRow = {
   id: string;
@@ -36,6 +37,8 @@ export type CustomerDirectoryRow = {
   addresses: {
     id: string;
     label: string | null;
+    recipientName: string | null;
+    phone: string | null;
     line1: string;
     line2: string | null;
     city: string;
@@ -296,6 +299,7 @@ function CustomerExpand({
   const [pending, startTransition] = useTransition();
   const [showAdd, setShowAdd] = useState(false);
   const [addrError, setAddrError] = useState<string | null>(null);
+  const { confirm, showToast, ui } = useAppFeedback();
   const atLimit = row.addresses.length >= 10;
 
   function refresh() {
@@ -309,6 +313,8 @@ function CustomerExpand({
         await addCompanyShipTo({
           companyId: row.id,
           label: String(fd.get("label") || ""),
+          recipientName: String(fd.get("recipientName") || ""),
+          phone: String(fd.get("phone") || ""),
           line1: String(fd.get("line1") || ""),
           line2: String(fd.get("line2") || ""),
           city: String(fd.get("city") || ""),
@@ -318,6 +324,7 @@ function CustomerExpand({
           isDefault: fd.get("isDefault") === "on",
         });
         setShowAdd(false);
+        showToast("Address saved successfully", "success");
         refresh();
       } catch (e) {
         setAddrError(
@@ -329,6 +336,7 @@ function CustomerExpand({
 
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
+      {ui}
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
         <div>
           <h3 className="text-base font-semibold text-[var(--admin-text)]">
@@ -458,13 +466,16 @@ function CustomerExpand({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-medium">
-                        {a.label || t("customers.address")}
+                        {a.recipientName || a.label || t("customers.address")}
                         {a.isDefault ? (
                           <span className="ml-2 text-[10px] font-bold tracking-wide text-[var(--admin-brand-500)] uppercase">
                             {t("customers.default")}
                           </span>
                         ) : null}
                       </p>
+                      {a.phone ? (
+                        <p className="mt-1 text-[var(--admin-muted)]">{a.phone}</p>
+                      ) : null}
                       <p className="mt-1 text-[var(--admin-muted)]">
                         {[a.line1, a.line2].filter(Boolean).join(", ")}
                       </p>
@@ -494,12 +505,20 @@ function CustomerExpand({
                       <button
                         type="button"
                         disabled={pending}
-                        onClick={() =>
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: t("common.remove"),
+                            message: "Delete this shipping address?",
+                            confirmLabel: t("common.remove"),
+                            tone: "danger",
+                          });
+                          if (!ok) return;
                           startTransition(async () => {
                             await removeCompanyShipTo(row.id, a.id);
+                            showToast("Address deleted", "danger");
                             refresh();
-                          })
-                        }
+                          });
+                        }}
                         className="admin-btn admin-btn-secondary admin-btn-sm !px-2 !text-xs"
                       >
                         {t("common.remove")}
@@ -529,6 +548,25 @@ function CustomerExpand({
                   <input
                     name="label"
                     placeholder={t("customers.addressLabelHint")}
+                    className="admin-input mt-1.5 w-full"
+                  />
+                </label>
+                <label className="block text-xs font-medium text-[var(--admin-muted)]">
+                  {t("customers.fullName")}
+                  <input
+                    name="recipientName"
+                    required
+                    autoComplete="name"
+                    className="admin-input mt-1.5 w-full"
+                  />
+                </label>
+                <label className="block text-xs font-medium text-[var(--admin-muted)]">
+                  {t("customers.phoneNumber")}
+                  <input
+                    name="phone"
+                    required
+                    type="tel"
+                    autoComplete="tel"
                     className="admin-input mt-1.5 w-full"
                   />
                 </label>
