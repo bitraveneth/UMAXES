@@ -30,6 +30,30 @@ function formatRate(rate: number) {
   return `$${rate.toFixed(2)}`;
 }
 
+function thisOrderCopy(channel: CheckoutRebateQuote | null) {
+  if (!channel) {
+    return "Volume from this order posts after payment clears.";
+  }
+  if (channel.isFirstOrder) {
+    if (channel.firstOrderUnpaidPcs > 0) {
+      return `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pieces on this first order — gift pricing applies.`;
+    }
+    return "First-order gift pricing is applied on this checkout.";
+  }
+  if (channel.chargedQty > 0) {
+    return `+${channel.chargedQty.toLocaleString()} paid pieces will count toward your ladder once funds clear.`;
+  }
+  return "Volume from this order posts after payment clears.";
+}
+
+function testStationCopy(stationQty: number) {
+  if (stationQty <= 0) return null;
+  if (stationQty === 1) {
+    return "Includes 1 free Test Station piece with this order.";
+  }
+  return `Includes ${stationQty} free Test Station pieces with this order.`;
+}
+
 export default function CheckoutRebatePanel({
   channel,
   stationQty,
@@ -78,6 +102,10 @@ export default function CheckoutRebatePanel({
     : currentRate != null
       ? [{ minQty: 0, rateUsd: currentRate }]
       : [];
+
+  const wallet = channel?.rebateBalanceUsd ?? 0;
+  const applied = channel?.rebateAppliedUsd ?? 0;
+  const stationLine = testStationCopy(stationQty);
 
   return (
     <section className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_12px_32px_rgba(61,22,5,0.05)]">
@@ -145,19 +173,15 @@ export default function CheckoutRebatePanel({
                     : "Rebate ladder activates after payment is confirmed"}
               </p>
             </div>
-            <div className="rounded-xl border border-[#1b4f72]/20 bg-[#eef3f7] px-3.5 py-2.5 text-right">
-              <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-[#1b4f72]/80 uppercase">
-                Current rate
+            {currentRate != null ? (
+              <p className="font-display text-right text-sm font-semibold text-black/55">
+                Now{" "}
+                <span className="text-xl font-extrabold tabular-nums text-[#1b4f72]">
+                  {formatRate(currentRate)}
+                </span>
+                <span className="text-[#1b4f72]/70">/pc</span>
               </p>
-              <p className="mt-0.5 font-display text-xl font-extrabold tabular-nums leading-none text-[#1b4f72]">
-                {currentRate != null ? `${formatRate(currentRate)}` : "—"}
-                {currentRate != null ? (
-                  <span className="ml-0.5 text-sm font-bold text-[#1b4f72]/70">
-                    /pc
-                  </span>
-                ) : null}
-              </p>
-            </div>
+            ) : null}
           </div>
 
           <div>
@@ -175,7 +199,7 @@ export default function CheckoutRebatePanel({
             </div>
             {barAfterPct > barPaidPct ? (
               <p className="mt-2 font-body text-[11px] text-black/50">
-                Orange shows where this order lands after funds are confirmed.
+                Orange is this order after payment clears.
               </p>
             ) : null}
           </div>
@@ -243,40 +267,38 @@ export default function CheckoutRebatePanel({
             </div>
           ) : null}
 
-          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 font-body text-sm text-black/65">
-            <p>
-              <span className="font-display text-[11px] font-semibold tracking-[0.12em] text-black/45 uppercase">
-                Wallet
-              </span>{" "}
-              <span className="font-display text-sm font-bold tabular-nums text-black">
-                ${(channel?.rebateBalanceUsd ?? 0).toFixed(2)}
-                {showPrices && channel && channel.rebateAppliedUsd > 0
-                  ? ` · −$${channel.rebateAppliedUsd.toFixed(2)} here`
-                  : ""}
-              </span>
-            </p>
-            <p>
-              <span className="font-display text-[11px] font-semibold tracking-[0.12em] text-black/45 uppercase">
-                This order
-              </span>{" "}
-              <span className="font-display text-sm font-semibold text-black">
-                {channel?.isFirstOrder
-                  ? channel.firstOrderUnpaidPcs
-                    ? `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pcs`
-                    : "First-order gift"
-                  : channel && channel.chargedQty > 0
-                    ? `+${channel.chargedQty.toLocaleString()} pcs after paid`
-                    : "Counts after funds confirmed"}
-              </span>
-            </p>
+          <div className="rounded-xl border border-[#1b4f72]/15 bg-[#eef3f7] px-4 py-3.5">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-[#1b4f72]/80 uppercase">
+                  Wallet
+                </p>
+                <p className="mt-1 font-display text-2xl font-extrabold tabular-nums leading-none text-[#1b4f72]">
+                  ${wallet.toFixed(2)}
+                </p>
+              </div>
+              {showPrices && applied > 0 ? (
+                <p className="font-display text-sm font-semibold text-[#1b4f72]/80">
+                  −${applied.toFixed(2)} applied here
+                </p>
+              ) : (
+                <p className="max-w-[16rem] text-right font-body text-xs leading-snug text-black/55">
+                  Available credit for eligible channel orders
+                </p>
+              )}
+            </div>
           </div>
 
-          {stationQty > 0 ? (
-            <p className="font-body text-xs text-black/55">
-              Test Station ·{" "}
-              {stationQty === 1 ? "1 piece" : `${stationQty} pieces`} · free
+          <div className="space-y-1.5">
+            <p className="font-body text-sm leading-snug text-black/70">
+              {thisOrderCopy(channel)}
             </p>
-          ) : null}
+            {stationLine ? (
+              <p className="font-body text-sm leading-snug text-black/70">
+                {stationLine}
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>
