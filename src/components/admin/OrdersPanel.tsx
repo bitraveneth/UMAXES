@@ -291,9 +291,9 @@ export default function OrdersPanel({
                   <th>{t("orders.colOrder")}</th>
                   <th>{t("orders.colCompany")}</th>
                   <th>{t("orders.colPayment")}</th>
+                  <th>{t("orders.colShipping")}</th>
                   <th>{t("orders.colTotal")}</th>
-                  <th>{t("orders.colStatus")}</th>
-                  <th className="text-center">{t("orders.colDocs")}</th>
+                  <th className="whitespace-nowrap">{t("orders.colDocs")}</th>
                   <th className="w-[1%] whitespace-nowrap pr-5 text-right">
                     {t("orders.updateStatus")}
                   </th>
@@ -348,11 +348,11 @@ export default function OrdersPanel({
                               : t("orders.noSupplier")}
                           </p>
                         </td>
-                        <td>
-                          <p className="whitespace-nowrap text-sm">
+                        <td className="whitespace-nowrap">
+                          <p className="text-xs font-medium text-[var(--admin-muted)]">
                             {payLabel(order.paymentMethod, true)}
                           </p>
-                          <span className="mt-1 inline-flex">
+                          <div className="mt-1">
                             <AdminBadge
                               tone={paymentTone(
                                 order.paymentMethod === "CREDIT"
@@ -368,24 +368,22 @@ export default function OrdersPanel({
                                   : t("orders.payCredit")
                                 : t(paymentStatusLabelKey(order.paymentStatus))}
                             </AdminBadge>
-                          </span>
+                          </div>
                         </td>
-                        <td className="whitespace-nowrap tabular-nums text-sm font-semibold">
-                          {money(order.total)}
-                        </td>
-                        <td>
+                        <td className="whitespace-nowrap">
                           <AdminBadge tone={orderTone(order.status)}>
                             {statusLabel(order.status)}
                           </AdminBadge>
                         </td>
-                        <td className="text-center">
-                          <div className="inline-flex max-w-[14rem] flex-wrap justify-center gap-1.5">
-                            <OrderDocLinks
-                              orderId={order.id}
-                              compact
-                              hasSlip={Boolean(order.paymentSlipUrl)}
-                            />
-                          </div>
+                        <td className="whitespace-nowrap tabular-nums text-sm font-semibold">
+                          {money(order.total)}
+                        </td>
+                        <td className="whitespace-nowrap">
+                          <OrderDocLinks
+                            orderId={order.id}
+                            compact
+                            hasSlip={Boolean(order.paymentSlipUrl)}
+                          />
                         </td>
                         <td className="w-[1%] whitespace-nowrap pr-5 text-right align-middle">
                           <button
@@ -455,12 +453,12 @@ function OrderDocLinks({
   ];
 
   const btnClass = compact
-    ? "admin-btn admin-btn-secondary admin-btn-sm"
+    ? "admin-btn admin-btn-secondary !h-7 !min-h-0 !px-2 !py-0 !text-[11px]"
     : "admin-btn admin-btn-secondary admin-btn-sm !px-2.5 !text-xs";
 
   return (
     <div
-      className="flex flex-wrap items-center gap-2"
+      className="flex flex-nowrap items-center gap-1"
       onClick={(e) => e.stopPropagation()}
     >
       {docs.map((doc) => (
@@ -472,7 +470,7 @@ function OrderDocLinks({
           title={doc.full}
           className={btnClass}
         >
-          {compact ? doc.short : doc.full}
+          {doc.short}
         </a>
       ))}
       {hasSlip ? (
@@ -483,7 +481,7 @@ function OrderDocLinks({
           title={t("orders.viewSlip")}
           className={btnClass}
         >
-          {compact ? t("orders.docSlip") : t("orders.viewSlip")}
+          {t("orders.docSlip")}
         </a>
       ) : null}
     </div>
