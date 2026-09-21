@@ -30,28 +30,18 @@ function formatRate(rate: number) {
   return `$${rate.toFixed(2)}`;
 }
 
-function thisOrderCopy(channel: CheckoutRebateQuote | null) {
-  if (!channel) {
-    return "Volume from this order posts after payment clears.";
-  }
+function thisOrderValue(channel: CheckoutRebateQuote | null) {
+  if (!channel) return "Posts after payment clears";
   if (channel.isFirstOrder) {
     if (channel.firstOrderUnpaidPcs > 0) {
-      return `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pieces on this first order — gift pricing applies.`;
+      return `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pcs · gift pricing`;
     }
-    return "First-order gift pricing is applied on this checkout.";
+    return "First-order gift pricing applied";
   }
   if (channel.chargedQty > 0) {
-    return `+${channel.chargedQty.toLocaleString()} paid pieces will count toward your ladder once funds clear.`;
+    return `+${channel.chargedQty.toLocaleString()} pcs after payment clears`;
   }
-  return "Volume from this order posts after payment clears.";
-}
-
-function testStationCopy(stationQty: number) {
-  if (stationQty <= 0) return null;
-  if (stationQty === 1) {
-    return "Includes 1 free Test Station piece with this order.";
-  }
-  return `Includes ${stationQty} free Test Station pieces with this order.`;
+  return "Posts after payment clears";
 }
 
 export default function CheckoutRebatePanel({
@@ -105,31 +95,54 @@ export default function CheckoutRebatePanel({
 
   const wallet = channel?.rebateBalanceUsd ?? 0;
   const applied = channel?.rebateAppliedUsd ?? 0;
-  const stationLine = testStationCopy(stationQty);
+
+  const detailRows: { label: string; value: string; accent?: boolean }[] = [
+    {
+      label: "Wallet",
+      value:
+        showPrices && applied > 0
+          ? `$${wallet.toFixed(2)} · −$${applied.toFixed(2)} here`
+          : `$${wallet.toFixed(2)}`,
+      accent: true,
+    },
+    {
+      label: "This order",
+      value: thisOrderValue(channel),
+    },
+  ];
+  if (stationQty > 0) {
+    detailRows.push({
+      label: "Test Station",
+      value:
+        stationQty === 1
+          ? "1 free piece included"
+          : `${stationQty} free pieces included`,
+    });
+  }
 
   return (
     <section className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_12px_32px_rgba(61,22,5,0.05)]">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/8 bg-[#eef3f7] px-5 py-4 sm:px-6">
+      <div className="flex items-center justify-between gap-3 border-b border-black/8 bg-[#eef3f7] px-5 py-4 sm:px-6">
         <div>
           <p className="font-display text-[0.65rem] font-semibold tracking-[0.18em] text-[#1b4f72] uppercase">
             Rebate
           </p>
-          <h2 className="mt-1 font-display text-xl font-semibold tracking-tight text-black">
+          <h2 className="mt-0.5 font-display text-xl font-semibold tracking-tight text-black">
             This month
           </h2>
         </div>
         <Link
           href="/account/rebate"
-          className="font-display text-sm font-semibold text-[#1b4f72] transition hover:text-umx-orange"
+          className="shrink-0 font-display text-sm font-semibold text-[#1b4f72] transition hover:text-umx-orange"
         >
           Full status →
         </Link>
       </div>
 
-      <div className="grid gap-6 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start sm:gap-8 sm:p-6">
-        <div className="mx-auto sm:mx-0 sm:pt-1">
+      <div className="p-5 sm:p-6">
+        <div className="grid items-center gap-5 sm:grid-cols-[7.5rem_minmax(0,1fr)] sm:gap-6">
           <div
-            className="relative h-[8.25rem] w-[8.25rem] rounded-full"
+            className="relative mx-auto h-[7.5rem] w-[7.5rem] rounded-full sm:mx-0"
             style={{
               background: `conic-gradient(#1b4f72 ${towardNext}%, #dbe4ec 0)`,
             }}
@@ -145,161 +158,138 @@ export default function CheckoutRebatePanel({
                 }}
               />
             ) : null}
-            <div className="absolute inset-[0.75rem] flex flex-col items-center justify-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)]">
-              <p className="font-display text-[1.75rem] font-extrabold leading-none tabular-nums tracking-tight text-[#1b4f72]">
+            <div className="absolute inset-[0.7rem] flex flex-col items-center justify-center rounded-full bg-white text-center">
+              <p className="font-display text-[1.65rem] font-extrabold leading-none tabular-nums text-[#1b4f72]">
                 {Math.round(towardNext)}%
               </p>
-              <p className="mt-1 font-display text-[10px] font-semibold tracking-[0.14em] text-black/50 uppercase">
+              <p className="mt-1 font-display text-[10px] font-semibold tracking-[0.14em] text-black/45 uppercase">
                 to next
               </p>
             </div>
           </div>
-        </div>
 
-        <div className="min-w-0 space-y-5">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-display text-2xl font-extrabold tabular-nums tracking-tight text-black">
-                {paid.toLocaleString()}{" "}
-                <span className="font-display text-sm font-semibold text-black/55">
-                  paid pcs
-                </span>
-              </p>
-              <p className="mt-1 font-body text-sm leading-snug text-black/60">
-                {channel?.nextTierQty != null && channel.nextTierRate != null
-                  ? `${channel.nextTierQty.toLocaleString()} more to ${formatRate(channel.nextTierRate)}/pc`
-                  : channel?.eligible
-                    ? "Top rebate rate unlocked this month"
-                    : "Rebate ladder activates after payment is confirmed"}
-              </p>
+          <div className="min-w-0">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-display text-2xl font-extrabold tabular-nums tracking-tight text-black">
+                  {paid.toLocaleString()}
+                  <span className="ml-1.5 text-sm font-semibold text-black/50">
+                    paid pcs
+                  </span>
+                </p>
+                <p className="mt-1 truncate font-body text-sm text-black/55">
+                  {channel?.nextTierQty != null && channel.nextTierRate != null
+                    ? `${channel.nextTierQty.toLocaleString()} more to ${formatRate(channel.nextTierRate)}/pc`
+                    : channel?.eligible
+                      ? "Top rebate rate unlocked"
+                      : "Ladder unlocks after payment clears"}
+                </p>
+              </div>
+              {currentRate != null ? (
+                <div className="shrink-0 text-right">
+                  <p className="font-display text-[10px] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                    Now
+                  </p>
+                  <p className="font-display text-xl font-extrabold tabular-nums text-[#1b4f72]">
+                    {formatRate(currentRate)}
+                    <span className="text-sm font-bold text-[#1b4f72]/65">/pc</span>
+                  </p>
+                </div>
+              ) : null}
             </div>
-            {currentRate != null ? (
-              <p className="font-display text-right text-sm font-semibold text-black/55">
-                Now{" "}
-                <span className="text-xl font-extrabold tabular-nums text-[#1b4f72]">
-                  {formatRate(currentRate)}
-                </span>
-                <span className="text-[#1b4f72]/70">/pc</span>
-              </p>
-            ) : null}
-          </div>
 
-          <div>
-            <div className="relative h-3 overflow-hidden rounded-full bg-black/10">
+            <div className="relative mt-3 h-2.5 overflow-hidden rounded-full bg-black/10">
               {barAfterPct > barPaidPct ? (
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-umx-orange/60 transition-[width]"
+                  className="absolute inset-y-0 left-0 rounded-full bg-umx-orange/60"
                   style={{ width: `${barAfterPct}%` }}
                 />
               ) : null}
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-[#1b4f72] transition-[width]"
+                className="absolute inset-y-0 left-0 rounded-full bg-[#1b4f72]"
                 style={{ width: `${barPaidPct}%` }}
               />
             </div>
-            {barAfterPct > barPaidPct ? (
-              <p className="mt-2 font-body text-[11px] text-black/50">
-                Orange is this order after payment clears.
-              </p>
-            ) : null}
-          </div>
-
-          {activeTier.length > 0 ? (
-            <div>
-              <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-black/45 uppercase">
-                Rebate rates
-              </p>
-              <div
-                className={`mt-2 grid gap-2 ${
-                  activeTier.length >= 3
-                    ? "grid-cols-3"
-                    : activeTier.length === 2
-                      ? "grid-cols-2"
-                      : "grid-cols-1"
-                }`}
-              >
-                {activeTier.map((tier) => {
-                  const reached = paid >= tier.minQty;
-                  const isCurrent =
-                    currentRate != null &&
-                    Math.abs(currentRate - tier.rateUsd) < 0.001;
-                  return (
-                    <div
-                      key={`${tier.minQty}-${tier.rateUsd}`}
-                      className={`rounded-xl border px-3 py-3 text-center transition ${
-                        isCurrent
-                          ? "border-[#1b4f72] bg-[#1b4f72] text-white shadow-[0_6px_16px_rgba(27,79,114,0.22)]"
-                          : reached
-                            ? "border-[#1b4f72]/35 bg-[#eef3f7]"
-                            : "border-black/12 bg-[#f7f8fa]"
-                      }`}
-                    >
-                      <p
-                        className={`font-display text-xl font-extrabold tabular-nums leading-none tracking-tight sm:text-2xl ${
-                          isCurrent
-                            ? "text-white"
-                            : reached
-                              ? "text-[#1b4f72]"
-                              : "text-black"
-                        }`}
-                      >
-                        {formatRate(tier.rateUsd)}
-                      </p>
-                      <p
-                        className={`mt-1.5 font-display text-[11px] font-semibold tracking-[0.06em] uppercase ${
-                          isCurrent
-                            ? "text-white/85"
-                            : reached
-                              ? "text-[#1b4f72]/75"
-                              : "text-black/55"
-                        }`}
-                      >
-                        {isCurrent
-                          ? "Current"
-                          : reached
-                            ? "Unlocked"
-                            : `${tier.minQty.toLocaleString()}+ pcs`}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="rounded-xl border border-[#1b4f72]/15 bg-[#eef3f7] px-4 py-3.5">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-[#1b4f72]/80 uppercase">
-                  Wallet
-                </p>
-                <p className="mt-1 font-display text-2xl font-extrabold tabular-nums leading-none text-[#1b4f72]">
-                  ${wallet.toFixed(2)}
-                </p>
-              </div>
-              {showPrices && applied > 0 ? (
-                <p className="font-display text-sm font-semibold text-[#1b4f72]/80">
-                  −${applied.toFixed(2)} applied here
-                </p>
-              ) : (
-                <p className="max-w-[16rem] text-right font-body text-xs leading-snug text-black/55">
-                  Available credit for eligible channel orders
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <p className="font-body text-sm leading-snug text-black/70">
-              {thisOrderCopy(channel)}
-            </p>
-            {stationLine ? (
-              <p className="font-body text-sm leading-snug text-black/70">
-                {stationLine}
-              </p>
-            ) : null}
           </div>
         </div>
+
+        {activeTier.length > 0 ? (
+          <div
+            className={`mt-5 grid gap-2 ${
+              activeTier.length >= 3
+                ? "grid-cols-3"
+                : activeTier.length === 2
+                  ? "grid-cols-2"
+                  : "grid-cols-1"
+            }`}
+          >
+            {activeTier.map((tier) => {
+              const reached = paid >= tier.minQty;
+              const isCurrent =
+                currentRate != null &&
+                Math.abs(currentRate - tier.rateUsd) < 0.001;
+              return (
+                <div
+                  key={`${tier.minQty}-${tier.rateUsd}`}
+                  className={`rounded-xl border px-2.5 py-2.5 text-center sm:px-3 sm:py-3 ${
+                    isCurrent
+                      ? "border-[#1b4f72] bg-[#1b4f72] text-white"
+                      : reached
+                        ? "border-[#1b4f72]/30 bg-[#eef3f7]"
+                        : "border-black/10 bg-[#f7f8fa]"
+                  }`}
+                >
+                  <p
+                    className={`font-display text-lg font-extrabold tabular-nums leading-none sm:text-xl ${
+                      isCurrent
+                        ? "text-white"
+                        : reached
+                          ? "text-[#1b4f72]"
+                          : "text-black"
+                    }`}
+                  >
+                    {formatRate(tier.rateUsd)}
+                  </p>
+                  <p
+                    className={`mt-1 font-display text-[10px] font-semibold tracking-[0.06em] uppercase ${
+                      isCurrent
+                        ? "text-white/85"
+                        : reached
+                          ? "text-[#1b4f72]/75"
+                          : "text-black/50"
+                    }`}
+                  >
+                    {isCurrent
+                      ? "Current"
+                      : reached
+                        ? "Unlocked"
+                        : `${tier.minQty.toLocaleString()}+`}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        <dl className="mt-5 divide-y divide-black/8 border-t border-black/8">
+          {detailRows.map((row) => (
+            <div
+              key={row.label}
+              className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-3 py-3 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:gap-4"
+            >
+              <dt className="font-display text-[11px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+                {row.label}
+              </dt>
+              <dd
+                className={`min-w-0 font-display text-sm font-semibold tabular-nums sm:text-base ${
+                  row.accent ? "text-[#1b4f72]" : "text-black"
+                }`}
+              >
+                {row.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </section>
   );
