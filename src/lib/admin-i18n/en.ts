@@ -510,7 +510,7 @@ const en: AdminMessages = {
     deleteSlip: "Delete slip",
     deleteSlipConfirm:
       "Delete this payment slip file? The buyer can upload again. This frees storage.",
-    markPaid: "Confirm funds received",
+    markPaid: "Mark paid",
     markPaidHint:
       "Confirm only after the money is in the account. That is when rebate quantity counts.",
     markPaidNeedSlip:
@@ -524,14 +524,14 @@ const en: AdminMessages = {
     updateStatus: "Update status",
     advanceTo: "Mark as {status}",
     otherStatus: "Or set another status",
-    applyStatus: "Apply",
+    applyStatus: "Save",
     statusLabel: "Status",
     placedByStaff: "Staff · {name}",
     assignSupplier: "Assign supplier",
     sendToSupplier: "Send to supplier",
-    supplierNote: "Note to supplier",
-    supplierNotePlaceholder: "PO ref, special packing…",
-    selectSupplier: "Select a supplier…",
+    supplierNote: "Note",
+    supplierNotePlaceholder: "Optional note…",
+    selectSupplier: "Select supplier…",
     noSupplier: "Not assigned",
     qty: "Qty",
     unit: "Unit",
