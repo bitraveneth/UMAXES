@@ -150,28 +150,17 @@ export default function ProductIntroduction() {
           <div className="relative min-w-0 pt-[4.5rem] sm:pt-24 lg:pt-28">
             <div
               aria-hidden
-              className="pointer-events-none absolute top-0 right-0 flex select-none flex-col items-end sm:right-1"
+              className="pointer-events-none absolute top-0 right-0 select-none font-display text-[clamp(5.75rem,16vw,10rem)] font-extrabold leading-[0.82] tracking-[-0.07em] text-black/[0.07] sm:right-1"
             >
-              <span className="product-intro-watermark font-display text-[clamp(5.75rem,16vw,10rem)] font-extrabold leading-[0.82] tracking-[-0.07em]">
-                80K
-              </span>
-              <span className="mt-1 mr-1 font-display text-[0.65rem] font-semibold tracking-[0.28em] text-umx-orange/55 uppercase sm:mr-2 sm:text-xs">
-                Puffs
-              </span>
+              80K
             </div>
 
             <div className="relative rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
               <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
                 Introduction
               </p>
-              <h3 className="mt-3 font-display text-[clamp(1.55rem,3vw,2.15rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-black">
-                Umaxes HookaMax 80k
-              </h3>
-              <p className="mt-1.5 font-display text-base font-semibold tracking-tight text-black/50 sm:text-lg">
-                Disposable Hookah
-              </p>
 
-              <div className="mt-5 space-y-3.5 font-body text-base leading-relaxed text-black/65 sm:mt-6 sm:text-lg">
+              <div className="mt-4 space-y-3.5 font-body text-base leading-relaxed text-black/65 sm:mt-5 sm:text-lg">
                 <p>
                   Umaxes HookaMax 80k Disposable Vape is a disposable vape with
                   at most{" "}
