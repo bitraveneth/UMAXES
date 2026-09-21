@@ -63,24 +63,38 @@ export default function ProductIntroduction() {
 
       <div className="relative mx-auto max-w-[1400px]">
         {/* Section title — top center, outside the card */}
-        <header className="mx-auto mb-12 max-w-3xl text-center sm:mb-14">
-          <div className="inline-flex items-center gap-3">
-            <span className="h-px w-8 bg-umx-orange/70" aria-hidden />
-            <p className="font-display text-xs font-semibold tracking-[0.22em] text-umx-orange uppercase sm:text-sm">
-              Introduction
-            </p>
-            <span className="h-px w-8 bg-umx-orange/70" aria-hidden />
-          </div>
-          <h2
-            id="product-intro-heading"
-            className="mt-4 font-display text-[clamp(1.65rem,3.6vw,2.55rem)] font-extrabold leading-[1.12] tracking-[-0.03em] text-black"
+        <header className="relative mx-auto mb-14 max-w-4xl text-center sm:mb-16">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-1/2 -z-0 w-[min(100%,28rem)] -translate-x-1/2 -translate-y-1/2 select-none font-display text-[clamp(4.5rem,18vw,9rem)] font-extrabold leading-none tracking-[-0.07em] text-black/[0.035]"
           >
-            Umaxes HookaMax{" "}
-            <span className="text-umx-orange">Disposable Vape</span>
-          </h2>
-          <p className="mx-auto mt-3 max-w-lg font-body text-sm text-black/55 sm:text-base">
-            Flagship HookaMax — power, glow, and draw in one device.
-          </p>
+            80K
+          </div>
+
+          <div className="relative z-[1]">
+            <div className="inline-flex items-center gap-3">
+              <span className="h-px w-10 bg-umx-orange sm:w-14" aria-hidden />
+              <p className="font-display text-xs font-semibold tracking-[0.24em] text-umx-orange uppercase sm:text-sm">
+                Introduction
+              </p>
+              <span className="h-px w-10 bg-umx-orange sm:w-14" aria-hidden />
+            </div>
+
+            <h2
+              id="product-intro-heading"
+              className="mt-5 font-display text-[clamp(2.35rem,6.5vw,4.5rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black"
+            >
+              Umaxes HookaMax
+              <span className="mt-2 block text-[0.72em] font-bold tracking-[-0.03em] text-umx-orange sm:mt-3">
+                Disposable Vape
+              </span>
+            </h2>
+
+            <p className="mx-auto mt-5 max-w-xl font-body text-base leading-relaxed text-black/60 sm:mt-6 sm:text-lg">
+              Flagship HookaMax — up to 80K puffs, 1600mAh power, ARGB glow, and
+              MTL & DTL in one device.
+            </p>
+          </div>
         </header>
 
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)] lg:gap-12 xl:gap-16">
