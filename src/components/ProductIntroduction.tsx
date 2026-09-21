@@ -96,11 +96,11 @@ export default function ProductIntroduction() {
           </h2>
         </header>
 
-        <div className="grid items-stretch gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 xl:gap-16">
+        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 xl:gap-16">
           {/* Left — devices; pills hover-reveal on fine pointers only */}
-          <div className="relative mx-auto flex w-full max-w-2xl items-center lg:max-w-none">
+          <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
             <div
-              className="group relative mx-auto aspect-[4/5] w-full max-w-[36rem] outline-none lg:max-w-none lg:min-h-[42rem] lg:aspect-auto"
+              className="group relative mx-auto aspect-[4/5] w-full max-w-[36rem] outline-none lg:max-w-none lg:min-h-[40rem] lg:aspect-auto"
               tabIndex={0}
             >
               <Image
