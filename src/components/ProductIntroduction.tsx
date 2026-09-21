@@ -14,6 +14,8 @@ const HIGHLIGHTS: {
   detail: string;
   icon: LucideIcon;
   spot: string;
+  delay: string;
+  enter: string;
 }[] = [
   {
     label: "Puffs",
@@ -21,6 +23,8 @@ const HIGHLIGHTS: {
     detail: "Long session life",
     icon: Wind,
     spot: "left-[2%] top-[14%] sm:left-[4%] sm:top-[16%] lg:left-0 lg:top-[18%]",
+    delay: "delay-0",
+    enter: "lg:-translate-x-3 lg:group-hover:translate-x-0",
   },
   {
     label: "Battery",
@@ -28,6 +32,8 @@ const HIGHLIGHTS: {
     detail: "Rechargeable power",
     icon: BatteryCharging,
     spot: "right-[1%] top-[22%] sm:right-[3%] sm:top-[20%] lg:right-0 lg:top-[22%]",
+    delay: "delay-75",
+    enter: "lg:translate-x-3 lg:group-hover:translate-x-0",
   },
   {
     label: "Lights",
@@ -35,6 +41,8 @@ const HIGHLIGHTS: {
     detail: "Full-spectrum glow",
     icon: Lightbulb,
     spot: "left-[4%] bottom-[18%] sm:left-[6%] sm:bottom-[16%] lg:left-2 lg:bottom-[18%]",
+    delay: "delay-100",
+    enter: "lg:-translate-x-3 lg:group-hover:translate-x-0",
   },
   {
     label: "Draw",
@@ -42,6 +50,8 @@ const HIGHLIGHTS: {
     detail: "Your style, either way",
     icon: ArrowLeftRight,
     spot: "right-[2%] bottom-[14%] sm:right-[4%] sm:bottom-[14%] lg:right-1 lg:bottom-[16%]",
+    delay: "delay-150",
+    enter: "lg:translate-x-3 lg:group-hover:translate-x-0",
   },
 ];
 
@@ -84,9 +94,9 @@ export default function ProductIntroduction() {
         </header>
 
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)] lg:gap-12 xl:gap-16">
-          {/* Left — devices + floating pills */}
+          {/* Left — devices; pills reveal on hover */}
           <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
-            <div className="relative mx-auto aspect-[4/5] w-full max-w-[36rem] lg:max-w-none lg:min-h-[40rem] lg:aspect-auto">
+            <div className="group relative mx-auto aspect-[4/5] w-full max-w-[36rem] outline-none lg:max-w-none lg:min-h-[40rem] lg:aspect-auto">
               <Image
                 src={product.deviceDuoImage}
                 alt="UMAXES HookaMax 80K disposable hookah devices"
@@ -94,7 +104,7 @@ export default function ProductIntroduction() {
                 priority
                 quality={100}
                 sizes="(max-width: 1024px) 95vw, 720px"
-                className="object-contain object-center drop-shadow-[0_24px_48px_rgba(0,0,0,0.12)]"
+                className="object-contain object-center drop-shadow-[0_24px_48px_rgba(0,0,0,0.12)] transition duration-500 ease-out group-hover:scale-[1.015]"
               />
 
               {HIGHLIGHTS.map((item) => {
@@ -102,9 +112,11 @@ export default function ProductIntroduction() {
                 return (
                   <div
                     key={item.label}
-                    className={`absolute z-10 max-w-[11.5rem] sm:max-w-[13rem] ${item.spot}`}
+                    className={`pointer-events-none absolute z-10 max-w-[11.5rem] sm:max-w-[13rem] ${item.spot}`}
                   >
-                    <div className="flex items-start gap-2.5 rounded-2xl border border-black/8 bg-umx-cream-warm/95 px-3 py-2.5 shadow-[0_14px_32px_rgba(61,22,5,0.1)] ring-1 ring-white/60 backdrop-blur-sm sm:gap-3 sm:px-3.5 sm:py-3">
+                    <div
+                      className={`flex items-start gap-2.5 rounded-2xl border border-black/8 bg-umx-cream-warm/95 px-3 py-2.5 opacity-100 shadow-[0_14px_32px_rgba(61,22,5,0.1)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-500 ease-out sm:gap-3 sm:px-3.5 sm:py-3 lg:opacity-0 ${item.enter} lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 lg:group-focus-within:translate-x-0 ${item.delay}`}
+                    >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-black text-umx-cream sm:h-10 sm:w-10">
                         <Icon
                           className="h-4 w-4 sm:h-5 sm:w-5"
@@ -127,19 +139,23 @@ export default function ProductIntroduction() {
                   </div>
                 );
               })}
+
+              <p className="pointer-events-none absolute inset-x-0 bottom-2 hidden text-center font-display text-[0.65rem] font-semibold tracking-[0.16em] text-black/35 uppercase transition duration-300 lg:block lg:opacity-70 lg:group-hover:opacity-0">
+                Hover for specs
+              </p>
             </div>
           </div>
 
-          {/* Right — copy card + 80K watermark outside the card */}
-          <div className="relative min-w-0">
+          {/* Right — copy card + higher 80K watermark */}
+          <div className="relative min-w-0 pt-10 sm:pt-12">
             <div
               aria-hidden
-              className="pointer-events-none absolute -top-8 right-0 select-none font-display text-[clamp(5rem,14vw,8.5rem)] font-extrabold leading-none tracking-[-0.06em] text-umx-orange/20 sm:-top-10"
+              className="pointer-events-none absolute top-0 right-0 select-none font-display text-[clamp(5.5rem,15vw,9.5rem)] font-extrabold leading-none tracking-[-0.06em] text-umx-orange/25 sm:right-2"
             >
               80K
             </div>
 
-            <div className="relative rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
+            <div className="relative mt-2 rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:mt-3 sm:px-8 sm:py-9 lg:px-9 lg:py-10">
               <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
                 Introduction
               </p>
