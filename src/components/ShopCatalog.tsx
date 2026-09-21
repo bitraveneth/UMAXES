@@ -20,8 +20,10 @@ import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
-import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { DualStorePrice, StorePrice, useShowStorePrices } from "@/components/StorePrice";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { flavors, product } from "@/lib/assets";
+import { PACK_COPY, formatCases } from "@/lib/pack";
 
 const PRODUCT_HREF = `/product/${flavors[0].id}`;
 
@@ -218,10 +220,10 @@ function ComingSoonCard() {
 }
 
 function ShopAside({
-  quantity,
+  cases,
   total,
 }: {
-  quantity: number;
+  cases: number;
   total: number;
 }) {
   const showPrices = useShowStorePrices();
@@ -235,9 +237,9 @@ function ShopAside({
                 <ShoppingBag className="h-4 w-4" strokeWidth={2.2} aria-hidden />
                 Your bag
               </p>
-              {quantity > 0 && (
+              {cases > 0 && (
                 <span className="bg-black px-2 py-0.5 font-display text-xs font-bold text-white">
-                  {quantity}
+                  {cases}
                 </span>
               )}
             </div>
@@ -248,12 +250,12 @@ function ShopAside({
               Subtotal
             </p>
             <p className="mt-1 font-display text-3xl font-extrabold tracking-tight text-black">
-              {showPrices ? `$${total.toFixed(2)}` : "On request"}
+              {showPrices ? <StorePrice amount={total} /> : "On request"}
             </p>
             <p className="mt-2 font-body text-sm text-black/55">
-              {quantity === 0
+              {cases === 0
                 ? "Open the product to add to your bag."
-                : `${quantity} item${quantity === 1 ? "" : "s"} ready to checkout.`}
+                : `${formatCases(cases)} ready to checkout.`}
             </p>
 
             <Link
@@ -326,9 +328,11 @@ function ShopAside({
 }
 
 export default function ShopCatalog() {
-  const { quantity, total } = useCart();
+  const { quantity, cases, total } = useCart();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor } = useCatalogPrices();
   const compactChrome = useCompactMobileStoreChrome();
+  const unitPrice = unitPriceFor(flavors[0].id);
 
   return (
     <div
@@ -347,7 +351,7 @@ export default function ShopCatalog() {
             <span className="hidden sm:inline">Cart</span>
             {quantity > 0 && (
               <span className="bg-umx-orange px-1.5 py-0.5 text-[0.65rem] font-bold text-white">
-                {quantity}
+                {cases}
               </span>
             )}
           </Link>
@@ -397,8 +401,14 @@ export default function ShopCatalog() {
                     <p className="font-display text-[0.65rem] font-semibold tracking-[0.16em] text-black/40 uppercase">
                       Price
                     </p>
-                    <p className="mt-1 font-display text-4xl font-extrabold tracking-tight text-black">
-                      <StorePrice amount={product.price} />
+                    <div className="mt-1">
+                      <DualStorePrice
+                        amount={unitPrice}
+                        className="font-display text-4xl font-extrabold tracking-tight text-black"
+                      />
+                    </div>
+                    <p className="mt-2 max-w-xs font-body text-sm text-black/50">
+                      {PACK_COPY}
                     </p>
                   </div>
                   <Link
@@ -414,7 +424,7 @@ export default function ShopCatalog() {
           <ComingSoonCard />
           </div>
 
-          <ShopAside quantity={quantity} total={total} />
+          <ShopAside cases={cases} total={total} />
         </div>
       </div>
 
@@ -423,7 +433,7 @@ export default function ShopCatalog() {
           <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-4">
             <div>
               <p className="font-display text-sm font-semibold text-black">
-                {quantity} {quantity === 1 ? "item" : "items"}
+                {formatCases(cases)}
                 {showPrices ? ` · $${total.toFixed(2)}` : ""}
               </p>
             </div>

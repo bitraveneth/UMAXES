@@ -19,6 +19,8 @@ const BUYER_PW = "Demo1234!";
 
 const ADDRESSES = {
   coastal: {
+    recipientName: "Alex Rivera",
+    phone: "+1 213 555 0140",
     line1: "1200 Commerce Ave",
     line2: "Suite 400",
     city: "Los Angeles",
@@ -27,6 +29,8 @@ const ADDRESSES = {
     country: "US",
   },
   pacific: {
+    recipientName: "Jordan Lee",
+    phone: "+1 562 555 0198",
     line1: "880 Harbor Blvd",
     line2: "Dock 12",
     city: "Long Beach",
@@ -35,6 +39,8 @@ const ADDRESSES = {
     country: "US",
   },
   national: {
+    recipientName: "Sam Patel",
+    phone: "+1 214 555 0172",
     line1: "4550 Industrial Pkwy",
     line2: null,
     city: "Dallas",
@@ -43,6 +49,8 @@ const ADDRESSES = {
     country: "US",
   },
   metro: {
+    recipientName: "Casey Nguyen",
+    phone: "+1 404 555 0116",
     line1: "210 Peachtree St NW",
     line2: "Floor 8",
     city: "Atlanta",
@@ -366,8 +374,8 @@ async function main() {
     return pool.map((p) => {
       const tier = p.prices.find((x) => x.level === level);
       const price = tier?.unitPrice ?? p.prices[0]?.unitPrice ?? 25;
-      const moq = tier?.moq || 5;
-      const qty = Math.max(5, Math.round(moq * qtyScale));
+      const moq = tier?.moq || 95;
+      const qty = Math.max(95, Math.round(moq * qtyScale));
       return {
         productId: p.id,
         sku: p.sku,

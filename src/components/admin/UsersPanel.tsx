@@ -7,6 +7,7 @@ import {
   prepareImpersonateCustomer,
 } from "@/lib/admin-actions";
 import { AdminBadge, AdminCard, AdminStat } from "@/components/admin/ui";
+import { useAdminI18n } from "@/components/admin/AdminI18n";
 import {
   Users,
   Store,
@@ -16,7 +17,11 @@ import {
   X,
   Clock,
   ExternalLink,
+  UserPlus,
 } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 import type {
   CustomerLevel,
   UserRole,
@@ -98,6 +103,10 @@ export default function UsersPanel({
   canImpersonate = false,
   initialError = null,
 }: Props) {
+  const { t } = useAdminI18n();
+  const { data: session } = useSession();
+  const showLoginAs =
+    canImpersonate && session?.user?.role === "SUPER_ADMIN";
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(initialError);
   const [message, setMessage] = useState<string | null>(null);
@@ -106,6 +115,7 @@ export default function UsersPanel({
   const [assignment, setAssignment] = useState<AssignmentValue>("buyer:DISTRO");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | UserStatus>("all");
+  const { confirm, showToast, ui } = useAppFeedback();
 
   const counts = useMemo(() => {
     const active = users.filter((u) => u.status === "APPROVED").length;
@@ -168,15 +178,15 @@ export default function UsersPanel({
     });
   }
 
-  function onDelete(row: CustomerUserRow) {
+  async function onDelete(row: CustomerUserRow) {
     const label = row.name || row.email || row.phone || "this user";
-    if (
-      !window.confirm(
-        `Delete ${label}? If they have orders or RMA history, the account will be disabled instead.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete customer?",
+      message: `Delete ${label}? If they have orders or RMA history, the account will be disabled instead.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     startTransition(async () => {
       try {
         const result = await deleteCustomerUser(row.id);
@@ -186,6 +196,12 @@ export default function UsersPanel({
             ? "Disabled (linked orders/RMA)."
             : "Customer deleted.",
         );
+        showToast(
+          "disabled" in result && result.disabled
+            ? "Customer disabled"
+            : "Customer deleted",
+          "danger",
+        );
       } catch (e) {
         setMessage(null);
         setError(e instanceof Error ? e.message : "Delete failed");
@@ -194,7 +210,7 @@ export default function UsersPanel({
   }
 
   function openLoginAs(row: CustomerUserRow) {
-    if (!canImpersonate) return;
+    if (!showLoginAs) return;
     if (row.status === "DISABLED" || row.status === "REJECTED") {
       setError("Cannot open a disabled account.");
       return;
@@ -230,6 +246,7 @@ export default function UsersPanel({
 
   return (
     <div className="space-y-6">
+      {ui}
       {(message || error) && (
         <div
           className={`rounded-xl border px-4 py-3 text-sm ${
@@ -257,6 +274,10 @@ export default function UsersPanel({
               staff (Sales, Logistics, Warehouse, Admin).
             </p>
           </div>
+          <Link href="/admin/users/new" className="admin-btn admin-btn-primary admin-btn-sm">
+            <UserPlus className="h-4 w-4" />
+            {t("users.addUser")}
+          </Link>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-b border-[var(--admin-border)] px-5 py-3">
@@ -361,7 +382,7 @@ export default function UsersPanel({
                     </td>
                     <td>
                       <div className="flex justify-end gap-1.5">
-                        {canImpersonate ? (
+                        {showLoginAs ? (
                           <button
                             type="button"
                             disabled={

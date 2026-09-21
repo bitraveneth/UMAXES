@@ -10,6 +10,7 @@ import {
 import { AdminBadge, AdminCard, AdminStat } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { Landmark, Pencil, Plus, Star, Trash2, X } from "lucide-react";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 
 export type BankAccountRow = {
   id: string;
@@ -44,6 +45,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const { confirm, showToast, ui } = useAppFeedback();
   const editing = Boolean(form.id);
   const active = accounts.find((a) => a.isActive);
 
@@ -112,13 +114,20 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
     });
   }
 
-  function onDelete(row: BankAccountRow) {
-    if (!window.confirm(t("invoices.deleteConfirm", { label: row.label }))) return;
+  async function onDelete(row: BankAccountRow) {
+    const ok = await confirm({
+      title: t("common.remove"),
+      message: t("invoices.deleteConfirm", { label: row.label }),
+      confirmLabel: t("common.remove"),
+      tone: "danger",
+    });
+    if (!ok) return;
     startTransition(async () => {
       try {
         await deleteBankAccount(row.id);
         if (form.id === row.id) resetForm();
         setMessage(t("invoices.deleted"));
+        showToast(t("invoices.deleted"), "danger");
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : t("invoices.saveFailed"));
@@ -128,6 +137,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
 
   return (
     <div className="space-y-6">
+      {ui}
       <div className="grid gap-4 sm:grid-cols-3">
         <AdminStat
           label={t("invoices.statAccounts")}

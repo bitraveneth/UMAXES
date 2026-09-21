@@ -7,7 +7,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /** Bump when models are added so HMR does not keep a stale PrismaClient. */
-const PRISMA_SCHEMA_VERSION = 14;
+const PRISMA_SCHEMA_VERSION = 17;
 
 function withVerifyFullSsl(connectionString: string) {
   try {
@@ -39,7 +39,7 @@ function createPrismaClient() {
 
 function clientHasModel(
   client: PrismaClient,
-  key: "shipmentLine" | "staffProfile",
+  key: "shipmentLine" | "staffProfile" | "faq" | "rebatePolicy",
 ) {
   return typeof (client as unknown as Record<string, { findMany?: unknown }>)[key]
     ?.findMany === "function";
@@ -51,7 +51,9 @@ function getClient() {
   const modelsOk =
     cached != null &&
     clientHasModel(cached, "shipmentLine") &&
-    clientHasModel(cached, "staffProfile");
+    clientHasModel(cached, "staffProfile") &&
+    clientHasModel(cached, "faq") &&
+    clientHasModel(cached, "rebatePolicy");
 
   if (cached && versionOk && modelsOk) {
     return cached;

@@ -9,7 +9,10 @@ import type {
 } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { CASE_MOQ_CASES, TEST_STATION_SKU, caseMoqFromStored, isCasePackedSku } from "@/lib/pack";
 import { canAccessAdmin } from "@/lib/rbac";
+import { deleteOrderPaymentSlip } from "@/lib/payment-slip-ops";
+import { isValidPhone } from "@/lib/phone";
 
 async function requireRoles(roles: UserRole[]) {
   const session = await auth();
@@ -213,17 +216,30 @@ export async function rejectCustomer(userId: string) {
   revalidatePath("/admin/retail");
 }
 
-/** Register a B2B company + owner login on behalf of the customer. */
+const CUSTOMER_LEVELS: CustomerLevel[] = ["DISTRO", "WHOLESALER", "SHOP"];
+
+function isCustomerLevel(value: string): value is CustomerLevel {
+  return CUSTOMER_LEVELS.includes(value as CustomerLevel);
+}
+
+/**
+ * Staff (ADMIN / SUPER_ADMIN) create a customer login on behalf of the buyer.
+ * Always CUSTOMER + APPROVED — no email OTP, no verification mail, immediately
+ * usable on Create Order. Password is hashed server-side (bcrypt, same as
+ * self-register). Never creates ADMIN / SUPER_ADMIN.
+ */
 export async function createCustomerOnBehalf(input: {
   level: CustomerLevel;
   companyName: string;
   taxId?: string;
   contactName: string;
-  email?: string;
-  phone?: string;
+  email: string;
+  phone: string;
   password: string;
+  confirmPassword?: string;
   creditLimit?: number;
   paymentTermsDays?: number;
+  /** Ignored — staff-created accounts are always APPROVED and usable now. */
   status?: "APPROVED" | "PENDING";
   address?: {
     line1: string;
@@ -233,35 +249,57 @@ export async function createCustomerOnBehalf(input: {
     postalCode: string;
     country: string;
     label?: string;
+    recipientName?: string;
+    phone?: string;
   };
 }) {
-  const session = await requireRoles(["ADMIN", "SALES"]);
+  const session = await requireRoles(["ADMIN"]);
   const { creditDefaultsByLevel } = await import("@/lib/customer-segments");
+
+  if (!isCustomerLevel(input.level)) {
+    throw new Error("Choose wholesaler, distributor, or retail");
+  }
 
   const companyName = input.companyName.trim();
   const contactName = input.contactName.trim();
-  const email = input.email?.trim().toLowerCase() || null;
-  const phone = input.phone?.trim() || null;
+  const email = input.email?.trim().toLowerCase() || "";
+  const phone = input.phone?.trim() || "";
   const password = input.password;
+  const confirmPassword = input.confirmPassword;
 
   if (!companyName) throw new Error("Company name required");
   if (!contactName) throw new Error("Contact name required");
-  if (!email && !phone) throw new Error("Email or phone required");
+  if (!email) throw new Error("Email is required");
+  if (!email.includes("@") || !email.includes(".")) {
+    throw new Error("Enter a valid email");
+  }
+  if (!phone) throw new Error("Phone is required");
+  const phoneDigits = phone.replace(/\D/g, "");
+  if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+    throw new Error("Enter a valid phone number");
+  }
   if (!password || password.length < 6) {
     throw new Error("Password must be at least 6 characters");
   }
+  if (confirmPassword !== undefined && confirmPassword !== password) {
+    throw new Error("Passwords do not match");
+  }
 
-  if (email) {
-    const exists = await prisma.user.findUnique({ where: { email } });
-    if (exists) throw new Error("Email is already registered");
+  const line1 = input.address?.line1?.trim() || "";
+  const city = input.address?.city?.trim() || "";
+  const postalCode = input.address?.postalCode?.trim() || "";
+  const country = input.address?.country?.trim() || "";
+  if (!line1 || !city || !postalCode || !country) {
+    throw new Error("Shipping address is required");
   }
-  if (phone) {
-    const exists = await prisma.user.findUnique({ where: { phone } });
-    if (exists) throw new Error("Phone is already registered");
-  }
+
+  const existsEmail = await prisma.user.findUnique({ where: { email } });
+  if (existsEmail) throw new Error("Email is already registered");
+  const existsPhone = await prisma.user.findUnique({ where: { phone } });
+  if (existsPhone) throw new Error("Phone is already registered");
 
   const defaults = creditDefaultsByLevel[input.level];
-  const status = input.status || "APPROVED";
+  const status = "APPROVED";
   const isRetail = input.level === "SHOP";
   const creditLimit = isRetail
     ? 0
@@ -277,7 +315,7 @@ export async function createCustomerOnBehalf(input: {
   const bcrypt = await import("bcryptjs");
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const company = await prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx) => {
     const co = await tx.company.create({
       data: {
         name: companyName,
@@ -290,7 +328,7 @@ export async function createCustomerOnBehalf(input: {
       },
     });
 
-    await tx.user.create({
+    const user = await tx.user.create({
       data: {
         name: contactName,
         email,
@@ -303,21 +341,22 @@ export async function createCustomerOnBehalf(input: {
       },
     });
 
-    if (input.address?.line1 && input.address.city && input.address.postalCode && input.address.country) {
-      await tx.address.create({
-        data: {
-          companyId: co.id,
-          label: input.address.label?.trim() || "Default",
-          line1: input.address.line1.trim(),
-          line2: input.address.line2?.trim() || null,
-          city: input.address.city.trim(),
-          region: input.address.region?.trim() || null,
-          postalCode: input.address.postalCode.trim(),
-          country: input.address.country.trim(),
-          isDefault: true,
-        },
-      });
-    }
+    await tx.address.create({
+      data: {
+        companyId: co.id,
+        label: input.address?.label?.trim() || "Default",
+        recipientName:
+          input.address?.recipientName?.trim() || contactName,
+        phone: input.address?.phone?.trim() || phone,
+        line1,
+        line2: input.address?.line2?.trim() || null,
+        city,
+        region: input.address?.region?.trim() || null,
+        postalCode,
+        country,
+        isDefault: true,
+      },
+    });
 
     await tx.auditLog.create({
       data: {
@@ -330,11 +369,20 @@ export async function createCustomerOnBehalf(input: {
           email,
           phone,
           status,
+          userId: user.id,
+          emailVerifySkipped: true,
+          role: "CUSTOMER",
         }),
       },
     });
 
-    return co;
+    return {
+      id: co.id,
+      companyId: co.id,
+      userId: user.id,
+      name: co.name,
+      level: input.level,
+    };
   });
 
   revalidatePath("/admin/customers");
@@ -342,7 +390,9 @@ export async function createCustomerOnBehalf(input: {
   revalidatePath("/admin/wholesalers");
   revalidatePath("/admin/retail");
   revalidatePath("/admin/approvals");
-  return company;
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/orders/new");
+  return created;
 }
 
 const MAX_COMPANY_ADDRESSES = 10;
@@ -358,6 +408,8 @@ function revalidateCustomerDirs() {
 export async function addCompanyShipTo(input: {
   companyId: string;
   label?: string;
+  recipientName?: string;
+  phone?: string;
   line1: string;
   line2?: string;
   city: string;
@@ -376,8 +428,15 @@ export async function addCompanyShipTo(input: {
   const city = input.city.trim();
   const postalCode = input.postalCode.trim();
   const country = input.country.trim();
-  if (!line1 || !city || !postalCode || !country) {
-    throw new Error("Address, city, postal code, and country are required");
+  const recipientName = (input.recipientName || "").trim();
+  const phone = (input.phone || "").trim();
+  if (!recipientName || !phone || !line1 || !city || !postalCode || !country) {
+    throw new Error(
+      "Full name, phone number, address, city, postal code, and country are required",
+    );
+  }
+  if (!isValidPhone(phone)) {
+    throw new Error("Enter a valid phone number (7–15 digits)");
   }
   if (country.toLowerCase().includes("china") || country.toUpperCase() === "CN") {
     throw new Error("Shipping to China is not available");
@@ -403,6 +462,8 @@ export async function addCompanyShipTo(input: {
       data: {
         companyId: input.companyId,
         label: input.label?.trim() || null,
+        recipientName,
+        phone,
         line1,
         line2: input.line2?.trim() || null,
         city,
@@ -507,6 +568,29 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     select: { status: true, orderNumber: true },
   });
   if (!before) throw new Error("Order not found");
+
+  if (
+    before.status === "PAYMENT_PENDING" &&
+    status !== "PAYMENT_PENDING" &&
+    status !== "CANCELLED" &&
+    status !== "SUBMITTED"
+  ) {
+    const isAdmin =
+      role === "ADMIN" || role === "SUPER_ADMIN";
+    const paid = await prisma.payment.findFirst({
+      where: { orderId, status: "paid", paidAt: { not: null } },
+      select: { id: true },
+    });
+    const method = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { paymentMethod: true },
+    });
+    if (!isAdmin && method?.paymentMethod !== "CREDIT" && !paid) {
+      throw new Error(
+        "Confirm funds received before moving this order forward",
+      );
+    }
+  }
 
   await prisma.$transaction([
     prisma.order.update({ where: { id: orderId }, data: { status } }),
@@ -676,63 +760,195 @@ export async function upsertSupplier(input: {
 }
 
 export async function markPaymentReceived(orderId: string, reference?: string) {
+  return updateOrderPaymentStatus(orderId, "paid", reference);
+}
+
+export async function updateOrderPaymentStatus(
+  orderId: string,
+  status: "pending" | "submitted" | "paid" | "rejected",
+  reference?: string,
+) {
   const session = await requireRoles(["ADMIN", "SALES"]);
+  const role = session.user.role;
+  const canConfirmWithoutSlip =
+    role === "ADMIN" || role === "SUPER_ADMIN";
+
+  if (!["pending", "submitted", "paid", "rejected"].includes(status)) {
+    throw new Error("Invalid payment status");
+  }
+
+  let shouldRunRebate = false;
 
   await prisma.$transaction(async (tx) => {
-    const order = await tx.order.findUnique({ where: { id: orderId } });
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: { payments: true },
+    });
     if (!order) throw new Error("Order not found");
 
-    await tx.order.update({
-      where: { id: orderId },
-      data: {
-        status: "CONFIRMED",
-        paymentRef: reference || order.paymentRef,
-      },
-    });
+    const payment = order.payments[0];
+    const alreadyPaid = order.payments.some(
+      (p) => p.status === "paid" && p.paidAt,
+    );
+    const hasSlip = order.payments.some((p) => p.slipUrl);
 
-    await tx.payment.updateMany({
-      where: { orderId },
-      data: {
-        status: "paid",
-        reference: reference || undefined,
-        paidAt: new Date(),
-      },
-    });
+    if (order.paymentMethod === "CREDIT" && status !== "paid") {
+      throw new Error("Credit orders use terms — not bank-slip payment status");
+    }
+
+    if (status === "paid") {
+      if (
+        order.paymentMethod !== "CREDIT" &&
+        !alreadyPaid &&
+        !hasSlip &&
+        !canConfirmWithoutSlip
+      ) {
+        throw new Error("Wait for the buyer to upload a payment slip first");
+      }
+
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status:
+            order.status === "PAYMENT_PENDING" ? "CONFIRMED" : order.status,
+          paymentRef: reference || order.paymentRef,
+        },
+      });
+
+      if (payment) {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: "paid",
+            reference: reference || payment.reference || undefined,
+            paidAt: alreadyPaid ? payment.paidAt : new Date(),
+          },
+        });
+      } else {
+        await tx.payment.create({
+          data: {
+            orderId,
+            method: order.paymentMethod,
+            amount: order.total,
+            status: "paid",
+            reference: reference || order.paymentRef,
+            paidAt: new Date(),
+          },
+        });
+      }
+
+      if (
+        !alreadyPaid &&
+        order.paymentMethod === "CREDIT" &&
+        order.payments.some((p) => p.status === "on_terms")
+      ) {
+        await tx.company.update({
+          where: { id: order.companyId },
+          data: { creditUsed: { decrement: order.total } },
+        });
+        await tx.creditLedger.create({
+          data: {
+            companyId: order.companyId,
+            orderId: order.id,
+            type: "payment",
+            amount: -order.total,
+            note: `Payment received for ${order.orderNumber}`,
+          },
+        });
+      }
+
+      shouldRunRebate = !alreadyPaid;
+    } else {
+      const nextPaymentStatus =
+        status === "submitted" && !hasSlip && !canConfirmWithoutSlip
+          ? "pending"
+          : status;
+
+      if (status === "submitted" && !hasSlip && !canConfirmWithoutSlip) {
+        throw new Error("No payment slip on this order yet");
+      }
+
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          // If unpaid again after paid, move back to pending payment when still early
+          status:
+            alreadyPaid &&
+            (order.status === "CONFIRMED" || order.status === "PAYMENT_PENDING")
+              ? "PAYMENT_PENDING"
+              : order.status,
+          paymentRef: reference || order.paymentRef,
+        },
+      });
+
+      if (payment) {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: nextPaymentStatus,
+            paidAt: null,
+            reference: reference || payment.reference || undefined,
+          },
+        });
+      } else {
+        await tx.payment.create({
+          data: {
+            orderId,
+            method: order.paymentMethod,
+            amount: order.total,
+            status: nextPaymentStatus,
+            reference: reference || order.paymentRef,
+          },
+        });
+      }
+    }
 
     await tx.auditLog.create({
       data: {
         userId: session.user.id,
-        action: "PAYMENT_RECEIVED",
+        action: "PAYMENT_STATUS",
         entity: "Order",
         entityId: orderId,
         meta: JSON.stringify({
           orderNumber: order.orderNumber,
+          paymentStatus: status,
           reference: reference || order.paymentRef || null,
-          previousStatus: order.status,
-          status: "CONFIRMED",
-          amount: order.total,
-          paymentMethod: order.paymentMethod,
-          companyId: order.companyId,
+          previousOrderStatus: order.status,
         }),
       },
     });
   });
 
+  if (shouldRunRebate) {
+    const { onPaymentReceived } = await import("@/lib/rebate");
+    await onPaymentReceived(orderId);
+  }
+
   revalidatePath("/admin/orders");
   revalidatePath("/admin/credit");
+  revalidatePath("/admin/rebates");
+  revalidatePath("/account/orders");
+  revalidatePath(`/account/orders/${orderId}`);
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { company: { select: { name: true } } },
-  });
-  if (order) {
-    const { notifyNeedsSupplierAssign } = await import("@/lib/notify");
-    await notifyNeedsSupplierAssign({
-      orderNumber: order.orderNumber,
-      companyName: order.company.name,
-      paymentMethod: order.paymentMethod,
+  if (status === "paid") {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { company: { select: { name: true } } },
     });
+    if (order) {
+      const { notifyNeedsSupplierAssign } = await import("@/lib/notify");
+      await notifyNeedsSupplierAssign({
+        orderNumber: order.orderNumber,
+        companyName: order.company.name,
+        paymentMethod: order.paymentMethod,
+      });
+    }
   }
+}
+
+export async function deletePaymentSlip(orderId: string) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  await deleteOrderPaymentSlip(orderId, session.user.id);
 }
 
 export async function upsertShipment(
@@ -1057,6 +1273,18 @@ export async function adjustInventory(productId: string, quantity: number) {
   const session = await requireRoles(["ADMIN", "WAREHOUSE"]);
   const qty = Math.max(0, Math.floor(quantity));
 
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, sku: true, name: true },
+  });
+  if (!product) throw new Error("Product not found");
+
+  const existing = await prisma.inventory.findUnique({
+    where: { productId },
+    select: { quantity: true },
+  });
+  const previousQuantity = existing?.quantity ?? 0;
+
   await prisma.inventory.upsert({
     where: { productId },
     create: { productId, quantity: qty, reserved: 0 },
@@ -1069,10 +1297,33 @@ export async function adjustInventory(productId: string, quantity: number) {
       action: "INVENTORY_ADJUST",
       entity: "Product",
       entityId: productId,
-      meta: JSON.stringify({ quantity: qty }),
+      meta: JSON.stringify({
+        sku: product.sku,
+        name: product.name,
+        previousQuantity,
+        quantity: qty,
+      }),
     },
   });
 
+  revalidatePath("/admin/warehouse");
+  revalidatePath("/admin/catalog");
+}
+
+export async function addTestStationProduct() {
+  await requireRoles(["ADMIN"]);
+  const existed = await prisma.product.findUnique({
+    where: { sku: TEST_STATION_SKU },
+    select: { id: true },
+  });
+  const { ensureTestStationProduct } = await import("@/lib/rebate");
+  const row = await ensureTestStationProduct();
+  // New kits start at 0 so warehouse can count real units (seed used a dummy pool).
+  await prisma.inventory.upsert({
+    where: { productId: row.id },
+    create: { productId: row.id, quantity: 0, reserved: 0 },
+    update: existed ? {} : { quantity: 0 },
+  });
   revalidatePath("/admin/warehouse");
   revalidatePath("/admin/catalog");
 }
@@ -1087,10 +1338,14 @@ export async function updateProductPrice(
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) throw new Error("Product not found");
 
+  const storedMoq = isCasePackedSku(product.sku)
+    ? caseMoqFromStored(moq)
+    : Math.max(1, Math.floor(Number(moq) || 1));
+
   await prisma.priceByLevel.upsert({
     where: { productId_level: { productId, level } },
-    create: { productId, level, unitPrice, moq },
-    update: { unitPrice, moq },
+    create: { productId, level, unitPrice, moq: storedMoq },
+    update: { unitPrice, moq: storedMoq },
   });
 
   await prisma.auditLog.create({
@@ -1145,6 +1400,244 @@ export async function saveCoupon(input: {
   });
 
   revalidatePath("/admin/coupons");
+}
+
+export async function saveRebatePolicy(input: {
+  level: "WHOLESALER" | "DISTRO";
+  active: boolean;
+  unitPrice: number | null;
+  pcsPerCase: number;
+  testStationsPerCase: number;
+  firstOrderCases: number;
+  firstOrderUnpaidPcs: number;
+  timezone: string;
+  tiers: { minQty: number; rateUsd: number }[];
+}) {
+  const session = await requireRoles(["ADMIN"]);
+  const { ensureRebatePolicies } = await import("@/lib/rebate");
+  await ensureRebatePolicies();
+
+  const unitPrice =
+    input.unitPrice != null && Number.isFinite(input.unitPrice) && input.unitPrice > 0
+      ? Math.round(input.unitPrice * 100) / 100
+      : null;
+  const tiers = (input.tiers || [])
+    .map((t) => ({
+      minQty: Math.floor(Number(t.minQty) || 0),
+      rateUsd: Number(t.rateUsd),
+    }))
+    .filter((t) => t.minQty > 0 && Number.isFinite(t.rateUsd) && t.rateUsd >= 0)
+    .sort((a, b) => a.minQty - b.minQty);
+
+  const active =
+    input.level === "WHOLESALER"
+      ? Boolean(input.active)
+      : Boolean(input.active && unitPrice && tiers.length);
+
+  await prisma.rebatePolicy.upsert({
+    where: { level: input.level },
+    create: {
+      level: input.level,
+      active,
+      unitPrice,
+      pcsPerCase: Math.max(1, Math.floor(input.pcsPerCase) || 95),
+      testStationsPerCase: Math.max(0, Math.floor(input.testStationsPerCase) || 0),
+      firstOrderCases: Math.max(1, Math.floor(input.firstOrderCases) || 5),
+      firstOrderUnpaidPcs: Math.max(0, Math.floor(input.firstOrderUnpaidPcs) || 0),
+      timezone: input.timezone || "America/Los_Angeles",
+      tiers,
+    },
+    update: {
+      active,
+      unitPrice,
+      pcsPerCase: Math.max(1, Math.floor(input.pcsPerCase) || 95),
+      testStationsPerCase: Math.max(0, Math.floor(input.testStationsPerCase) || 0),
+      firstOrderCases: Math.max(1, Math.floor(input.firstOrderCases) || 5),
+      firstOrderUnpaidPcs: Math.max(0, Math.floor(input.firstOrderUnpaidPcs) || 0),
+      timezone: input.timezone || "America/Los_Angeles",
+      tiers,
+    },
+  });
+
+  if (unitPrice != null) {
+    const products = await prisma.product.findMany({
+      where: { sku: { not: "test-station" }, active: true },
+      select: { id: true },
+    });
+    for (const product of products) {
+      await prisma.priceByLevel.upsert({
+        where: {
+          productId_level: { productId: product.id, level: input.level },
+        },
+        create: {
+          productId: product.id,
+          level: input.level,
+          unitPrice,
+          moq: CASE_MOQ_CASES,
+        },
+        update: { unitPrice },
+      });
+    }
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "REBATE_POLICY_SAVE",
+      entity: "RebatePolicy",
+      entityId: input.level,
+      meta: JSON.stringify({ ...input, active, unitPrice, tiers }),
+    },
+  });
+
+  revalidatePath("/admin/rebates");
+  revalidatePath("/admin/catalog");
+}
+
+export async function issueRebateMonthAction(rebateMonthId: string) {
+  const session = await requireRoles(["ADMIN"]);
+  const { issueRebateMonth } = await import("@/lib/rebate");
+  await issueRebateMonth(rebateMonthId, session.user.id);
+  revalidatePath("/admin/rebates");
+}
+
+export async function adjustRebateWalletAction(
+  companyId: string,
+  amount: number,
+  note: string,
+) {
+  const session = await requireRoles(["ADMIN"]);
+  const { adjustRebateWallet } = await import("@/lib/rebate");
+  await adjustRebateWallet(
+    companyId,
+    amount,
+    note.trim() || "Manual adjustment",
+    session.user.id,
+  );
+  revalidatePath("/admin/rebates");
+}
+
+function faqKeywordsFromCopy(question: string, answer: string) {
+  const words = `${question} ${answer}`
+    .toLowerCase()
+    .replace(/[^a-z0-9/+%\s-]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length >= 3);
+  return [...new Set(words)].slice(0, 24).join(", ");
+}
+
+export async function createFaq(input: {
+  question: string;
+  answer: string;
+  keywords?: string;
+  sortOrder?: number;
+  published?: boolean;
+}) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const question = input.question.trim();
+  const answer = input.answer.trim();
+  if (!question) throw new Error("Question is required");
+  if (!answer) throw new Error("Answer is required");
+
+  const last = await prisma.faq.findFirst({
+    orderBy: { sortOrder: "desc" },
+    select: { sortOrder: true },
+  });
+  const sortOrder =
+    typeof input.sortOrder === "number" && Number.isFinite(input.sortOrder)
+      ? Math.floor(input.sortOrder)
+      : (last?.sortOrder ?? -1) + 1;
+
+  const row = await prisma.faq.create({
+    data: {
+      question,
+      answer,
+      keywords: faqKeywordsFromCopy(question, answer),
+      sortOrder,
+      published: input.published !== false,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "FAQ_CREATE",
+      entity: "Faq",
+      entityId: row.id,
+      meta: JSON.stringify({ question }),
+    },
+  });
+
+  revalidatePath("/admin/faq");
+  revalidatePath("/faq");
+  return row;
+}
+
+export async function updateFaq(input: {
+  id: string;
+  question: string;
+  answer: string;
+  keywords?: string;
+  sortOrder?: number;
+  published?: boolean;
+}) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const question = input.question.trim();
+  const answer = input.answer.trim();
+  if (!question) throw new Error("Question is required");
+  if (!answer) throw new Error("Answer is required");
+
+  const existing = await prisma.faq.findUnique({ where: { id: input.id } });
+  if (!existing) throw new Error("FAQ not found");
+
+  const row = await prisma.faq.update({
+    where: { id: input.id },
+    data: {
+      question,
+      answer,
+      keywords: faqKeywordsFromCopy(question, answer),
+      sortOrder:
+        typeof input.sortOrder === "number" && Number.isFinite(input.sortOrder)
+          ? Math.floor(input.sortOrder)
+          : existing.sortOrder,
+      published: input.published !== false,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "FAQ_UPDATE",
+      entity: "Faq",
+      entityId: row.id,
+      meta: JSON.stringify({ question }),
+    },
+  });
+
+  revalidatePath("/admin/faq");
+  revalidatePath("/faq");
+  return row;
+}
+
+export async function deleteFaq(id: string) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const existing = await prisma.faq.findUnique({ where: { id } });
+  if (!existing) throw new Error("FAQ not found");
+
+  await prisma.faq.delete({ where: { id } });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "FAQ_DELETE",
+      entity: "Faq",
+      entityId: id,
+      meta: JSON.stringify({ question: existing.question }),
+    },
+  });
+
+  revalidatePath("/admin/faq");
+  revalidatePath("/faq");
 }
 
 export async function recordCreditPayment(companyId: string, amount: number, note?: string) {
@@ -2118,17 +2611,17 @@ export async function createProduct(input: {
           {
             level: "DISTRO",
             unitPrice: Number(input.distroPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.distroMoq ?? 50)),
+            moq: Math.max(1, Math.floor(input.distroMoq ?? CASE_MOQ_CASES)),
           },
           {
             level: "WHOLESALER",
             unitPrice: Number(input.wholesalerPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.wholesalerMoq ?? 20)),
+            moq: Math.max(1, Math.floor(input.wholesalerMoq ?? CASE_MOQ_CASES)),
           },
           {
             level: "SHOP",
             unitPrice: Number(input.shopPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.shopMoq ?? 5)),
+            moq: Math.max(1, Math.floor(input.shopMoq ?? CASE_MOQ_CASES)),
           },
         ],
       },

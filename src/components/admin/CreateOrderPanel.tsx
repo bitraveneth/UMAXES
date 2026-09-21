@@ -1,10 +1,16 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AdminCard, AdminBadge } from "@/components/admin/ui";
 import { Plus, Search } from "lucide-react";
 import type { CustomerLevel, PaymentMethod } from "@/generated/prisma/enums";
+import { casesFromPcs, formatCases, formatPack, pcsFromCases } from "@/lib/pack";
+import {
+  TEST_STATION_NAME,
+  TEST_STATION_PER_CASE_COPY,
+  formatTestStationQty,
+} from "@/lib/test-station";
 
 export type CreateOrderCompanyOption = {
   id: string;
@@ -46,6 +52,8 @@ type CompanyContext = {
     name: string;
     level: CustomerLevel;
     creditAllowed: boolean;
+    testStationsPerCase?: number;
+    pcsPerCase?: number;
   };
   addresses: Address[];
   catalog: CatalogItem[];
@@ -67,8 +75,10 @@ function levelLabel(level: CustomerLevel) {
 
 export default function CreateOrderPanel({
   companies,
+  initialCompanyId,
 }: {
   companies: CreateOrderCompanyOption[];
+  initialCompanyId?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -114,6 +124,17 @@ export default function CreateOrderPanel({
     () => lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0),
     [lines],
   );
+  const sellingQty = useMemo(
+    () => lines.reduce((s, l) => s + l.quantity, 0),
+    [lines],
+  );
+  const pcsPerCase = ctx?.company.pcsPerCase || 95;
+  const cartCases = useMemo(() => casesFromPcs(sellingQty), [sellingQty]);
+  const stationQty = useMemo(() => {
+    const per = ctx?.company.testStationsPerCase || 0;
+    if (per < 1 || sellingQty < 1) return 0;
+    return casesFromPcs(sellingQty) * per;
+  }, [ctx?.company.testStationsPerCase, sellingQty]);
 
   const catalogFiltered = useMemo(() => {
     if (!ctx) return [];
@@ -160,17 +181,35 @@ export default function CreateOrderPanel({
     }
   }
 
-  function setQty(sku: string, moq: number, stock: number, raw: string) {
-    const n = Math.floor(Number(raw) || 0);
+  const autoSelected = useRef(false);
+  useEffect(() => {
+    if (autoSelected.current || !initialCompanyId) return;
+    if (!companies.some((c) => c.id === initialCompanyId)) return;
+    autoSelected.current = true;
+    const id = initialCompanyId;
+    void Promise.resolve().then(() => selectCompany(id));
+  }, [initialCompanyId, companies]);
+
+  function setCases(sku: string, stockPcs: number, raw: string) {
+    const cases = Math.floor(Number(raw) || 0);
+    const maxCases = Math.floor(stockPcs / pcsPerCase);
     setQtyBySku((prev) => {
       const next = { ...prev };
-      if (n <= 0) {
+      if (cases <= 0) {
         delete next[sku];
       } else {
-        next[sku] = Math.min(stock, Math.max(moq, n));
+        const clamped = Math.min(maxCases, Math.max(1, cases));
+        next[sku] = pcsFromCases(clamped);
       }
       return next;
     });
+  }
+
+  function bumpCases(sku: string, stockPcs: number, delta: number) {
+    const currentPcs = qtyBySku[sku] || 0;
+    const currentCases = casesFromPcs(currentPcs);
+    const nextCases = currentCases + delta;
+    setCases(sku, stockPcs, String(nextCases));
   }
 
   function submit() {
@@ -188,7 +227,8 @@ export default function CreateOrderPanel({
             paymentMethod,
             paymentRef: paymentRef || undefined,
             notes: notes || undefined,
-            couponCode: couponCode || undefined,
+            couponCode:
+              ctx.company.level === "SHOP" ? couponCode || undefined : undefined,
             items: lines.map((l) => ({ sku: l.sku, quantity: l.quantity })),
           }),
         });
@@ -219,8 +259,7 @@ export default function CreateOrderPanel({
               1. Select customer
             </h2>
             <p className="mt-1 text-sm text-[var(--admin-muted)]">
-              Create the company first under Distributors / Wholesalers / Retail
-              if they are new.
+              Create the company first under Add user if they are new.
             </p>
           </div>
           <label className="relative block w-full max-w-xs">
@@ -346,10 +385,13 @@ export default function CreateOrderPanel({
                 Cart
               </p>
               <p className="mt-2 font-semibold tabular-nums">
-                {lines.length} SKU · {money(subtotal)}
+                {cartCases > 0 ? formatPack(sellingQty) : "Empty"}
               </p>
               <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                Prices for {levelLabel(ctx.company.level)} level
+                {levelLabel(ctx.company.level)} price · {money(subtotal)}
+                {stationQty > 0
+                  ? ` · +${formatTestStationQty(stationQty)} free`
+                  : ""}
               </p>
             </AdminCard>
           </div>
@@ -359,7 +401,8 @@ export default function CreateOrderPanel({
               <div>
                 <h2 className="text-base font-semibold">2. Add products</h2>
                 <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                  Qty must meet MOQ and available stock.
+                  Same as the storefront: sold by the case ({pcsPerCase} pcs).
+                  Test stations add automatically for channel accounts.
                 </p>
               </div>
               <label className="relative block w-full max-w-xs">
@@ -378,40 +421,73 @@ export default function CreateOrderPanel({
                 <thead>
                   <tr>
                     <th>Product</th>
-                    <th>Unit</th>
-                    <th>MOQ</th>
                     <th>Stock</th>
-                    <th className="w-28">Qty</th>
+                    <th className="w-40">Cases</th>
+                    <th>Pcs</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {catalogFiltered.map((p) => (
-                    <tr key={p.id}>
-                      <td>
-                        <p className="font-medium">{p.name}</p>
-                        <p className="text-xs text-[var(--admin-muted)]">
-                          {p.sku}
-                        </p>
-                      </td>
-                      <td className="tabular-nums">{money(p.unitPrice)}</td>
-                      <td className="tabular-nums">{p.moq}</td>
-                      <td className="tabular-nums">{p.stock}</td>
-                      <td>
-                        <input
-                          type="number"
-                          min={0}
-                          step={1}
-                          disabled={p.stock < p.moq || p.unitPrice <= 0}
-                          value={qtyBySku[p.sku] ?? ""}
-                          onChange={(e) =>
-                            setQty(p.sku, p.moq, p.stock, e.target.value)
-                          }
-                          placeholder="0"
-                          className="admin-input w-full"
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                  {catalogFiltered.map((p) => {
+                    const pcs = qtyBySku[p.sku] || 0;
+                    const cases = casesFromPcs(pcs);
+                    const stockCases = Math.floor(p.stock / pcsPerCase);
+                    const disabled = p.stock < pcsPerCase || p.unitPrice <= 0;
+                    return (
+                      <tr key={p.id}>
+                        <td>
+                          <p className="font-medium">{p.name}</p>
+                          <p className="text-xs text-[var(--admin-muted)]">
+                            {p.sku}
+                            {p.unitPrice > 0
+                              ? ` · ${money(p.unitPrice)}/pc`
+                              : " · no price"}
+                          </p>
+                        </td>
+                        <td className="tabular-nums text-sm">
+                          {stockCases > 0
+                            ? formatCases(stockCases)
+                            : "0 cases"}
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              disabled={disabled || cases < 1}
+                              onClick={() => bumpCases(p.sku, p.stock, -1)}
+                              className="admin-btn admin-btn-secondary admin-btn-sm !px-2"
+                              aria-label="Remove one case"
+                            >
+                              −
+                            </button>
+                            <input
+                              type="number"
+                              min={0}
+                              step={1}
+                              disabled={disabled}
+                              value={cases || ""}
+                              onChange={(e) =>
+                                setCases(p.sku, p.stock, e.target.value)
+                              }
+                              placeholder="0"
+                              className="admin-input w-16 text-center tabular-nums"
+                            />
+                            <button
+                              type="button"
+                              disabled={disabled || cases >= stockCases}
+                              onClick={() => bumpCases(p.sku, p.stock, 1)}
+                              className="admin-btn admin-btn-secondary admin-btn-sm !px-2"
+                              aria-label="Add one case"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </td>
+                        <td className="tabular-nums text-sm text-[var(--admin-muted)]">
+                          {pcs > 0 ? pcs.toLocaleString() : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -474,13 +550,20 @@ export default function CreateOrderPanel({
               </label>
 
               <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                Coupon code
+                {ctx.company.level === "SHOP" ? "Coupon code" : "Channel rebate"}
+                {ctx.company.level === "SHOP" ? (
                 <input
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="admin-input mt-1.5 w-full"
                   placeholder="Optional"
                 />
+                ) : (
+                  <p className="mt-1.5 text-sm text-[var(--admin-gray-700)]">
+                    {TEST_STATION_PER_CASE_COPY}. First-order unpaid pcs apply
+                    automatically. No coupon code.
+                  </p>
+                )}
               </label>
 
               <label className="block text-xs font-medium text-[var(--admin-muted)] lg:col-span-2">
@@ -507,18 +590,33 @@ export default function CreateOrderPanel({
                       className="flex justify-between gap-3 tabular-nums"
                     >
                       <span>
-                        {l.name} × {l.quantity}
+                        {l.name} · {formatPack(l.quantity)}
                       </span>
                       <span className="font-medium">
                         {money(l.unitPrice * l.quantity)}
                       </span>
                     </li>
                   ))}
+                  {stationQty > 0 ? (
+                    <li className="flex justify-between gap-3 tabular-nums">
+                      <span>
+                        {TEST_STATION_NAME} · {formatTestStationQty(stationQty)}{" "}
+                        · free
+                      </span>
+                      <span className="font-medium">{money(0)}</span>
+                    </li>
+                  ) : null}
                 </ul>
                 <div className="mt-3 flex justify-between border-t border-[var(--admin-border)] pt-3 font-semibold">
                   <span>Subtotal</span>
                   <span className="tabular-nums">{money(subtotal)}</span>
                 </div>
+                {ctx.company.level !== "SHOP" ? (
+                  <p className="mt-2 text-xs text-[var(--admin-muted)]">
+                    Channel rebate program applies — same as storefront checkout
+                    ({TEST_STATION_PER_CASE_COPY}).
+                  </p>
+                ) : null}
               </div>
             ) : null}
 

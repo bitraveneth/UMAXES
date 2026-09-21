@@ -19,11 +19,10 @@
 }
 
 /*
- * Buyer account keeps classic UMAXES orange.
- * Login / register / forgot-password use sapphire (adult ops chrome).
- * Admin uses its own --admin-brand-* tokens in admin.css.
+ * Buyer accounts (wholesale, distro, shop) and login/register use sapphire,
+ * the same adult ops blue as admin. Classic brand orange stays on
+ * .umx-brand-orange for media-kit previews only.
  */
-.umx-account-theme,
 .umx-brand-orange {
   --umx-orange: #ff5b04;
   --umx-orange-deep: #c44503;
@@ -39,6 +38,7 @@
   --color-umx-orange-wash: #ffe8d6;
 }
 
+.umx-account-theme,
 .umx-brand-navy {
   --umx-orange: #1b4f72;
   --umx-orange-deep: #163f5c;
@@ -116,66 +116,50 @@
 }
 
 /*
- * Account + auth: real orange fills/text (variables alone can still resolve
- * to public black depending on Tailwind theme wiring).
+ * Theme fills (variables alone can still resolve to public black depending
+ * on Tailwind theme wiring). Media kit uses .umx-brand-orange.
  */
-.umx-account-theme .text-umx-orange,
 .umx-brand-orange .text-umx-orange {
   color: #ff5b04;
 }
-.umx-account-theme .bg-umx-orange,
 .umx-brand-orange .bg-umx-orange {
   background-color: #ff5b04;
 }
-.umx-account-theme .bg-umx-orange-deep,
 .umx-brand-orange .bg-umx-orange-deep {
   background-color: #c44503;
 }
-.umx-account-theme .bg-umx-orange-ink,
 .umx-brand-orange .bg-umx-orange-ink {
   background-color: #3d1605;
 }
-.umx-account-theme .bg-umx-orange-wash,
 .umx-brand-orange .bg-umx-orange-wash {
   background-color: #ffe8d6;
 }
-.umx-account-theme .text-umx-orange-ink,
 .umx-brand-orange .text-umx-orange-ink {
   color: #3d1605;
 }
-.umx-account-theme .text-umx-orange-deep,
 .umx-brand-orange .text-umx-orange-deep {
   color: #c44503;
 }
-.umx-account-theme .border-umx-orange,
 .umx-brand-orange .border-umx-orange {
   border-color: #ff5b04;
 }
-.umx-account-theme .ring-umx-orange,
 .umx-brand-orange .ring-umx-orange {
   --tw-ring-color: #ff5b04;
 }
 
 @media (hover: hover) {
-  .umx-account-theme [class*="hover:text-umx-orange"]:hover:not([class*="hover:text-umx-orange-"]),
   .umx-brand-orange [class*="hover:text-umx-orange"]:hover:not([class*="hover:text-umx-orange-"]) {
     color: #ff5b04;
   }
 
-  .umx-account-theme [class*="hover:text-umx-orange-deep"]:hover,
   .umx-brand-orange [class*="hover:text-umx-orange-deep"]:hover {
     color: #c44503;
   }
 
-  .umx-account-theme [class*="hover:text-white"]:hover,
   .umx-brand-orange [class*="hover:text-white"]:hover {
     color: #fff;
   }
 
-  .umx-account-theme
-    [class*="hover:bg-umx-orange"]:hover:not([class*="hover:bg-umx-orange-"]):not(
-      [class*="hover:bg-umx-orange/"]
-    ),
   .umx-brand-orange
     [class*="hover:bg-umx-orange"]:hover:not([class*="hover:bg-umx-orange-"]):not(
       [class*="hover:bg-umx-orange/"]
@@ -184,37 +168,31 @@
     box-shadow: none;
   }
 
-  .umx-account-theme [class*="hover:bg-umx-orange-wash"]:hover,
   .umx-brand-orange [class*="hover:bg-umx-orange-wash"]:hover {
     background-color: #ffe8d6;
     box-shadow: none;
   }
 
-  .umx-account-theme [class*="hover:bg-umx-orange-deep"]:hover,
   .umx-brand-orange [class*="hover:bg-umx-orange-deep"]:hover {
     background-color: #c44503;
     box-shadow: none;
   }
 
-  .umx-account-theme [class*="hover:bg-umx-orange-mid"]:hover,
   .umx-brand-orange [class*="hover:bg-umx-orange-mid"]:hover {
     background-color: #e04f03;
     box-shadow: none;
   }
 
-  .umx-account-theme [class*="hover:bg-umx-orange/"]:hover,
   .umx-brand-orange [class*="hover:bg-umx-orange/"]:hover {
     background-color: rgb(255 91 4 / 0.1);
     box-shadow: none;
   }
 
-  .umx-account-theme [class*="hover:border-umx-orange"]:hover:not([class*="hover:border-umx-orange/"]),
   .umx-brand-orange [class*="hover:border-umx-orange"]:hover:not([class*="hover:border-umx-orange/"]) {
     border-color: #ff5b04;
     box-shadow: none;
   }
 
-  .umx-account-theme [class*="hover:ring-umx-orange"]:hover,
   .umx-brand-orange [class*="hover:ring-umx-orange"]:hover {
     --tw-ring-color: #ff5b04;
     --tw-ring-opacity: 1;
@@ -222,66 +200,77 @@
   }
 }
 
-.umx-account-theme .group:hover [class*="group-hover:text-umx-orange"]:not([class*="group-hover:text-umx-orange-"]),
 .umx-brand-orange .group:hover [class*="group-hover:text-umx-orange"]:not([class*="group-hover:text-umx-orange-"]) {
   color: #ff5b04;
 }
 
-.umx-account-theme .group\/nav:hover [class*="group-hover\/nav:text-white"],
 .umx-brand-orange .group\/nav:hover [class*="group-hover\/nav:text-white"],
-.umx-account-theme .group\/out:hover [class*="group-hover\/out:text-white"],
 .umx-brand-orange .group\/out:hover [class*="group-hover\/out:text-white"] {
   color: #fff;
 }
 
-.umx-account-theme .group:hover [class*="group-hover:bg-umx-orange"]:not([class*="group-hover:bg-umx-orange-"]),
 .umx-brand-orange .group:hover [class*="group-hover:bg-umx-orange"]:not([class*="group-hover:bg-umx-orange-"]) {
   background-color: #ff5b04;
 }
 
-.umx-account-theme .group:hover [class*="group-hover:border-umx-orange"],
 .umx-brand-orange .group:hover [class*="group-hover:border-umx-orange"] {
   border-color: #ff5b04;
 }
 
+.umx-account-theme .text-umx-orange,
 .umx-brand-navy .text-umx-orange {
   color: #1b4f72;
 }
+.umx-account-theme .bg-umx-orange,
 .umx-brand-navy .bg-umx-orange {
   background-color: #1b4f72;
 }
+.umx-account-theme .bg-umx-orange-deep,
 .umx-brand-navy .bg-umx-orange-deep {
   background-color: #163f5c;
 }
+.umx-account-theme .bg-umx-orange-ink,
 .umx-brand-navy .bg-umx-orange-ink {
   background-color: #0e2438;
 }
+.umx-account-theme .bg-umx-orange-wash,
 .umx-brand-navy .bg-umx-orange-wash {
   background-color: #e7f1f8;
 }
+.umx-account-theme .text-umx-orange-ink,
 .umx-brand-navy .text-umx-orange-ink {
   color: #0e2438;
 }
+.umx-account-theme .text-umx-orange-deep,
 .umx-brand-navy .text-umx-orange-deep {
   color: #163f5c;
 }
+.umx-account-theme .border-umx-orange,
 .umx-brand-navy .border-umx-orange {
   border-color: #1b4f72;
 }
+.umx-account-theme .ring-umx-orange,
 .umx-brand-navy .ring-umx-orange {
   --tw-ring-color: #1b4f72;
 }
 
 @media (hover: hover) {
+  .umx-account-theme [class*="hover:text-umx-orange"]:hover:not([class*="hover:text-umx-orange-"]),
   .umx-brand-navy [class*="hover:text-umx-orange"]:hover:not([class*="hover:text-umx-orange-"]) {
     color: #1b4f72;
   }
+  .umx-account-theme [class*="hover:text-umx-orange-deep"]:hover,
   .umx-brand-navy [class*="hover:text-umx-orange-deep"]:hover {
     color: #163f5c;
   }
+  .umx-account-theme [class*="hover:text-white"]:hover,
   .umx-brand-navy [class*="hover:text-white"]:hover {
     color: #fff;
   }
+  .umx-account-theme
+    [class*="hover:bg-umx-orange"]:hover:not([class*="hover:bg-umx-orange-"]):not(
+      [class*="hover:bg-umx-orange/"]
+    ),
   .umx-brand-navy
     [class*="hover:bg-umx-orange"]:hover:not([class*="hover:bg-umx-orange-"]):not(
       [class*="hover:bg-umx-orange/"]
@@ -289,26 +278,32 @@
     background-color: #1b4f72;
     box-shadow: none;
   }
+  .umx-account-theme [class*="hover:bg-umx-orange-wash"]:hover,
   .umx-brand-navy [class*="hover:bg-umx-orange-wash"]:hover {
     background-color: #e7f1f8;
     box-shadow: none;
   }
+  .umx-account-theme [class*="hover:bg-umx-orange-deep"]:hover,
   .umx-brand-navy [class*="hover:bg-umx-orange-deep"]:hover {
     background-color: #163f5c;
     box-shadow: none;
   }
+  .umx-account-theme [class*="hover:bg-umx-orange-mid"]:hover,
   .umx-brand-navy [class*="hover:bg-umx-orange-mid"]:hover {
     background-color: #2b7aab;
     box-shadow: none;
   }
+  .umx-account-theme [class*="hover:bg-umx-orange/"]:hover,
   .umx-brand-navy [class*="hover:bg-umx-orange/"]:hover {
     background-color: rgb(27 79 114 / 0.1);
     box-shadow: none;
   }
+  .umx-account-theme [class*="hover:border-umx-orange"]:hover:not([class*="hover:border-umx-orange/"]),
   .umx-brand-navy [class*="hover:border-umx-orange"]:hover:not([class*="hover:border-umx-orange/"]) {
     border-color: #1b4f72;
     box-shadow: none;
   }
+  .umx-account-theme [class*="hover:ring-umx-orange"]:hover,
   .umx-brand-navy [class*="hover:ring-umx-orange"]:hover {
     --tw-ring-color: #1b4f72;
     --tw-ring-opacity: 1;
@@ -316,12 +311,21 @@
   }
 }
 
+.umx-account-theme .group:hover [class*="group-hover:text-umx-orange"]:not([class*="group-hover:text-umx-orange-"]),
 .umx-brand-navy .group:hover [class*="group-hover:text-umx-orange"]:not([class*="group-hover:text-umx-orange-"]) {
   color: #1b4f72;
 }
+.umx-account-theme .group\/nav:hover [class*="group-hover\/nav:text-white"],
+.umx-brand-navy .group\/nav:hover [class*="group-hover\/nav:text-white"],
+.umx-account-theme .group\/out:hover [class*="group-hover\/out:text-white"],
+.umx-brand-navy .group\/out:hover [class*="group-hover\/out:text-white"] {
+  color: #fff;
+}
+.umx-account-theme .group:hover [class*="group-hover:bg-umx-orange"]:not([class*="group-hover:bg-umx-orange-"]),
 .umx-brand-navy .group:hover [class*="group-hover:bg-umx-orange"]:not([class*="group-hover:bg-umx-orange-"]) {
   background-color: #1b4f72;
 }
+.umx-account-theme .group:hover [class*="group-hover:border-umx-orange"],
 .umx-brand-navy .group:hover [class*="group-hover:border-umx-orange"] {
   border-color: #1b4f72;
 }

@@ -37,12 +37,12 @@ export const learnEn: Record<LearnSlug, LearnTutorial> = {
   customers: {
     title: "Customer directories",
     summary: "Distributors, wholesalers, and retail shops in one place.",
-    what: "After approval, companies appear under Distributors, Wholesalers, or Retail. These lists are your customer directory for contact, status, and credit overview.",
+    what: "After approval, companies appear under Distributors, Wholesalers, or Retail. Admin and Super Admin can also Add user on Users (or at the top of each directory) — no email verification, you set the password, and the account is approved immediately.",
     steps: [
-      "Pick the segment that matches the company level.",
-      "Search or open a company to review members and account status.",
+      "Use Add user on Users (or the form at the top of a directory) to create company + login.",
+      "Choose level: Distributor, Wholesaler, or Retail. Enter a ship-to so you can place an order next.",
+      "The new company is approved immediately and shows on Create order.",
       "Admins can see credit used / limit; other roles only see whether credit is allowed.",
-      "Update details or follow links into orders and credit as needed.",
     ],
   },
   catalog: {

@@ -11,6 +11,7 @@ import MemberOnlyLink from "@/components/MemberOnlyLink";
 import { useCart } from "@/context/CartContext";
 import { useCompactMobileStoreChrome } from "@/hooks/useStoreChrome";
 import { logos } from "@/lib/assets";
+import { formatCases } from "@/lib/pack";
 
 /** Public site nav — keep lean */
 const primaryNav = [
@@ -242,7 +243,7 @@ export default function Header() {
   const [langOpen, setLangOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isXl, setIsXl] = useState(false);
-  const { quantity } = useCart();
+  const { quantity, cases } = useCart();
   const { data: session } = useSession();
   const hideMobileHeader = useCompactMobileStoreChrome();
   const accountHref =
@@ -370,7 +371,7 @@ export default function Header() {
               <MemberOnlyLink
                 href="/cart"
                 aria-label={
-                  quantity > 0 ? `Cart, ${quantity} items` : "Cart"
+                  quantity > 0 ? `Cart, ${formatCases(cases)}` : "Cart"
                 }
                 className="relative inline-flex h-12 w-12 items-center justify-center rounded-full text-black ring-1 ring-black/15 transition duration-200 hover:bg-black hover:text-white hover:ring-black"
                 onClick={closeMenu}
@@ -378,7 +379,7 @@ export default function Header() {
                 <CartIcon className="h-[1.15rem] w-[1.15rem]" />
                 {quantity > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-umx-orange px-1 font-display text-[0.65rem] font-bold text-white">
-                    {quantity > 99 ? "99+" : quantity}
+                    {cases > 99 ? "99+" : cases}
                   </span>
                 )}
               </MemberOnlyLink>

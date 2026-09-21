@@ -13,6 +13,8 @@ import {
   buyerStatusLabel,
 } from "@/lib/buyer-order";
 import { Package } from "lucide-react";
+import OverviewRebateCard from "@/components/account/OverviewRebateCard";
+import { isChannelBuyerLevel } from "@/lib/channel-level";
 
 export const metadata = {
   title: "Account · UMAXES",
@@ -66,6 +68,7 @@ export default async function AccountPage() {
             select: {
               name: true,
               level: true,
+              rebateBalanceUsd: true,
             },
           })
         : null,
@@ -119,6 +122,8 @@ export default async function AccountPage() {
             select: {
               id: true,
               label: true,
+              recipientName: true,
+              phone: true,
               line1: true,
               city: true,
               region: true,
@@ -139,6 +144,10 @@ export default async function AccountPage() {
         paymentPending={paymentPending}
         wishlistCount={wishlistCount}
       />
+
+      {isChannelBuyerLevel(company?.level) ? (
+        <OverviewRebateCard walletUsd={company?.rebateBalanceUsd ?? 0} />
+      ) : null}
 
       <section className="mt-10">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -162,7 +171,7 @@ export default async function AccountPage() {
         </div>
 
         {addresses.length === 0 ? (
-          <div className="border border-dashed border-black/15 bg-white px-6 py-10 text-center shadow-[0_10px_28px_rgba(61,22,5,0.04)]">
+          <div className="border border-dashed border-black/15 bg-white px-6 py-10 text-center shadow-[0_10px_28px_rgba(14,36,56,0.04)]">
             <p className="font-display text-base font-semibold text-black">
               No shipping address yet
             </p>
@@ -181,7 +190,7 @@ export default async function AccountPage() {
             {addresses.map((a) => (
               <li
                 key={a.id}
-                className="border border-black/10 bg-white p-4 shadow-[0_8px_24px_rgba(61,22,5,0.04)]"
+                className="border border-black/10 bg-white p-4 shadow-[0_8px_24px_rgba(14,36,56,0.04)]"
               >
                 {a.isDefault ? (
                   <p className="font-display text-[10px] font-semibold tracking-[0.14em] text-umx-orange uppercase">
@@ -189,9 +198,10 @@ export default async function AccountPage() {
                   </p>
                 ) : null}
                 <p className="mt-1 font-display text-sm font-bold text-black">
-                  {a.label || "Shipping address"}
+                  {a.recipientName || a.label || "Shipping address"}
                 </p>
                 <div className="mt-2 space-y-0.5 font-body text-sm leading-relaxed text-black/75">
+                  {a.phone ? <p>{a.phone}</p> : null}
                   <p>{a.line1}</p>
                   <p>
                     {a.city}
@@ -235,7 +245,7 @@ export default async function AccountPage() {
         </div>
 
         {recentOrders.length === 0 ? (
-          <div className="border border-dashed border-black/15 bg-white px-6 py-14 text-center shadow-[0_10px_28px_rgba(61,22,5,0.04)]">
+          <div className="border border-dashed border-black/15 bg-white px-6 py-14 text-center shadow-[0_10px_28px_rgba(14,36,56,0.04)]">
             <Package className="mx-auto h-8 w-8 text-umx-orange" strokeWidth={1.75} />
             <p className="mt-4 font-display text-base font-semibold text-black">
               No orders yet
@@ -259,7 +269,7 @@ export default async function AccountPage() {
                 <li key={order.id}>
                   <Link
                     href={`/account/orders/${order.id}`}
-                    className="group block overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(61,22,5,0.04)] transition hover:border-umx-orange hover:shadow-[0_12px_28px_rgba(255,91,4,0.1)]"
+                    className="group block overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(14,36,56,0.04)] transition hover:border-umx-orange hover:shadow-[0_12px_28px_rgba(27,79,114,0.1)]"
                   >
                     <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
                       {/* Thumbs */}

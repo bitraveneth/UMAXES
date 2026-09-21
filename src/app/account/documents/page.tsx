@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Download, ExternalLink, FileText, Package } from "lucide-react";
+import { ExternalLink, FileText, Package } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import AccountHeaderI18n from "@/components/account/AccountHeaderI18n";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 import {
   buyerDocAvailability,
   buyerStatusClass,
@@ -20,7 +21,6 @@ const DOC_META: {
   icon: typeof FileText;
 }[] = [
   { type: "pi", label: "Proforma", short: "PI", icon: FileText },
-  { type: "invoice", label: "Invoice", short: "CI", icon: FileText },
   { type: "packing", label: "Packing list", short: "PL", icon: Package },
 ];
 
@@ -48,7 +48,7 @@ export default async function DocumentsPage() {
       />
 
       {orders.length === 0 ? (
-        <div className="border border-black/10 bg-white px-6 py-16 text-center shadow-[0_8px_20px_rgba(61,22,5,0.04)]">
+        <div className="border border-black/10 bg-white px-6 py-16 text-center shadow-[0_8px_20px_rgba(14,36,56,0.04)]">
           <p className="font-display text-base font-semibold text-black">
             No documents yet
           </p>
@@ -71,7 +71,7 @@ export default async function DocumentsPage() {
             return (
               <li
                 key={order.id}
-                className="group/card overflow-hidden border border-black/10 bg-white shadow-[0_8px_20px_rgba(61,22,5,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-umx-orange/50 hover:shadow-[0_14px_32px_rgba(255,91,4,0.12)]"
+                className="group/card border border-black/10 bg-white shadow-[0_8px_20px_rgba(14,36,56,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-umx-orange/50 hover:shadow-[0_14px_32px_rgba(27,79,114,0.12)]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3 border-b border-black/8 px-5 py-4 sm:px-6">
                   <div className="min-w-0">
@@ -92,14 +92,14 @@ export default async function DocumentsPage() {
                       {order.createdAt.toISOString().slice(0, 10)}
                       <span className="mx-2">·</span>
                       {readyCount} of {DOC_META.length} ready
-                      {order.piNumber ? (
-                        <>
-                          <span className="mx-2">·</span>
-                          <span className="font-display font-semibold text-umx-orange">
-                            {order.piNumber}
-                          </span>
-                        </>
-                      ) : null}
+                              {order.piNumber ? (
+                                <>
+                                  <span className="mx-2">·</span>
+                                  <span className="break-all font-display font-semibold text-[#1b4f72]">
+                                    {order.piNumber}
+                                  </span>
+                                </>
+                              ) : null}
                     </p>
                   </div>
                   <Link
@@ -145,32 +145,35 @@ export default async function DocumentsPage() {
 
                     return (
                       <li key={doc.type} className={border}>
-                        <a
-                          href={`/api/orders/${order.id}/docs?type=${doc.type}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group/doc flex h-full items-start gap-3 px-5 py-4 transition duration-200 hover:bg-umx-orange-wash/70 sm:px-5"
-                        >
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-umx-orange-wash text-umx-orange transition duration-200 group-hover/doc:scale-105 group-hover/doc:bg-umx-orange group-hover/doc:text-white">
+                        <div className="flex h-full items-start gap-3 px-5 py-4 sm:px-5">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center bg-umx-orange-wash text-umx-orange">
                             <Icon className="h-3.5 w-3.5" strokeWidth={1.85} />
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="font-display text-sm font-bold text-black transition group-hover/doc:text-umx-orange">
+                            <p className="font-display text-sm font-bold text-black">
                               {doc.label}
                             </p>
-                            <p className="mt-0.5 font-body text-xs text-black">
-                              Ready to open
+                            <p className="mt-0.5 font-body text-xs text-black/55">
+                              Download as PDF or Excel
                             </p>
-                            <span className="mt-2 inline-flex items-center gap-1 font-display text-xs font-semibold text-umx-orange transition duration-200 group-hover/doc:gap-1.5">
-                              <Download className="h-3 w-3" strokeWidth={2} />
-                              Open
-                              <ExternalLink
-                                className="h-3 w-3 transition group-hover/doc:translate-x-0.5"
-                                strokeWidth={2}
+                            <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                              <DocumentDownloadMenu
+                                orderId={order.id}
+                                type={doc.type}
+                                compact
                               />
-                            </span>
+                              <a
+                                href={`/api/orders/${order.id}/docs?type=${doc.type}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 border border-transparent px-2 py-1.5 font-display text-xs font-semibold text-umx-orange transition hover:border-umx-orange/25 hover:bg-umx-orange-wash/50"
+                              >
+                                Open
+                                <ExternalLink className="h-3 w-3" strokeWidth={2} />
+                              </a>
+                            </div>
                           </div>
-                        </a>
+                        </div>
                       </li>
                     );
                   })}

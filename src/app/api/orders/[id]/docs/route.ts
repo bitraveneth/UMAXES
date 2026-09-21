@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getActiveBankAccount } from "@/lib/bank-accounts";
 import { buildInvoiceHtml, type InvoiceDocType } from "@/lib/invoice-html";
+import { siblingDocNumber } from "@/lib/doc-number";
+import { buildInvoicePdf, buildInvoiceXlsx } from "@/lib/document-file";
 import { prisma } from "@/lib/db";
 
 type Params = { params: Promise<{ id: string }> };
@@ -58,6 +60,7 @@ export async function GET(request: Request, { params }: Params) {
   const url = new URL(request.url);
   const type = (url.searchParams.get("type") || "pi") as InvoiceDocType;
   const forceDownload = url.searchParams.get("download") === "1";
+  const format = (url.searchParams.get("format") || "").toLowerCase();
 
   if (role === "LOGISTICS" && type !== "packing") {
     return NextResponse.json(
@@ -67,9 +70,9 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   const filenames: Record<InvoiceDocType, string> = {
-    pi: order.piNumber || order.orderNumber,
-    packing: `PL-${order.orderNumber}`,
-    invoice: `CI-${order.orderNumber}`,
+    pi: order.piNumber || siblingDocNumber(order.piNumber, "PI", order.orderNumber),
+    packing: siblingDocNumber(order.piNumber, "PL", order.orderNumber),
+    invoice: siblingDocNumber(order.piNumber, "CI", order.orderNumber),
   };
 
   const shipment = order.shipments[0];
@@ -92,7 +95,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const bank = type === "packing" ? null : await getActiveBankAccount();
   const origin = new URL(request.url).origin;
-  const html = buildInvoiceHtml({
+  const exportInput = {
     type,
     orderNumber: order.orderNumber,
     docNumber: filenames[type],
@@ -105,14 +108,45 @@ export async function GET(request: Request, { params }: Params) {
     addressSnap: order.addressSnap,
     paymentMethod: order.paymentMethod,
     couponCode: order.couponCode,
+    rebateAppliedUsd: order.rebateAppliedUsd,
+    firstOrderUnpaidPcs: order.firstOrderUnpaidPcs,
+    testStationQty: order.testStationQty,
+    chargedQty: order.chargedQty,
+    sellingQty: order.sellingQty,
     items: order.items,
     packingLines: shipment?.lines?.length ? shipment.lines : null,
     subtotal: order.subtotal,
     discount: order.discount,
     shipping: order.shipping,
     total: order.total,
+  };
+
+  if (format === "xlsx" || format === "excel") {
+    const body = buildInvoiceXlsx(exportInput);
+    return new NextResponse(body, {
+      headers: {
+        "Content-Type": "application/vnd.ms-excel; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filenames[type]}.xls"`,
+      },
+    });
+  }
+
+  if (format === "pdf") {
+    const body = buildInvoicePdf(exportInput);
+    return new NextResponse(body, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filenames[type]}.pdf"`,
+      },
+    });
+  }
+
+  const html = buildInvoiceHtml({
+    ...exportInput,
     packingMetaHtml,
     forceDownloadHref: `?type=${type}&download=1`,
+    pdfHref: `?type=${type}&format=pdf`,
+    xlsxHref: `?type=${type}&format=xlsx`,
     showToolbar: true,
     bank,
     origin,
