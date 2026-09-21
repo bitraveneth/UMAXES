@@ -31,7 +31,7 @@ function formatRate(rate: number) {
 }
 
 function thisOrderValue(channel: CheckoutRebateQuote | null) {
-  if (!channel) return "Posts after payment clears";
+  if (!channel) return "Counts toward rebate after you pay";
   if (channel.isFirstOrder) {
     if (channel.firstOrderUnpaidPcs > 0) {
       return `${channel.firstOrderUnpaidPcs.toLocaleString()} unpaid pcs · gift pricing`;
@@ -39,9 +39,9 @@ function thisOrderValue(channel: CheckoutRebateQuote | null) {
     return "First-order gift pricing applied";
   }
   if (channel.chargedQty > 0) {
-    return `+${channel.chargedQty.toLocaleString()} pcs after payment clears`;
+    return `+${channel.chargedQty.toLocaleString()} pcs count after you pay`;
   }
-  return "Posts after payment clears";
+  return "Counts toward rebate after you pay";
 }
 
 export default function CheckoutRebatePanel({
