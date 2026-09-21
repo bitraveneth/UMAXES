@@ -7,7 +7,11 @@ import AddUserForm from "@/components/admin/AddUserForm";
 
 export const metadata = { title: "Add user · UMAXES Ops" };
 
-export default async function AdminAddUserPage() {
+export default async function AdminAddUserPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ level?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -16,6 +20,12 @@ export default async function AdminAddUserPage() {
   ) {
     redirect("/admin");
   }
+
+  const sp = await searchParams;
+  const level =
+    sp.level === "DISTRO" || sp.level === "WHOLESALER" || sp.level === "SHOP"
+      ? sp.level
+      : "WHOLESALER";
 
   return (
     <div className="space-y-6">
@@ -26,7 +36,7 @@ export default async function AdminAddUserPage() {
           <AdminLinkBtn href="/admin/users" labelKey="users.backToUsers" />
         }
       />
-      <AddUserForm />
+      <AddUserForm initialLevel={level} />
     </div>
   );
 }

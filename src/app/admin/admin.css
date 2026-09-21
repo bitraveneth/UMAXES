@@ -342,6 +342,27 @@
   cursor: not-allowed;
 }
 
+.admin-input-invalid {
+  border-color: var(--admin-error-500) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.admin-req {
+  color: var(--admin-error-500);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.admin-field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--admin-error-500);
+}
+
 .admin-label {
   display: block;
   font-size: 0.9375rem;

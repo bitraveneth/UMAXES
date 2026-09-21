@@ -2,16 +2,12 @@
 
 import { Fragment, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  addCompanyShipTo,
-  removeCompanyShipTo,
-  setCompanyShipToDefault,
-} from "@/lib/admin-actions";
+import { addCompanyShipTo, removeCompanyShipTo, setCompanyShipToDefault } from "@/lib/admin-actions";
 import type { CustomerLevel, UserStatus } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
-import AddUserForm from "@/components/admin/AddUserForm";
-import { Building2, Plus } from "lucide-react";
+import { Building2, Plus, UserPlus } from "lucide-react";
+import Link from "next/link";
 
 export type CustomerDirectoryRow = {
   id: string;
@@ -76,7 +72,7 @@ export default function CustomersDirectory({
   rows: CustomerDirectoryRow[];
   /** ADMIN / SUPER_ADMIN only — never buyers or sales UI */
   canSeeCreditAmounts?: boolean;
-  /** ADMIN / SUPER_ADMIN — staff add-user form */
+  /** ADMIN / SUPER_ADMIN — link to the single Add user page */
   canRegister?: boolean;
 }) {
   const { t, locale } = useAdminI18n();
@@ -111,12 +107,15 @@ export default function CustomersDirectory({
   return (
     <div className="space-y-6">
       {canRegister ? (
-        <AddUserForm
-          fixedLevel={level}
-          canSeeCreditAmounts={canSeeCreditAmounts}
-          titleKey="customers.registerTitle"
-          hintKey="customers.registerHint"
-        />
+        <div className="flex justify-end">
+          <Link
+            href={`/admin/users/new?level=${level}`}
+            className="admin-btn admin-btn-secondary admin-btn-sm"
+          >
+            <UserPlus className="h-4 w-4" strokeWidth={1.75} />
+            {t("users.addUser")}
+          </Link>
+        </div>
       ) : null}
 
       <div className="flex flex-wrap gap-2">

@@ -233,7 +233,7 @@ export async function createCustomerOnBehalf(input: {
   taxId?: string;
   contactName: string;
   email: string;
-  phone?: string;
+  phone: string;
   password: string;
   confirmPassword?: string;
   creditLimit?: number;
@@ -260,14 +260,21 @@ export async function createCustomerOnBehalf(input: {
   const companyName = input.companyName.trim();
   const contactName = input.contactName.trim();
   const email = input.email?.trim().toLowerCase() || "";
-  const phone = input.phone?.trim() || null;
+  const phone = input.phone?.trim() || "";
   const password = input.password;
   const confirmPassword = input.confirmPassword;
 
   if (!companyName) throw new Error("Company name required");
   if (!contactName) throw new Error("Contact name required");
   if (!email) throw new Error("Email is required");
-  if (!email.includes("@")) throw new Error("Enter a valid email");
+  if (!email.includes("@") || !email.includes(".")) {
+    throw new Error("Enter a valid email");
+  }
+  if (!phone) throw new Error("Phone is required");
+  const phoneDigits = phone.replace(/\D/g, "");
+  if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+    throw new Error("Enter a valid phone number");
+  }
   if (!password || password.length < 6) {
     throw new Error("Password must be at least 6 characters");
   }
@@ -285,10 +292,8 @@ export async function createCustomerOnBehalf(input: {
 
   const existsEmail = await prisma.user.findUnique({ where: { email } });
   if (existsEmail) throw new Error("Email is already registered");
-  if (phone) {
-    const existsPhone = await prisma.user.findUnique({ where: { phone } });
-    if (existsPhone) throw new Error("Phone is already registered");
-  }
+  const existsPhone = await prisma.user.findUnique({ where: { phone } });
+  if (existsPhone) throw new Error("Phone is already registered");
 
   const defaults = creditDefaultsByLevel[input.level];
   const status = "APPROVED";
