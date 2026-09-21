@@ -21,7 +21,6 @@ const DOC_META: {
   icon: typeof FileText;
 }[] = [
   { type: "pi", label: "Proforma", short: "PI", icon: FileText },
-  { type: "invoice", label: "Invoice", short: "CI", icon: FileText },
   { type: "packing", label: "Packing list", short: "PL", icon: Package },
 ];
 

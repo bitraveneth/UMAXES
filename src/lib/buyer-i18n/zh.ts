@@ -63,7 +63,7 @@ const zh: BuyerMessages = {
   documents: {
     eyebrow: "文件",
     title: "单据",
-    description: "各订单的形式发票、商业发票与装箱单。可打开已就绪文件查看或下载。",
+    description: "各订单的形式发票与装箱单。可打开已就绪文件查看或下载。",
   },
   tracking: {
     eyebrow: "货运",

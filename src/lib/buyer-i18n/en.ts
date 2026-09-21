@@ -65,7 +65,7 @@ const en: BuyerMessages = {
     eyebrow: "Paperwork",
     title: "Documents",
     description:
-      "Proformas, invoices, and packing lists across your orders. Open any ready file to view or download.",
+      "Proformas and packing lists across your orders. Open any ready file to view or download.",
   },
   tracking: {
     eyebrow: "Shipments",

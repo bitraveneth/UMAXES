@@ -55,12 +55,6 @@ const DOCS: {
     icon: FileText,
   },
   {
-    type: "invoice",
-    label: "Commercial invoice",
-    description: "Final invoice",
-    icon: FileText,
-  },
-  {
     type: "packing",
     label: "Packing list",
     description: "What ships in the boxes",
@@ -200,7 +194,7 @@ export default function BuyerOrderDetail({
           <p className="font-body text-sm text-black">
             Open a document to view it, or download PDF / Excel.
           </p>
-          <ul className="grid gap-4 sm:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2">
             {DOCS.map((doc) => {
               const state = docs[doc.type];
               const Icon = doc.icon;
