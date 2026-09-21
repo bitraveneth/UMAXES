@@ -52,6 +52,7 @@ export const adminNavIcons: Record<string, LucideIcon> = {
   "/admin/logistics/packing-lists": ClipboardList,
   "/admin/profile": UserRound,
   "/admin/catalog": Package,
+  "/admin/warehouse": Warehouse,
   "/admin/faq": CircleHelp,
   "/admin/coupons": TicketPercent,
   "/admin/rebates": Wallet,

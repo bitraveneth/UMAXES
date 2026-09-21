@@ -9,7 +9,7 @@ import type {
 } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { CASE_MOQ_PCS } from "@/lib/pack";
+import { CASE_MOQ_CASES, TEST_STATION_SKU, caseMoqFromStored, isCasePackedSku } from "@/lib/pack";
 import { canAccessAdmin } from "@/lib/rbac";
 import { deleteOrderPaymentSlip } from "@/lib/payment-slip-ops";
 
@@ -1128,6 +1128,18 @@ export async function adjustInventory(productId: string, quantity: number) {
   const session = await requireRoles(["ADMIN", "WAREHOUSE"]);
   const qty = Math.max(0, Math.floor(quantity));
 
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { id: true, sku: true, name: true },
+  });
+  if (!product) throw new Error("Product not found");
+
+  const existing = await prisma.inventory.findUnique({
+    where: { productId },
+    select: { quantity: true },
+  });
+  const previousQuantity = existing?.quantity ?? 0;
+
   await prisma.inventory.upsert({
     where: { productId },
     create: { productId, quantity: qty, reserved: 0 },
@@ -1140,10 +1152,33 @@ export async function adjustInventory(productId: string, quantity: number) {
       action: "INVENTORY_ADJUST",
       entity: "Product",
       entityId: productId,
-      meta: JSON.stringify({ quantity: qty }),
+      meta: JSON.stringify({
+        sku: product.sku,
+        name: product.name,
+        previousQuantity,
+        quantity: qty,
+      }),
     },
   });
 
+  revalidatePath("/admin/warehouse");
+  revalidatePath("/admin/catalog");
+}
+
+export async function addTestStationProduct() {
+  await requireRoles(["ADMIN"]);
+  const existed = await prisma.product.findUnique({
+    where: { sku: TEST_STATION_SKU },
+    select: { id: true },
+  });
+  const { ensureTestStationProduct } = await import("@/lib/rebate");
+  const row = await ensureTestStationProduct();
+  // New kits start at 0 so warehouse can count real units (seed used a dummy pool).
+  await prisma.inventory.upsert({
+    where: { productId: row.id },
+    create: { productId: row.id, quantity: 0, reserved: 0 },
+    update: existed ? {} : { quantity: 0 },
+  });
   revalidatePath("/admin/warehouse");
   revalidatePath("/admin/catalog");
 }
@@ -1158,10 +1193,14 @@ export async function updateProductPrice(
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) throw new Error("Product not found");
 
+  const storedMoq = isCasePackedSku(product.sku)
+    ? caseMoqFromStored(moq)
+    : Math.max(1, Math.floor(Number(moq) || 1));
+
   await prisma.priceByLevel.upsert({
     where: { productId_level: { productId, level } },
-    create: { productId, level, unitPrice, moq },
-    update: { unitPrice, moq },
+    create: { productId, level, unitPrice, moq: storedMoq },
+    update: { unitPrice, moq: storedMoq },
   });
 
   await prisma.auditLog.create({
@@ -1289,7 +1328,7 @@ export async function saveRebatePolicy(input: {
           productId: product.id,
           level: input.level,
           unitPrice,
-          moq: CASE_MOQ_PCS,
+          moq: CASE_MOQ_CASES,
         },
         update: { unitPrice },
       });
@@ -2427,17 +2466,17 @@ export async function createProduct(input: {
           {
             level: "DISTRO",
             unitPrice: Number(input.distroPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.distroMoq ?? CASE_MOQ_PCS)),
+            moq: Math.max(1, Math.floor(input.distroMoq ?? CASE_MOQ_CASES)),
           },
           {
             level: "WHOLESALER",
             unitPrice: Number(input.wholesalerPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.wholesalerMoq ?? CASE_MOQ_PCS)),
+            moq: Math.max(1, Math.floor(input.wholesalerMoq ?? CASE_MOQ_CASES)),
           },
           {
             level: "SHOP",
             unitPrice: Number(input.shopPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.shopMoq ?? CASE_MOQ_PCS)),
+            moq: Math.max(1, Math.floor(input.shopMoq ?? CASE_MOQ_CASES)),
           },
         ],
       },

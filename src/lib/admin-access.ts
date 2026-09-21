@@ -31,7 +31,7 @@ const ADMIN_PATH_RULES: PathRule[] = [
   { href: "/admin/orders", roles: ["ADMIN", "SALES", "WAREHOUSE", "SUPER_ADMIN"] },
   { href: "/admin/orders/new", roles: ["ADMIN", "SALES", "SUPER_ADMIN"] },
   { href: "/admin/suppliers", roles: ["ADMIN", "SALES", "WAREHOUSE", "SUPER_ADMIN"] },
-  { href: "/admin/warehouse", roles: [] },
+  { href: "/admin/warehouse", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/warehouses", roles: [] },
   { href: "/admin/logistics", roles: ["ADMIN", "LOGISTICS", "SALES", "SUPER_ADMIN"] },
   {
@@ -87,7 +87,6 @@ export function canAccessAdminPath(role: string, pathname: string): boolean {
 
   if (role === "SUPER_ADMIN") {
     if (
-      pathname.startsWith("/admin/warehouse") ||
       pathname === "/admin/warehouses" ||
       pathname.startsWith("/admin/warehouses/")
     ) {
@@ -96,10 +95,9 @@ export function canAccessAdminPath(role: string, pathname: string): boolean {
     return true;
   }
 
-  // Regular ADMIN: almost everything except system / warehouse desk
+  // Regular ADMIN: almost everything except system / multi-warehouse
   if (role === "ADMIN") {
     if (
-      pathname.startsWith("/admin/warehouse") ||
       pathname === "/admin/warehouses" ||
       pathname.startsWith("/admin/warehouses/")
     ) {
