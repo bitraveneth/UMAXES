@@ -47,9 +47,23 @@ export default function CheckoutRebatePanel({
     channel && !channel.isFirstOrder
       ? paid + Math.max(0, channel.chargedQty)
       : paid;
-  const afterPct =
+  const afterTowardNext =
     nextMin && nextMin > 0
       ? clampPct((afterPaid / nextMin) * 100)
+      : afterPaid > 0
+        ? 100
+        : 0;
+  // Progress bar uses the same scale as tier ticks (0 → top minQty).
+  const ladderMax = top?.minQty && top.minQty > 0 ? top.minQty : nextMin;
+  const barPaidPct =
+    ladderMax && ladderMax > 0
+      ? clampPct((paid / ladderMax) * 100)
+      : paid > 0
+        ? 100
+        : 0;
+  const barAfterPct =
+    ladderMax && ladderMax > 0
+      ? clampPct((afterPaid / ladderMax) * 100)
       : afterPaid > 0
         ? 100
         : 0;
@@ -88,12 +102,12 @@ export default function CheckoutRebatePanel({
             role="img"
             aria-label={`${Math.round(towardNext)} percent toward next rebate level`}
           >
-            {afterPct > towardNext ? (
+            {afterTowardNext > towardNext ? (
               <span
                 aria-hidden
                 className="absolute inset-0 rounded-full opacity-40"
                 style={{
-                  background: `conic-gradient(transparent ${towardNext}%, #f97316 ${towardNext}%, #f97316 ${afterPct}%, transparent 0)`,
+                  background: `conic-gradient(transparent ${towardNext}%, #f97316 ${towardNext}%, #f97316 ${afterTowardNext}%, transparent 0)`,
                 }}
               />
             ) : null}
@@ -134,22 +148,21 @@ export default function CheckoutRebatePanel({
 
           <div>
             <div className="relative h-2.5 overflow-hidden rounded-full bg-black/8">
-              {afterPct > towardNext ? (
+              {barAfterPct > barPaidPct ? (
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-umx-orange/55 transition-[width]"
-                  style={{ width: `${afterPct}%` }}
+                  style={{ width: `${barAfterPct}%` }}
                 />
               ) : null}
               <div
                 className="absolute inset-y-0 left-0 rounded-full bg-[#1b4f72] transition-[width]"
-                style={{ width: `${towardNext}%` }}
+                style={{ width: `${barPaidPct}%` }}
               />
             </div>
-            {tiers.length > 0 ? (
+            {tiers.length > 0 && ladderMax ? (
               <div className="relative mt-2 h-5">
                 {tiers.map((tier) => {
-                  const max = top?.minQty || tier.minQty;
-                  const left = clampPct((tier.minQty / max) * 100);
+                  const left = clampPct((tier.minQty / ladderMax) * 100);
                   const reached = paid >= tier.minQty;
                   return (
                     <span
@@ -170,7 +183,7 @@ export default function CheckoutRebatePanel({
                 })}
               </div>
             ) : null}
-            {afterPct > towardNext ? (
+            {barAfterPct > barPaidPct ? (
               <p className="mt-2 font-body text-[11px] text-black/50">
                 Orange shows where this order lands after funds are confirmed.
               </p>
