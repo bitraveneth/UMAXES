@@ -173,7 +173,7 @@ export default function CheckoutRebatePanel({
               <div className="min-w-0">
                 <p className="font-display text-2xl font-extrabold tabular-nums tracking-tight text-black">
                   {paid.toLocaleString()}
-                  <span className="ml-1.5 text-sm font-semibold text-black/50">
+                  <span className="ml-1.5 text-base font-bold text-black">
                     paid pcs
                   </span>
                 </p>
@@ -187,12 +187,12 @@ export default function CheckoutRebatePanel({
               </div>
               {currentRate != null ? (
                 <div className="shrink-0 text-right">
-                  <p className="font-display text-[10px] font-semibold tracking-[0.12em] text-black/40 uppercase">
+                  <p className="font-display text-sm font-bold text-black">
                     Now
                   </p>
                   <p className="font-display text-xl font-extrabold tabular-nums text-[#1b4f72]">
                     {formatRate(currentRate)}
-                    <span className="text-sm font-bold text-[#1b4f72]/65">/pc</span>
+                    <span className="text-sm font-bold text-[#1b4f72]">/pc</span>
                   </p>
                 </div>
               ) : null}
