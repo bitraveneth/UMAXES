@@ -184,7 +184,6 @@ export default function OrdersPanel({
   allowedStatuses,
   canAssignSupplier,
   canDeleteSlip,
-  canConfirmWithoutSlip = false,
   openId = null,
 }: {
   orders: OrdersPanelItem[];
@@ -192,7 +191,6 @@ export default function OrdersPanel({
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
   canDeleteSlip: boolean;
-  canConfirmWithoutSlip?: boolean;
   openId?: string | null;
 }) {
   const { t, locale } = useAdminI18n();
@@ -417,7 +415,6 @@ export default function OrdersPanel({
                               allowedStatuses={allowedStatuses}
                               canAssignSupplier={canAssignSupplier}
                               canDeleteSlip={canDeleteSlip}
-                              canConfirmWithoutSlip={canConfirmWithoutSlip}
                               payLabel={payLabel}
                               statusLabel={statusLabel}
                               onClose={() => setEditingId(null)}
@@ -542,7 +539,6 @@ function OrderExpand({
   allowedStatuses,
   canAssignSupplier,
   canDeleteSlip,
-  canConfirmWithoutSlip,
   payLabel,
   statusLabel,
   onClose,
@@ -552,7 +548,6 @@ function OrderExpand({
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
   canDeleteSlip: boolean;
-  canConfirmWithoutSlip: boolean;
   payLabel: (m: PaymentMethod) => string;
   statusLabel: (s: OrderStatus) => string;
   onClose: () => void;
