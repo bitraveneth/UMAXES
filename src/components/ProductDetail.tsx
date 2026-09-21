@@ -469,7 +469,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                     return (
                       <li
                         key={line.key}
-                        className="grid grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_7.75rem_8.75rem_2.75rem] sm:items-center sm:gap-4"
+                        className="grid min-w-0 grid-cols-1 gap-3 px-4 py-3.5 sm:grid-cols-[minmax(0,1fr)_7.75rem_8.75rem_2.75rem] sm:items-center sm:gap-4"
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-black/5 ring-1 ring-black/8">
@@ -481,9 +481,24 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                               className="object-cover"
                             />
                           </span>
-                          <p className="min-w-0 flex-1 truncate font-display text-sm font-semibold text-black">
-                            {item.name}
-                          </p>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-display text-sm font-semibold text-black">
+                              {item.name}
+                            </p>
+                            <p
+                              className={`mt-0.5 truncate font-display text-sm font-semibold tabular-nums tracking-tight sm:hidden ${
+                                stock === 0 ? "text-black/40" : "text-black"
+                              }`}
+                              title={
+                                stock == null
+                                  ? undefined
+                                  : `${stockLabel} available`
+                              }
+                            >
+                              <span className="mr-1.5 font-bold">Stock</span>{" "}
+                              {stockLabel}
+                            </p>
+                          </div>
                           <button
                             type="button"
                             aria-label={`Remove ${item.name}`}
@@ -497,45 +512,38 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                             />
                           </button>
                         </div>
-                        <div className="grid min-w-0 grid-cols-[minmax(4.75rem,1fr)_auto] items-start gap-3 sm:contents">
-                          <div className="min-w-0">
-                            <p className="mb-1.5 font-display text-sm font-bold text-black sm:hidden">
-                              Stock
-                            </p>
-                            <p
-                              className={`truncate font-display text-sm font-semibold tabular-nums tracking-tight sm:text-right ${
-                                stock === 0 ? "text-black/40" : "text-black"
-                              }`}
-                              title={
-                                stock == null
-                                  ? undefined
-                                  : `${stockLabel} available`
-                              }
-                            >
-                              {stockLabel}
-                            </p>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="mb-1.5 text-center font-display text-sm font-bold text-black sm:hidden">
-                              Cases
-                            </p>
-                            <CaseQtyStepper
-                              pcs={line.quantity}
-                              onChangePcs={(next) => {
-                                const snapped = snapToCasePcs(next);
-                                const capPcs =
-                                  maxCases == null
-                                    ? snapped
-                                    : Math.min(snapped, pcsFromCases(maxCases));
-                                updateLine(line.key, { quantity: capPcs });
-                              }}
-                              allowZero
-                              maxCases={maxCases ?? 999}
-                              size="sm"
-                              align="center"
-                              ariaLabel={`${item.name} cases`}
-                            />
-                          </div>
+                        <p
+                          className={`hidden min-w-0 truncate font-display text-sm font-semibold tabular-nums tracking-tight sm:block sm:text-right ${
+                            stock === 0 ? "text-black/40" : "text-black"
+                          }`}
+                          title={
+                            stock == null
+                              ? undefined
+                              : `${stockLabel} available`
+                          }
+                        >
+                          {stockLabel}
+                        </p>
+                        <div className="min-w-0">
+                          <p className="mb-1.5 text-center font-display text-sm font-bold text-black sm:hidden">
+                            Cases
+                          </p>
+                          <CaseQtyStepper
+                            pcs={line.quantity}
+                            onChangePcs={(next) => {
+                              const snapped = snapToCasePcs(next);
+                              const capPcs =
+                                maxCases == null
+                                  ? snapped
+                                  : Math.min(snapped, pcsFromCases(maxCases));
+                              updateLine(line.key, { quantity: capPcs });
+                            }}
+                            allowZero
+                            maxCases={maxCases ?? 999}
+                            size="sm"
+                            align="center"
+                            ariaLabel={`${item.name} cases`}
+                          />
                         </div>
                         <button
                           type="button"
