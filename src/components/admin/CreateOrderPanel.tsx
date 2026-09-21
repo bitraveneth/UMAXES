@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AdminCard, AdminBadge } from "@/components/admin/ui";
 import { Plus, Search } from "lucide-react";
@@ -75,8 +75,10 @@ function levelLabel(level: CustomerLevel) {
 
 export default function CreateOrderPanel({
   companies,
+  initialCompanyId,
 }: {
   companies: CreateOrderCompanyOption[];
+  initialCompanyId?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -177,6 +179,16 @@ export default function CreateOrderPanel({
     }
   }
 
+  const autoSelected = useRef(false);
+  useEffect(() => {
+    if (autoSelected.current || !initialCompanyId) return;
+    if (!companies.some((c) => c.id === initialCompanyId)) return;
+    autoSelected.current = true;
+    void selectCompany(initialCompanyId);
+    // Intentionally run when the linked company list arrives.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCompanyId, companies]);
+
   function setQty(sku: string, stock: number, raw: string) {
     const n = Math.floor(Number(raw) || 0);
     setQtyBySku((prev) => {
@@ -237,8 +249,7 @@ export default function CreateOrderPanel({
               1. Select customer
             </h2>
             <p className="mt-1 text-sm text-[var(--admin-muted)]">
-              Create the company first under Distributors / Wholesalers / Retail
-              if they are new.
+              Create the company first under Add user if they are new.
             </p>
           </div>
           <label className="relative block w-full max-w-xs">

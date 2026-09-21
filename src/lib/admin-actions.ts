@@ -215,17 +215,30 @@ export async function rejectCustomer(userId: string) {
   revalidatePath("/admin/retail");
 }
 
-/** Register a B2B company + owner login on behalf of the customer. */
+const CUSTOMER_LEVELS: CustomerLevel[] = ["DISTRO", "WHOLESALER", "SHOP"];
+
+function isCustomerLevel(value: string): value is CustomerLevel {
+  return CUSTOMER_LEVELS.includes(value as CustomerLevel);
+}
+
+/**
+ * Staff (ADMIN / SUPER_ADMIN) create a customer login on behalf of the buyer.
+ * Always CUSTOMER + APPROVED — no email OTP, no verification mail, immediately
+ * usable on Create Order. Password is hashed server-side (bcrypt, same as
+ * self-register). Never creates ADMIN / SUPER_ADMIN.
+ */
 export async function createCustomerOnBehalf(input: {
   level: CustomerLevel;
   companyName: string;
   taxId?: string;
   contactName: string;
-  email?: string;
+  email: string;
   phone?: string;
   password: string;
+  confirmPassword?: string;
   creditLimit?: number;
   paymentTermsDays?: number;
+  /** Ignored — staff-created accounts are always APPROVED and usable now. */
   status?: "APPROVED" | "PENDING";
   address?: {
     line1: string;
@@ -237,33 +250,48 @@ export async function createCustomerOnBehalf(input: {
     label?: string;
   };
 }) {
-  const session = await requireRoles(["ADMIN", "SALES"]);
+  const session = await requireRoles(["ADMIN"]);
   const { creditDefaultsByLevel } = await import("@/lib/customer-segments");
+
+  if (!isCustomerLevel(input.level)) {
+    throw new Error("Choose wholesaler, distributor, or retail");
+  }
 
   const companyName = input.companyName.trim();
   const contactName = input.contactName.trim();
-  const email = input.email?.trim().toLowerCase() || null;
+  const email = input.email?.trim().toLowerCase() || "";
   const phone = input.phone?.trim() || null;
   const password = input.password;
+  const confirmPassword = input.confirmPassword;
 
   if (!companyName) throw new Error("Company name required");
   if (!contactName) throw new Error("Contact name required");
-  if (!email && !phone) throw new Error("Email or phone required");
+  if (!email) throw new Error("Email is required");
+  if (!email.includes("@")) throw new Error("Enter a valid email");
   if (!password || password.length < 6) {
     throw new Error("Password must be at least 6 characters");
   }
-
-  if (email) {
-    const exists = await prisma.user.findUnique({ where: { email } });
-    if (exists) throw new Error("Email is already registered");
+  if (confirmPassword !== undefined && confirmPassword !== password) {
+    throw new Error("Passwords do not match");
   }
+
+  const line1 = input.address?.line1?.trim() || "";
+  const city = input.address?.city?.trim() || "";
+  const postalCode = input.address?.postalCode?.trim() || "";
+  const country = input.address?.country?.trim() || "";
+  if (!line1 || !city || !postalCode || !country) {
+    throw new Error("Shipping address is required");
+  }
+
+  const existsEmail = await prisma.user.findUnique({ where: { email } });
+  if (existsEmail) throw new Error("Email is already registered");
   if (phone) {
-    const exists = await prisma.user.findUnique({ where: { phone } });
-    if (exists) throw new Error("Phone is already registered");
+    const existsPhone = await prisma.user.findUnique({ where: { phone } });
+    if (existsPhone) throw new Error("Phone is already registered");
   }
 
   const defaults = creditDefaultsByLevel[input.level];
-  const status = input.status || "APPROVED";
+  const status = "APPROVED";
   const isRetail = input.level === "SHOP";
   const creditLimit = isRetail
     ? 0
@@ -279,7 +307,7 @@ export async function createCustomerOnBehalf(input: {
   const bcrypt = await import("bcryptjs");
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const company = await prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx) => {
     const co = await tx.company.create({
       data: {
         name: companyName,
@@ -292,7 +320,7 @@ export async function createCustomerOnBehalf(input: {
       },
     });
 
-    await tx.user.create({
+    const user = await tx.user.create({
       data: {
         name: contactName,
         email,
@@ -305,21 +333,19 @@ export async function createCustomerOnBehalf(input: {
       },
     });
 
-    if (input.address?.line1 && input.address.city && input.address.postalCode && input.address.country) {
-      await tx.address.create({
-        data: {
-          companyId: co.id,
-          label: input.address.label?.trim() || "Default",
-          line1: input.address.line1.trim(),
-          line2: input.address.line2?.trim() || null,
-          city: input.address.city.trim(),
-          region: input.address.region?.trim() || null,
-          postalCode: input.address.postalCode.trim(),
-          country: input.address.country.trim(),
-          isDefault: true,
-        },
-      });
-    }
+    await tx.address.create({
+      data: {
+        companyId: co.id,
+        label: input.address?.label?.trim() || "Default",
+        line1,
+        line2: input.address?.line2?.trim() || null,
+        city,
+        region: input.address?.region?.trim() || null,
+        postalCode,
+        country,
+        isDefault: true,
+      },
+    });
 
     await tx.auditLog.create({
       data: {
@@ -332,11 +358,20 @@ export async function createCustomerOnBehalf(input: {
           email,
           phone,
           status,
+          userId: user.id,
+          emailVerifySkipped: true,
+          role: "CUSTOMER",
         }),
       },
     });
 
-    return co;
+    return {
+      id: co.id,
+      companyId: co.id,
+      userId: user.id,
+      name: co.name,
+      level: input.level,
+    };
   });
 
   revalidatePath("/admin/customers");
@@ -344,7 +379,9 @@ export async function createCustomerOnBehalf(input: {
   revalidatePath("/admin/wholesalers");
   revalidatePath("/admin/retail");
   revalidatePath("/admin/approvals");
-  return company;
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/orders/new");
+  return created;
 }
 
 const MAX_COMPANY_ADDRESSES = 10;

@@ -57,6 +57,7 @@ const ADMIN_PATH_RULES: PathRule[] = [
   { href: "/admin/audit", roles: ["ADMIN", "SUPER_ADMIN"] },
   /** Customer users directory — admin + super admin */
   { href: "/admin/users", roles: ["SUPER_ADMIN", "ADMIN"] },
+  { href: "/admin/users/new", roles: ["SUPER_ADMIN", "ADMIN"] },
   /** Internal staff accounts — admin + super admin */
   { href: "/admin/staff", roles: ["SUPER_ADMIN", "ADMIN"] },
   /** DB backup / reset / import — super admin only */

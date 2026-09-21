@@ -140,6 +140,7 @@ export async function CustomerSegmentPage({
         level={level}
         rows={rows}
         canSeeCreditAmounts={canSeeCreditAmounts}
+        canRegister={canSeeCreditAmounts}
       />
     </div>
   );

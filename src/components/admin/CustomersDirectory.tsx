@@ -3,16 +3,15 @@
 import { Fragment, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  createCustomerOnBehalf,
   addCompanyShipTo,
   removeCompanyShipTo,
   setCompanyShipToDefault,
 } from "@/lib/admin-actions";
 import type { CustomerLevel, UserStatus } from "@/generated/prisma/enums";
-import { creditDefaultsByLevel } from "@/lib/customer-segments";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
-import { Building2, MapPin, Plus, UserRound } from "lucide-react";
+import AddUserForm from "@/components/admin/AddUserForm";
+import { Building2, Plus } from "lucide-react";
 
 export type CustomerDirectoryRow = {
   id: string;
@@ -71,21 +70,19 @@ export default function CustomersDirectory({
   level,
   rows,
   canSeeCreditAmounts = false,
+  canRegister = false,
 }: {
   level: CustomerLevel;
   rows: CustomerDirectoryRow[];
   /** ADMIN / SUPER_ADMIN only — never buyers or sales UI */
   canSeeCreditAmounts?: boolean;
+  /** ADMIN / SUPER_ADMIN — staff add-user form */
+  canRegister?: boolean;
 }) {
   const { t, locale } = useAdminI18n();
-  const router = useRouter();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formOk, setFormOk] = useState<string | null>(null);
 
-  const defaults = creditDefaultsByLevel[level];
   const isRetail = level === "SHOP";
 
   const filtered = useMemo(() => {
@@ -111,60 +108,17 @@ export default function CustomersDirectory({
     { key: "REJECTED", labelKey: "customers.filterRejected" },
   ];
 
-  function submitRegister(fd: FormData) {
-    setFormError(null);
-    setFormOk(null);
-    const addressLine1 = String(fd.get("line1") || "").trim();
-    const address =
-      addressLine1
-        ? {
-            line1: addressLine1,
-            line2: String(fd.get("line2") || "").trim() || undefined,
-            city: String(fd.get("city") || "").trim(),
-            region: String(fd.get("region") || "").trim() || undefined,
-            postalCode: String(fd.get("postalCode") || "").trim(),
-            country: String(fd.get("country") || "").trim(),
-            label: String(fd.get("addressLabel") || "").trim() || undefined,
-          }
-        : undefined;
-
-    startTransition(async () => {
-      try {
-        await createCustomerOnBehalf({
-          level,
-          companyName: String(fd.get("companyName") || ""),
-          taxId: String(fd.get("taxId") || ""),
-          contactName: String(fd.get("contactName") || ""),
-          email: String(fd.get("email") || ""),
-          phone: String(fd.get("phone") || ""),
-          password: String(fd.get("password") || ""),
-          creditLimit: Number(fd.get("creditLimit") || defaults.creditLimit),
-          paymentTermsDays: Number(
-            fd.get("paymentTermsDays") || defaults.paymentTermsDays,
-          ),
-          status: (String(fd.get("status") || "APPROVED") as
-            | "APPROVED"
-            | "PENDING"),
-          address:
-            address &&
-            address.city &&
-            address.postalCode &&
-            address.country
-              ? address
-              : undefined,
-        });
-        setFormOk(t("customers.registerSuccess"));
-        router.refresh();
-      } catch (e) {
-        setFormError(
-          e instanceof Error ? e.message : t("customers.registerError"),
-        );
-      }
-    });
-  }
-
   return (
     <div className="space-y-6">
+      {canRegister ? (
+        <AddUserForm
+          fixedLevel={level}
+          canSeeCreditAmounts={canSeeCreditAmounts}
+          titleKey="customers.registerTitle"
+          hintKey="customers.registerHint"
+        />
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         {filters.map((f) => {
           const count =
@@ -320,169 +274,6 @@ export default function CustomersDirectory({
             </table>
           </div>
         )}
-      </AdminCard>
-
-      <AdminCard>
-        <div className="mb-4 flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
-            <UserRound className="h-5 w-5" strokeWidth={1.75} />
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-[var(--admin-text)]">
-              {t("customers.registerTitle")}
-            </h2>
-            <p className="mt-1 text-sm text-[var(--admin-muted)]">
-              {t("customers.registerHint")}
-            </p>
-          </div>
-        </div>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submitRegister(new FormData(e.currentTarget));
-            e.currentTarget.reset();
-          }}
-          className="space-y-4"
-        >
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="block text-xs font-medium text-[var(--admin-muted)]">
-              {t("customers.company")}
-              <input
-                name="companyName"
-                required
-                className="admin-input mt-1.5 w-full"
-              />
-            </label>
-            <label className="block text-xs font-medium text-[var(--admin-muted)]">
-              {t("customers.taxId")}
-              <input name="taxId" className="admin-input mt-1.5 w-full" />
-            </label>
-            <label className="block text-xs font-medium text-[var(--admin-muted)]">
-              {t("customers.accountStatus")}
-              <select
-                name="status"
-                defaultValue="APPROVED"
-                className="admin-input mt-1.5 w-full"
-              >
-                <option value="APPROVED">{t("customers.statusAPPROVED")}</option>
-                <option value="PENDING">{t("customers.statusPENDING")}</option>
-              </select>
-            </label>
-            <label className="block text-xs font-medium text-[var(--admin-muted)]">
-              {t("customers.contactName")}
-              <input
-                name="contactName"
-                required
-                className="admin-input mt-1.5 w-full"
-              />
-            </label>
-            <label className="block text-xs font-medium text-[var(--admin-muted)]">
-              {t("customers.email")}
-              <input
-                name="email"
-                type="email"
-                className="admin-input mt-1.5 w-full"
-              />
-            </label>
-            <label className="block text-xs font-medium text-[var(--admin-muted)]">
-              {t("customers.phone")}
-              <input name="phone" className="admin-input mt-1.5 w-full" />
-            </label>
-            <label className="block text-xs font-medium text-[var(--admin-muted)]">
-              {t("customers.tempPassword")}
-              <input
-                name="password"
-                type="text"
-                required
-                minLength={6}
-                className="admin-input mt-1.5 w-full"
-                placeholder={t("customers.tempPasswordHint")}
-              />
-            </label>
-            {!isRetail && canSeeCreditAmounts ? (
-              <>
-                <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                  {t("customers.creditLimit")}
-                  <input
-                    name="creditLimit"
-                    type="number"
-                    min={0}
-                    step={100}
-                    defaultValue={defaults.creditLimit}
-                    className="admin-input mt-1.5 w-full"
-                  />
-                </label>
-                <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                  {t("customers.terms")}
-                  <input
-                    name="paymentTermsDays"
-                    type="number"
-                    min={0}
-                    defaultValue={defaults.paymentTermsDays}
-                    className="admin-input mt-1.5 w-full"
-                  />
-                </label>
-              </>
-            ) : null}
-          </div>
-
-          <div className="rounded-xl border border-[var(--admin-border)] p-4">
-            <p className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-wide text-[var(--admin-muted)] uppercase">
-              <MapPin className="h-3.5 w-3.5" />
-              {t("customers.shipAddress")}
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <label className="block text-xs font-medium text-[var(--admin-muted)] sm:col-span-2">
-                {t("customers.line1")}
-                <input name="line1" className="admin-input mt-1.5 w-full" />
-              </label>
-              <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                {t("customers.line2")}
-                <input name="line2" className="admin-input mt-1.5 w-full" />
-              </label>
-              <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                {t("customers.city")}
-                <input name="city" className="admin-input mt-1.5 w-full" />
-              </label>
-              <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                {t("customers.region")}
-                <input name="region" className="admin-input mt-1.5 w-full" />
-              </label>
-              <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                {t("customers.postalCode")}
-                <input name="postalCode" className="admin-input mt-1.5 w-full" />
-              </label>
-              <label className="block text-xs font-medium text-[var(--admin-muted)]">
-                {t("customers.country")}
-                <input
-                  name="country"
-                  defaultValue="US"
-                  className="admin-input mt-1.5 w-full"
-                />
-              </label>
-            </div>
-          </div>
-
-          {formError ? (
-            <p className="text-sm text-[var(--admin-error-500)]">{formError}</p>
-          ) : null}
-          {formOk ? (
-            <p className="text-sm text-[var(--admin-success-500,#16a34a)]">
-              {formOk}
-            </p>
-          ) : null}
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={pending}
-              className="admin-btn admin-btn-primary"
-            >
-              {t("customers.registerSubmit")}
-            </button>
-          </div>
-        </form>
       </AdminCard>
     </div>
   );

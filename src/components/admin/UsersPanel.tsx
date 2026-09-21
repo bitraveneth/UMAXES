@@ -7,6 +7,7 @@ import {
   prepareImpersonateCustomer,
 } from "@/lib/admin-actions";
 import { AdminBadge, AdminCard, AdminStat } from "@/components/admin/ui";
+import { useAdminI18n } from "@/components/admin/AdminI18n";
 import {
   Users,
   Store,
@@ -16,7 +17,9 @@ import {
   X,
   Clock,
   ExternalLink,
+  UserPlus,
 } from "lucide-react";
+import Link from "next/link";
 import type {
   CustomerLevel,
   UserRole,
@@ -98,6 +101,7 @@ export default function UsersPanel({
   canImpersonate = false,
   initialError = null,
 }: Props) {
+  const { t } = useAdminI18n();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(initialError);
   const [message, setMessage] = useState<string | null>(null);
@@ -257,6 +261,10 @@ export default function UsersPanel({
               staff (Sales, Logistics, Warehouse, Admin).
             </p>
           </div>
+          <Link href="/admin/users/new" className="admin-btn admin-btn-primary admin-btn-sm">
+            <UserPlus className="h-4 w-4" />
+            {t("users.addUser")}
+          </Link>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-b border-[var(--admin-border)] px-5 py-3">

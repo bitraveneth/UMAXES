@@ -3,7 +3,9 @@ import { auth } from "@/lib/auth";
 import { canAccessPath } from "@/lib/rbac";
 import { prisma } from "@/lib/db";
 import { AdminPageHeaderI18n } from "@/components/admin/AdminPageHeaderI18n";
+import { AdminLinkBtn } from "@/components/admin/AdminI18nBits";
 import UsersPanel from "@/components/admin/UsersPanel";
+import { UserPlus } from "lucide-react";
 
 export const metadata = { title: "Users · UMAXES Ops" };
 
@@ -55,6 +57,14 @@ export default async function UsersPage({
       <AdminPageHeaderI18n
         titleKey="users.title"
         descriptionKey="users.description"
+        actions={
+          <AdminLinkBtn
+            href="/admin/users/new"
+            labelKey="users.addUser"
+            variant="primary"
+            icon={<UserPlus className="h-4 w-4" strokeWidth={1.75} />}
+          />
+        }
       />
       <UsersPanel
         canImpersonate={session.user.role === "SUPER_ADMIN"}
