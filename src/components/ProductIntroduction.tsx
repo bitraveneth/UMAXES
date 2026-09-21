@@ -64,32 +64,23 @@ export default function ProductIntroduction() {
       <div className="relative mx-auto max-w-[1400px]">
         {/* Section title — top center, outside the card */}
         <header className="relative mx-auto mb-14 max-w-4xl text-center sm:mb-16">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 left-1/2 -z-0 w-[min(100%,28rem)] -translate-x-1/2 -translate-y-1/2 select-none font-display text-[clamp(4.5rem,18vw,9rem)] font-extrabold leading-none tracking-[-0.07em] text-black/[0.035]"
+          <div className="inline-flex items-center gap-3">
+            <span className="h-px w-10 bg-umx-orange sm:w-14" aria-hidden />
+            <p className="font-display text-xs font-semibold tracking-[0.24em] text-umx-orange uppercase sm:text-sm">
+              Introduction
+            </p>
+            <span className="h-px w-10 bg-umx-orange sm:w-14" aria-hidden />
+          </div>
+
+          <h2
+            id="product-intro-heading"
+            className="mt-5 font-display text-[clamp(2.35rem,6.5vw,4.5rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black"
           >
-            80K
-          </div>
-
-          <div className="relative z-[1]">
-            <div className="inline-flex items-center gap-3">
-              <span className="h-px w-10 bg-umx-orange sm:w-14" aria-hidden />
-              <p className="font-display text-xs font-semibold tracking-[0.24em] text-umx-orange uppercase sm:text-sm">
-                Introduction
-              </p>
-              <span className="h-px w-10 bg-umx-orange sm:w-14" aria-hidden />
-            </div>
-
-            <h2
-              id="product-intro-heading"
-              className="mt-5 font-display text-[clamp(2.35rem,6.5vw,4.5rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black"
-            >
-              Umaxes HookaMax
-              <span className="mt-2 block text-[0.72em] font-bold tracking-[-0.03em] text-umx-orange sm:mt-3">
-                Disposable Vape
-              </span>
-            </h2>
-          </div>
+            Umaxes HookaMax
+            <span className="mt-2 block text-[0.72em] font-bold tracking-[-0.03em] text-umx-orange sm:mt-3">
+              Disposable Vape
+            </span>
+          </h2>
         </header>
 
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)] lg:gap-12 xl:gap-16">
@@ -143,16 +134,23 @@ export default function ProductIntroduction() {
           <div className="relative min-w-0">
             <div
               aria-hidden
-              className="pointer-events-none absolute -top-8 right-0 select-none font-display text-[clamp(5rem,14vw,8.5rem)] font-extrabold leading-none tracking-[-0.06em] text-black/[0.045] sm:-top-10"
+              className="pointer-events-none absolute -top-8 right-0 select-none font-display text-[clamp(5rem,14vw,8.5rem)] font-extrabold leading-none tracking-[-0.06em] text-umx-orange/20 sm:-top-10"
             >
               80K
             </div>
 
             <div className="relative rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-6 py-7 shadow-[0_22px_55px_rgba(61,22,5,0.08)] sm:px-8 sm:py-9 lg:px-9 lg:py-10">
-              <p className="font-display text-xs font-semibold tracking-[0.18em] text-black/40 uppercase">
-                About the device
+              <p className="font-display text-xs font-semibold tracking-[0.2em] text-umx-orange uppercase sm:text-sm">
+                Introduction
               </p>
-              <div className="mt-4 space-y-3.5 font-body text-base leading-relaxed text-black/65 sm:mt-5 sm:text-lg">
+              <h3 className="mt-3 font-display text-[clamp(1.55rem,3vw,2.15rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-black">
+                Umaxes HookaMax 80k
+              </h3>
+              <p className="mt-1.5 font-display text-base font-semibold tracking-tight text-black/50 sm:text-lg">
+                Disposable Hookah
+              </p>
+
+              <div className="mt-5 space-y-3.5 font-body text-base leading-relaxed text-black/65 sm:mt-6 sm:text-lg">
                 <p>
                   Umaxes HookaMax 80k Disposable Vape is a disposable vape with
                   at most{" "}
