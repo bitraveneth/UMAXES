@@ -385,7 +385,10 @@ export default function OrdersPanel({
                       </tr>
                       {open ? (
                         <tr className="bg-[var(--admin-brand-50)]/20">
-                          <td colSpan={8} className="!p-0 !align-top">
+                          <td
+                            colSpan={8}
+                            className="!p-0 !align-top !text-left"
+                          >
                             <OrderExpand
                               order={order}
                               suppliers={suppliers}
