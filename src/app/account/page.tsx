@@ -153,7 +153,9 @@ export default async function AccountPage() {
           </h2>
           <p className="mt-2 font-body text-sm text-black/70">
             Auto-applied to your next order. Not cash.
-            {rebate.testStationQty ? ` Next order also adds test stations at 95+1.` : ""}
+            {rebate.testStationsPerCase
+              ? ` Each case includes 1 test station with 1 device.`
+              : ""}
           </p>
           <p className="mt-2 font-body text-sm text-black/70">
             Paid this month: {rebate.monthPaidQty.toLocaleString()} pcs

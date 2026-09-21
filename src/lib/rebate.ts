@@ -2,9 +2,22 @@ import type { CustomerLevel } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { roundMoney } from "@/lib/catalog";
+import {
+  TEST_STATION_NAME,
+  TEST_STATION_PER_CASE_COPY,
+  TEST_STATION_SKU,
+  formatTestStationLine,
+} from "@/lib/test-station";
 
-export const TEST_STATION_SKU = "test-station";
-export const TEST_STATION_NAME = "Test Station (incl. 1 device)";
+export { TEST_STATION_NAME, TEST_STATION_PER_CASE_COPY, TEST_STATION_SKU, formatTestStationLine };
+
+export function grantsTestStations(policy: ChannelPolicy | null | undefined) {
+  return Boolean(
+    policy &&
+      isChannelLevel(policy.level) &&
+      policy.testStationsPerCase > 0,
+  );
+}
 
 export type RebateTier = { minQty: number; rateUsd: number };
 
@@ -27,6 +40,8 @@ export type ChannelQuote = {
   isFirstOrder: boolean;
   sellingQty: number;
   cases: number;
+  pcsPerCase: number;
+  testStationsPerCase: number;
   testStationQty: number;
   firstOrderUnpaidPcs: number;
   firstOrderDiscountUsd: number;
@@ -276,6 +291,8 @@ export function emptyQuote(sellingQty: number): ChannelQuote {
     isFirstOrder: false,
     sellingQty,
     cases: 0,
+    pcsPerCase: 95,
+    testStationsPerCase: 0,
     testStationQty: 0,
     firstOrderUnpaidPcs: 0,
     firstOrderDiscountUsd: 0,
@@ -311,17 +328,29 @@ export async function quoteForCompany(
 
   const policy = await getPolicyForLevel(company.level);
   const live = isPolicyLive(policy);
+  const stations = grantsTestStations(policy)
+    ? testStationQty(
+        sellingQty,
+        policy!.pcsPerCase,
+        policy!.testStationsPerCase,
+      )
+    : 0;
+  const cases = policy
+    ? caseCount(sellingQty, policy.pcsPerCase)
+    : 0;
+
   if (!policy || !live) {
-    return { ...emptyQuote(sellingQty), hideCoupon: false };
+    return {
+      ...emptyQuote(sellingQty),
+      hideCoupon: false,
+      cases,
+      pcsPerCase: policy?.pcsPerCase || 95,
+      testStationsPerCase: policy?.testStationsPerCase || 0,
+      testStationQty: stations,
+    };
   }
 
   const isFirst = await companyIsFirstOrder(company.id);
-  const cases = caseCount(sellingQty, policy.pcsPerCase);
-  const stations = testStationQty(
-    sellingQty,
-    policy.pcsPerCase,
-    policy.testStationsPerCase,
-  );
   const unpaid = firstOrderUnpaidPcs(sellingQty, policy, isFirst);
   const unit = policy.unitPrice ?? unitPriceHint ?? 0;
   const firstDiscount = roundMoney(unpaid * unit);
@@ -348,6 +377,8 @@ export async function quoteForCompany(
     isFirstOrder: isFirst,
     sellingQty,
     cases,
+    pcsPerCase: policy.pcsPerCase,
+    testStationsPerCase: policy.testStationsPerCase,
     testStationQty: stations,
     firstOrderUnpaidPcs: unpaid,
     firstOrderDiscountUsd: firstDiscount,

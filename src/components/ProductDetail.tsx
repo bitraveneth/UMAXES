@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { flushSync } from "react-dom";
 import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
-import { PCS_PER_CASE, formatPack, snapToCasePcs } from "@/lib/pack";
+import { PCS_PER_CASE, casesFromPcs, formatPack, snapToCasePcs } from "@/lib/pack";
 import { DualStorePrice, StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
 import { useCatalogPrices } from "@/context/CatalogPricesContext";
@@ -15,6 +15,10 @@ import {
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
 import { flavors, product, type Flavor, type FlavorId } from "@/lib/assets";
+import {
+  TEST_STATION_PER_CASE_COPY,
+  formatTestStationLine,
+} from "@/lib/test-station";
 
 const DRAFT_KEY = "umaxes-product-order-lines-v3";
 
@@ -77,7 +81,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
   const router = useRouter();
   const { addMany, couponCode: savedCoupon, setCouponCode } = useCart();
   const showPrices = useShowStorePrices();
-  const { hideCoupon, unitPriceFor } = useCatalogPrices();
+  const { hideCoupon, unitPriceFor, testStationsPerCase } = useCatalogPrices();
   const [lines, setLines] = useState<OrderLine[]>(() => defaultLines(flavor.id));
   const [draftReady, setDraftReady] = useState(false);
   const [added, setAdded] = useState(false);
@@ -140,6 +144,8 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
     [lines, unitPriceFor],
   );
   const payable = Math.max(0, subtotal - discount);
+  const orderCases = casesFromPcs(totalQty);
+  const stationQty = orderCases * testStationsPerCase;
   const activeShot = gallery[shot] ?? gallery[0];
 
   async function validateCoupon(code: string, amount: number) {
@@ -466,6 +472,22 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                 <p className="mt-1.5 font-display text-[1.65rem] font-extrabold leading-none tracking-[-0.04em] text-black tabular-nums sm:text-[2.15rem]">
                   {formatPack(totalQty)}
                 </p>
+                {testStationsPerCase > 0 ? (
+                  <div className="mt-3 border-t border-black/8 pt-3">
+                    <p className="font-display text-[0.7rem] font-semibold tracking-[0.16em] text-black/45 uppercase">
+                      Test stations
+                    </p>
+                    <p className="mt-1 font-display text-lg font-bold tracking-tight text-black">
+                      {stationQty > 0
+                        ? formatTestStationLine(stationQty)
+                        : "Add a case to include a test station"}
+                    </p>
+                    <p className="mt-1 font-body text-sm text-black/55">
+                      {TEST_STATION_PER_CASE_COPY}. Free with this order — taken
+                      from Test Station stock.
+                    </p>
+                  </div>
+                ) : null}
                 <p className="mt-3 font-display text-2xl font-bold tracking-tight text-black sm:text-3xl">
                   {showPrices ? <StorePrice amount={payable} /> : "On request"}
                 </p>

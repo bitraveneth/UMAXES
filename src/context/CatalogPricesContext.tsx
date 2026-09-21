@@ -25,6 +25,8 @@ type CatalogPricesValue = {
   ready: boolean;
   hideCoupon: boolean;
   accountLevel: AccountPriceLevel | null;
+  testStationsPerCase: number;
+  pcsPerCase: number;
   unitPriceFor: (sku?: string) => number;
   retailPriceFor: (sku?: string) => number;
 };
@@ -48,6 +50,8 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
   const [accountUnit, setAccountUnit] = useState<number>(FALLBACK_RETAIL_PRICE);
   const [accountLevel, setAccountLevel] = useState<AccountPriceLevel | null>(null);
   const [hideCoupon, setHideCoupon] = useState(false);
+  const [testStationsPerCase, setTestStationsPerCase] = useState(0);
+  const [pcsPerCase, setPcsPerCase] = useState(95);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -57,6 +61,8 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
       setAccountUnit(FALLBACK_RETAIL_PRICE);
       setAccountLevel(null);
       setHideCoupon(false);
+      setTestStationsPerCase(0);
+      setPcsPerCase(95);
       setReady(true);
       return;
     }
@@ -88,6 +94,12 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
         setPrices(map);
         setAccountLevel(parseAccountLevel(data?.level));
         setHideCoupon(Boolean(data?.channel?.hideCoupon));
+        setTestStationsPerCase(
+          Math.max(0, Math.floor(Number(data?.channel?.testStationsPerCase) || 0)),
+        );
+        setPcsPerCase(
+          Math.max(1, Math.floor(Number(data?.channel?.pcsPerCase) || 95)),
+        );
         setReady(true);
       })
       .catch(() => {
@@ -113,8 +125,24 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
   );
 
   const value = useMemo(
-    () => ({ ready, hideCoupon, accountLevel, unitPriceFor, retailPriceFor }),
-    [ready, hideCoupon, accountLevel, unitPriceFor, retailPriceFor],
+    () => ({
+      ready,
+      hideCoupon,
+      accountLevel,
+      testStationsPerCase,
+      pcsPerCase,
+      unitPriceFor,
+      retailPriceFor,
+    }),
+    [
+      ready,
+      hideCoupon,
+      accountLevel,
+      testStationsPerCase,
+      pcsPerCase,
+      unitPriceFor,
+      retailPriceFor,
+    ],
   );
 
   return (
@@ -131,6 +159,8 @@ export function useCatalogPrices() {
       ready: true,
       hideCoupon: false,
       accountLevel: null,
+      testStationsPerCase: 0,
+      pcsPerCase: 95,
       unitPriceFor: () => FALLBACK_RETAIL_PRICE,
       retailPriceFor: () => FALLBACK_RETAIL_PRICE,
     };

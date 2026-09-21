@@ -14,6 +14,7 @@ import {
   ensureTestStationProduct,
   firstOrderUnpaidPcs,
   getPolicyForLevel,
+  grantsTestStations,
   isPolicyLive,
   testStationQty,
 } from "@/lib/rebate";
@@ -174,28 +175,43 @@ export async function createOrder(
   let firstOrderDiscount = 0;
   let rebateApplied = 0;
 
-  if (channelOn && policy) {
+  if (grantsTestStations(policy) && policy) {
     stations = testStationQty(
       sellingQty,
       policy.pcsPerCase,
       policy.testStationsPerCase,
     );
+  }
+
+  if (channelOn && policy) {
     unpaidPcs = firstOrderUnpaidPcs(sellingQty, policy, isFirstOrder);
     const avgUnit =
       sellingQty > 0 ? subtotal / sellingQty : policy.unitPrice || 0;
     firstOrderDiscount = roundMoney(unpaidPcs * avgUnit);
+  }
 
-    if (stations > 0) {
-      const station = await ensureTestStationProduct();
-      orderItems.push({
-        productId: station.id,
-        sku: TEST_STATION_SKU,
-        name: TEST_STATION_NAME,
-        quantity: stations,
-        unitPrice: 0,
-        image: station.image,
-      });
+  if (stations > 0) {
+    const station = await ensureTestStationProduct();
+    const stationInv = await prisma.inventory.findUnique({
+      where: { productId: station.id },
+    });
+    const stationAvailable =
+      (stationInv?.quantity ?? 0) - (stationInv?.reserved ?? 0);
+    if (stations > stationAvailable) {
+      return {
+        ok: false,
+        status: 400,
+        error: `Insufficient stock for ${TEST_STATION_NAME} (${stations} needed)`,
+      };
     }
+    orderItems.push({
+      productId: station.id,
+      sku: TEST_STATION_SKU,
+      name: TEST_STATION_NAME,
+      quantity: stations,
+      unitPrice: 0,
+      image: station.image,
+    });
   }
 
   let discount = firstOrderDiscount;
@@ -323,6 +339,18 @@ export async function createOrder(
     });
 
     for (const item of orderItems) {
+      if (item.sku === TEST_STATION_SKU) {
+        await tx.inventory.upsert({
+          where: { productId: item.productId },
+          create: {
+            productId: item.productId,
+            quantity: 0,
+            reserved: 0,
+          },
+          update: { quantity: { decrement: item.quantity } },
+        });
+        continue;
+      }
       await tx.inventory.upsert({
         where: { productId: item.productId },
         create: {

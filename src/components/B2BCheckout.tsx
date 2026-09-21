@@ -11,6 +11,11 @@ import { getFlavor } from "@/lib/assets";
 import { CASE_MOQ_PCS, casesFromPcs, formatCases } from "@/lib/pack";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import {
+  TEST_STATION_NAME,
+  TEST_STATION_PER_CASE_COPY,
+  formatTestStationLine,
+} from "@/lib/test-station";
+import {
   EMPTY_ADDRESS_FORM,
   ShippingAddressForm,
   confirmDeleteAddress,
@@ -44,6 +49,8 @@ type ChannelQuote = {
   isFirstOrder: boolean;
   sellingQty: number;
   cases: number;
+  pcsPerCase?: number;
+  testStationsPerCase?: number;
   testStationQty: number;
   firstOrderUnpaidPcs: number;
   firstOrderDiscountUsd: number;
@@ -154,6 +161,14 @@ export default function B2BCheckout() {
     0,
   );
   const sellingQty = lines.reduce((sum, l) => sum + l.quantity, 0);
+  const fallbackStations =
+    (channel?.testStationsPerCase || 0) > 0
+      ? casesFromPcs(sellingQty) * (channel?.testStationsPerCase || 0)
+      : 0;
+  const stationQty =
+    channel && channel.sellingQty === sellingQty
+      ? channel.testStationQty
+      : fallbackStations;
   const firstDiscount = channel?.eligible ? channel.firstOrderDiscountUsd : 0;
   const rebateApplied = channel?.eligible ? channel.rebateAppliedUsd : 0;
   const channelDiscount = firstDiscount + rebateApplied;
@@ -161,7 +176,8 @@ export default function B2BCheckout() {
   const total = Math.max(0, Math.round((subtotal - displayDiscount) * 100) / 100);
 
   useEffect(() => {
-    if (!channel?.eligible) return;
+    if (status !== "authenticated") return;
+    if (sellingQty < 1) return;
     let cancelled = false;
     const unit = lines[0]?.unitPrice;
     (async () => {
@@ -176,7 +192,7 @@ export default function B2BCheckout() {
     return () => {
       cancelled = true;
     };
-  }, [sellingQty, channel?.eligible]);
+  }, [sellingQty, status]);
 
   async function refreshAddresses(preferId?: string) {
     const res = await fetch("/api/addresses");
@@ -572,14 +588,17 @@ export default function B2BCheckout() {
                 ) : (
                   <p>No rebate balance yet. Volume counts after payment is confirmed.</p>
                 )}
-                {channel.testStationQty > 0 ? (
+                {stationQty > 0 ? (
                   <p>
-                    This order includes {channel.testStationQty} free test station
-                    {channel.testStationQty === 1 ? "" : "s"} (95+1).
+                    This order includes {formatTestStationLine(stationQty)}.{" "}
+                    {TEST_STATION_PER_CASE_COPY}. Taken from Test Station stock.
                   </p>
-                ) : (
-                  <p>Every 95 pcs adds 1 free test station on this order.</p>
-                )}
+                ) : (channel?.testStationsPerCase || 0) > 0 ? (
+                  <p>
+                    {TEST_STATION_PER_CASE_COPY}. Kits are added automatically
+                    and deducted from Test Station stock.
+                  </p>
+                ) : null}
                 {channel.nextTierQty != null ? (
                   <p>
                     Paid this month: {channel.monthPaidQty.toLocaleString()} pcs.
@@ -669,6 +688,26 @@ export default function B2BCheckout() {
                 </li>
               );
             })}
+            {stationQty > 0 ? (
+              <li className="flex gap-3 py-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-[#eef3f7] font-display text-[0.65rem] font-bold tracking-wide text-[#1b4f72] uppercase">
+                  Kit
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="font-display text-sm font-semibold leading-snug text-black">
+                      {TEST_STATION_NAME}
+                    </p>
+                    <p className="shrink-0 font-display text-sm font-semibold tabular-nums text-black">
+                      $0
+                    </p>
+                  </div>
+                  <p className="mt-1.5 font-body text-xs text-black/55">
+                    {formatTestStationLine(stationQty)} · {TEST_STATION_PER_CASE_COPY}
+                  </p>
+                </div>
+              </li>
+            ) : null}
           </ul>
 
           <div className="mt-2 space-y-2.5 border-t border-black/10 pt-4 font-body text-sm">
@@ -682,12 +721,6 @@ export default function B2BCheckout() {
               <span className="text-black/65">Shipping</span>
               <span className="text-right text-black/65">Arranged after order</span>
             </div>
-            {channel?.testStationQty ? (
-              <div className="flex justify-between gap-4">
-                <span className="text-black/65">Test stations</span>
-                <span>{channel.testStationQty} free</span>
-              </div>
-            ) : null}
             {channel?.firstOrderUnpaidPcs ? (
               <div className="flex justify-between gap-4">
                 <span className="text-black/65">First-order unpaid pcs</span>

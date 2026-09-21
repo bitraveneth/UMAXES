@@ -11,6 +11,10 @@ import { formatCases, formatPack } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
 import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import {
+  TEST_STATION_PER_CASE_COPY,
+  formatTestStationLine,
+} from "@/lib/test-station";
+import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
@@ -20,7 +24,8 @@ export default function CartPage() {
   const { items, quantity, cases, setQuantity, remove, total } = useCart();
   const compactChrome = useCompactMobileStoreChrome();
   const showPrices = useShowStorePrices();
-  const { unitPriceFor } = useCatalogPrices();
+  const { unitPriceFor, testStationsPerCase } = useCatalogPrices();
+  const stationQty = cases * testStationsPerCase;
 
   return (
     <>
@@ -146,6 +151,12 @@ export default function CartPage() {
                 <p className="mt-2 font-body text-sm text-black/50">
                   1 case = 95 pieces. Shipping calculated at checkout.
                 </p>
+                {stationQty > 0 ? (
+                  <p className="mt-2 font-body text-sm text-black/60">
+                    {formatTestStationLine(stationQty)}. {TEST_STATION_PER_CASE_COPY}.
+                    Free — deducted from Test Station stock at checkout.
+                  </p>
+                ) : null}
                 <Link
                   href="/checkout"
                   className="mt-5 block w-full rounded-full bg-umx-orange py-3.5 text-center font-display text-sm font-semibold !text-white transition hover:bg-umx-orange-deep sm:text-base"

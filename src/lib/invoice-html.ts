@@ -364,7 +364,7 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
       ? `<span><strong>Coupon</strong> · ${escapeHtml(input.couponCode)}</span>`
       : "",
     input.testStationQty
-      ? `<span><strong>Test stations</strong> · ${input.testStationQty} free</span>`
+      ? `<span><strong>Test stations</strong> · ${input.testStationQty} free · 1 device each</span>`
       : "",
     input.firstOrderUnpaidPcs
       ? `<span><strong>First-order unpaid</strong> · ${input.firstOrderUnpaidPcs} pcs</span>`

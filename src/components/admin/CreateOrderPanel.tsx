@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { AdminCard, AdminBadge } from "@/components/admin/ui";
 import { Plus, Search } from "lucide-react";
 import type { CustomerLevel, PaymentMethod } from "@/generated/prisma/enums";
+import { casesFromPcs, formatCases } from "@/lib/pack";
+import {
+  TEST_STATION_NAME,
+  TEST_STATION_PER_CASE_COPY,
+  formatTestStationLine,
+} from "@/lib/test-station";
 
 export type CreateOrderCompanyOption = {
   id: string;
@@ -46,6 +52,8 @@ type CompanyContext = {
     name: string;
     level: CustomerLevel;
     creditAllowed: boolean;
+    testStationsPerCase?: number;
+    pcsPerCase?: number;
   };
   addresses: Address[];
   catalog: CatalogItem[];
@@ -114,6 +122,15 @@ export default function CreateOrderPanel({
     () => lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0),
     [lines],
   );
+  const sellingQty = useMemo(
+    () => lines.reduce((s, l) => s + l.quantity, 0),
+    [lines],
+  );
+  const stationQty = useMemo(() => {
+    const per = ctx?.company.testStationsPerCase || 0;
+    if (per < 1 || sellingQty < 1) return 0;
+    return casesFromPcs(sellingQty) * per;
+  }, [ctx?.company.testStationsPerCase, sellingQty]);
 
   const catalogFiltered = useMemo(() => {
     if (!ctx) return [];
@@ -486,7 +503,8 @@ export default function CreateOrderPanel({
                 />
                 ) : (
                   <p className="mt-1.5 text-sm text-[var(--admin-gray-700)]">
-                    Test stations and first-order unpaid pcs apply automatically. No coupon code.
+                    {TEST_STATION_PER_CASE_COPY}. First-order unpaid pcs apply
+                    automatically. No coupon code.
                   </p>
                 )}
               </label>
@@ -516,12 +534,23 @@ export default function CreateOrderPanel({
                     >
                       <span>
                         {l.name} × {l.quantity}
+                        {l.quantity >= 95
+                          ? ` · ${formatCases(casesFromPcs(l.quantity))}`
+                          : ""}
                       </span>
                       <span className="font-medium">
                         {money(l.unitPrice * l.quantity)}
                       </span>
                     </li>
                   ))}
+                  {stationQty > 0 ? (
+                    <li className="flex justify-between gap-3 tabular-nums">
+                      <span>
+                        {TEST_STATION_NAME} · {formatTestStationLine(stationQty)}
+                      </span>
+                      <span className="font-medium">{money(0)}</span>
+                    </li>
+                  ) : null}
                 </ul>
                 <div className="mt-3 flex justify-between border-t border-[var(--admin-border)] pt-3 font-semibold">
                   <span>Subtotal</span>
