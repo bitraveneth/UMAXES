@@ -575,6 +575,8 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     status !== "CANCELLED" &&
     status !== "SUBMITTED"
   ) {
+    const isAdmin =
+      role === "ADMIN" || role === "SUPER_ADMIN";
     const paid = await prisma.payment.findFirst({
       where: { orderId, status: "paid", paidAt: { not: null } },
       select: { id: true },
@@ -583,9 +585,9 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
       where: { id: orderId },
       select: { paymentMethod: true },
     });
-    if (method?.paymentMethod !== "CREDIT" && !paid) {
+    if (!isAdmin && method?.paymentMethod !== "CREDIT" && !paid) {
       throw new Error(
-        "Confirm funds received after the payment slip before moving this order forward",
+        "Confirm funds received before moving this order forward",
       );
     }
   }
@@ -759,6 +761,9 @@ export async function upsertSupplier(input: {
 
 export async function markPaymentReceived(orderId: string, reference?: string) {
   const session = await requireRoles(["ADMIN", "SALES"]);
+  const role = session.user.role;
+  const canConfirmWithoutSlip =
+    role === "ADMIN" || role === "SUPER_ADMIN";
 
   await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
@@ -771,7 +776,12 @@ export async function markPaymentReceived(orderId: string, reference?: string) {
       (p) => p.status === "paid" && p.paidAt,
     );
     const hasSlip = order.payments.some((p) => p.slipUrl);
-    if (!alreadyPaid && !hasSlip && order.paymentMethod !== "CREDIT") {
+    if (
+      !alreadyPaid &&
+      !hasSlip &&
+      order.paymentMethod !== "CREDIT" &&
+      !canConfirmWithoutSlip
+    ) {
       throw new Error("Wait for the buyer to upload a payment slip first");
     }
 

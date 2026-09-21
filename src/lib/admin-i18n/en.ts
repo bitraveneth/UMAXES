@@ -512,9 +512,11 @@ const en: AdminMessages = {
       "Delete this payment slip file? The buyer can upload again. This frees storage.",
     markPaid: "Confirm funds received",
     markPaidHint:
-      "Finance has the payment slip. Confirm funds received only after the money is in the account. That is when rebate quantity counts.",
+      "Confirm only after the money is in the account. That is when rebate quantity counts.",
     markPaidNeedSlip:
-      "Waiting for the buyer to upload a payment slip. You can confirm funds received after it is on this order.",
+      "No payment slip yet. Admins can still confirm funds if payment is already in.",
+    markPaidOptional:
+      "Slip is optional for admins. Confirm when funds are received — rebate quantity counts then.",
     shipment: "Shipment",
     noShipment: "No shipment yet",
     unpaid: "Unpaid",

@@ -498,9 +498,11 @@ const zh: AdminMessages = {
     noShipment: "暂无发货记录",
     markPaid: "确认到账",
     markPaidHint:
-      "财务已核对水单。确认到账后，本单才计入返利数量。",
+      "请确认款项已到账后再点确认。确认后本单才计入返利数量。",
     markPaidNeedSlip:
-      "等待客户上传水单。上传后才能确认到账。",
+      "客户尚未上传水单。管理员仍可在确认到账后继续处理。",
+    markPaidOptional:
+      "管理员可不依赖水单。确认到账后，本单才计入返利数量。",
     unpaid: "未付款",
     paid: "已付款",
     updateStatus: "更新状态",

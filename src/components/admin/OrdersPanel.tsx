@@ -162,6 +162,7 @@ export default function OrdersPanel({
   allowedStatuses,
   canAssignSupplier,
   canDeleteSlip,
+  canConfirmWithoutSlip = false,
   openId = null,
 }: {
   orders: OrdersPanelItem[];
@@ -169,6 +170,7 @@ export default function OrdersPanel({
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
   canDeleteSlip: boolean;
+  canConfirmWithoutSlip?: boolean;
   openId?: string | null;
 }) {
   const { t, locale } = useAdminI18n();
@@ -386,6 +388,7 @@ export default function OrdersPanel({
                               allowedStatuses={allowedStatuses}
                               canAssignSupplier={canAssignSupplier}
                               canDeleteSlip={canDeleteSlip}
+                              canConfirmWithoutSlip={canConfirmWithoutSlip}
                               payLabel={payLabel}
                               statusLabel={statusLabel}
                               onClose={() => setEditingId(null)}
@@ -510,6 +513,7 @@ function OrderExpand({
   allowedStatuses,
   canAssignSupplier,
   canDeleteSlip,
+  canConfirmWithoutSlip,
   payLabel,
   statusLabel,
   onClose,
@@ -519,6 +523,7 @@ function OrderExpand({
   allowedStatuses: OrderStatus[];
   canAssignSupplier: boolean;
   canDeleteSlip: boolean;
+  canConfirmWithoutSlip: boolean;
   payLabel: (m: PaymentMethod) => string;
   statusLabel: (s: OrderStatus) => string;
   onClose: () => void;
@@ -528,10 +533,15 @@ function OrderExpand({
   const shipment = order.shipments[0];
   const unpaid = !order.paymentPaid && order.status !== "CANCELLED";
   const next = NEXT_STATUS[order.status] ?? null;
+  const canConfirmPaid =
+    unpaid &&
+    (order.paymentMethod === "CREDIT" ||
+      Boolean(order.paymentSlipUrl) ||
+      canConfirmWithoutSlip);
   const canAdvance = Boolean(
     next &&
       allowedStatuses.includes(next) &&
-      !(unpaid && next === "CONFIRMED"),
+      (!(unpaid && next === "CONFIRMED") || canConfirmWithoutSlip),
   );
   const canAssign =
     canAssignSupplier &&
@@ -539,6 +549,12 @@ function OrderExpand({
     ["CONFIRMED", "SENT_TO_SUPPLIER", "PICKING", "SUBMITTED"].includes(
       order.status,
     );
+
+  const paidHint = order.paymentSlipUrl
+    ? t("orders.markPaidHint")
+    : canConfirmWithoutSlip
+      ? t("orders.markPaidOptional")
+      : t("orders.markPaidNeedSlip");
 
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
@@ -583,105 +599,120 @@ function OrderExpand({
 
       <div className="grid gap-4 px-5 py-4 lg:grid-cols-5">
         <div className="lg:col-span-2 space-y-4">
-          <div className="rounded-xl border-2 border-[var(--admin-brand-200)] bg-[var(--admin-brand-25)] p-4">
-            <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-brand-700)] uppercase">
-              {t("orders.updateStatus")}
-            </p>
-            {unpaid ? (
-              <form
-                action={async () => {
-                  await markPaymentReceived(
-                    order.id,
-                    order.paymentRef || "TT/CHECK received",
-                  );
-                  onClose();
-                }}
-                className="mb-3"
-              >
-                <p className="mb-2 text-xs text-[var(--admin-muted)]">
-                  {order.paymentSlipUrl
-                    ? t("orders.markPaidHint")
-                    : t("orders.markPaidNeedSlip")}
-                </p>
-                {order.paymentSlipUrl ? (
-                  <>
-                    <AdminSlipPhoto
-                      orderId={order.id}
-                      fileName={order.paymentSlipName}
-                    />
-                    <a
-                      href={slipHref(order.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mb-2 mt-2 block text-xs font-semibold text-[var(--admin-brand-700)] underline"
-                    >
-                      {t("orders.viewSlip")}
-                    </a>
-                  </>
-                ) : null}
-                <button
-                  type="submit"
-                  disabled={!order.paymentSlipUrl && order.paymentMethod !== "CREDIT"}
-                  className="admin-btn admin-btn-primary admin-btn-sm w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {t("orders.markPaid")}
-                </button>
-              </form>
-            ) : null}
-            {canAdvance ? (
-              <form
-                action={async () => {
-                  await updateOrderStatus(order.id, next!);
-                  onClose();
-                }}
-                className={unpaid ? "mb-3 border-t border-[var(--admin-brand-100)] pt-3" : "mb-3"}
-              >
-                <button
-                  type="submit"
-                  className={`admin-btn admin-btn-sm w-full sm:w-auto ${
-                    unpaid ? "admin-btn-secondary" : "admin-btn-primary"
-                  }`}
-                >
-                  {t("orders.advanceTo", { status: statusLabel(next!) })}
-                </button>
-              </form>
-            ) : null}
-            {allowedStatuses.length > 0 ? (
-              <form
-                action={async (fd) => {
-                  const nextStatus = String(fd.get("status") || "") as OrderStatus;
-                  if (!nextStatus) return;
-                  await updateOrderStatus(order.id, nextStatus);
-                  onClose();
-                }}
-                className="flex flex-wrap items-end gap-2 border-t border-[var(--admin-brand-100)] pt-3"
-              >
-                <label className="min-w-[10rem] flex-1 text-xs font-medium text-[var(--admin-muted)]">
-                  {t("orders.otherStatus")}
-                  <select
-                    name="status"
-                    defaultValue={
-                      order.status === "PICKING"
-                        ? "SENT_TO_SUPPLIER"
-                        : order.status
-                    }
-                    className="admin-input mt-1.5 w-full"
+          <div className="overflow-hidden rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] shadow-[var(--admin-shadow-theme)]">
+            <div className="border-b border-[var(--admin-border)] bg-[var(--admin-hover)] px-4 py-3">
+              <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-text)] uppercase">
+                {t("orders.updateStatus")}
+              </p>
+            </div>
+            <div className="space-y-4 p-4">
+              {unpaid ? (
+                <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)] p-3.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-[var(--admin-text)]">
+                      {t("orders.markPaid")}
+                    </p>
+                    <AdminBadge tone="warning">{t("orders.unpaid")}</AdminBadge>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--admin-text)]">
+                    {paidHint}
+                  </p>
+                  {order.paymentSlipUrl ? (
+                    <div className="mt-3 space-y-2">
+                      <AdminSlipPhoto
+                        orderId={order.id}
+                        fileName={order.paymentSlipName}
+                      />
+                      <a
+                        href={slipHref(order.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex text-sm font-semibold text-[var(--admin-brand-600)] underline underline-offset-2"
+                      >
+                        {t("orders.viewSlip")}
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs font-medium text-[var(--admin-muted)]">
+                      {t("orders.noSlip")}
+                    </p>
+                  )}
+                  <form
+                    action={async () => {
+                      await markPaymentReceived(
+                        order.id,
+                        order.paymentRef || "TT/CHECK received",
+                      );
+                      onClose();
+                    }}
+                    className="mt-3"
                   >
-                    {allowedStatuses.map((s) => (
-                      <option key={s} value={s}>
-                        {statusLabel(s)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="submit"
-                  className="admin-btn admin-btn-secondary admin-btn-sm"
+                    <button
+                      type="submit"
+                      disabled={!canConfirmPaid}
+                      className="admin-btn admin-btn-primary admin-btn-sm w-full sm:w-auto disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {t("orders.markPaid")}
+                    </button>
+                  </form>
+                </div>
+              ) : null}
+
+              {canAdvance ? (
+                <form
+                  action={async () => {
+                    await updateOrderStatus(order.id, next!);
+                    onClose();
+                  }}
                 >
-                  {t("orders.applyStatus")}
-                </button>
-              </form>
-            ) : null}
+                  <button
+                    type="submit"
+                    className={`admin-btn admin-btn-sm w-full sm:w-auto ${
+                      unpaid ? "admin-btn-secondary" : "admin-btn-primary"
+                    }`}
+                  >
+                    {t("orders.advanceTo", { status: statusLabel(next!) })}
+                  </button>
+                </form>
+              ) : null}
+
+              {allowedStatuses.length > 0 ? (
+                <form
+                  action={async (fd) => {
+                    const nextStatus = String(fd.get("status") || "") as OrderStatus;
+                    if (!nextStatus) return;
+                    await updateOrderStatus(order.id, nextStatus);
+                    onClose();
+                  }}
+                  className="flex flex-wrap items-end gap-2 border-t border-[var(--admin-border)] pt-4"
+                >
+                  <label className="min-w-[10rem] flex-1 text-sm font-semibold text-[var(--admin-text)]">
+                    {t("orders.otherStatus")}
+                    <select
+                      name="status"
+                      defaultValue={
+                        order.status === "PICKING"
+                          ? "SENT_TO_SUPPLIER"
+                          : order.status
+                      }
+                      className="admin-input mt-1.5 w-full"
+                    >
+                      {allowedStatuses.map((s) => (
+                        <option key={s} value={s}>
+                          {statusLabel(s)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    className="admin-btn admin-btn-secondary admin-btn-sm"
+                  >
+                    {t("orders.applyStatus")}
+                  </button>
+                </form>
+              ) : null}
+            </div>
           </div>
 
           {canAssign ? (
