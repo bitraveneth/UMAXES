@@ -457,28 +457,6 @@ body {
   animation: icon-bob 3.2s ease-in-out infinite;
 }
 
-@keyframes product-intro-pin-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 4px rgba(255, 91, 4, 0.16);
-  }
-  50% {
-    transform: scale(1.15);
-    box-shadow: 0 0 0 8px rgba(255, 91, 4, 0.08);
-  }
-}
-
-.product-intro-pin {
-  animation: product-intro-pin-pulse 2.2s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .product-intro-pin {
-    animation: none;
-  }
-}
-
 @keyframes flavor-shine {
   from {
     transform: translateX(-120%) skewX(-18deg);
