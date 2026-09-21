@@ -142,9 +142,9 @@ export default function CheckoutRebatePanel({
       <div className="p-5 sm:p-6">
         <div className="grid items-center gap-5 sm:grid-cols-[7.5rem_minmax(0,1fr)] sm:gap-6">
           <div
-            className="relative mx-auto h-[7.5rem] w-[7.5rem] rounded-full sm:mx-0"
+            className="relative mx-auto h-[7.5rem] w-[7.5rem] rounded-full shadow-[0_0_0_6px_#e7f1f8] sm:mx-0"
             style={{
-              background: `conic-gradient(#1b4f72 ${towardNext}%, #dbe4ec 0)`,
+              background: `conic-gradient(#2b7aab 0%, #1b4f72 ${towardNext}%, #d7e6f0 0)`,
             }}
             role="img"
             aria-label={`${Math.round(towardNext)} percent toward next rebate level`}
@@ -152,13 +152,14 @@ export default function CheckoutRebatePanel({
             {afterTowardNext > towardNext ? (
               <span
                 aria-hidden
-                className="absolute inset-0 rounded-full opacity-45"
+                className="absolute inset-0 rounded-full"
                 style={{
-                  background: `conic-gradient(transparent ${towardNext}%, #f97316 ${towardNext}%, #f97316 ${afterTowardNext}%, transparent 0)`,
+                  background: `conic-gradient(transparent ${towardNext}%, #ff5b04 ${towardNext}%, #ff8a3d ${afterTowardNext}%, transparent 0)`,
+                  opacity: 0.92,
                 }}
               />
             ) : null}
-            <div className="absolute inset-[0.7rem] flex flex-col items-center justify-center rounded-full bg-white text-center">
+            <div className="absolute inset-[0.85rem] flex flex-col items-center justify-center rounded-full bg-white text-center shadow-[inset_0_0_0_1px_rgba(27,79,114,0.08)]">
               <p className="font-display text-[1.65rem] font-extrabold leading-none tabular-nums text-[#1b4f72]">
                 {Math.round(towardNext)}%
               </p>
@@ -198,18 +199,29 @@ export default function CheckoutRebatePanel({
               ) : null}
             </div>
 
-            <div className="relative mt-3 h-2.5 overflow-hidden rounded-full bg-black/10">
+            <div className="relative mt-3 h-3 overflow-hidden rounded-full bg-[#d7e6f0]">
               {barAfterPct > barPaidPct ? (
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-umx-orange/60"
-                  style={{ width: `${barAfterPct}%` }}
+                  className="absolute inset-y-0 left-0 rounded-full"
+                  style={{
+                    width: `${barAfterPct}%`,
+                    background: "linear-gradient(90deg, #ff8a3d, #ff5b04)",
+                  }}
                 />
               ) : null}
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-[#1b4f72]"
-                style={{ width: `${barPaidPct}%` }}
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{
+                  width: `${barPaidPct}%`,
+                  background: "linear-gradient(90deg, #2b7aab, #1b4f72)",
+                }}
               />
             </div>
+            {barAfterPct > barPaidPct ? (
+              <p className="mt-1.5 font-body text-[11px] text-black/50">
+                Orange = this order after payment clears
+              </p>
+            ) : null}
           </div>
         </div>
 
