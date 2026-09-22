@@ -532,11 +532,17 @@ const en: AdminMessages = {
     markPaidOptional:
       "Slip is optional for admins. Confirm when funds are received — rebate quantity counts then.",
     paymentStatus: "Payment",
+    paymentPanelTitle: "Payment",
+    paymentPanelHint:
+      "Saves payment only. Shipping status does not change.",
     payStatusPending: "Pending payment",
     payStatusSubmitted: "Slip submitted",
     payStatusPaid: "Paid",
     payStatusRejected: "Rejected",
     savePayment: "Save payment",
+    shippingPanelTitle: "Shipping",
+    shippingPanelHint:
+      "Saves shipping status only. Payment does not change.",
     shipment: "Shipment",
     noShipment: "No shipment yet",
     unpaid: "Unpaid",
@@ -544,7 +550,7 @@ const en: AdminMessages = {
     updateStatus: "Update",
     advanceTo: "Mark as {status}",
     otherStatus: "Or set another status",
-    applyStatus: "Save",
+    applyStatus: "Save shipping",
     statusLabel: "Shipping status",
     placedByStaff: "Staff · {name}",
     staffLabel: "Staff",

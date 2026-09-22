@@ -1049,8 +1049,7 @@ export async function updateOrderPaymentStatus(
       await tx.order.update({
         where: { id: orderId },
         data: {
-          status:
-            order.status === "PAYMENT_PENDING" ? "CONFIRMED" : order.status,
+          // Payment only — never auto-advance fulfillment/shipping status.
           paymentRef: reference || order.paymentRef,
         },
       });
@@ -1111,12 +1110,7 @@ export async function updateOrderPaymentStatus(
       await tx.order.update({
         where: { id: orderId },
         data: {
-          // If unpaid again after paid, move back to pending payment when still early
-          status:
-            alreadyPaid &&
-            (order.status === "CONFIRMED" || order.status === "PAYMENT_PENDING")
-              ? "PAYMENT_PENDING"
-              : order.status,
+          // Payment only — leave fulfillment/shipping status untouched.
           paymentRef: reference || order.paymentRef,
         },
       });
