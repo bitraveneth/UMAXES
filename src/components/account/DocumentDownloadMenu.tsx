@@ -38,7 +38,7 @@ export default function DocumentDownloadMenu({
           <FileText className="h-3.5 w-3.5" strokeWidth={1.85} />
           PDF
         </a>
-        <a href={xlsx} title="Download Excel">
+        <a href={xlsx} title="Download Excel (xlsx) — Excel / WPS / LibreOffice">
           <FileSpreadsheet className="h-3.5 w-3.5" strokeWidth={1.85} />
           Excel
         </a>
@@ -68,6 +68,7 @@ export default function DocumentDownloadMenu({
       </a>
       <a
         href={xlsx}
+        title="Excel / WPS / LibreOffice"
         className={`inline-flex items-center gap-1.5 font-display font-semibold text-black transition hover:bg-[#eef3f7] hover:text-[#1b4f72] ${
           compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2.5 text-sm"
         }`}

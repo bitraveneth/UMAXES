@@ -186,6 +186,8 @@ type BuildInvoiceHtmlInput = {
   showToolbar?: boolean;
   bank?: InvoiceBankDetails | null;
   origin?: string;
+  /** Prefer embedded data URI so PDF/Excel/print never depend on a public URL. */
+  logoSrc?: string;
 };
 
 const titles: Record<InvoiceDocType, string> = {
@@ -234,7 +236,8 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
   const issued = formatIssuedDate(input.createdAt);
   const showToolbar = input.showToolbar !== false;
   const seller = sellerCompany();
-  const logoSrc = resolvePublicUrl(logos.blueWordmark, input.origin);
+  const logoSrc =
+    input.logoSrc || resolvePublicUrl(logos.blueWordmark, input.origin);
   const bank = input.bank || DEFAULT_INVOICE_BANK;
   const buyerContact = [input.clientPhone, input.clientEmail]
     .map((v) => (v || "").trim())

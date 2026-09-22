@@ -532,11 +532,17 @@ const en: AdminMessages = {
     markPaidOptional:
       "Slip is optional for admins. Confirm when funds are received — rebate quantity counts then.",
     paymentStatus: "Payment",
+    paymentPanelTitle: "Payment",
+    paymentPanelHint:
+      "Saves payment only. Shipping status does not change.",
     payStatusPending: "Pending payment",
     payStatusSubmitted: "Slip submitted",
     payStatusPaid: "Paid",
     payStatusRejected: "Rejected",
     savePayment: "Save payment",
+    shippingPanelTitle: "Shipping",
+    shippingPanelHint:
+      "Saves shipping status only. Payment does not change.",
     shipment: "Shipment",
     noShipment: "No shipment yet",
     unpaid: "Unpaid",
@@ -544,7 +550,7 @@ const en: AdminMessages = {
     updateStatus: "Update",
     advanceTo: "Mark as {status}",
     otherStatus: "Or set another status",
-    applyStatus: "Save",
+    applyStatus: "Save shipping",
     statusLabel: "Shipping status",
     placedByStaff: "Staff · {name}",
     staffLabel: "Staff",
@@ -858,7 +864,12 @@ const en: AdminMessages = {
   rebates: {
     title: "Volume rebate",
     description:
-      "SOP per customer level: unit price, 95+1 test stations, first-order unpaid pcs, and monthly paid-qty rebate. Issued after Info confirms payment received.",
+      "Wholesaler and distributor cash-back. Payment confirm counts pcs → issue to wallet → next order uses it automatically. You do not type amounts by hand for normal orders.",
+    howTitle: "Normal flow (automatic)",
+    howSteps:
+      "1) Info marks the order Paid · 2) This month’s rebate updates from paid pcs · 3) Click Issue to wallet · 4) Checkout spends the wallet balance by itself.",
+    howAdjustNote:
+      "The form on the right is only for rare fixes (wrong issue, goodwill, clawback). It is not how buyers earn credit after paying.",
     sopHint:
       "Same mechanics for wholesaler and distributor. Only unit price and rebate ladder differ. Save to apply unit price to the catalog.",
     wholesaler: "Wholesaler SOP",
@@ -883,7 +894,7 @@ const en: AdminMessages = {
     statActivity: "Wallet activity",
     monthsTitle: "This month’s rebates",
     monthsHint:
-      "Counted after Info confirms payment received. Issue sends the money to their wallet.",
+      "Auto-counted when payment is confirmed. Issue puts that month’s cash-back into their wallet. Buyers then spend it on the next order — no manual Company form needed.",
     monthsEmpty: "No rebate months yet. Confirm a paid channel order first.",
     issue: "Issue to wallet",
     issuedSoFar: "Already issued",
@@ -900,15 +911,18 @@ const en: AdminMessages = {
     colWhen: "When",
     colType: "Type",
     walletsTitle: "Customer wallets",
-    walletsHint: "Rebate left to use automatically on the next order.",
+    walletsHint:
+      "Balance left after Issue. Used automatically at checkout — do not re-add it with the correction form.",
     walletsEmpty: "No wholesaler or distributor accounts yet.",
-    adjustTitle: "Add or take back",
-    adjustHint: "Positive adds money. Negative claws it back. Always add a note.",
-    company: "Company",
+    adjustTitle: "Manual correction (rare)",
+    adjustHint:
+      "Only for exceptions: fix a wrong balance, goodwill credit, or clawback. Normal payment rebates use Issue to wallet above — not this form.",
+    company: "Whose wallet",
     amount: "Amount (USD)",
-    adjust: "Save adjustment",
+    amountHint: "Use +100 to add. Use −100 to take back. Note is required.",
+    adjust: "Save correction",
     ledgerTitle: "Wallet activity",
-    ledgerHint: "Every issue, use on an order, manual add, or clawback.",
+    ledgerHint: "Issues, auto use on orders, and rare manual corrections.",
     typeIssue: "Issued to wallet",
     typeApply: "Used on order",
     typeAdjust: "Manual add",
@@ -1127,15 +1141,20 @@ const en: AdminMessages = {
   },
   learn: {
     title: "Learning Hub",
-    description: "Short tutorials for each admin module — how UMAXES works.",
-    start: "Start",
+    description:
+      "Simple daily SOP first, then short courses for each module — English and Chinese follow your admin language.",
+    coursesTitle: "Courses",
+    coursesHint: "Step-by-step for each screen. Open a module when you are ready to practice.",
+    start: "Start course",
     openModule: "Open module",
     previous: "Previous",
     next: "Next",
-    outline: "Tutorials",
-    lessonOf: "Tutorial {n} of {total}",
+    outline: "Courses",
+    lessonOf: "Course {n} of {total}",
     tip: "Tip",
-    backToHub: "All tutorials",
+    backToHub: "All courses",
+    whatHeading: "What it is",
+    howHeading: "How to use it",
   },
 };
 

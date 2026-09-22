@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getActiveBankAccount } from "@/lib/bank-accounts";
 import { buildInvoiceHtml } from "@/lib/invoice-html";
+import { loadInvoiceLogoDataUri } from "@/lib/document-file";
 import { prisma } from "@/lib/db";
 
 type Params = { params: Promise<{ id: string }> };
@@ -36,6 +37,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const docNumber = order.piNumber || order.orderNumber;
   const bank = await getActiveBankAccount();
+  const logoSrc = (await loadInvoiceLogoDataUri()) || undefined;
   const html = buildInvoiceHtml({
     type: "pi",
     orderNumber: order.orderNumber,
@@ -65,6 +67,7 @@ export async function GET(request: Request, { params }: Params) {
     xlsxHref: `/api/orders/${order.id}/docs?type=pi&format=xlsx`,
     bank,
     origin: new URL(request.url).origin,
+    logoSrc,
   });
 
   return new NextResponse(html, {

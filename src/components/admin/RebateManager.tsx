@@ -355,6 +355,18 @@ export default function RebateManager({
         />
       </div>
 
+      <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-4 py-4 sm:px-5 sm:py-5">
+        <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+          {t("rebates.howTitle")}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--admin-text)]">
+          {t("rebates.howSteps")}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--admin-muted)]">
+          {t("rebates.howAdjustNote")}
+        </p>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         {policies.map((policy) => (
           <PolicyCard
@@ -490,7 +502,7 @@ export default function RebateManager({
         </div>
 
         <form
-          className="admin-card admin-card-pad h-fit"
+          className="rounded-2xl border border-dashed border-[var(--admin-border)] bg-[var(--admin-card)] p-4 sm:p-5 h-fit"
           action={(fd) => {
             setError(null);
             startTransition(async () => {
@@ -529,12 +541,20 @@ export default function RebateManager({
               step="0.01"
               required
               className="admin-input mt-1 w-full"
-              placeholder="100.00"
+              placeholder="+100 or −50"
             />
+            <span className="mt-1 block text-xs admin-muted">
+              {t("rebates.amountHint")}
+            </span>
           </label>
           <label className="admin-label mt-3">
             {t("common.note")}
-            <input name="note" required className="admin-input mt-1 w-full" />
+            <input
+              name="note"
+              required
+              className="admin-input mt-1 w-full"
+              placeholder="Why this correction?"
+            />
           </label>
           <button
             type="submit"

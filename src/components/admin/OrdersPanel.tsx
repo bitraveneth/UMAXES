@@ -570,7 +570,7 @@ function OrderExpand({
     );
 
   const fulfillmentStatuses: OrderStatus[] = allowedStatuses.filter(
-    (s) => s !== "PAYMENT_PENDING" && s !== "SUBMITTED",
+    (s) => s !== "SUBMITTED",
   );
   const preferredStatus: OrderStatus =
     order.status === "PICKING" ? "SENT_TO_SUPPLIER" : order.status;
@@ -586,29 +586,18 @@ function OrderExpand({
       <div className="space-y-6 px-5 py-6 sm:px-6 sm:py-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h3 className="text-lg font-semibold tracking-tight text-[var(--admin-text)] sm:text-xl">
-                {order.orderNumber}
-              </h3>
-              <AdminBadge tone={orderTone(order.status)}>
-                {statusLabel(order.status)}
-              </AdminBadge>
-              <AdminBadge
-                tone={paymentTone(
-                  isCredit
-                    ? order.paymentPaid
-                      ? "paid"
-                      : "on_terms"
-                    : order.paymentStatus,
-                )}
-              >
-                {isCredit
-                  ? order.paymentPaid
-                    ? t("orders.payStatusPaid")
-                    : t("orders.payCredit")
-                  : t(paymentStatusLabelKey(order.paymentStatus))}
-              </AdminBadge>
-            </div>
+            <h3 className="text-lg font-semibold tracking-tight text-[var(--admin-text)] sm:text-xl">
+              {order.orderNumber}
+            </h3>
+            <p className="text-sm text-[var(--admin-muted)]">
+              {order.companyName}
+              <span className="mx-2 text-[var(--admin-border)]">·</span>
+              {payLabel(order.paymentMethod)}
+              <span className="mx-2 text-[var(--admin-border)]">·</span>
+              <span className="tabular-nums font-medium text-[var(--admin-text)]">
+                {money(order.total)}
+              </span>
+            </p>
           </div>
           <button
             type="button"
@@ -629,10 +618,32 @@ function OrderExpand({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/50 p-4 sm:p-5">
-            <p className="mb-4 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
-              {t("orders.updateStatus")}
-            </p>
+          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:p-5">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+                  {t("orders.paymentPanelTitle")}
+                </p>
+                <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                  {t("orders.paymentPanelHint")}
+                </p>
+              </div>
+              <AdminBadge
+                tone={paymentTone(
+                  isCredit
+                    ? order.paymentPaid
+                      ? "paid"
+                      : "on_terms"
+                    : order.paymentStatus,
+                )}
+              >
+                {isCredit
+                  ? order.paymentPaid
+                    ? t("orders.payStatusPaid")
+                    : t("orders.payCredit")
+                  : t(paymentStatusLabelKey(order.paymentStatus))}
+              </AdminBadge>
+            </div>
 
             <div className="space-y-4">
               {!isCredit ? (
@@ -649,9 +660,9 @@ function OrderExpand({
                     );
                     onClose();
                   }}
-                  className="flex flex-wrap items-end gap-2"
+                  className="space-y-3"
                 >
-                  <label className="min-w-[12rem] flex-1 text-sm font-medium text-[var(--admin-text)]">
+                  <label className="block text-sm font-medium text-[var(--admin-text)]">
                     {t("orders.paymentStatus")}
                     <select
                       name="paymentStatus"
@@ -673,26 +684,35 @@ function OrderExpand({
                   </button>
                 </form>
               ) : !order.paymentPaid ? (
-                <form
-                  action={async () => {
-                    await markPaymentReceived(
-                      order.id,
-                      order.paymentRef || "Credit settlement",
-                    );
-                    onClose();
-                  }}
-                >
-                  <button
-                    type="submit"
-                    className="admin-btn admin-btn-primary admin-btn-sm"
+                <div className="space-y-3">
+                  <p className="text-sm text-[var(--admin-muted)]">
+                    {t("orders.markPaidHint")}
+                  </p>
+                  <form
+                    action={async () => {
+                      await markPaymentReceived(
+                        order.id,
+                        order.paymentRef || "Credit settlement",
+                      );
+                      onClose();
+                    }}
                   >
-                    {t("orders.markPaid")}
-                  </button>
-                </form>
-              ) : null}
+                    <button
+                      type="submit"
+                      className="admin-btn admin-btn-primary admin-btn-sm"
+                    >
+                      {t("orders.markPaid")}
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-[var(--admin-success-700)]">
+                  {t("orders.payStatusPaid")}
+                </p>
+              )}
 
               {order.paymentSlipUrl ? (
-                <div className="space-y-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-3">
+                <div className="space-y-2 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-3">
                   <a
                     href={slipHref(order.id)}
                     target="_blank"
@@ -706,8 +726,30 @@ function OrderExpand({
                     fileName={order.paymentSlipName}
                   />
                 </div>
+              ) : !isCredit ? (
+                <p className="text-sm font-medium text-[var(--admin-warning-700)]">
+                  {t("orders.noSlip")}
+                </p>
               ) : null}
+            </div>
+          </section>
 
+          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:p-5">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+                  {t("orders.shippingPanelTitle")}
+                </p>
+                <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                  {t("orders.shippingPanelHint")}
+                </p>
+              </div>
+              <AdminBadge tone={orderTone(order.status)}>
+                {statusLabel(order.status)}
+              </AdminBadge>
+            </div>
+
+            <div className="space-y-4">
               {fulfillmentStatuses.length > 0 ? (
                 <form
                   action={async (fd) => {
@@ -718,9 +760,9 @@ function OrderExpand({
                     await updateOrderStatus(order.id, nextStatus);
                     onClose();
                   }}
-                  className="flex flex-wrap items-end gap-2 border-t border-[var(--admin-border)] pt-4"
+                  className="space-y-3"
                 >
-                  <label className="min-w-[11rem] flex-1 text-sm font-medium text-[var(--admin-text)]">
+                  <label className="block text-sm font-medium text-[var(--admin-text)]">
                     {t("orders.statusLabel")}
                     <select
                       name="status"
@@ -736,12 +778,16 @@ function OrderExpand({
                   </label>
                   <button
                     type="submit"
-                    className="admin-btn admin-btn-secondary admin-btn-sm"
+                    className="admin-btn admin-btn-primary admin-btn-sm"
                   >
                     {t("orders.applyStatus")}
                   </button>
                 </form>
-              ) : null}
+              ) : (
+                <p className="text-sm text-[var(--admin-muted)]">
+                  {statusLabel(order.status)}
+                </p>
+              )}
 
               {canAssign ? (
                 <form
@@ -780,16 +826,18 @@ function OrderExpand({
                   />
                   <button
                     type="submit"
-                    className="admin-btn admin-btn-primary admin-btn-sm"
+                    className="admin-btn admin-btn-secondary admin-btn-sm"
                   >
                     {t("orders.sendToSupplier")}
                   </button>
                 </form>
               ) : null}
             </div>
-          </div>
+          </section>
+        </div>
 
-          <div className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-4 lg:col-span-2">
             <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/50 p-4 sm:p-5">
               <p className="mb-3 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
                 {t("orders.detail")}
