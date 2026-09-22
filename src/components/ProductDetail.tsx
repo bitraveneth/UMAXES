@@ -569,7 +569,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
                         : "Add a case to include a test station"}
                     </p>
                     <p className="mt-1 font-body text-sm text-black/55">
-                      {TEST_STATION_PER_CASE_COPY}. Free with this order.
+                      {TEST_STATION_PER_CASE_COPY}
                     </p>
                   </div>
                 ) : null}

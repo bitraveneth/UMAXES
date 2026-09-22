@@ -1,7 +1,8 @@
-/** SOP: each selling case includes one test station kit with one device. */
+/** SOP: each selling case includes one test station with one device inside. */
 export const TEST_STATION_SKU = "test-station";
 export const TEST_STATION_NAME = "Test Station";
-export const TEST_STATION_PER_CASE_COPY = "1 case = 1 test station · 1 device";
+export const TEST_STATION_PER_CASE_COPY =
+  "1 case included 1 test station · (including 1 device inside)";
 
 export function formatTestStationQty(qty: number) {
   const n = Math.max(0, Math.floor(Number(qty) || 0));

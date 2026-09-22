@@ -131,7 +131,8 @@ const en: BuyerMessages = {
     tierLocked: "Not yet",
     howTitle: "How it works",
     howStations: "Test stations",
-    howStationsBody: "Kits are added automatically and taken from Test Station stock.",
+    howStationsBody:
+      "1 case included 1 test station · (including 1 device inside)",
     howStationsNone: "No test-station kit is attached to this account level.",
     howFirst: "First order",
     howFirstBody:
