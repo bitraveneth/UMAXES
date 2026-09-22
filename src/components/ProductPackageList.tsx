@@ -28,12 +28,9 @@ export default function ProductPackageList({ flavor }: { flavor: Flavor }) {
           </div>
           <h2
             id="package-list-heading"
-            className="mt-4 font-display text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-black"
+            className="mt-4 font-display text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.04em] text-black"
           >
-            Umaxes HookaMax 80K
-            <span className="mt-2 block text-[0.72em] font-bold tracking-[-0.03em] text-black/45 sm:mt-2.5">
-              Disposable Vape
-            </span>
+            Umaxes HookaMax 80K Disposable Vape
           </h2>
         </header>
 
@@ -69,11 +66,10 @@ export default function ProductPackageList({ flavor }: { flavor: Flavor }) {
           <div className="flex min-h-[20rem] flex-col rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-7 py-8 shadow-[0_16px_40px_rgba(61,22,5,0.06)] sm:min-h-[24rem] sm:px-9 sm:py-10 lg:min-h-[28rem]">
             <div className="flex-1">
               <p className="font-display text-[0.65rem] font-semibold tracking-[0.2em] text-black/40 uppercase">
-                UMAXES
+                Our slogan
               </p>
-              <p className="mt-4 font-display text-[clamp(2rem,4.2vw,2.85rem)] font-extrabold leading-[0.98] tracking-[-0.045em] text-black">
-                Luxury in
-                <span className="mt-1 block text-black/40">Every Draw</span>
+              <p className="mt-4 font-display text-[clamp(1.85rem,3.8vw,2.6rem)] font-extrabold leading-[1.08] tracking-[-0.04em] text-black">
+                Luxury in Every Draw
               </p>
               <p className="mt-4 max-w-sm font-body text-sm leading-relaxed text-black/55 sm:text-base">
                 Premium hookah-inspired disposables — crafted for adults who
