@@ -840,7 +840,12 @@ const zh: AdminMessages = {
   rebates: {
     title: "进货返利",
     description:
-      "按客户等级维护 SOP：单价、95+1 试抽装、第一单少收、月度已到账返利。Info 确认到账后才计入数量。",
+      "批发商 / 经销商返利。确认到账后按支数累计 → 发放到账户 → 下一单自动抵扣。正常订单不需要手工填金额。",
+    howTitle: "正常流程（自动）",
+    howSteps:
+      "1）Info 确认订单已到账 · 2）本月返利按已付款支数更新 · 3）点「发放到账户」· 4）下单结账时自动用余额。",
+    howAdjustNote:
+      "右侧表单仅用于少数纠错（发错、补偿、追回），不是买家付款后拿返利的正常方式。",
     sopHint:
       "批发商与经销商流程相同，只有单价和返利阶梯不同。保存后会把单价同步到商品价格。",
     wholesaler: "批发商 SOP",
@@ -863,7 +868,8 @@ const zh: AdminMessages = {
     statWallets: "客户账户余额",
     statActivity: "账户流水",
     monthsTitle: "本月返利",
-    monthsHint: "Info 确认到账后才计入。点发放后进入客户返利账户。",
+    monthsHint:
+      "确认到账后自动累计。点发放进入返利账户；买家下单会自动抵扣——不必用右侧公司表单手工加钱。",
     monthsEmpty: "还没有月度返利。请先确认一笔到账的渠道订单。",
     issue: "发放到账户",
     issuedSoFar: "已发放",
@@ -880,15 +886,17 @@ const zh: AdminMessages = {
     colWhen: "时间",
     colType: "类型",
     walletsTitle: "客户返利账户",
-    walletsHint: "剩余返利会在下一单自动抵扣。",
+    walletsHint: "发放后的剩余余额，结账时自动抵扣。不要再用纠错表单重复加一笔。",
     walletsEmpty: "还没有批发商或经销商客户。",
-    adjustTitle: "增加或追回",
-    adjustHint: "正数增加余额，负数追回。请填写原因。",
-    company: "公司",
+    adjustTitle: "手工纠错（少用）",
+    adjustHint:
+      "仅用于例外：改错账、补偿或追回。正常付款返利请用上方「发放到账户」，不要用这个表单。",
+    company: "调整哪家公司",
     amount: "金额（美元）",
-    adjust: "保存调整",
+    amountHint: "填 +100 增加；填 −100 扣回。必须写原因。",
+    adjust: "保存纠错",
     ledgerTitle: "账户流水",
-    ledgerHint: "发放、下单抵扣、手工增加或追回都会记在这里。",
+    ledgerHint: "发放、下单自动抵扣，以及少数手工纠错都会记在这里。",
     typeIssue: "发放到账户",
     typeApply: "订单抵扣",
     typeAdjust: "手工增加",

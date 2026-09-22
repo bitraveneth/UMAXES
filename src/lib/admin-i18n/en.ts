@@ -864,7 +864,12 @@ const en: AdminMessages = {
   rebates: {
     title: "Volume rebate",
     description:
-      "SOP per customer level: unit price, 95+1 test stations, first-order unpaid pcs, and monthly paid-qty rebate. Issued after Info confirms payment received.",
+      "Wholesaler and distributor cash-back. Payment confirm counts pcs → issue to wallet → next order uses it automatically. You do not type amounts by hand for normal orders.",
+    howTitle: "Normal flow (automatic)",
+    howSteps:
+      "1) Info marks the order Paid · 2) This month’s rebate updates from paid pcs · 3) Click Issue to wallet · 4) Checkout spends the wallet balance by itself.",
+    howAdjustNote:
+      "The form on the right is only for rare fixes (wrong issue, goodwill, clawback). It is not how buyers earn credit after paying.",
     sopHint:
       "Same mechanics for wholesaler and distributor. Only unit price and rebate ladder differ. Save to apply unit price to the catalog.",
     wholesaler: "Wholesaler SOP",
@@ -889,7 +894,7 @@ const en: AdminMessages = {
     statActivity: "Wallet activity",
     monthsTitle: "This month’s rebates",
     monthsHint:
-      "Counted after Info confirms payment received. Issue sends the money to their wallet.",
+      "Auto-counted when payment is confirmed. Issue puts that month’s cash-back into their wallet. Buyers then spend it on the next order — no manual Company form needed.",
     monthsEmpty: "No rebate months yet. Confirm a paid channel order first.",
     issue: "Issue to wallet",
     issuedSoFar: "Already issued",
@@ -906,15 +911,18 @@ const en: AdminMessages = {
     colWhen: "When",
     colType: "Type",
     walletsTitle: "Customer wallets",
-    walletsHint: "Rebate left to use automatically on the next order.",
+    walletsHint:
+      "Balance left after Issue. Used automatically at checkout — do not re-add it with the correction form.",
     walletsEmpty: "No wholesaler or distributor accounts yet.",
-    adjustTitle: "Add or take back",
-    adjustHint: "Positive adds money. Negative claws it back. Always add a note.",
-    company: "Company",
+    adjustTitle: "Manual correction (rare)",
+    adjustHint:
+      "Only for exceptions: fix a wrong balance, goodwill credit, or clawback. Normal payment rebates use Issue to wallet above — not this form.",
+    company: "Whose wallet",
     amount: "Amount (USD)",
-    adjust: "Save adjustment",
+    amountHint: "Use +100 to add. Use −100 to take back. Note is required.",
+    adjust: "Save correction",
     ledgerTitle: "Wallet activity",
-    ledgerHint: "Every issue, use on an order, manual add, or clawback.",
+    ledgerHint: "Issues, auto use on orders, and rare manual corrections.",
     typeIssue: "Issued to wallet",
     typeApply: "Used on order",
     typeAdjust: "Manual add",
