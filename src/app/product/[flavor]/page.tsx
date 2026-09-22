@@ -44,7 +44,7 @@ export default async function ProductPage({ params }: Props) {
         <ProductDetail flavor={flavor} />
         <ProductIntroduction />
         <ProductKeyFeatures flavor={flavor} />
-        <ProductPackageList />
+        <ProductPackageList flavor={flavor} />
         <Features />
         <ProductFlavorLineup flavor={flavor} />
       </main>
