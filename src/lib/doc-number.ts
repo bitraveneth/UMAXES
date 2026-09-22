@@ -14,17 +14,26 @@ const MONTHS = [
 ] as const;
 
 const COMPANY_NOISE =
-  /\b(LLC|L\.L\.C|INC|LTD|CORP|CO|LIMITED|INCORPORATED|COMPANY)\b\.?/g;
+  /\b(LLC|L\.L\.C|INC|LTD|CORP|CO|LIMITED|INCORPORATED|COMPANY|PARTNERS|PARTNER|GROUP|HOLDINGS|ENTERPRISES|ENTERPRISE|TRADING|INTERNATIONAL|INTL)\b\.?/gi;
 
 export function nextSystemId() {
   return String(Math.floor(Math.random() * 9000 + 1000));
 }
 
-/** Document date token: 21-SEP-2026 */
+/** Document date token: 20260921 (numeric, universal). */
 export function formatDocDate(date = new Date()) {
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const mon = MONTHS[date.getUTCMonth()] || "JAN";
-  return `${day}-${mon}-${date.getUTCFullYear()}`;
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${d}`;
+}
+
+/** Human label for UI: 2026-09-21 */
+export function formatDocDateLabel(token: string) {
+  if (/^\d{8}$/.test(token)) {
+    return `${token.slice(0, 4)}-${token.slice(4, 6)}-${token.slice(6, 8)}`;
+  }
+  return token;
 }
 
 export function slugState(region?: string | null) {
@@ -34,14 +43,17 @@ export function slugState(region?: string | null) {
   return raw.replace(/[^A-Z0-9]+/g, "").slice(0, 8);
 }
 
+/** First two meaningful words only, e.g. "Pacific Distro Partners" → PACIFIC-DISTRO */
 export function slugCompany(name: string) {
-  const slug = (name || "")
+  const words = (name || "")
     .toUpperCase()
     .replace(COMPANY_NOISE, " ")
-    .replace(/[^A-Z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 28);
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  const slug = words.join("-").slice(0, 24);
   return slug || "CUSTOMER";
 }
 
@@ -51,7 +63,11 @@ export function nextOrderNumber() {
   return `UMX-${stamp}-${nextSystemId()}`;
 }
 
-/** PI-{STATE}-{COMPANY}-{DD-MON-YYYY}-{SYSID} */
+/**
+ * Universal short doc id used for PI (and CI/PL via siblingDocNumber):
+ * PI-{COMPANY2}-{STATE}-{YYYYMMDD}-{SYSID}
+ * Example: PI-PACIFIC-DISTRO-CA-20260921-9801
+ */
 export function nextPiNumber(opts: {
   companyName?: string | null;
   customerName?: string | null;
@@ -63,8 +79,8 @@ export function nextPiNumber(opts: {
   const systemId = opts.orderNumber.split("-").pop() || nextSystemId();
   const parts = [
     "PI",
-    slugState(opts.region),
     slugCompany(party),
+    slugState(opts.region),
     formatDocDate(opts.date),
     systemId,
   ].filter(Boolean);
@@ -115,34 +131,40 @@ export function parseDocNumber(
   }
 
   let dateLabel = "";
-  const monthIdx = rest.findIndex(
-    (part, i) =>
-      MONTHS.includes(part as (typeof MONTHS)[number]) &&
-      i > 0 &&
-      /^\d{1,2}$/.test(rest[i - 1] || "") &&
-      /^\d{4}$/.test(rest[i + 1] || ""),
-  );
-  if (monthIdx >= 1) {
-    const day = String(rest[monthIdx - 1]).padStart(2, "0");
-    const mon = rest[monthIdx];
-    const year = rest[monthIdx + 1];
-    dateLabel = `${day} ${mon} ${year}`;
-    rest.splice(monthIdx - 1, 3);
-  } else if (rest.length) {
-    const last = rest[rest.length - 1] || "";
-    const compact = last.match(/^(\d{2})([A-Z]{3})(\d{4})$/);
-    if (compact) {
-      dateLabel = `${compact[1]} ${compact[2]} ${compact[3]}`;
-      rest.pop();
-    } else if (/^\d{8}$/.test(last)) {
-      const mon = MONTHS[Number(last.slice(4, 6)) - 1];
-      dateLabel = `${last.slice(6, 8)} ${mon || last.slice(4, 6)} ${last.slice(0, 4)}`;
-      rest.pop();
+  // New universal numeric date: YYYYMMDD
+  if (rest.length && /^\d{8}$/.test(rest[rest.length - 1] || "")) {
+    dateLabel = formatDocDateLabel(rest.pop() as string);
+  } else {
+    // Legacy: 21-SEP-2026
+    const monthIdx = rest.findIndex(
+      (part, i) =>
+        MONTHS.includes(part as (typeof MONTHS)[number]) &&
+        i > 0 &&
+        /^\d{1,2}$/.test(rest[i - 1] || "") &&
+        /^\d{4}$/.test(rest[i + 1] || ""),
+    );
+    if (monthIdx >= 1) {
+      const day = String(rest[monthIdx - 1]).padStart(2, "0");
+      const mon = rest[monthIdx];
+      const year = rest[monthIdx + 1];
+      dateLabel = `${day} ${mon} ${year}`;
+      rest.splice(monthIdx - 1, 3);
+    } else if (rest.length) {
+      const last = rest[rest.length - 1] || "";
+      const compact = last.match(/^(\d{2})([A-Z]{3})(\d{4})$/);
+      if (compact) {
+        dateLabel = `${compact[1]} ${compact[2]} ${compact[3]}`;
+        rest.pop();
+      }
     }
   }
 
+  // Prefer trailing 2-letter state (new order: company then state)
   let state = "";
-  if (rest[0] && /^[A-Z]{2}$/.test(rest[0])) {
+  if (rest.length && /^[A-Z]{2}$/.test(rest[rest.length - 1] || "")) {
+    state = rest.pop() as string;
+  } else if (rest[0] && /^[A-Z]{2}$/.test(rest[0])) {
+    // Legacy: state first
     state = rest.shift() as string;
   }
 
