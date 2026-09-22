@@ -5,7 +5,6 @@ import {
   markPaymentReceived,
   updateOrderPaymentStatus,
   updateOrderStatus,
-  assignOrderToSupplier,
   deletePaymentSlip,
 } from "@/lib/admin-actions";
 import type { OrderStatus, PaymentMethod } from "@/generated/prisma/enums";
@@ -17,11 +16,6 @@ import {
   ADMIN_PAYMENT_STATUSES,
   type AdminPaymentStatus,
 } from "@/lib/payment-slip";
-
-export type OrdersPanelSupplier = {
-  id: string;
-  name: string;
-};
 
 export type OrdersPanelItem = {
   id: string;
@@ -180,16 +174,12 @@ function AdminSlipPhoto({
 
 export default function OrdersPanel({
   orders,
-  suppliers,
   allowedStatuses,
-  canAssignSupplier,
   canDeleteSlip,
   openId = null,
 }: {
   orders: OrdersPanelItem[];
-  suppliers: OrdersPanelSupplier[];
   allowedStatuses: OrderStatus[];
-  canAssignSupplier: boolean;
   canDeleteSlip: boolean;
   openId?: string | null;
 }) {
@@ -399,9 +389,7 @@ export default function OrdersPanel({
                           >
                             <OrderExpand
                               order={order}
-                              suppliers={suppliers}
                               allowedStatuses={allowedStatuses}
-                              canAssignSupplier={canAssignSupplier}
                               canDeleteSlip={canDeleteSlip}
                               payLabel={payLabel}
                               statusLabel={statusLabel}
@@ -541,18 +529,14 @@ function OrderPipeline({
 
 function OrderExpand({
   order,
-  suppliers,
   allowedStatuses,
-  canAssignSupplier,
   canDeleteSlip,
   payLabel,
   statusLabel,
   onClose,
 }: {
   order: OrdersPanelItem;
-  suppliers: OrdersPanelSupplier[];
   allowedStatuses: OrderStatus[];
-  canAssignSupplier: boolean;
   canDeleteSlip: boolean;
   payLabel: (m: PaymentMethod) => string;
   statusLabel: (s: OrderStatus) => string;
@@ -562,12 +546,6 @@ function OrderExpand({
   const { confirm, ui } = useAppFeedback();
   const shipment = order.shipments[0];
   const isCredit = order.paymentMethod === "CREDIT";
-  const canAssign =
-    canAssignSupplier &&
-    suppliers.length > 0 &&
-    ["CONFIRMED", "SENT_TO_SUPPLIER", "PICKING", "SUBMITTED"].includes(
-      order.status,
-    );
 
   const fulfillmentStatuses: OrderStatus[] = allowedStatuses.filter(
     (s) => s !== "SUBMITTED",
@@ -788,50 +766,6 @@ function OrderExpand({
                   {statusLabel(order.status)}
                 </p>
               )}
-
-              {canAssign ? (
-                <form
-                  action={async (fd) => {
-                    const supplierId = String(fd.get("supplierId") || "");
-                    const note = String(fd.get("supplierNote") || "");
-                    if (!supplierId) return;
-                    await assignOrderToSupplier(order.id, supplierId, note);
-                    onClose();
-                  }}
-                  className="space-y-2 border-t border-[var(--admin-border)] pt-4"
-                >
-                  <label className="block text-sm font-medium text-[var(--admin-text)]">
-                    {t("orders.colSupplier")}
-                    <select
-                      name="supplierId"
-                      required
-                      defaultValue={order.supplierId || ""}
-                      className="admin-input mt-1.5 w-full"
-                    >
-                      <option value="" disabled>
-                        {t("orders.selectSupplier")}
-                      </option>
-                      {suppliers.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <input
-                    name="supplierNote"
-                    defaultValue={order.supplierNote || ""}
-                    className="admin-input w-full"
-                    placeholder={t("orders.supplierNotePlaceholder")}
-                  />
-                  <button
-                    type="submit"
-                    className="admin-btn admin-btn-secondary admin-btn-sm"
-                  >
-                    {t("orders.sendToSupplier")}
-                  </button>
-                </form>
-              ) : null}
             </div>
           </section>
         </div>
