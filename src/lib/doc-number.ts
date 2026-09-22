@@ -64,9 +64,10 @@ export function nextOrderNumber() {
 }
 
 /**
- * Universal short doc id used for PI (and CI/PL via siblingDocNumber):
- * PI-{COMPANY2}-{STATE}-{YYYYMMDD}-{SYSID}
- * Example: PI-PACIFIC-DISTRO-CA-20260921-9801
+ * Universal short doc id (stored on order.piNumber).
+ * {COMPANY2}-{STATE}-{YYYYMMDD}
+ * Example: PACIFIC-DISTRO-CA-20260921
+ * CI/PL add their own prefix via siblingDocNumber.
  */
 export function nextPiNumber(opts: {
   companyName?: string | null;
@@ -76,13 +77,10 @@ export function nextPiNumber(opts: {
   date?: Date;
 }) {
   const party = (opts.companyName || opts.customerName || "CUSTOMER").trim();
-  const systemId = opts.orderNumber.split("-").pop() || nextSystemId();
   const parts = [
-    "PI",
     slugCompany(party),
     slugState(opts.region),
     formatDocDate(opts.date),
-    systemId,
   ].filter(Boolean);
   return parts.join("-");
 }
@@ -92,8 +90,10 @@ export function siblingDocNumber(
   prefix: "PI" | "CI" | "PL",
   orderNumber: string,
 ) {
-  if (piNumber && /^PI-/i.test(piNumber)) {
-    return `${prefix}-${piNumber.slice(3)}`;
+  const raw = (piNumber || "").trim();
+  if (raw) {
+    const body = raw.replace(/^(PI|CI|PL)-/i, "");
+    return `${prefix}-${body}`;
   }
   return `${prefix}-${orderNumber.replace(/^UMX-/, "")}`;
 }
@@ -122,11 +122,17 @@ export function parseDocNumber(
   if (!value) return empty;
 
   const bits = value.split("-").filter(Boolean);
-  const prefix = bits[0] || "PI";
-  const rest = bits.slice(1);
+  const hasTypePrefix = /^(PI|CI|PL)$/i.test(bits[0] || "");
+  const prefix = hasTypePrefix ? (bits[0] || "PI").toUpperCase() : "";
+  const rest = hasTypePrefix ? bits.slice(1) : bits.slice();
 
   let systemId = "";
-  if (rest.length && /^\d{3,6}$/.test(rest[rest.length - 1] || "")) {
+  // Only treat trailing 3–6 digit id as system id when not a full YYYYMMDD date
+  if (
+    rest.length &&
+    /^\d{3,6}$/.test(rest[rest.length - 1] || "") &&
+    !/^\d{8}$/.test(rest[rest.length - 1] || "")
+  ) {
     systemId = rest.pop() as string;
   }
 
