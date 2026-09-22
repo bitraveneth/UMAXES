@@ -94,6 +94,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
           isActive: form.isActive,
         });
         setMessage(t("invoices.saved"));
+        showToast(t("invoices.saved"), "success");
         resetForm();
         router.refresh();
       } catch (err) {
@@ -107,6 +108,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
       try {
         await activateBankAccount(id);
         setMessage(t("invoices.activated"));
+        showToast(t("invoices.activated"), "success");
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : t("invoices.saveFailed"));
@@ -157,6 +159,35 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
         />
       </div>
 
+      {active ? (
+        <AdminCard>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
+                <Star className="h-5 w-5" strokeWidth={1.75} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+                  {t("invoices.onInvoice")}
+                </p>
+                <p className="mt-1 text-lg font-semibold text-[var(--admin-text)]">
+                  {active.label}
+                </p>
+                <p className="mt-1 text-sm text-[var(--admin-text)]">
+                  {active.companyName} · {active.accountNumber}
+                </p>
+                <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                  {active.bankName}
+                  {active.swiftCode ? ` · SWIFT ${active.swiftCode}` : ""}
+                  {` · ${active.currency}`}
+                </p>
+              </div>
+            </div>
+            <AdminBadge tone="success">{t("invoices.onInvoice")}</AdminBadge>
+          </div>
+        </AdminCard>
+      ) : null}
+
       {error ? (
         <p className="rounded-xl border border-[var(--admin-error-500)]/30 bg-[var(--admin-error-50)] px-4 py-3 text-sm text-[var(--admin-error-700)]">
           {error}
@@ -168,196 +199,214 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
         </p>
       ) : null}
 
-      <AdminCard padded={false}>
-        <div className="border-b border-[var(--admin-border)] px-5 py-4">
-          <h2 className="admin-section-title mb-0">{t("invoices.listed")}</h2>
-          <p className="mt-1 text-sm text-[var(--admin-muted)]">
-            {t("invoices.listedHint")}
-          </p>
-        </div>
-        {accounts.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-[var(--admin-muted)]">
-            {t("invoices.empty")}
-          </p>
-        ) : (
-          <ul className="divide-y divide-[var(--admin-border)]">
-            {accounts.map((row) => (
-              <li
-                key={row.id}
-                className="flex flex-wrap items-start justify-between gap-4 px-5 py-4"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-[var(--admin-text)]">
-                      {row.label}
-                    </p>
-                    {row.isActive ? (
-                      <AdminBadge tone="success">{t("invoices.onInvoice")}</AdminBadge>
-                    ) : (
-                      <AdminBadge>{t("common.inactive")}</AdminBadge>
-                    )}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
+        <AdminCard padded={false}>
+          <div className="border-b border-[var(--admin-border)] px-5 py-4">
+            <h2 className="admin-section-title mb-0">{t("invoices.listed")}</h2>
+            <p className="mt-1 text-sm text-[var(--admin-muted)]">
+              {t("invoices.listedHint")}
+            </p>
+          </div>
+          {accounts.length === 0 ? (
+            <p className="px-5 py-10 text-sm text-[var(--admin-muted)]">
+              {t("invoices.empty")}
+            </p>
+          ) : (
+            <ul className="divide-y divide-[var(--admin-border)]">
+              {accounts.map((row) => (
+                <li
+                  key={row.id}
+                  className={`px-5 py-4 ${
+                    row.isActive
+                      ? "bg-[var(--admin-brand-50)]/45"
+                      : "bg-transparent"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-[var(--admin-text)]">
+                          {row.label}
+                        </p>
+                        {row.isActive ? (
+                          <AdminBadge tone="success">
+                            {t("invoices.onInvoice")}
+                          </AdminBadge>
+                        ) : (
+                          <AdminBadge>{t("common.inactive")}</AdminBadge>
+                        )}
+                      </div>
+                      <p className="mt-1.5 text-sm text-[var(--admin-text)]">
+                        {row.companyName}
+                      </p>
+                      <p className="mt-0.5 font-mono text-sm tracking-wide text-[var(--admin-muted)]">
+                        {row.accountNumber}
+                      </p>
+                      <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                        {row.bankName}
+                        {row.swiftCode ? ` · SWIFT ${row.swiftCode}` : ""}
+                        {row.currency ? ` · ${row.currency}` : ""}
+                      </p>
+                      {row.bankAddress ? (
+                        <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                          {row.bankAddress}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {!row.isActive ? (
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => onActivate(row.id)}
+                          className="admin-btn admin-btn-primary admin-btn-sm"
+                        >
+                          <Star className="h-3.5 w-3.5" strokeWidth={1.75} />
+                          {t("invoices.useOnInvoice")}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => startEdit(row)}
+                        className="admin-btn admin-btn-secondary admin-btn-sm"
+                      >
+                        <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        {t("common.edit")}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => onDelete(row)}
+                        className="admin-btn admin-btn-danger admin-btn-sm"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        {t("common.remove")}
+                      </button>
+                    </div>
                   </div>
-                  <p className="mt-1 text-sm text-[var(--admin-text)]">
-                    {row.companyName} · {row.accountNumber}
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                    {row.bankName}
-                    {row.swiftCode ? ` · SWIFT ${row.swiftCode}` : ""}
-                    {row.currency ? ` · ${row.currency}` : ""}
-                  </p>
-                  {row.bankAddress ? (
-                    <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                      {row.bankAddress}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {!row.isActive ? (
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => onActivate(row.id)}
-                      className="admin-btn"
-                    >
-                      <Star className="h-4 w-4" strokeWidth={1.75} />
-                      {t("invoices.useOnInvoice")}
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => startEdit(row)}
-                    className="admin-btn"
-                  >
-                    <Pencil className="h-4 w-4" strokeWidth={1.75} />
-                    {t("common.edit")}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => onDelete(row)}
-                    className="admin-btn"
-                  >
-                    <Trash2 className="h-4 w-4" strokeWidth={1.75} />
-                    {t("common.remove")}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </AdminCard>
+                </li>
+              ))}
+            </ul>
+          )}
+        </AdminCard>
 
-      <AdminCard>
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
-              {editing ? (
-                <Pencil className="h-5 w-5" strokeWidth={1.75} />
-              ) : (
-                <Plus className="h-5 w-5" strokeWidth={1.75} />
-              )}
+        <AdminCard>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
+                {editing ? (
+                  <Pencil className="h-5 w-5" strokeWidth={1.75} />
+                ) : (
+                  <Plus className="h-5 w-5" strokeWidth={1.75} />
+                )}
+              </div>
+              <h2 className="text-base font-semibold text-[var(--admin-text)]">
+                {editing ? t("invoices.edit") : t("invoices.add")}
+              </h2>
             </div>
-            <h2 className="text-base font-semibold text-[var(--admin-text)]">
-              {editing ? t("invoices.edit") : t("invoices.add")}
-            </h2>
+            {editing ? (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="admin-btn admin-btn-secondary admin-btn-sm"
+              >
+                <X className="h-4 w-4" strokeWidth={1.75} />
+                {t("common.cancel")}
+              </button>
+            ) : null}
           </div>
-          {editing ? (
-            <button type="button" onClick={resetForm} className="admin-btn">
-              <X className="h-4 w-4" strokeWidth={1.75} />
-              {t("common.cancel")}
-            </button>
-          ) : null}
-        </div>
-        <form onSubmit={onSave} className="grid gap-3 sm:grid-cols-2">
-          <label className="admin-label text-xs">
-            {t("invoices.label")}
-            <input
-              required
-              value={form.label}
-              onChange={(e) => field("label", e.target.value)}
-              className="admin-input mt-1.5 w-full"
-              placeholder="Dah Sing Bank"
-            />
-          </label>
-          <label className="admin-label text-xs">
-            {t("invoices.company")}
-            <input
-              required
-              value={form.companyName}
-              onChange={(e) => field("companyName", e.target.value)}
-              className="admin-input mt-1.5 w-full"
-            />
-          </label>
-          <label className="admin-label text-xs">
-            {t("invoices.accountNumber")}
-            <input
-              required
-              value={form.accountNumber}
-              onChange={(e) => field("accountNumber", e.target.value)}
-              className="admin-input mt-1.5 w-full"
-            />
-          </label>
-          <label className="admin-label text-xs">
-            {t("invoices.bankName")}
-            <input
-              required
-              value={form.bankName}
-              onChange={(e) => field("bankName", e.target.value)}
-              className="admin-input mt-1.5 w-full"
-            />
-          </label>
-          <label className="admin-label text-xs sm:col-span-2">
-            {t("invoices.bankAddress")}
-            <input
-              value={form.bankAddress}
-              onChange={(e) => field("bankAddress", e.target.value)}
-              className="admin-input mt-1.5 w-full"
-            />
-          </label>
-          <label className="admin-label text-xs">
-            {t("invoices.swift")}
-            <input
-              value={form.swiftCode}
-              onChange={(e) => field("swiftCode", e.target.value)}
-              className="admin-input mt-1.5 w-full"
-            />
-          </label>
-          <label className="admin-label text-xs">
-            {t("invoices.currency")}
-            <input
-              value={form.currency}
-              onChange={(e) => field("currency", e.target.value)}
-              className="admin-input mt-1.5 w-full"
-            />
-          </label>
-          <label className="admin-label text-xs sm:col-span-2">
-            {t("invoices.notes")}
-            <input
-              value={form.notes}
-              onChange={(e) => field("notes", e.target.value)}
-              className="admin-input mt-1.5 w-full"
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-[var(--admin-gray-700)] sm:col-span-2">
-            <input
-              type="checkbox"
-              checked={form.isActive}
-              onChange={(e) => field("isActive", e.target.checked)}
-            />
-            {t("invoices.setActive")}
-          </label>
-          <div className="sm:col-span-2 flex justify-end">
-            <button
-              type="submit"
-              disabled={pending}
-              className="admin-btn admin-btn-primary"
-            >
-              {editing ? t("common.save") : t("invoices.create")}
-            </button>
-          </div>
-        </form>
-      </AdminCard>
+          <form onSubmit={onSave} className="grid gap-3 sm:grid-cols-2">
+            <label className="admin-label text-xs">
+              {t("invoices.label")}
+              <input
+                required
+                value={form.label}
+                onChange={(e) => field("label", e.target.value)}
+                className="admin-input mt-1.5 w-full"
+                placeholder="Dah Sing Bank"
+              />
+            </label>
+            <label className="admin-label text-xs">
+              {t("invoices.company")}
+              <input
+                required
+                value={form.companyName}
+                onChange={(e) => field("companyName", e.target.value)}
+                className="admin-input mt-1.5 w-full"
+              />
+            </label>
+            <label className="admin-label text-xs">
+              {t("invoices.accountNumber")}
+              <input
+                required
+                value={form.accountNumber}
+                onChange={(e) => field("accountNumber", e.target.value)}
+                className="admin-input mt-1.5 w-full font-mono"
+              />
+            </label>
+            <label className="admin-label text-xs">
+              {t("invoices.bankName")}
+              <input
+                required
+                value={form.bankName}
+                onChange={(e) => field("bankName", e.target.value)}
+                className="admin-input mt-1.5 w-full"
+              />
+            </label>
+            <label className="admin-label text-xs sm:col-span-2">
+              {t("invoices.bankAddress")}
+              <input
+                value={form.bankAddress}
+                onChange={(e) => field("bankAddress", e.target.value)}
+                className="admin-input mt-1.5 w-full"
+              />
+            </label>
+            <label className="admin-label text-xs">
+              {t("invoices.swift")}
+              <input
+                value={form.swiftCode}
+                onChange={(e) => field("swiftCode", e.target.value)}
+                className="admin-input mt-1.5 w-full font-mono uppercase"
+              />
+            </label>
+            <label className="admin-label text-xs">
+              {t("invoices.currency")}
+              <input
+                value={form.currency}
+                onChange={(e) => field("currency", e.target.value)}
+                className="admin-input mt-1.5 w-full uppercase"
+              />
+            </label>
+            <label className="admin-label text-xs sm:col-span-2">
+              {t("invoices.notes")}
+              <input
+                value={form.notes}
+                onChange={(e) => field("notes", e.target.value)}
+                className="admin-input mt-1.5 w-full"
+              />
+            </label>
+            <label className="flex items-center gap-2.5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-3.5 py-3 text-sm text-[var(--admin-text)] sm:col-span-2">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => field("isActive", e.target.checked)}
+                className="rounded border-[var(--admin-border)]"
+              />
+              {t("invoices.setActive")}
+            </label>
+            <div className="sm:col-span-2 flex justify-end">
+              <button
+                type="submit"
+                disabled={pending}
+                className="admin-btn admin-btn-primary"
+              >
+                {editing ? t("common.save") : t("invoices.create")}
+              </button>
+            </div>
+          </form>
+        </AdminCard>
+      </div>
     </div>
   );
 }
