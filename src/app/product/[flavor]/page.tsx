@@ -8,6 +8,7 @@ import ProductDetail from "@/components/ProductDetail";
 import ProductFlavorLineup from "@/components/ProductFlavorLineup";
 import ProductIntroduction from "@/components/ProductIntroduction";
 import ProductKeyFeatures from "@/components/ProductKeyFeatures";
+import ProductPackageList from "@/components/ProductPackageList";
 import { flavors, getFlavor, product } from "@/lib/assets";
 import { requireMember } from "@/lib/require-member";
 
@@ -43,6 +44,7 @@ export default async function ProductPage({ params }: Props) {
         <ProductDetail flavor={flavor} />
         <ProductIntroduction />
         <ProductKeyFeatures flavor={flavor} />
+        <ProductPackageList flavor={flavor} />
         <Features />
         <ProductFlavorLineup flavor={flavor} />
       </main>
