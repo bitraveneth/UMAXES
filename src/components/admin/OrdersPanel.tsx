@@ -470,9 +470,13 @@ function OrderDocLinks({
 
 function OrderPipeline({
   status,
+  paymentPaid,
+  paymentMethod,
   statusLabel,
 }: {
   status: OrderStatus;
+  paymentPaid: boolean;
+  paymentMethod: PaymentMethod;
   statusLabel: (s: OrderStatus) => string;
 }) {
   const { t } = useAdminI18n();
@@ -486,19 +490,27 @@ function OrderPipeline({
 
   const current = pipelineStatus(status);
   const currentIndex = PIPELINE.indexOf(current);
+  // Credit is on terms; cash/TT must actually be paid before this step looks "done".
+  const paymentSettled = paymentMethod === "CREDIT" || paymentPaid;
 
   return (
     <ol className="admin-pipeline" aria-label={t("orders.colShipping")}>
       {PIPELINE.map((step, i) => {
-        const done = i < currentIndex;
-        const active = i === currentIndex;
+        const isPayStep = step === "PAYMENT_PENDING";
+        const unpaidPayStep = isPayStep && !paymentSettled;
+        const done = !unpaidPayStep && i < currentIndex;
+        const active = unpaidPayStep
+          ? true
+          : !done && i === currentIndex;
+        const stateClass = unpaidPayStep
+          ? "is-pay-pending"
+          : done
+            ? "is-done"
+            : active
+              ? "is-active"
+              : "is-todo";
         return (
-          <li
-            key={step}
-            className={`admin-pipeline-step ${
-              done ? "is-done" : active ? "is-active" : "is-todo"
-            }`}
-          >
+          <li key={step} className={`admin-pipeline-step ${stateClass}`}>
             <span className="admin-pipeline-node" aria-hidden>
               {done ? (
                 <svg
@@ -608,7 +620,12 @@ function OrderExpand({
         </div>
 
         <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-4 py-5 sm:px-6 sm:py-6">
-          <OrderPipeline status={order.status} statusLabel={statusLabel} />
+          <OrderPipeline
+            status={order.status}
+            paymentPaid={order.paymentPaid}
+            paymentMethod={order.paymentMethod}
+            statusLabel={statusLabel}
+          />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
