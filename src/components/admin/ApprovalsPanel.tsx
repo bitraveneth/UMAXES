@@ -83,7 +83,20 @@ export default function ApprovalsPanel({ rows }: { rows: ApprovalRow[] }) {
     }
   }
 
-  function runApprove(userId: string, level: CustomerLevel) {
+  async function runApprove(userId: string, level: CustomerLevel) {
+    const levelLabel =
+      level === "DISTRO"
+        ? t("customers.levelDISTRO")
+        : level === "WHOLESALER"
+          ? t("customers.levelWHOLESALER")
+          : t("customers.levelSHOP");
+    const ok = await confirm({
+      title: t("approvals.approveTitle"),
+      message: t("approvals.approveConfirm", { level: levelLabel }),
+      confirmLabel: t("approvals.confirmApprove"),
+      tone: "success",
+    });
+    if (!ok) return;
     setPendingId(userId);
     startTransition(async () => {
       try {
@@ -101,12 +114,10 @@ export default function ApprovalsPanel({ rows }: { rows: ApprovalRow[] }) {
     });
   }
 
-  async function runReject(userId: string, companyName: string | null) {
+  async function runReject(userId: string) {
     const ok = await confirm({
       title: t("approvals.rejectTitle"),
-      message: t("approvals.rejectConfirm", {
-        name: companyName || t("approvals.thisApplicant"),
-      }),
+      message: t("approvals.rejectConfirm"),
       confirmLabel: t("approvals.reject"),
       tone: "danger",
     });
@@ -191,7 +202,7 @@ export default function ApprovalsPanel({ rows }: { rows: ApprovalRow[] }) {
                             {row.companyName || t("approvals.noCompany")}
                           </p>
                           <AdminBadge tone="warning">
-                            {t("approvals.pending")}
+                            {t("approvals.statusLabel")}: {t("approvals.pending")}
                           </AdminBadge>
                           <AdminBadge tone="brand">
                             {levelHint(row.companyLevel, t)}
@@ -256,7 +267,7 @@ export default function ApprovalsPanel({ rows }: { rows: ApprovalRow[] }) {
                         <button
                           type="button"
                           disabled={busy || pending}
-                          onClick={() => runReject(row.id, row.companyName)}
+                          onClick={() => runReject(row.id)}
                           className="admin-btn admin-btn-danger admin-btn-sm"
                         >
                           <XCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
