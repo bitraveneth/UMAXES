@@ -6,7 +6,7 @@ import type { BuyerDocType } from "@/lib/buyer-order";
 export function documentFileHref(
   orderId: string,
   type: BuyerDocType,
-  format: "pdf" | "xlsx" | "csv",
+  format: "pdf" | "xlsx",
 ) {
   return `/api/orders/${orderId}/docs?type=${type}&format=${format}`;
 }
@@ -24,7 +24,6 @@ export default function DocumentDownloadMenu({
 }) {
   const pdf = documentFileHref(orderId, type, "pdf");
   const xlsx = documentFileHref(orderId, type, "xlsx");
-  const csv = documentFileHref(orderId, type, "csv");
   const admin = variant === "admin";
 
   if (admin) {
@@ -42,9 +41,6 @@ export default function DocumentDownloadMenu({
         <a href={xlsx} title="Download Excel (xlsx) — Excel / WPS / LibreOffice">
           <FileSpreadsheet className="h-3.5 w-3.5" strokeWidth={1.85} />
           Excel
-        </a>
-        <a href={csv} title="Download CSV">
-          CSV
         </a>
       </div>
     );
@@ -73,7 +69,7 @@ export default function DocumentDownloadMenu({
       <a
         href={xlsx}
         title="Excel / WPS / LibreOffice"
-        className={`inline-flex items-center gap-1.5 border-r border-black/10 font-display font-semibold text-black transition hover:bg-[#eef3f7] hover:text-[#1b4f72] ${
+        className={`inline-flex items-center gap-1.5 font-display font-semibold text-black transition hover:bg-[#eef3f7] hover:text-[#1b4f72] ${
           compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2.5 text-sm"
         }`}
       >
@@ -82,15 +78,6 @@ export default function DocumentDownloadMenu({
           strokeWidth={1.85}
         />
         Excel
-      </a>
-      <a
-        href={csv}
-        title="CSV"
-        className={`inline-flex items-center gap-1.5 font-display font-semibold text-black transition hover:bg-[#eef3f7] hover:text-[#1b4f72] ${
-          compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2.5 text-sm"
-        }`}
-      >
-        CSV
       </a>
     </div>
   );

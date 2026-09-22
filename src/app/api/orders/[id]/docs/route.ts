@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { getActiveBankAccount } from "@/lib/bank-accounts";
 import { buildInvoiceHtml, type InvoiceDocType } from "@/lib/invoice-html";
 import { siblingDocNumber } from "@/lib/doc-number";
-import { buildInvoiceCsv, buildInvoicePdf, buildInvoiceXlsx, loadInvoiceLogoDataUri } from "@/lib/document-file";
+import { buildInvoicePdf, buildInvoiceXlsx, loadInvoiceLogoDataUri } from "@/lib/document-file";
 import { prisma } from "@/lib/db";
 
 type Params = { params: Promise<{ id: string }> };
@@ -145,16 +145,6 @@ export async function GET(request: Request, { params }: Params) {
     });
   }
 
-  if (format === "csv") {
-    const body = buildInvoiceCsv(exportInput);
-    return new NextResponse(new Uint8Array(body), {
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filenames[type]}.csv"`,
-      },
-    });
-  }
-
   if (format === "pdf") {
     const body = await buildInvoicePdf(exportInput);
     return new NextResponse(new Uint8Array(body), {
@@ -171,7 +161,6 @@ export async function GET(request: Request, { params }: Params) {
     forceDownloadHref: `?type=${type}&download=1`,
     pdfHref: `?type=${type}&format=pdf`,
     xlsxHref: `?type=${type}&format=xlsx`,
-    csvHref: `?type=${type}&format=csv`,
     showToolbar: true,
     bank,
     origin,
