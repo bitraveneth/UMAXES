@@ -138,7 +138,7 @@ export const adminNav: AdminNavItem[] = [
   { href: "/admin/credit", label: "Credit", roles: [SA, AD, "SALES"], group: "money" },
   { href: "/admin/aging", label: "Aging", roles: [SA, AD, "SALES"], group: "money" },
   { href: "/admin/rebates", label: "Volume rebate", roles: [SA, AD], group: "money" },
-  { href: "/admin/invoices", label: "Invoices", roles: [SA, AD], group: "money" },
+  { href: "/admin/payments", label: "Payments", roles: [SA, AD], group: "money" },
   { href: "/admin/coupons", label: "Coupons", roles: [SA, AD], group: "money" },
   { href: "/admin/commissions", label: "Commissions", roles: [SA, AD, "SALES"], group: "money" },
   { href: "/admin/rma", label: "RMA", roles: [SA, AD, "SALES"], group: "money" },

@@ -93,12 +93,12 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
           notes: form.notes,
           isActive: form.isActive,
         });
-        setMessage(t("invoices.saved"));
-        showToast(t("invoices.saved"), "success");
+        setMessage(t("payments.saved"));
+        showToast(t("payments.saved"), "success");
         resetForm();
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : t("invoices.saveFailed"));
+        setError(err instanceof Error ? err.message : t("payments.saveFailed"));
       }
     });
   }
@@ -107,11 +107,11 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
     startTransition(async () => {
       try {
         await activateBankAccount(id);
-        setMessage(t("invoices.activated"));
-        showToast(t("invoices.activated"), "success");
+        setMessage(t("payments.activated"));
+        showToast(t("payments.activated"), "success");
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : t("invoices.saveFailed"));
+        setError(err instanceof Error ? err.message : t("payments.saveFailed"));
       }
     });
   }
@@ -119,7 +119,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
   async function onDelete(row: BankAccountRow) {
     const ok = await confirm({
       title: t("common.remove"),
-      message: t("invoices.deleteConfirm", { label: row.label }),
+      message: t("payments.deleteConfirm", { label: row.label }),
       confirmLabel: t("common.remove"),
       tone: "danger",
     });
@@ -128,11 +128,11 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
       try {
         await deleteBankAccount(row.id);
         if (form.id === row.id) resetForm();
-        setMessage(t("invoices.deleted"));
-        showToast(t("invoices.deleted"), "danger");
+        setMessage(t("payments.deleted"));
+        showToast(t("payments.deleted"), "danger");
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : t("invoices.saveFailed"));
+        setError(err instanceof Error ? err.message : t("payments.saveFailed"));
       }
     });
   }
@@ -142,18 +142,18 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
       {ui}
       <div className="grid gap-4 sm:grid-cols-3">
         <AdminStat
-          label={t("invoices.statAccounts")}
+          label={t("payments.statAccounts")}
           value={accounts.length.toLocaleString()}
           icon={Landmark}
         />
         <AdminStat
-          label={t("invoices.statActive")}
+          label={t("payments.statActive")}
           value={accounts.filter((a) => a.isActive).length.toLocaleString()}
           icon={Star}
           trendUp={Boolean(active)}
         />
         <AdminStat
-          label={t("invoices.statBank")}
+          label={t("payments.statBank")}
           value={active?.currency || "USD"}
           icon={Landmark}
         />
@@ -168,7 +168,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
-                  {t("invoices.onInvoice")}
+                  {t("payments.onInvoice")}
                 </p>
                 <p className="mt-1 text-lg font-semibold text-[var(--admin-text)]">
                   {active.label}
@@ -183,7 +183,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
                 </p>
               </div>
             </div>
-            <AdminBadge tone="success">{t("invoices.onInvoice")}</AdminBadge>
+            <AdminBadge tone="success">{t("payments.onInvoice")}</AdminBadge>
           </div>
         </AdminCard>
       ) : null}
@@ -202,14 +202,14 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
         <AdminCard padded={false}>
           <div className="border-b border-[var(--admin-border)] px-5 py-4">
-            <h2 className="admin-section-title mb-0">{t("invoices.listed")}</h2>
+            <h2 className="admin-section-title mb-0">{t("payments.listed")}</h2>
             <p className="mt-1 text-sm text-[var(--admin-muted)]">
-              {t("invoices.listedHint")}
+              {t("payments.listedHint")}
             </p>
           </div>
           {accounts.length === 0 ? (
             <p className="px-5 py-10 text-sm text-[var(--admin-muted)]">
-              {t("invoices.empty")}
+              {t("payments.empty")}
             </p>
           ) : (
             <ul className="divide-y divide-[var(--admin-border)]">
@@ -230,7 +230,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
                         </p>
                         {row.isActive ? (
                           <AdminBadge tone="success">
-                            {t("invoices.onInvoice")}
+                            {t("payments.onInvoice")}
                           </AdminBadge>
                         ) : (
                           <AdminBadge>{t("common.inactive")}</AdminBadge>
@@ -262,7 +262,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
                           className="admin-btn admin-btn-primary admin-btn-sm"
                         >
                           <Star className="h-3.5 w-3.5" strokeWidth={1.75} />
-                          {t("invoices.useOnInvoice")}
+                          {t("payments.useOnInvoice")}
                         </button>
                       ) : null}
                       <button
@@ -302,7 +302,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
                 )}
               </div>
               <h2 className="text-base font-semibold text-[var(--admin-text)]">
-                {editing ? t("invoices.edit") : t("invoices.add")}
+                {editing ? t("payments.edit") : t("payments.add")}
               </h2>
             </div>
             {editing ? (
@@ -318,7 +318,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
           </div>
           <form onSubmit={onSave} className="grid gap-3 sm:grid-cols-2">
             <label className="admin-label text-xs">
-              {t("invoices.label")}
+              {t("payments.label")}
               <input
                 required
                 value={form.label}
@@ -328,7 +328,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
               />
             </label>
             <label className="admin-label text-xs">
-              {t("invoices.company")}
+              {t("payments.company")}
               <input
                 required
                 value={form.companyName}
@@ -337,7 +337,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
               />
             </label>
             <label className="admin-label text-xs">
-              {t("invoices.accountNumber")}
+              {t("payments.accountNumber")}
               <input
                 required
                 value={form.accountNumber}
@@ -346,7 +346,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
               />
             </label>
             <label className="admin-label text-xs">
-              {t("invoices.bankName")}
+              {t("payments.bankName")}
               <input
                 required
                 value={form.bankName}
@@ -355,7 +355,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
               />
             </label>
             <label className="admin-label text-xs sm:col-span-2">
-              {t("invoices.bankAddress")}
+              {t("payments.bankAddress")}
               <input
                 value={form.bankAddress}
                 onChange={(e) => field("bankAddress", e.target.value)}
@@ -363,7 +363,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
               />
             </label>
             <label className="admin-label text-xs">
-              {t("invoices.swift")}
+              {t("payments.swift")}
               <input
                 value={form.swiftCode}
                 onChange={(e) => field("swiftCode", e.target.value)}
@@ -371,7 +371,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
               />
             </label>
             <label className="admin-label text-xs">
-              {t("invoices.currency")}
+              {t("payments.currency")}
               <input
                 value={form.currency}
                 onChange={(e) => field("currency", e.target.value)}
@@ -379,7 +379,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
               />
             </label>
             <label className="admin-label text-xs sm:col-span-2">
-              {t("invoices.notes")}
+              {t("payments.notes")}
               <input
                 value={form.notes}
                 onChange={(e) => field("notes", e.target.value)}
@@ -393,7 +393,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
                 onChange={(e) => field("isActive", e.target.checked)}
                 className="rounded border-[var(--admin-border)]"
               />
-              {t("invoices.setActive")}
+              {t("payments.setActive")}
             </label>
             <div className="sm:col-span-2 flex justify-end">
               <button
@@ -401,7 +401,7 @@ export function BankAccountsPanel({ accounts }: { accounts: BankAccountRow[] }) 
                 disabled={pending}
                 className="admin-btn admin-btn-primary"
               >
-                {editing ? t("common.save") : t("invoices.create")}
+                {editing ? t("common.save") : t("payments.create")}
               </button>
             </div>
           </form>
