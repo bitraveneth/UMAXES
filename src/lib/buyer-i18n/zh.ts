@@ -122,7 +122,7 @@ const zh: BuyerMessages = {
     tierLocked: "未达成",
     howTitle: "规则说明",
     howStations: "试抽套件",
-    howStationsBody: "下单自动附赠，并从试抽库存扣减。",
+    howStationsBody: "每箱含 1 台试抽套件 ·（内含 1 台设备）",
     howStationsNone: "此账户级别不附赠试抽套件。",
     howFirst: "首单",
     howFirstBody: "每 {cases} 箱赠 {unpaid} 件不计费。首单不计入月度返利。",

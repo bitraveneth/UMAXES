@@ -401,8 +401,8 @@ export default function CreateOrderPanel({
               <div>
                 <h2 className="text-base font-semibold">2. Add products</h2>
                 <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                  Same as the storefront: sold by the case ({pcsPerCase} pcs).
-                  Test stations add automatically for channel accounts.
+                  Same as the storefront: sold by the case ({pcsPerCase} pcs).{" "}
+                  {TEST_STATION_PER_CASE_COPY}.
                 </p>
               </div>
               <label className="relative block w-full max-w-xs">

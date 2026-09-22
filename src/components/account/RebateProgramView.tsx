@@ -14,7 +14,6 @@ import {
   AccountStatGrid,
 } from "@/components/account/AccountUI";
 import { useBuyerI18n } from "@/components/account/BuyerI18n";
-import { TEST_STATION_PER_CASE_COPY } from "@/lib/test-station";
 import type { BuyerRebateStatus } from "@/lib/rebate-types";
 
 function money(n: number) {
@@ -225,7 +224,7 @@ export default function RebateProgramView({
             </p>
             <p className="mt-1.5 font-body text-sm leading-relaxed text-black/70">
               {status.testStationsPerCase > 0
-                ? `${TEST_STATION_PER_CASE_COPY}. ${t("rebate.howStationsBody")}`
+                ? t("rebate.howStationsBody")
                 : t("rebate.howStationsNone")}
             </p>
           </li>

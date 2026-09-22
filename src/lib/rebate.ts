@@ -269,7 +269,8 @@ export async function ensureTestStationProduct() {
     data: {
       sku: TEST_STATION_SKU,
       name: TEST_STATION_NAME,
-      description: "Free test station kit. Includes 1 HOOKAMAX device.",
+      description:
+        "1 case included 1 test station · (including 1 device inside)",
       active: true,
       visibleLevels: ["WHOLESALER", "DISTRO"],
       inventory: { create: { quantity: 100000, reserved: 0 } },
