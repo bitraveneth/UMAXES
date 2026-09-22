@@ -115,6 +115,17 @@ export async function GET(request: Request, { params }: Params) {
     sellingQty: order.sellingQty,
     items: order.items,
     packingLines: shipment?.lines?.length ? shipment.lines : null,
+    packingMeta:
+      type === "packing" && shipment
+        ? {
+            boxCount: shipment.boxCount,
+            cbm: shipment.cbm,
+            weightKg: shipment.weightKg,
+            packingNote: shipment.packingNote,
+            carrier: shipment.carrier,
+            trackingNumber: shipment.trackingNumber,
+          }
+        : null,
     subtotal: order.subtotal,
     discount: order.discount,
     shipping: order.shipping,
@@ -123,18 +134,19 @@ export async function GET(request: Request, { params }: Params) {
   };
 
   if (format === "xlsx" || format === "excel") {
-    const body = buildInvoiceXlsx(exportInput);
-    return new NextResponse(body, {
+    const body = await buildInvoiceXlsx(exportInput);
+    return new NextResponse(new Uint8Array(body), {
       headers: {
-        "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filenames[type]}.xls"`,
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${filenames[type]}.xlsx"`,
       },
     });
   }
 
   if (format === "pdf") {
-    const body = buildInvoicePdf(exportInput);
-    return new NextResponse(body, {
+    const body = await buildInvoicePdf(exportInput);
+    return new NextResponse(new Uint8Array(body), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filenames[type]}.pdf"`,
