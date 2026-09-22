@@ -119,6 +119,7 @@ export async function GET(request: Request, { params }: Params) {
     discount: order.discount,
     shipping: order.shipping,
     total: order.total,
+    bank,
   };
 
   if (format === "xlsx" || format === "excel") {
