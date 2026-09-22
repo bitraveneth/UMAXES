@@ -1141,15 +1141,20 @@ const en: AdminMessages = {
   },
   learn: {
     title: "Learning Hub",
-    description: "Short tutorials for each admin module — how UMAXES works.",
-    start: "Start",
+    description:
+      "Simple daily SOP first, then short courses for each module — English and Chinese follow your admin language.",
+    coursesTitle: "Courses",
+    coursesHint: "Step-by-step for each screen. Open a module when you are ready to practice.",
+    start: "Start course",
     openModule: "Open module",
     previous: "Previous",
     next: "Next",
-    outline: "Tutorials",
-    lessonOf: "Tutorial {n} of {total}",
+    outline: "Courses",
+    lessonOf: "Course {n} of {total}",
     tip: "Tip",
-    backToHub: "All tutorials",
+    backToHub: "All courses",
+    whatHeading: "What it is",
+    howHeading: "How to use it",
   },
 };
 

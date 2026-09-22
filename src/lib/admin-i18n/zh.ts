@@ -1103,15 +1103,20 @@ const zh: AdminMessages = {
   },
   learn: {
     title: "学习中心",
-    description: "各后台模块的简短教程 — 了解 UMAXES 如何运作。",
-    start: "开始学习",
+    description:
+      "先看简易日常 SOP，再按模块学课程。中英文随后台语言切换。",
+    coursesTitle: "课程",
+    coursesHint: "每个页面的分步说明。准备好后可打开真实模块练习。",
+    start: "开始课程",
     openModule: "打开模块",
-    previous: "上一篇",
-    next: "下一篇",
-    outline: "教程目录",
-    lessonOf: "第 {n} / {total} 篇",
+    previous: "上一课",
+    next: "下一课",
+    outline: "课程目录",
+    lessonOf: "第 {n} / {total} 课",
     tip: "提示",
-    backToHub: "全部教程",
+    backToHub: "全部课程",
+    whatHeading: "这是什么",
+    howHeading: "怎么用",
   },
 };
 
