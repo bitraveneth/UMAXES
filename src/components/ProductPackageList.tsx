@@ -71,8 +71,9 @@ export default function ProductPackageList({ flavor }: { flavor: Flavor }) {
               <p className="font-display text-[0.65rem] font-semibold tracking-[0.2em] text-black/40 uppercase">
                 Our slogan
               </p>
-              <p className="mt-4 font-display text-[clamp(1.85rem,3.8vw,2.6rem)] font-extrabold leading-[1.08] tracking-[-0.04em] text-black">
-                Luxury in Every Draw
+              <p className="mt-5 font-display text-[clamp(2.35rem,5vw,3.35rem)] font-extrabold leading-[0.98] tracking-[-0.045em] text-black">
+                Luxury in
+                <span className="mt-1 block">Every Draw</span>
               </p>
               <p className="mt-4 max-w-sm font-body text-sm leading-relaxed text-black/55 sm:text-base">
                 Premium hookah-inspired disposables — crafted for adults who
