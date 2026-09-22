@@ -232,6 +232,58 @@
   padding: 1.5rem 1.75rem;
 }
 
+/* Standard dashboard / summary stat cards — centered everywhere */
+.admin-stat-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 10.5rem;
+}
+
+.admin-stat {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.3rem;
+}
+
+.admin-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-bottom: 0.45rem;
+  border-radius: 1rem;
+  background: var(--admin-brand-50);
+  color: var(--admin-brand-500);
+}
+
+.admin-stat-value {
+  color: var(--admin-text);
+  font-size: clamp(1.85rem, 2.5vw, 2.35rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-stat-label {
+  max-width: 14rem;
+  margin-top: 0.15rem;
+  color: var(--admin-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.admin-stat-trend {
+  margin-top: 0.35rem;
+}
+
 /* Buttons */
 .admin-btn {
   display: inline-flex;
@@ -567,6 +619,13 @@
   box-shadow: 0 0 0 5px var(--admin-brand-100);
 }
 
+.admin-pipeline-step.is-pay-pending .admin-pipeline-node {
+  border-color: var(--admin-warning-500);
+  background: var(--admin-warning-50);
+  color: var(--admin-warning-700);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--admin-warning-500) 18%, transparent);
+}
+
 .admin-pipeline-step.is-todo .admin-pipeline-node {
   opacity: 0.8;
 }
@@ -592,6 +651,11 @@
 
 .admin-pipeline-step.is-active .admin-pipeline-label {
   color: var(--admin-text);
+  font-weight: 700;
+}
+
+.admin-pipeline-step.is-pay-pending .admin-pipeline-label {
+  color: var(--admin-warning-700);
   font-weight: 700;
 }
 

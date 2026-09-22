@@ -3040,6 +3040,7 @@ export async function saveBankAccount(input: {
     },
   });
 
+  revalidatePath("/admin/payments");
   revalidatePath("/admin/invoices");
   return row;
 }
@@ -3066,6 +3067,7 @@ export async function activateBankAccount(id: string) {
     },
   });
 
+  revalidatePath("/admin/payments");
   revalidatePath("/admin/invoices");
   return row;
 }
@@ -3100,5 +3102,6 @@ export async function deleteBankAccount(id: string) {
     },
   });
 
+  revalidatePath("/admin/payments");
   revalidatePath("/admin/invoices");
 }
