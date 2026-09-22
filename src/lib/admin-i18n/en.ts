@@ -106,6 +106,12 @@ const en: AdminMessages = {
     accessDenied: "You don't have access to that page",
     accessDeniedHint:
       "Your role cannot open {page}. Sign in with Admin or a staff account that has permission.",
+    ok: "OK",
+    approved: "Approved",
+    rejected: "Rejected",
+    statusUpdated: "Status updated",
+    actionComplete: "Done",
+    changesSaved: "Your changes were saved successfully.",
   },
   dashboard: {
     title: "Dashboard",
@@ -616,8 +622,12 @@ const en: AdminMessages = {
     approveConfirm:
       "Are you sure you want to approve this application as {level}? Account access and pricing will follow that customer type.",
     confirmApprove: "Approve",
-    approved: "Application approved.",
-    rejected: "Application rejected.",
+    approved: "Application approved",
+    rejected: "Application rejected",
+    approvedDetail:
+      "Status is now Approved. The buyer can sign in and place orders with the selected customer type.",
+    rejectedDetail:
+      "Status is now Rejected. The buyer cannot place orders until this application is approved later.",
     actionFailed: "Could not update application.",
     statPending: "Pending",
     statShop: "Shop requests",

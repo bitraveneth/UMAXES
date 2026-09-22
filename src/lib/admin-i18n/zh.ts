@@ -107,6 +107,12 @@ const zh: AdminMessages = {
     accessDenied: "无权访问该页面",
     accessDeniedHint:
       "当前账号角色无法打开「{page}」。请使用管理员或有权限的员工账号登录。",
+    ok: "确定",
+    approved: "已批准",
+    rejected: "已拒绝",
+    statusUpdated: "状态已更新",
+    actionComplete: "完成",
+    changesSaved: "更改已保存成功。",
   },
   dashboard: {
     title: "工作台总览",
@@ -599,8 +605,12 @@ const zh: AdminMessages = {
     approveConfirm:
       "确定要将此申请批准为{level}吗？账号权限与价格将按该客户类型生效。",
     confirmApprove: "批准",
-    approved: "申请已批准。",
-    rejected: "申请已拒绝。",
+    approved: "申请已批准",
+    rejected: "申请已拒绝",
+    approvedDetail:
+      "状态已变为已批准。买家可以登录，并按所选客户类型下单。",
+    rejectedDetail:
+      "状态已变为已拒绝。在之后重新批准之前，该买家无法下单。",
     actionFailed: "无法更新申请。",
     statPending: "待审核",
     statShop: "门店申请",

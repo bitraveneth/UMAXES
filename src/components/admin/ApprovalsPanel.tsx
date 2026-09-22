@@ -101,7 +101,11 @@ export default function ApprovalsPanel({ rows }: { rows: ApprovalRow[] }) {
     startTransition(async () => {
       try {
         await approveCustomer(userId, level);
-        showToast(t("approvals.approved"), "success");
+        showToast(
+          t("approvals.approved"),
+          "success",
+          t("approvals.approvedDetail"),
+        );
         router.refresh();
       } catch (e) {
         showToast(
@@ -126,7 +130,11 @@ export default function ApprovalsPanel({ rows }: { rows: ApprovalRow[] }) {
     startTransition(async () => {
       try {
         await rejectCustomer(userId);
-        showToast(t("approvals.rejected"), "danger");
+        showToast(
+          t("approvals.rejected"),
+          "danger",
+          t("approvals.rejectedDetail"),
+        );
         router.refresh();
       } catch (e) {
         showToast(
