@@ -42,7 +42,7 @@ const en: BuyerMessages = {
     wishlistHint: "Saved SKUs",
     availableCredit: "Credit",
     recentOrders: "Recent orders",
-    recentOrdersHint: "Totals, payment, and status at a glance",
+    recentOrdersHint: "Status, payment, PI, and tracking",
     activity: "Activity",
     noOrders: "No orders yet",
     browseCatalog: "Browse catalog",

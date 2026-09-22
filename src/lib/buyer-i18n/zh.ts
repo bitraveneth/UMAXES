@@ -42,7 +42,7 @@ const zh: BuyerMessages = {
     wishlistHint: "已保存 SKU",
     availableCredit: "授信",
     recentOrders: "最近订单",
-    recentOrdersHint: "金额、付款方式与状态一览",
+    recentOrdersHint: "状态、付款、PI 与物流单号",
     activity: "动态",
     noOrders: "暂无订单",
     browseCatalog: "浏览商品",
