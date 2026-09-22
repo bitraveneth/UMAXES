@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { getActiveBankAccount } from "@/lib/bank-accounts";
 import { buildInvoiceHtml, type InvoiceDocType } from "@/lib/invoice-html";
 import { siblingDocNumber } from "@/lib/doc-number";
-import { buildInvoicePdf, buildInvoiceXlsx } from "@/lib/document-file";
+import { buildInvoicePdf, buildInvoiceXlsx, loadInvoiceLogoDataUri } from "@/lib/document-file";
 import { prisma } from "@/lib/db";
 
 type Params = { params: Promise<{ id: string }> };
@@ -95,6 +95,7 @@ export async function GET(request: Request, { params }: Params) {
 
   const bank = type === "packing" ? null : await getActiveBankAccount();
   const origin = new URL(request.url).origin;
+  const logoSrc = (await loadInvoiceLogoDataUri()) || undefined;
   const exportInput = {
     type,
     orderNumber: order.orderNumber,
@@ -162,6 +163,7 @@ export async function GET(request: Request, { params }: Params) {
     showToolbar: true,
     bank,
     origin,
+    logoSrc,
   });
 
   return new NextResponse(html, {
