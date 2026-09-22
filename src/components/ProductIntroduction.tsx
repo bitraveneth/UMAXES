@@ -90,10 +90,10 @@ export default function ProductIntroduction() {
             className="mt-5 font-display text-[clamp(2.35rem,6.5vw,4.5rem)] font-extrabold leading-[0.95] tracking-[-0.04em] text-black"
           >
             Umaxes HookaMax
-            <span className="mt-2 block text-[0.72em] font-bold tracking-[-0.03em] text-umx-orange sm:mt-3">
-              Disposable Vape
-            </span>
           </h2>
+          <p className="mt-3 font-display text-base font-semibold tracking-[0.08em] text-black/50 sm:mt-4 sm:text-lg sm:tracking-[0.1em]">
+            Disposable Vape
+          </p>
         </header>
 
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 xl:gap-16">
