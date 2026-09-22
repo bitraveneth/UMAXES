@@ -30,8 +30,11 @@ export default function ProductPackageList({ flavor }: { flavor: Flavor }) {
             id="package-list-heading"
             className="mt-4 font-display text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.04em] text-black"
           >
-            Umaxes HookaMax 80K Disposable Vape
+            Umaxes HookaMax 80K
           </h2>
+          <p className="mt-3 font-display text-base font-semibold tracking-[0.08em] text-black/50 sm:text-lg sm:tracking-[0.1em]">
+            Disposable Vape
+          </p>
         </header>
 
         <div className="grid items-stretch gap-4 sm:gap-5 lg:grid-cols-2 lg:gap-6">
