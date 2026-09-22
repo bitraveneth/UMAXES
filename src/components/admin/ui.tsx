@@ -60,8 +60,8 @@ export function AdminStat({
           <Icon className="h-6 w-6" strokeWidth={1.75} />
         </div>
       ) : null}
-      <p className="admin-stat-label">{label}</p>
       <p className="admin-stat-value">{value}</p>
+      <p className="admin-stat-label">{label}</p>
       {trend ? (
         <span
           className={`admin-stat-trend admin-badge ${
