@@ -6,7 +6,7 @@ import {
   addTestStationProduct,
   adjustInventory,
 } from "@/lib/admin-actions";
-import { AdminBadge, AdminCard, AdminTable } from "@/components/admin/ui";
+import { AdminBadge, AdminCard, AdminStat, AdminTable } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { useAdminToast } from "@/components/admin/AdminToast";
 import {
@@ -180,49 +180,35 @@ export default function WarehouseStockPanel({
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="admin-card admin-card-pad flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
-            <Package className="h-6 w-6" strokeWidth={1.75} />
-          </span>
-          <div>
-            <p className="text-sm text-[var(--admin-muted)]">
+        <AdminStat
+          label={
+            <>
               {t("warehouse.statCases")}
-            </p>
-            <p className="mt-0.5 font-display text-3xl font-bold tabular-nums tracking-tight">
-              {totalCases}
-            </p>
-            <span className="wh-pack-pill mt-2">{t("warehouse.packHint")}</span>
-          </div>
-        </div>
-        <div className="admin-card admin-card-pad flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
-            <Box className="h-6 w-6" strokeWidth={1.75} />
-          </span>
-          <div>
-            <p className="text-sm text-[var(--admin-muted)]">
-              {t("warehouse.statPcs")}
-            </p>
-            <p className="mt-0.5 font-display text-3xl font-bold tabular-nums tracking-tight">
-              {totalPcs.toLocaleString()}
-            </p>
-          </div>
-        </div>
-        <div className="admin-card admin-card-pad flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
-            <Box className="h-6 w-6" strokeWidth={1.75} />
-          </span>
-          <div>
-            <p className="text-sm text-[var(--admin-muted)]">
+              <span className="mt-1 block text-xs font-normal text-[var(--admin-muted)]">
+                {t("warehouse.packHint")}
+              </span>
+            </>
+          }
+          value={totalCases}
+          icon={Package}
+        />
+        <AdminStat
+          label={t("warehouse.statPcs")}
+          value={totalPcs.toLocaleString()}
+          icon={Box}
+        />
+        <AdminStat
+          label={
+            <>
               {t("warehouse.statStations")}
-            </p>
-            <p className="mt-0.5 font-display text-3xl font-bold tabular-nums tracking-tight">
-              {bonus?.quantity ?? 0}
-            </p>
-            <p className="mt-1 text-xs admin-muted">
-              {t("warehouse.testStationHint")}
-            </p>
-          </div>
-        </div>
+              <span className="mt-1 block text-xs font-normal text-[var(--admin-muted)]">
+                {t("warehouse.testStationHint")}
+              </span>
+            </>
+          }
+          value={bonus?.quantity ?? 0}
+          icon={Box}
+        />
       </div>
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">

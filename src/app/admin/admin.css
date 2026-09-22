@@ -232,6 +232,57 @@
   padding: 1.5rem 1.75rem;
 }
 
+/* Standard dashboard / summary stat cards — centered everywhere */
+.admin-stat-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 10.5rem;
+}
+
+.admin-stat {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+
+.admin-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-bottom: 0.55rem;
+  border-radius: 1rem;
+  background: var(--admin-brand-50);
+  color: var(--admin-brand-500);
+}
+
+.admin-stat-label {
+  max-width: 14rem;
+  color: var(--admin-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.admin-stat-value {
+  color: var(--admin-text);
+  font-size: clamp(1.75rem, 2.4vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-stat-trend {
+  margin-top: 0.35rem;
+}
+
 /* Buttons */
 .admin-btn {
   display: inline-flex;
