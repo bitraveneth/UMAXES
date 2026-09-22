@@ -7,8 +7,6 @@ import {
 } from "@/lib/bank-accounts";
 import { paymentLabels } from "@/lib/catalog";
 import {
-  buildInvoiceHtml,
-  escapeHtml,
   formatIssuedDate,
   formatUsd,
   invoiceLineParts,
@@ -16,6 +14,7 @@ import {
   sellerCompany,
   type InvoiceDocType,
 } from "@/lib/invoice-html";
+import { zipStore } from "@/lib/zip-store";
 
 type ExportItem = {
   sku: string;
@@ -113,24 +112,34 @@ export async function loadInvoiceLogoJpeg(): Promise<{
   }
 }
 
-/** PNG data URI for HTML / Excel so the logo never depends on a public URL. */
-export async function loadInvoiceLogoDataUri(): Promise<string | null> {
+/** Embedded PNG for real .xlsx (Excel / WPS / LibreOffice). */
+export async function loadInvoiceLogoPng(): Promise<{
+  data: Buffer;
+  width: number;
+  height: number;
+} | null> {
   if (!fs.existsSync(LOGO_PATH)) return null;
   try {
-    const png = await sharp(LOGO_PATH)
+    const resized = await sharp(LOGO_PATH)
       .flatten({ background: "#ffffff" })
-      .resize({ width: 340, height: 100, fit: "inside" })
+      .resize({ width: 170, height: 50, fit: "inside" })
       .png()
-      .toBuffer();
-    return `data:image/png;base64,${png.toString("base64")}`;
+      .toBuffer({ resolveWithObject: true });
+    return {
+      data: resized.data,
+      width: resized.info.width,
+      height: resized.info.height,
+    };
   } catch {
-    try {
-      const raw = fs.readFileSync(LOGO_PATH);
-      return `data:image/png;base64,${raw.toString("base64")}`;
-    } catch {
-      return null;
-    }
+    return null;
   }
+}
+
+/** PNG data URI for on-screen HTML invoices (print / browser). */
+export async function loadInvoiceLogoDataUri(): Promise<string | null> {
+  const logo = await loadInvoiceLogoPng();
+  if (!logo) return null;
+  return `data:image/png;base64,${logo.data.toString("base64")}`;
 }
 
 function money(n: number) {
@@ -140,6 +149,14 @@ function money(n: number) {
 function dash(value?: string | null) {
   const v = (value || "").trim();
   return v || "—";
+}
+
+function xmlText(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function addressText(snap: string) {
@@ -199,39 +216,650 @@ function factLines(input: InvoiceExportInput, showMoney: boolean) {
   return lines;
 }
 
-function packingMetaHtml(meta: PackingShipmentMeta | null | undefined) {
-  if (!meta) return "";
-  const cards = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 18px">
-  <div style="border:1px solid rgba(0,0,0,.08);padding:12px;border-radius:12px;background:#fff"><div class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase">Boxes</div><div style="font-size:18px;font-weight:800;margin-top:4px">${meta.boxCount ?? "—"}</div></div>
-  <div style="border:1px solid rgba(0,0,0,.08);padding:12px;border-radius:12px;background:#fff"><div class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase">CBM</div><div style="font-size:18px;font-weight:800;margin-top:4px">${meta.cbm ?? "—"}</div></div>
-  <div style="border:1px solid rgba(0,0,0,.08);padding:12px;border-radius:12px;background:#fff"><div class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase">Weight (kg)</div><div style="font-size:18px;font-weight:800;margin-top:4px">${meta.weightKg ?? "—"}</div></div>
-</div>`;
-  const note = meta.packingNote
-    ? `<p style="margin:0 0 12px;font-size:13px"><strong>Packing note:</strong> ${escapeHtml(meta.packingNote)}</p>`
-    : "";
-  const tracking = meta.trackingNumber
-    ? `<p style="margin:0 0 12px;font-size:13px"><strong>Tracking:</strong> ${escapeHtml(meta.carrier || "—")} · ${escapeHtml(meta.trackingNumber)}</p>`
-    : "";
-  return `${cards}${note}${tracking}`;
+function colName(index: number) {
+  let n = index;
+  let s = "";
+  while (n >= 0) {
+    s = String.fromCharCode((n % 26) + 65) + s;
+    n = Math.floor(n / 26) - 1;
+  }
+  return s;
+}
+
+type SheetCell = {
+  t?: "s" | "n";
+  v?: string | number;
+  style?: number;
+};
+
+type SheetRow = {
+  cells: Array<SheetCell | null>;
+  height?: number;
+};
+
+function cellXml(row: number, col: number, cell: SheetCell) {
+  const ref = `${colName(col)}${row}`;
+  const style = cell.style != null ? ` s="${cell.style}"` : "";
+  if (cell.t === "n" && typeof cell.v === "number") {
+    return `<c r="${ref}"${style}><v>${cell.v}</v></c>`;
+  }
+  const text = xmlText(String(cell.v ?? ""));
+  return `<c r="${ref}"${style} t="inlineStr"><is><t>${text}</t></is></c>`;
+}
+
+function mergeXml(ref: string) {
+  return `<mergeCell ref="${ref}"/>`;
 }
 
 /**
- * Excel download — same visual layout as the on-screen invoice / PDF print,
- * with the UMAXES logo embedded (no exceljs, Turbopack-safe).
- * Served as .xls; Excel and Numbers open the HTML worksheet.
+ * Real OOXML .xlsx with embedded UMAXES logo.
+ * Opens correctly in Microsoft Excel, WPS Office, LibreOffice, Numbers.
  */
 export async function buildInvoiceXlsx(
   input: InvoiceExportInput,
 ): Promise<Buffer> {
-  const logoSrc = await loadInvoiceLogoDataUri();
-  const html = buildInvoiceHtml({
-    ...input,
-    packingMetaHtml: packingMetaHtml(input.packingMeta),
-    showToolbar: false,
-    logoSrc: logoSrc || undefined,
-    bank: input.bank,
-  });
-  return Buffer.from(html, "utf8");
+  const showMoney = input.type !== "packing";
+  const seller = sellerCompany();
+  const bank = input.bank || DEFAULT_INVOICE_BANK;
+  const buyerContact = [input.clientPhone, input.clientEmail]
+    .map((v) => (v || "").trim())
+    .filter(Boolean)
+    .join(" · ");
+  const issued = formatIssuedDate(input.createdAt);
+  const qtyTotal = input.items.reduce((s, i) => s + i.quantity, 0);
+  const discount = input.discount ?? 0;
+  const shipping = input.shipping ?? 0;
+  const grand =
+    input.total ??
+    input.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+  const logo = await loadInvoiceLogoPng();
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="8">
+    <font><sz val="10"/><name val="Arial"/></font>
+    <font><b/><sz val="16"/><color rgb="FF172033"/><name val="Arial"/></font>
+    <font><b/><sz val="11"/><name val="Arial"/></font>
+    <font><b/><sz val="10"/><color rgb="FF172033"/><name val="Arial"/></font>
+    <font><b/><sz val="12"/><color rgb="FF172033"/><name val="Arial"/></font>
+    <font><b/><sz val="10"/><name val="Arial"/></font>
+    <font><b/><sz val="10"/><color rgb="FF3D1605"/><name val="Arial"/></font>
+    <font><b/><sz val="14"/><color rgb="FF2F6FB2"/><name val="Arial"/></font>
+  </fonts>
+  <fills count="5">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFC5D9F1"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFEEF4FB"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFFFF6EF"/></patternFill></fill>
+  </fills>
+  <borders count="3">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border>
+      <left style="thin"><color rgb="FF111111"/></left>
+      <right style="thin"><color rgb="FF111111"/></right>
+      <top style="thin"><color rgb="FF111111"/></top>
+      <bottom style="thin"><color rgb="FF111111"/></bottom>
+      <diagonal/>
+    </border>
+    <border>
+      <left/><right/><top/>
+      <bottom style="medium"><color rgb="FFFF5B04"/></bottom>
+      <diagonal/>
+    </border>
+  </borders>
+  <cellStyleXfs count="1"><xf/></cellStyleXfs>
+  <cellXfs count="13">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment horizontal="right" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment horizontal="right" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment vertical="top" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+    <xf numFmtId="0" fontId="5" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"><alignment vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="7" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="5" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="7" fontId="5" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="6" fillId="4" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="7" fillId="0" borderId="2" xfId="0" applyFont="1" applyBorder="1"><alignment vertical="center"/></xf>
+  </cellXfs>
+</styleSheet>`;
+
+  const rows: SheetRow[] = [];
+  const merges: string[] = [];
+
+  function pushRow(cells: Array<SheetCell | null>, height?: number) {
+    rows.push({ cells, height });
+  }
+
+  pushRow(
+    [
+      logo ? { v: "", style: 12 } : { v: "UMAXES", style: 12 },
+      null,
+      null,
+      null,
+      { v: TITLES[input.type].toUpperCase(), style: 1 },
+      null,
+      null,
+    ],
+    22,
+  );
+  merges.push("A1:C1", "E1:G1");
+  pushRow(
+    [
+      null,
+      null,
+      null,
+      null,
+      { v: `${NUMBER_LABELS[input.type]} ${input.docNumber}`, style: 2 },
+      null,
+      null,
+    ],
+    18,
+  );
+  merges.push("E2:G2");
+  pushRow(
+    [null, null, null, null, { v: `Issued date: ${issued}`, style: 0 }, null, null],
+    18,
+  );
+  merges.push("A3:C3", "E3:G3");
+  pushRow([null, null, null, null, null, null, null], 8);
+
+  pushRow([
+    { v: "Vendor", style: 4 },
+    null,
+    null,
+    null,
+    { v: "Buyer", style: 4 },
+    null,
+    null,
+  ]);
+  merges.push(
+    `A${rows.length}:C${rows.length}`,
+    `E${rows.length}:G${rows.length}`,
+  );
+
+  const vendorPairs: Array<[string, string]> = [
+    ["Company", seller.legalName || seller.name],
+    ["Address", sellerAddressText()],
+    ["Mobile", dash(seller.phone)],
+    ["Email", dash(seller.email)],
+  ];
+  const buyerPairs: Array<[string, string]> = [
+    ["Company", input.companyName],
+    ["Name", dash(input.clientName)],
+    ["Address", addressText(input.addressSnap)],
+    ["Contact", dash(buyerContact)],
+  ];
+  if (input.companyTaxId) buyerPairs.push(["Tax ID", input.companyTaxId]);
+
+  const partyCount = Math.max(vendorPairs.length, buyerPairs.length);
+  for (let i = 0; i < partyCount; i++) {
+    const v = vendorPairs[i];
+    const b = buyerPairs[i];
+    pushRow([
+      v ? { v: v[0], style: 3 } : null,
+      v ? { v: v[1], style: 0 } : null,
+      null,
+      null,
+      b ? { v: b[0], style: 3 } : null,
+      b ? { v: b[1], style: 0 } : null,
+      null,
+    ]);
+    const r = rows.length;
+    merges.push(`B${r}:C${r}`, `F${r}:G${r}`);
+  }
+
+  pushRow([null], 8);
+  pushRow([{ v: factLines(input, showMoney).join("   |   "), style: 0 }], 28);
+  merges.push(`A${rows.length}:G${rows.length}`);
+  pushRow([null], 8);
+
+  if (!showMoney && input.packingMeta) {
+    const m = input.packingMeta;
+    pushRow([
+      { v: "Boxes", style: 3 },
+      { v: String(m.boxCount ?? "—") },
+      { v: "CBM", style: 3 },
+      { v: String(m.cbm ?? "—") },
+      { v: "Weight (kg)", style: 3 },
+      { v: String(m.weightKg ?? "—") },
+      null,
+    ]);
+    if (m.packingNote) {
+      pushRow([{ v: "Packing note", style: 3 }, { v: m.packingNote }]);
+      merges.push(`B${rows.length}:G${rows.length}`);
+    }
+    if (m.trackingNumber) {
+      pushRow([
+        { v: "Tracking", style: 3 },
+        { v: `${m.carrier || "—"} · ${m.trackingNumber}` },
+      ]);
+      merges.push(`B${rows.length}:G${rows.length}`);
+    }
+    pushRow([null], 8);
+  }
+
+  if (showMoney) {
+    pushRow(
+      [
+        { v: "No", style: 5 },
+        { v: "Commodity", style: 5 },
+        { v: "Puffs", style: 5 },
+        { v: "Description of goods", style: 5 },
+        { v: "Unit price (USD)", style: 5 },
+        { v: "Quantity", style: 5 },
+        { v: "Total Price (USD)", style: 5 },
+      ],
+      24,
+    );
+    input.items.forEach((item, index) => {
+      const parts = invoiceLineParts(item.name);
+      pushRow([
+        { t: "n", v: index + 1, style: 7 },
+        { v: parts.commodity, style: 6 },
+        { v: parts.puffs, style: 7 },
+        { v: parts.description, style: 6 },
+        { t: "n", v: money(item.unitPrice), style: 8 },
+        { t: "n", v: item.quantity, style: 7 },
+        { t: "n", v: money(item.unitPrice * item.quantity), style: 8 },
+      ]);
+    });
+    if (discount > 0) {
+      const label =
+        input.rebateAppliedUsd && input.rebateAppliedUsd > 0
+          ? "Discount / rebate credit"
+          : "Discount";
+      pushRow([
+        { v: "", style: 9 },
+        { v: label, style: 9 },
+        { v: "", style: 9 },
+        { v: "", style: 9 },
+        { v: "", style: 9 },
+        { v: "", style: 9 },
+        { t: "n", v: -money(discount), style: 10 },
+      ]);
+      merges.push(`B${rows.length}:D${rows.length}`);
+    }
+    if (shipping > 0) {
+      pushRow([
+        { v: "", style: 9 },
+        { v: "Shipping", style: 9 },
+        { v: "", style: 9 },
+        { v: "", style: 9 },
+        { v: "", style: 9 },
+        { v: "", style: 9 },
+        { t: "n", v: money(shipping), style: 10 },
+      ]);
+      merges.push(`B${rows.length}:D${rows.length}`);
+    }
+    pushRow([
+      { v: "", style: 9 },
+      { v: "Total", style: 9 },
+      { v: "", style: 9 },
+      { v: "", style: 9 },
+      { v: "", style: 9 },
+      { t: "n", v: qtyTotal, style: 9 },
+      { t: "n", v: money(grand), style: 10 },
+    ]);
+    merges.push(`B${rows.length}:D${rows.length}`);
+  } else {
+    const source =
+      input.packingLines && input.packingLines.length
+        ? input.packingLines
+        : input.items.map((i) => ({
+            sku: i.sku,
+            name: i.name,
+            flavor: null as string | null,
+            size: null as string | null,
+            quantity: i.quantity,
+            boxes: null as number | null,
+          }));
+    pushRow(
+      [
+        { v: "No", style: 5 },
+        { v: "SKU", style: 5 },
+        { v: "Item", style: 5 },
+        { v: "Flavor", style: 5 },
+        { v: "Size", style: 5 },
+        { v: "Qty", style: 5 },
+        { v: "Boxes", style: 5 },
+      ],
+      24,
+    );
+    source.forEach((line, index) => {
+      const parts = invoiceLineParts(line.name);
+      pushRow([
+        { t: "n", v: index + 1, style: 7 },
+        { v: line.sku, style: 7 },
+        { v: parts.description, style: 6 },
+        { v: line.flavor || parts.description, style: 6 },
+        { v: line.size || "—", style: 7 },
+        { t: "n", v: line.quantity, style: 7 },
+        {
+          v: line.boxes != null ? line.boxes : "—",
+          t: line.boxes != null ? "n" : "s",
+          style: 7,
+        },
+      ]);
+    });
+    const boxesTotal = source.reduce((s, l) => s + (l.boxes ?? 0), 0);
+    pushRow([
+      { v: "", style: 9 },
+      { v: "Total", style: 9 },
+      { v: "", style: 9 },
+      { v: "", style: 9 },
+      { v: "", style: 9 },
+      {
+        t: "n",
+        v: source.reduce((s, l) => s + l.quantity, 0),
+        style: 9,
+      },
+      { v: boxesTotal || "—", style: 9 },
+    ]);
+    merges.push(`B${rows.length}:E${rows.length}`);
+  }
+
+  if (showMoney) {
+    pushRow([null], 8);
+    pushRow([{ v: "Bank Information", style: 4 }]);
+    merges.push(`A${rows.length}:G${rows.length}`);
+    for (const [label, value] of [
+      ["Company", bank.companyName],
+      ["Bank account", bank.accountNumber],
+      ["Bank name", bank.bankName],
+      ["Bank address", bank.bankAddress],
+      ["Swift code", bank.swiftCode],
+    ] as Array<[string, string]>) {
+      pushRow([{ v: label, style: 3 }, { v: value }]);
+      merges.push(`B${rows.length}:G${rows.length}`);
+    }
+  }
+
+  pushRow([null], 8);
+  pushRow(
+    [
+      {
+        v: "Adults 21+ only. Nicotine is an addictive chemical.",
+        style: 11,
+      },
+    ],
+    28,
+  );
+  merges.push(`A${rows.length}:G${rows.length}`);
+
+  const sheetRowsXml = rows
+    .map((row, idx) => {
+      const r = idx + 1;
+      const ht = row.height ? ` ht="${row.height}" customHeight="1"` : "";
+      const cells = row.cells
+        .map((c, col) => (c ? cellXml(r, col, c) : ""))
+        .filter(Boolean)
+        .join("");
+      return `<row r="${r}"${ht}>${cells}</row>`;
+    })
+    .join("");
+
+  const drawingRel = logo ? `<drawing r:id="rId1"/>` : "";
+
+  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+ xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheetFormatPr defaultRowHeight="18"/>
+  <cols>
+    <col min="1" max="1" width="12" customWidth="1"/>
+    <col min="2" max="2" width="18" customWidth="1"/>
+    <col min="3" max="3" width="16" customWidth="1"/>
+    <col min="4" max="4" width="28" customWidth="1"/>
+    <col min="5" max="5" width="14" customWidth="1"/>
+    <col min="6" max="6" width="11" customWidth="1"/>
+    <col min="7" max="7" width="16" customWidth="1"/>
+  </cols>
+  <sheetData>${sheetRowsXml}</sheetData>
+  <mergeCells count="${merges.length}">${merges.map(mergeXml).join("")}</mergeCells>
+  ${drawingRel}
+</worksheet>`;
+
+  const sheetName = xmlText(TITLES[input.type].slice(0, 31));
+  const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+ xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="${sheetName}" sheetId="1" r:id="rId1"/>
+  </sheets>
+</workbook>`;
+
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+  const contentTypes = logo
+    ? `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+  <Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>
+</Types>`
+    : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+
+  const entries: { name: string; data: Buffer }[] = [
+    { name: "[Content_Types].xml", data: Buffer.from(contentTypes, "utf8") },
+    { name: "_rels/.rels", data: Buffer.from(rootRels, "utf8") },
+    { name: "xl/workbook.xml", data: Buffer.from(workbookXml, "utf8") },
+    {
+      name: "xl/_rels/workbook.xml.rels",
+      data: Buffer.from(workbookRels, "utf8"),
+    },
+    { name: "xl/styles.xml", data: Buffer.from(stylesXml, "utf8") },
+    { name: "xl/worksheets/sheet1.xml", data: Buffer.from(sheetXml, "utf8") },
+  ];
+
+  if (logo) {
+    const cx = Math.round(logo.width * 9525);
+    const cy = Math.round(logo.height * 9525);
+    const drawingXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing"
+ xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+ xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <xdr:oneCellAnchor>
+    <xdr:from>
+      <xdr:col>0</xdr:col>
+      <xdr:colOff>0</xdr:colOff>
+      <xdr:row>0</xdr:row>
+      <xdr:rowOff>0</xdr:rowOff>
+    </xdr:from>
+    <xdr:ext cx="${cx}" cy="${cy}"/>
+    <xdr:pic>
+      <xdr:nvPicPr>
+        <xdr:cNvPr id="1" name="UMAXES"/>
+        <xdr:cNvPicPr/>
+      </xdr:nvPicPr>
+      <xdr:blipFill>
+        <a:blip r:embed="rId1"/>
+        <a:stretch><a:fillRect/></a:stretch>
+      </xdr:blipFill>
+      <xdr:spPr>
+        <a:xfrm>
+          <a:off x="0" y="0"/>
+          <a:ext cx="${cx}" cy="${cy}"/>
+        </a:xfrm>
+        <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+      </xdr:spPr>
+    </xdr:pic>
+    <xdr:clientData/>
+  </xdr:oneCellAnchor>
+</xdr:wsDr>`;
+
+    const drawingRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/>
+</Relationships>`;
+
+    const sheetRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>
+</Relationships>`;
+
+    entries.push(
+      {
+        name: "xl/worksheets/_rels/sheet1.xml.rels",
+        data: Buffer.from(sheetRels, "utf8"),
+      },
+      {
+        name: "xl/drawings/drawing1.xml",
+        data: Buffer.from(drawingXml, "utf8"),
+      },
+      {
+        name: "xl/drawings/_rels/drawing1.xml.rels",
+        data: Buffer.from(drawingRels, "utf8"),
+      },
+      { name: "xl/media/image1.png", data: logo.data },
+    );
+  }
+
+  return zipStore(entries);
+}
+
+/** UTF-8 CSV (BOM) — Excel, WPS, Numbers, Google Sheets. Text only (no image). */
+export function buildInvoiceCsv(input: InvoiceExportInput): Buffer {
+  const showMoney = input.type !== "packing";
+  const seller = sellerCompany();
+  const bank = input.bank || DEFAULT_INVOICE_BANK;
+  const issued = formatIssuedDate(input.createdAt);
+  const lines: string[][] = [];
+
+  const q = (v: string | number | null | undefined) => {
+    const s = String(v ?? "");
+    if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  };
+  const row = (...cols: Array<string | number | null | undefined>) => {
+    lines.push(cols.map(q));
+  };
+
+  row("UMAXES", TITLES[input.type]);
+  row(NUMBER_LABELS[input.type], input.docNumber);
+  row("Issued date", issued);
+  row("Order", input.orderNumber);
+  row();
+  row("Vendor");
+  row("Company", seller.legalName || seller.name);
+  row("Address", sellerAddressText());
+  row("Mobile", dash(seller.phone));
+  row("Email", dash(seller.email));
+  row();
+  row("Buyer");
+  row("Company", input.companyName);
+  row("Name", dash(input.clientName));
+  row("Address", addressText(input.addressSnap));
+  row(
+    "Contact",
+    [input.clientPhone, input.clientEmail].filter(Boolean).join(" · ") || "—",
+  );
+  if (input.companyTaxId) row("Tax ID", input.companyTaxId);
+  row();
+  for (const fact of factLines(input, showMoney)) row(fact);
+  row();
+
+  if (showMoney) {
+    row(
+      "No",
+      "Commodity",
+      "Puffs",
+      "Description of goods",
+      "Unit price (USD)",
+      "Quantity",
+      "Total Price (USD)",
+    );
+    input.items.forEach((item, index) => {
+      const parts = invoiceLineParts(item.name);
+      row(
+        index + 1,
+        parts.commodity,
+        parts.puffs,
+        parts.description,
+        money(item.unitPrice).toFixed(2),
+        item.quantity,
+        money(item.unitPrice * item.quantity).toFixed(2),
+      );
+    });
+    const qtyTotal = input.items.reduce((s, i) => s + i.quantity, 0);
+    const grand =
+      input.total ??
+      input.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+    if ((input.discount ?? 0) > 0) {
+      row(
+        "",
+        "Discount / rebate",
+        "",
+        "",
+        "",
+        "",
+        (-money(input.discount!)).toFixed(2),
+      );
+    }
+    if ((input.shipping ?? 0) > 0) {
+      row("", "Shipping", "", "", "", "", money(input.shipping!).toFixed(2));
+    }
+    row("", "Total", "", "", "", qtyTotal, money(grand).toFixed(2));
+    row();
+    row("Bank Information");
+    row("Company", bank.companyName);
+    row("Bank account", bank.accountNumber);
+    row("Bank name", bank.bankName);
+    row("Bank address", bank.bankAddress);
+    row("Swift code", bank.swiftCode);
+  } else {
+    const source =
+      input.packingLines && input.packingLines.length
+        ? input.packingLines
+        : input.items.map((i) => ({
+            sku: i.sku,
+            name: i.name,
+            flavor: null as string | null,
+            size: null as string | null,
+            quantity: i.quantity,
+            boxes: null as number | null,
+          }));
+    row("No", "SKU", "Item", "Flavor", "Size", "Qty", "Boxes");
+    source.forEach((line, index) => {
+      const parts = invoiceLineParts(line.name);
+      row(
+        index + 1,
+        line.sku,
+        parts.description,
+        line.flavor || parts.description,
+        line.size || "—",
+        line.quantity,
+        line.boxes ?? "—",
+      );
+    });
+  }
+
+  row();
+  row("Adults 21+ only. Nicotine is an addictive chemical.");
+
+  const csv = lines.map((r) => r.join(",")).join("\r\n");
+  return Buffer.from(`\uFEFF${csv}`, "utf8");
 }
 
 function pdfEscape(text: string) {

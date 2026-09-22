@@ -183,6 +183,7 @@ type BuildInvoiceHtmlInput = {
   forceDownloadHref?: string;
   pdfHref?: string;
   xlsxHref?: string;
+  csvHref?: string;
   showToolbar?: boolean;
   bank?: InvoiceBankDetails | null;
   origin?: string;
@@ -356,7 +357,7 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
   <div class="actions">
     <button type="button" class="primary" onclick="window.print()">Print</button>
     ${
-      input.pdfHref || input.xlsxHref
+      input.pdfHref || input.xlsxHref || input.csvHref
         ? `<span class="format-label">Choose format</span>`
         : ""
     }
@@ -368,6 +369,11 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
     ${
       input.xlsxHref
         ? `<a href="${escapeHtml(input.xlsxHref)}">Excel</a>`
+        : ""
+    }
+    ${
+      input.csvHref
+        ? `<a href="${escapeHtml(input.csvHref)}">CSV</a>`
         : ""
     }
     ${
