@@ -65,39 +65,40 @@ export default function ProductPackageList({ flavor }: { flavor: Flavor }) {
             </div>
           </div>
 
-          {/* Right — contents panel (same size) */}
-          <div className="flex min-h-[20rem] flex-col justify-between rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-7 py-8 shadow-[0_16px_40px_rgba(61,22,5,0.06)] sm:min-h-[24rem] sm:px-9 sm:py-10 lg:min-h-[28rem]">
-            <div>
+          {/* Right — slogan + contents */}
+          <div className="flex min-h-[20rem] flex-col rounded-[1.75rem] border border-black/8 bg-umx-cream-warm px-7 py-8 shadow-[0_16px_40px_rgba(61,22,5,0.06)] sm:min-h-[24rem] sm:px-9 sm:py-10 lg:min-h-[28rem]">
+            <div className="flex-1">
               <p className="font-display text-[0.65rem] font-semibold tracking-[0.2em] text-black/40 uppercase">
-                Contents
+                UMAXES
               </p>
-              <p className="mt-3 font-display text-2xl font-extrabold tracking-tight text-black sm:text-3xl">
-                What&apos;s included
+              <p className="mt-4 font-display text-[clamp(2rem,4.2vw,2.85rem)] font-extrabold leading-[0.98] tracking-[-0.045em] text-black">
+                Luxury in
+                <span className="mt-1 block text-black/40">Every Draw</span>
               </p>
-              <p className="mt-3 max-w-sm font-body text-sm leading-relaxed text-black/55 sm:text-base">
-                Everything in the retail package for this HOOKAMAX 80K
-                disposable.
+              <p className="mt-4 max-w-sm font-body text-sm leading-relaxed text-black/55 sm:text-base">
+                Premium hookah-inspired disposables — crafted for adults who
+                notice the difference.
               </p>
             </div>
 
-            <div className="mt-10 border-t border-black/10 pt-8">
-              <div className="flex items-start gap-5">
-                <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-black text-umx-cream sm:h-[4.5rem] sm:w-[4.5rem]">
+            <div className="mt-8 border-t border-black/10 pt-7">
+              <p className="font-display text-[0.65rem] font-semibold tracking-[0.2em] text-black/40 uppercase">
+                Contents · Item 01
+              </p>
+              <div className="mt-4 flex items-start gap-4 sm:gap-5">
+                <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl bg-black text-umx-cream sm:h-16 sm:w-16">
                   <span className="font-display text-[0.55rem] font-semibold tracking-[0.16em] uppercase opacity-60">
                     Qty
                   </span>
-                  <span className="font-display text-3xl font-extrabold leading-none tracking-[-0.04em] tabular-nums">
+                  <span className="font-display text-2xl font-extrabold leading-none tracking-[-0.04em] tabular-nums sm:text-3xl">
                     1
                   </span>
                 </div>
-                <div className="min-w-0 pt-1">
-                  <p className="font-display text-[0.65rem] font-semibold tracking-[0.16em] text-black/40 uppercase">
-                    Item 01
-                  </p>
-                  <p className="mt-1.5 font-display text-lg font-extrabold leading-snug tracking-tight text-black sm:text-xl">
+                <div className="min-w-0 pt-0.5">
+                  <p className="font-display text-base font-extrabold leading-snug tracking-tight text-black sm:text-lg">
                     Umaxes HookaMax 80K Disposable Kit
                   </p>
-                  <p className="mt-2 font-body text-sm text-black/50">
+                  <p className="mt-1.5 font-body text-sm text-black/50">
                     Complete disposable kit · one device
                   </p>
                 </div>
