@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -15,6 +14,7 @@ import {
 import { Package } from "lucide-react";
 import OverviewRebateCard from "@/components/account/OverviewRebateCard";
 import { isChannelBuyerLevel } from "@/lib/channel-level";
+import { formatPack } from "@/lib/pack";
 
 export const metadata = {
   title: "Account · UMAXES",
@@ -99,14 +99,20 @@ export default async function AccountPage() {
         ? prisma.order.findMany({
             where: { companyId },
             include: {
-              items: {
-                select: { id: true, name: true, image: true },
-                take: 3,
-              },
               shipments: {
-                select: { trackingNumber: true },
+                select: {
+                  trackingNumber: true,
+                  carrier: true,
+                  trackingStatus: true,
+                  status: true,
+                },
                 take: 1,
                 orderBy: { createdAt: "desc" },
+              },
+              payments: {
+                select: { status: true, paidAt: true, slipUrl: true },
+                orderBy: { createdAt: "desc" },
+                take: 1,
               },
               _count: { select: { items: true } },
             },
@@ -225,7 +231,7 @@ export default async function AccountPage() {
               Recent orders
             </h2>
             <p className="mt-1 font-body text-sm text-black">
-              Totals, payment, and status at a glance
+              Status, payment, PI, and tracking — no product pictures
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -260,10 +266,13 @@ export default async function AccountPage() {
         ) : (
           <ul className="space-y-3">
             {recentOrders.map((order) => {
-              const itemCount = order._count.items;
-              const preview = order.items;
-              const tracking = order.shipments[0]?.trackingNumber;
-              const extra = Math.max(0, itemCount - preview.length);
+              const shipment = order.shipments[0];
+              const payment = order.payments[0];
+              const paid =
+                payment?.status === "paid" && Boolean(payment.paidAt);
+              const hasSlip = Boolean(payment?.slipUrl);
+              const tracking = shipment?.trackingNumber;
+              const carrier = shipment?.carrier;
 
               return (
                 <li key={order.id}>
@@ -272,72 +281,72 @@ export default async function AccountPage() {
                     className="group block overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(14,36,56,0.04)] transition hover:border-umx-orange hover:shadow-[0_12px_28px_rgba(27,79,114,0.1)]"
                   >
                     <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
-                      {/* Thumbs */}
-                      <div className="flex shrink-0 -space-x-2">
-                        {preview.map((item) => (
-                          <div
-                            key={item.id}
-                            className="relative h-12 w-12 overflow-hidden border-2 border-white bg-umx-cream sm:h-14 sm:w-14"
-                          >
-                            {item.image ? (
-                              <Image
-                                src={item.image}
-                                alt=""
-                                fill
-                                className="object-contain p-1"
-                                sizes="56px"
-                              />
-                            ) : (
-                              <span className="flex h-full w-full items-center justify-center">
-                                <Package
-                                  className="h-4 w-4 text-black"
-                                  strokeWidth={1.75}
-                                />
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                        {extra > 0 ? (
-                          <div className="flex h-12 w-12 items-center justify-center border-2 border-white bg-black font-display text-xs font-bold text-white sm:h-14 sm:w-14">
-                            +{extra}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      {/* Meta */}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-display text-base font-extrabold text-black sm:text-lg">
                             {order.orderNumber}
                           </p>
                           <span
-                            className={`px-2.5 py-1 font-display text-[10px] font-bold tracking-wide uppercase ${buyerStatusClass(order.status)}`}
+                            className={`px-2.5 py-1 font-display text-[10px] font-bold tracking-wide uppercase ${buyerStatusClass(order.status, { paid, hasSlip })}`}
                           >
-                            {buyerStatusLabel(order.status)}
+                            {buyerStatusLabel(order.status, { paid, hasSlip })}
                           </span>
                         </div>
-                        <p className="mt-1 truncate font-body text-sm text-black">
+
+                        <p className="mt-1.5 font-body text-sm text-black/75">
                           {order.createdAt.toISOString().slice(0, 10)}
-                          <span className="mx-1.5">·</span>
-                          {itemCount} item{itemCount === 1 ? "" : "s"}
-                          <span className="mx-1.5">·</span>
+                          <span className="mx-1.5 text-black/30">·</span>
                           {shortPayment(order.paymentMethod)}
-                          {preview[0]?.name ? (
+                          {order.sellingQty > 0 ? (
                             <>
-                              <span className="mx-1.5">·</span>
-                              {preview[0].name}
-                              {itemCount > 1 ? ` +${itemCount - 1}` : ""}
+                              <span className="mx-1.5 text-black/30">·</span>
+                              {formatPack(order.sellingQty)}
+                            </>
+                          ) : (
+                            <>
+                              <span className="mx-1.5 text-black/30">·</span>
+                              {order._count.items} line
+                              {order._count.items === 1 ? "" : "s"}
+                            </>
+                          )}
+                          {order.testStationQty > 0 ? (
+                            <>
+                              <span className="mx-1.5 text-black/30">·</span>
+                              {order.testStationQty} test station
+                              {order.testStationQty === 1 ? "" : "s"}
                             </>
                           ) : null}
                         </p>
-                        {tracking ? (
-                          <p className="mt-1.5 font-mono text-xs font-semibold tracking-wide text-umx-orange">
-                            {tracking}
-                          </p>
-                        ) : null}
+
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-body text-sm">
+                          {order.piNumber ? (
+                            <p className="min-w-0">
+                              <span className="font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+                                PI
+                              </span>{" "}
+                              <span className="break-all font-display text-sm font-semibold text-[#1b4f72]">
+                                {order.piNumber}
+                              </span>
+                            </p>
+                          ) : null}
+                          {tracking ? (
+                            <p className="min-w-0">
+                              <span className="font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+                                Tracking
+                              </span>{" "}
+                              <span className="break-all font-mono text-sm font-semibold text-umx-orange">
+                                {carrier ? `${carrier} · ` : ""}
+                                {tracking}
+                              </span>
+                            </p>
+                          ) : (
+                            <p className="font-body text-sm text-black/45">
+                              Tracking not assigned yet
+                            </p>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Total */}
                       <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-center">
                         <div className="sm:text-right">
                           <p className="font-display text-[10px] font-semibold tracking-[0.12em] text-black uppercase">
