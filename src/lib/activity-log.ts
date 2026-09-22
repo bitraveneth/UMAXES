@@ -102,6 +102,16 @@ const ACTION_META: Record<
     category: "customers",
     tone: "neutral",
   },
+  COMPANY_PROFILE_UPDATED: {
+    label: "Company profile updated",
+    category: "customers",
+    tone: "neutral",
+  },
+  COMPANY_ADDRESS_UPDATED: {
+    label: "Ship-to address updated",
+    category: "customers",
+    tone: "neutral",
+  },
   SUBACCOUNT_CREATED: {
     label: "Sub-account created",
     category: "customers",

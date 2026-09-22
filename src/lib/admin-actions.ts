@@ -402,6 +402,246 @@ function revalidateCustomerDirs() {
   revalidatePath("/admin/distributors");
   revalidatePath("/admin/wholesalers");
   revalidatePath("/admin/retail");
+  revalidatePath("/admin/credit");
+  revalidatePath("/admin/orders/new");
+}
+
+const COMPANY_STATUSES = ["APPROVED", "PENDING", "REJECTED", "DISABLED"] as const;
+
+/** Update company + primary contact from wholesaler / distro / retail directory. */
+export async function updateCompanyDirectoryProfile(input: {
+  companyId: string;
+  name: string;
+  taxId?: string;
+  status?: string;
+  creditLimit?: number;
+  paymentTermsDays?: number;
+  contactId?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}) {
+  const session = await requireRoles(["ADMIN", "SALES"]);
+  const company = await prisma.company.findUnique({
+    where: { id: input.companyId },
+    include: {
+      users: {
+        where: { role: "CUSTOMER" },
+        orderBy: [{ companyRole: "asc" }, { createdAt: "asc" }],
+        take: 8,
+      },
+    },
+  });
+  if (!company) throw new Error("Company not found");
+
+  const name = input.name.trim();
+  if (name.length < 2) throw new Error("Company name is required");
+
+  const taxId = (input.taxId || "").trim() || null;
+  const statusRaw = (input.status || company.status).trim().toUpperCase();
+  if (!COMPANY_STATUSES.includes(statusRaw as (typeof COMPANY_STATUSES)[number])) {
+    throw new Error("Invalid account status");
+  }
+  const status = statusRaw as (typeof COMPANY_STATUSES)[number];
+
+  const canEditCredit =
+    session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN";
+
+  let creditLimit = company.creditLimit;
+  let paymentTermsDays = company.paymentTermsDays;
+  if (canEditCredit && company.level !== "SHOP") {
+    if (input.creditLimit !== undefined) {
+      const limit = Math.round(Number(input.creditLimit) * 100) / 100;
+      if (!Number.isFinite(limit) || limit < 0) {
+        throw new Error("Credit limit must be 0 or greater");
+      }
+      creditLimit = limit;
+    }
+    if (input.paymentTermsDays !== undefined) {
+      const days = Math.floor(Number(input.paymentTermsDays));
+      if (!Number.isFinite(days) || days < 0) {
+        throw new Error("Payment terms days must be 0 or greater");
+      }
+      paymentTermsDays = days;
+    }
+  }
+
+  const contact =
+    (input.contactId
+      ? company.users.find((u) => u.id === input.contactId)
+      : null) ||
+    company.users.find((u) => u.companyRole === "OWNER") ||
+    company.users[0] ||
+    null;
+
+  let contactName: string | null = null;
+  let contactEmail: string | null = null;
+  let contactPhone: string | null = null;
+  if (contact) {
+    contactName = (input.contactName ?? contact.name ?? "").trim() || null;
+    contactEmail = (input.contactEmail ?? contact.email ?? "")
+      .trim()
+      .toLowerCase() || null;
+    contactPhone = (input.contactPhone ?? contact.phone ?? "").trim() || null;
+
+    if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+      throw new Error("Enter a valid email");
+    }
+    if (contactPhone && !isValidPhone(contactPhone)) {
+      throw new Error("Enter a valid phone number (7–15 digits)");
+    }
+    if (!contactEmail && !contactPhone) {
+      throw new Error("Contact needs an email or phone");
+    }
+
+    if (contactEmail) {
+      const emailTaken = await prisma.user.findFirst({
+        where: {
+          email: contactEmail,
+          NOT: { id: contact.id },
+        },
+        select: { id: true },
+      });
+      if (emailTaken) throw new Error("That email is already in use");
+    }
+    if (contactPhone) {
+      const phoneTaken = await prisma.user.findFirst({
+        where: {
+          phone: contactPhone,
+          NOT: { id: contact.id },
+        },
+        select: { id: true },
+      });
+      if (phoneTaken) throw new Error("That phone is already in use");
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.company.update({
+      where: { id: company.id },
+      data: {
+        name,
+        taxId,
+        status,
+        ...(canEditCredit && company.level !== "SHOP"
+          ? { creditLimit, paymentTermsDays }
+          : {}),
+      },
+    });
+
+    if (contact) {
+      await tx.user.update({
+        where: { id: contact.id },
+        data: {
+          name: contactName,
+          email: contactEmail,
+          phone: contactPhone,
+          ...(status === "APPROVED" ||
+          status === "PENDING" ||
+          status === "REJECTED" ||
+          status === "DISABLED"
+            ? { status }
+            : {}),
+        },
+      });
+    }
+
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "COMPANY_PROFILE_UPDATED",
+        entity: "Company",
+        entityId: company.id,
+        meta: JSON.stringify({
+          name,
+          taxId,
+          status,
+          creditLimit: canEditCredit ? creditLimit : undefined,
+          paymentTermsDays: canEditCredit ? paymentTermsDays : undefined,
+          contactId: contact?.id || null,
+        }),
+      },
+    });
+  });
+
+  revalidateCustomerDirs();
+}
+
+/** Update an existing ship-to address. */
+export async function updateCompanyShipTo(input: {
+  companyId: string;
+  addressId: string;
+  label?: string;
+  recipientName?: string;
+  phone?: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  region?: string;
+  postalCode: string;
+  country: string;
+  isDefault?: boolean;
+}) {
+  const session = await requireRoles(["ADMIN", "SALES"]);
+  const address = await prisma.address.findFirst({
+    where: { id: input.addressId, companyId: input.companyId },
+  });
+  if (!address) throw new Error("Address not found");
+
+  const line1 = input.line1.trim();
+  const city = input.city.trim();
+  const postalCode = input.postalCode.trim();
+  const country = input.country.trim();
+  const recipientName = (input.recipientName || "").trim();
+  const phone = (input.phone || "").trim();
+  if (!recipientName || !phone || !line1 || !city || !postalCode || !country) {
+    throw new Error(
+      "Full name, phone number, address, city, postal code, and country are required",
+    );
+  }
+  if (!isValidPhone(phone)) {
+    throw new Error("Enter a valid phone number (7–15 digits)");
+  }
+  if (country.toLowerCase().includes("china") || country.toUpperCase() === "CN") {
+    throw new Error("Shipping to China is not available");
+  }
+
+  const isDefault = Boolean(input.isDefault) || address.isDefault;
+
+  await prisma.$transaction(async (tx) => {
+    if (isDefault) {
+      await tx.address.updateMany({
+        where: { companyId: input.companyId },
+        data: { isDefault: false },
+      });
+    }
+    await tx.address.update({
+      where: { id: address.id },
+      data: {
+        label: input.label?.trim() || null,
+        recipientName,
+        phone,
+        line1,
+        line2: input.line2?.trim() || null,
+        city,
+        region: input.region?.trim() || null,
+        postalCode,
+        country,
+        isDefault,
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "COMPANY_ADDRESS_UPDATED",
+        entity: "Company",
+        entityId: input.companyId,
+        meta: JSON.stringify({ addressId: address.id, city, country, isDefault }),
+      },
+    });
+  });
+
+  revalidateCustomerDirs();
 }
 
 /** Add another ship-to address for a B2B company (distro / wholesale / retail). */
