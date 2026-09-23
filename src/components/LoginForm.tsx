@@ -65,7 +65,7 @@ export default function LoginForm() {
     setError(null);
 
     if (!altcha) {
-      setError("Please complete the captcha before signing in.");
+      setError("Please check “I am human” before signing in.");
       return;
     }
 
@@ -99,7 +99,7 @@ export default function LoginForm() {
 
     if (!result || result.error || result.ok === false) {
       setError(
-        "Invalid login details or captcha expired. Check your details and try again.",
+        "Invalid login details. Check your details and try again.",
       );
       return;
     }

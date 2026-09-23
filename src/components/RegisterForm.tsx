@@ -248,7 +248,7 @@ function RegisterFormInner() {
       return;
     }
     if (!altcha) {
-      setError("Please complete the captcha before creating an account.");
+      setError("Please check “I am human” before creating an account.");
       return;
     }
 
