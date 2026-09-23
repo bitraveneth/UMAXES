@@ -11,6 +11,8 @@ import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 export type PackingListRow = {
   id: string;
   orderNumber: string;
+  plNumber: string;
+  piNumber: string | null;
   status: OrderStatus;
   updatedAt: string;
   companyName: string;
@@ -66,6 +68,8 @@ export default function PackingListsWorkspace({
       if (!needle) return true;
       return (
         row.orderNumber.toLowerCase().includes(needle) ||
+        row.plNumber.toLowerCase().includes(needle) ||
+        (row.piNumber || "").toLowerCase().includes(needle) ||
         row.companyName.toLowerCase().includes(needle) ||
         row.route.toLowerCase().includes(needle) ||
         (row.trackingNumber || "").toLowerCase().includes(needle)
@@ -155,7 +159,16 @@ export default function PackingListsWorkspace({
                     }
                   >
                     <td className="font-semibold text-[var(--admin-muted)]">
-                      PL-{row.orderNumber}
+                      <p className="text-[var(--admin-text)]">{row.plNumber}</p>
+                      {row.piNumber ? (
+                        <p className="text-xs font-normal text-[var(--admin-muted)]">
+                          PI · {row.piNumber}
+                        </p>
+                      ) : (
+                        <p className="text-xs font-normal text-[var(--admin-muted)]">
+                          {row.orderNumber}
+                        </p>
+                      )}
                     </td>
                     <td>
                       <p className="font-medium text-[var(--admin-text)]">

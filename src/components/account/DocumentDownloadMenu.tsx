@@ -34,7 +34,12 @@ export default function DocumentDownloadMenu({
         role="group"
         aria-label="Download format"
       >
-        <a href={pdf} title="Download PDF">
+        <a
+          href={pdf}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open print / PDF (same design as on screen)"
+        >
           <FileText className="h-3.5 w-3.5" strokeWidth={1.85} />
           PDF
         </a>
@@ -56,6 +61,9 @@ export default function DocumentDownloadMenu({
     >
       <a
         href={pdf}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Open print / PDF (same design as on screen)"
         className={`inline-flex items-center gap-1.5 border-r border-black/10 font-display font-semibold text-black transition hover:bg-[#eef3f7] hover:text-[#1b4f72] ${
           compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2.5 text-sm"
         }`}

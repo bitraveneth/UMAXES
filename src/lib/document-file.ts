@@ -14,6 +14,7 @@ import {
   sellerCompany,
   type InvoiceDocType,
 } from "@/lib/invoice-html";
+import { casesFromPcs, isCasePackedSku } from "@/lib/pack";
 import { zipStore } from "@/lib/zip-store";
 
 type ExportItem = {
@@ -159,37 +160,6 @@ function xmlText(value: string) {
     .replace(/"/g, "&quot;");
 }
 
-function addressText(snap: string) {
-  const a = parseAddressSnap(snap);
-  return (
-    [
-      [a.recipientName, a.phone].filter(Boolean).join(" · "),
-      a.line1,
-      a.line2,
-      [a.city, a.region, a.postalCode].filter(Boolean).join(", "),
-      a.country,
-    ]
-      .map((v) => (v || "").trim())
-      .filter(Boolean)
-      .join(", ") || "—"
-  );
-}
-
-function sellerAddressText() {
-  const s = sellerCompany();
-  return (
-    [
-      s.line1,
-      s.line2,
-      [s.city, s.region, s.postalCode].filter(Boolean).join(", "),
-      s.country,
-    ]
-      .map((v) => (v || "").trim())
-      .filter(Boolean)
-      .join(", ") || "—"
-  );
-}
-
 function factLines(input: InvoiceExportInput, showMoney: boolean) {
   const lines: string[] = [];
   if (showMoney && input.paymentMethod) {
@@ -197,7 +167,9 @@ function factLines(input: InvoiceExportInput, showMoney: boolean) {
   }
   if (input.couponCode) lines.push(`Coupon · ${input.couponCode}`);
   if (input.testStationQty) {
-    lines.push(`Test stations · ${input.testStationQty} free · 1 device each`);
+    lines.push(
+      `Test stations · ${input.testStationQty} · including 1 device inside each`,
+    );
   }
   if (input.firstOrderUnpaidPcs) {
     lines.push(`First-order unpaid · ${input.firstOrderUnpaidPcs} pcs`);
@@ -243,12 +215,63 @@ function cellXml(row: number, col: number, cell: SheetCell) {
   if (cell.t === "n" && typeof cell.v === "number") {
     return `<c r="${ref}"${style}><v>${cell.v}</v></c>`;
   }
-  const text = xmlText(String(cell.v ?? ""));
-  return `<c r="${ref}"${style} t="inlineStr"><is><t>${text}</t></is></c>`;
+  const raw = String(cell.v ?? "");
+  const text = xmlText(raw);
+  const space = raw.includes("\n") || raw.startsWith(" ") || raw.endsWith(" ")
+    ? ` xml:space="preserve"`
+    : "";
+  return `<c r="${ref}"${style} t="inlineStr"><is><t${space}>${text}</t></is></c>`;
 }
 
 function mergeXml(ref: string) {
   return `<mergeCell ref="${ref}"/>`;
+}
+
+function lineCount(value: string) {
+  return Math.max(1, String(value || "").split("\n").length);
+}
+
+function rowHeightForLines(lines: number, perLine = 14, pad = 6) {
+  return Math.min(96, Math.max(18, lines * perLine + pad));
+}
+
+function estimateWrapLines(text: string, charsPerLine = 40) {
+  const parts = String(text || "").split("\n");
+  let total = 0;
+  for (const part of parts) {
+    const len = part.trim().length || 1;
+    total += Math.max(1, Math.ceil(len / Math.max(12, charsPerLine)));
+  }
+  return Math.max(1, total);
+}
+
+function addressLinesFromSnap(snap: string): string[] {
+  try {
+    const a = parseAddressSnap(snap);
+    const cityLine = [a.city, a.region, a.postalCode].filter(Boolean).join(", ");
+    const nameLine = [a.recipientName, a.phone].filter(Boolean).join(" · ");
+    return [a.label, nameLine, a.line1, a.line2, cityLine, a.country]
+      .map((v) => (v || "").trim())
+      .filter(Boolean);
+  } catch {
+    return [(snap || "").trim()].filter(Boolean);
+  }
+}
+
+function addressText(snap: string) {
+  return addressLinesFromSnap(snap).join("\n") || "—";
+}
+
+function sellerAddressLines(): string[] {
+  const s = sellerCompany();
+  const cityLine = [s.city, s.region, s.postalCode].filter(Boolean).join(", ");
+  return [s.line1, s.line2, cityLine, s.country]
+    .map((v) => (v || "").trim())
+    .filter(Boolean);
+}
+
+function sellerAddressText() {
+  return sellerAddressLines().join("\n") || "—";
 }
 
 /**
@@ -276,24 +299,28 @@ export async function buildInvoiceXlsx(
 
   const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="8">
-    <font><sz val="10"/><name val="Arial"/></font>
-    <font><b/><sz val="16"/><color rgb="FF172033"/><name val="Arial"/></font>
-    <font><b/><sz val="11"/><name val="Arial"/></font>
+  <fonts count="10">
+    <font><sz val="10"/><color rgb="FF111111"/><name val="Arial"/></font>
+    <font><b/><sz val="18"/><color rgb="FF172033"/><name val="Arial"/></font>
+    <font><b/><sz val="11"/><color rgb="FF111111"/><name val="Arial"/></font>
     <font><b/><sz val="10"/><color rgb="FF172033"/><name val="Arial"/></font>
     <font><b/><sz val="12"/><color rgb="FF172033"/><name val="Arial"/></font>
-    <font><b/><sz val="10"/><name val="Arial"/></font>
+    <font><b/><sz val="10"/><color rgb="FF111111"/><name val="Arial"/></font>
     <font><b/><sz val="10"/><color rgb="FF3D1605"/><name val="Arial"/></font>
     <font><b/><sz val="14"/><color rgb="FF2F6FB2"/><name val="Arial"/></font>
+    <font><sz val="9"/><color rgb="FF3F4F63"/><name val="Arial"/></font>
+    <font><b/><sz val="16"/><color rgb="FF111111"/><name val="Arial"/></font>
   </fonts>
-  <fills count="5">
+  <fills count="7">
     <fill><patternFill patternType="none"/></fill>
     <fill><patternFill patternType="gray125"/></fill>
     <fill><patternFill patternType="solid"><fgColor rgb="FFC5D9F1"/></patternFill></fill>
     <fill><patternFill patternType="solid"><fgColor rgb="FFEEF4FB"/></patternFill></fill>
     <fill><patternFill patternType="solid"><fgColor rgb="FFFFF6EF"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFFFFFFF"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFF7FAFC"/></patternFill></fill>
   </fills>
-  <borders count="3">
+  <borders count="5">
     <border><left/><right/><top/><bottom/><diagonal/></border>
     <border>
       <left style="thin"><color rgb="FF111111"/></left>
@@ -307,12 +334,26 @@ export async function buildInvoiceXlsx(
       <bottom style="medium"><color rgb="FFFF5B04"/></bottom>
       <diagonal/>
     </border>
+    <border>
+      <left style="thin"><color rgb="FFD5DEE9"/></left>
+      <right style="thin"><color rgb="FFD5DEE9"/></right>
+      <top style="thin"><color rgb="FFD5DEE9"/></top>
+      <bottom style="thin"><color rgb="FFD5DEE9"/></bottom>
+      <diagonal/>
+    </border>
+    <border>
+      <left style="thin"><color rgb="FFFFD0AD"/></left>
+      <right style="thin"><color rgb="FFFFD0AD"/></right>
+      <top style="thin"><color rgb="FFFFD0AD"/></top>
+      <bottom style="thin"><color rgb="FFFFD0AD"/></bottom>
+      <diagonal/>
+    </border>
   </borders>
   <cellStyleXfs count="1"><xf/></cellStyleXfs>
-  <cellXfs count="13">
-    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+  <cellXfs count="20">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"><alignment vertical="center" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment horizontal="right" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment horizontal="right" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment horizontal="right" vertical="top" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment vertical="top" wrapText="1"/></xf>
     <xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1"/>
     <xf numFmtId="0" fontId="5" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
@@ -321,8 +362,15 @@ export async function buildInvoiceXlsx(
     <xf numFmtId="7" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf>
     <xf numFmtId="0" fontId="5" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
     <xf numFmtId="7" fontId="5" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf>
-    <xf numFmtId="0" fontId="6" fillId="4" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
-    <xf numFmtId="0" fontId="7" fillId="0" borderId="2" xfId="0" applyFont="1" applyBorder="1"><alignment vertical="center"/></xf>
+    <xf numFmtId="0" fontId="6" fillId="4" borderId="4" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment vertical="center"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"><alignment vertical="top" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="5" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment vertical="top" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="8" fillId="5" borderId="3" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="left" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="9" fillId="5" borderId="3" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="left" vertical="center"/></xf>
+    <xf numFmtId="0" fontId="8" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="2" xfId="0" applyBorder="1"/>
+    <xf numFmtId="0" fontId="8" fillId="6" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment vertical="center" wrapText="1"/></xf>
   </cellXfs>
 </styleSheet>`;
 
@@ -333,6 +381,7 @@ export async function buildInvoiceXlsx(
     rows.push({ cells, height });
   }
 
+  // —— Header (logo + title)
   pushRow(
     [
       logo ? { v: "", style: 12 } : { v: "UMAXES", style: 12 },
@@ -343,101 +392,191 @@ export async function buildInvoiceXlsx(
       null,
       null,
     ],
-    22,
+    36,
   );
   merges.push("A1:C1", "E1:G1");
+
+  // Value must sit in the top-left cell of the merge (E), or Excel hides it.
+  const docLine = `${NUMBER_LABELS[input.type]} ${input.docNumber}`;
   pushRow(
     [
       null,
       null,
       null,
       null,
-      { v: `${NUMBER_LABELS[input.type]} ${input.docNumber}`, style: 2 },
+      { v: docLine, style: 2 },
       null,
       null,
     ],
-    18,
+    rowHeightForLines(estimateWrapLines(docLine, 40), 14, 6),
   );
   merges.push("E2:G2");
   pushRow(
-    [null, null, null, null, { v: `Issued date: ${issued}`, style: 0 }, null, null],
-    18,
+    [
+      null,
+      null,
+      null,
+      null,
+      { v: `Issued date: ${issued}`, style: 17 },
+      null,
+      null,
+    ],
+    16,
   );
-  merges.push("A3:C3", "E3:G3");
-  pushRow([null, null, null, null, null, null, null], 8);
-
-  pushRow([
-    { v: "Vendor", style: 4 },
-    null,
-    null,
-    null,
-    { v: "Buyer", style: 4 },
-    null,
-    null,
-  ]);
-  merges.push(
-    `A${rows.length}:C${rows.length}`,
-    `E${rows.length}:G${rows.length}`,
+  merges.push("E3:G3");
+  // One orange accent under the full header (none under the logo cell)
+  pushRow(
+    [
+      { v: "", style: 18 },
+      { v: "", style: 18 },
+      { v: "", style: 18 },
+      { v: "", style: 18 },
+      { v: "", style: 18 },
+      { v: "", style: 18 },
+      { v: "", style: 18 },
+    ],
+    4,
   );
 
-  const vendorPairs: Array<[string, string]> = [
-    ["Company", seller.legalName || seller.name],
-    ["Address", sellerAddressText()],
-    ["Mobile", dash(seller.phone)],
-    ["Email", dash(seller.email)],
-  ];
-  const buyerPairs: Array<[string, string]> = [
-    ["Company", input.companyName],
-    ["Name", dash(input.clientName)],
-    ["Address", addressText(input.addressSnap)],
-    ["Contact", dash(buyerContact)],
-  ];
-  if (input.companyTaxId) buyerPairs.push(["Tax ID", input.companyTaxId]);
+  pushRow([null], 8);
 
-  const partyCount = Math.max(vendorPairs.length, buyerPairs.length);
-  for (let i = 0; i < partyCount; i++) {
-    const v = vendorPairs[i];
-    const b = buyerPairs[i];
-    pushRow([
-      v ? { v: v[0], style: 3 } : null,
-      v ? { v: v[1], style: 0 } : null,
-      null,
-      null,
-      b ? { v: b[0], style: 3 } : null,
-      b ? { v: b[1], style: 0 } : null,
-      null,
-    ]);
+  // —— Parties: align Address with Address so Mobile/Name stay normal height
+  const vendorAddress = sellerAddressText();
+  const buyerAddress = addressText(input.addressSnap);
+  const partyRows: Array<{
+    left?: [string, string, boolean];
+    right?: [string, string, boolean];
+  }> = [
+    {
+      left: ["Vendor", seller.legalName || seller.name, true],
+      right: ["Company", input.companyName, true],
+    },
+    {
+      left: ["Address", vendorAddress, false],
+      right: ["Address", buyerAddress, false],
+    },
+    {
+      left: ["Mobile", dash(seller.phone), false],
+      right: ["Name", dash(input.clientName), false],
+    },
+    {
+      left: ["Email", dash(seller.email), false],
+      right: ["Contact", dash(buyerContact), false],
+    },
+  ];
+  if (input.companyTaxId) {
+    partyRows.push({
+      right: ["Tax ID", input.companyTaxId, false],
+    });
+  }
+
+  for (const row of partyRows) {
+    const v = row.left;
+    const b = row.right;
+    const vValue = v?.[1] || "";
+    const bValue = b?.[1] || "";
+    const isAddressRow = v?.[0] === "Address" || b?.[0] === "Address";
+    const isContactRow = b?.[0] === "Contact";
+    const vLines = estimateWrapLines(vValue, isAddressRow ? 32 : 40);
+    const bLines = estimateWrapLines(
+      bValue,
+      isAddressRow || isContactRow ? 30 : 40,
+    );
+    const height = isAddressRow
+      ? rowHeightForLines(Math.max(vLines, bLines), 15, 8)
+      : isContactRow
+        ? rowHeightForLines(Math.max(1, bLines), 14, 6)
+        : 20;
+    pushRow(
+      [
+        v ? { v: v[0], style: 3 } : null,
+        v ? { v: vValue, style: v[2] ? 14 : 13 } : null,
+        null,
+        null,
+        b ? { v: b[0], style: 3 } : null,
+        b ? { v: bValue, style: b[2] ? 14 : 13 } : null,
+        null,
+      ],
+      height,
+    );
     const r = rows.length;
     merges.push(`B${r}:C${r}`, `F${r}:G${r}`);
   }
 
-  pushRow([null], 8);
-  pushRow([{ v: factLines(input, showMoney).join("   |   "), style: 0 }], 28);
+  // —— Facts line (same as printable PDF)
+  const facts = factLines(input, showMoney);
+  pushRow([null], 6);
+  pushRow([{ v: facts.join("   "), style: 17 }], 18);
   merges.push(`A${rows.length}:G${rows.length}`);
-  pushRow([null], 8);
 
-  if (!showMoney && input.packingMeta) {
-    const m = input.packingMeta;
-    pushRow([
-      { v: "Boxes", style: 3 },
-      { v: String(m.boxCount ?? "—") },
-      { v: "CBM", style: 3 },
-      { v: String(m.cbm ?? "—") },
-      { v: "Weight (kg)", style: 3 },
-      { v: String(m.weightKg ?? "—") },
-      null,
-    ]);
+  // —— Packing meta cards (always on packing list, like PDF)
+  if (!showMoney) {
+    const m = input.packingMeta || {
+      boxCount: null,
+      cbm: null,
+      weightKg: null,
+    };
+    pushRow([null], 8);
+    // Label row
+    pushRow(
+      [
+        { v: "CASES", style: 15 },
+        null,
+        { v: "CBM", style: 15 },
+        null,
+        { v: "WEIGHT (KG)", style: 15 },
+        null,
+        null,
+      ],
+      18,
+    );
+    merges.push(
+      `A${rows.length}:B${rows.length}`,
+      `C${rows.length}:D${rows.length}`,
+      `E${rows.length}:G${rows.length}`,
+    );
+    // Value row
+    pushRow(
+      [
+        { v: String(m.boxCount ?? "—"), style: 16 },
+        null,
+        { v: String(m.cbm ?? "—"), style: 16 },
+        null,
+        { v: String(m.weightKg ?? "—"), style: 16 },
+        null,
+        null,
+      ],
+      28,
+    );
+    merges.push(
+      `A${rows.length}:B${rows.length}`,
+      `C${rows.length}:D${rows.length}`,
+      `E${rows.length}:G${rows.length}`,
+    );
     if (m.packingNote) {
-      pushRow([{ v: "Packing note", style: 3 }, { v: m.packingNote }]);
-      merges.push(`B${rows.length}:G${rows.length}`);
+      pushRow([null], 4);
+      pushRow(
+        [
+          { v: `Packing note: ${m.packingNote}`, style: 17 },
+        ],
+        rowHeightForLines(lineCount(m.packingNote), 14, 6),
+      );
+      merges.push(`A${rows.length}:G${rows.length}`);
     }
     if (m.trackingNumber) {
-      pushRow([
-        { v: "Tracking", style: 3 },
-        { v: `${m.carrier || "—"} · ${m.trackingNumber}` },
-      ]);
-      merges.push(`B${rows.length}:G${rows.length}`);
+      pushRow(
+        [
+          {
+            v: `Tracking: ${m.carrier || "—"} · ${m.trackingNumber}`,
+            style: 17,
+          },
+        ],
+        18,
+      );
+      merges.push(`A${rows.length}:G${rows.length}`);
     }
+    pushRow([null], 8);
+  } else {
     pushRow([null], 8);
   }
 
@@ -456,15 +595,18 @@ export async function buildInvoiceXlsx(
     );
     input.items.forEach((item, index) => {
       const parts = invoiceLineParts(item.name);
-      pushRow([
-        { t: "n", v: index + 1, style: 7 },
-        { v: parts.commodity, style: 6 },
-        { v: parts.puffs, style: 7 },
-        { v: parts.description, style: 6 },
-        { t: "n", v: money(item.unitPrice), style: 8 },
-        { t: "n", v: item.quantity, style: 7 },
-        { t: "n", v: money(item.unitPrice * item.quantity), style: 8 },
-      ]);
+      pushRow(
+        [
+          { t: "n", v: index + 1, style: 7 },
+          { v: parts.commodity, style: 6 },
+          { v: parts.puffs, style: 7 },
+          { v: parts.description, style: 6 },
+          { t: "n", v: money(item.unitPrice), style: 8 },
+          { t: "n", v: item.quantity, style: 7 },
+          { t: "n", v: money(item.unitPrice * item.quantity), style: 8 },
+        ],
+        22,
+      );
     });
     if (discount > 0) {
       const label =
@@ -516,35 +658,51 @@ export async function buildInvoiceXlsx(
             quantity: i.quantity,
             boxes: null as number | null,
           }));
+    function packingCases(line: {
+      sku: string;
+      quantity: number;
+      boxes?: number | null;
+    }) {
+      if (line.boxes != null) return line.boxes;
+      if (!isCasePackedSku(line.sku)) return null;
+      const n = casesFromPcs(line.quantity);
+      return n > 0 ? n : null;
+    }
     pushRow(
       [
         { v: "No", style: 5 },
-        { v: "SKU", style: 5 },
-        { v: "Item", style: 5 },
-        { v: "Flavor", style: 5 },
+        { v: "Commodity", style: 5 },
+        { v: "Puffs", style: 5 },
+        { v: "Description of goods", style: 5 },
         { v: "Size", style: 5 },
-        { v: "Qty", style: 5 },
-        { v: "Boxes", style: 5 },
+        { v: "Quantity", style: 5 },
+        { v: "Case", style: 5 },
       ],
       24,
     );
     source.forEach((line, index) => {
       const parts = invoiceLineParts(line.name);
-      pushRow([
-        { t: "n", v: index + 1, style: 7 },
-        { v: line.sku, style: 7 },
-        { v: parts.description, style: 6 },
-        { v: line.flavor || parts.description, style: 6 },
-        { v: line.size || "—", style: 7 },
-        { t: "n", v: line.quantity, style: 7 },
-        {
-          v: line.boxes != null ? line.boxes : "—",
-          t: line.boxes != null ? "n" : "s",
-          style: 7,
-        },
-      ]);
+      const description =
+        (line.flavor || "").trim() || parts.description;
+      const cases = packingCases(line);
+      pushRow(
+        [
+          { t: "n", v: index + 1, style: 7 },
+          { v: parts.commodity, style: 6 },
+          { v: parts.puffs, style: 7 },
+          { v: description, style: 6 },
+          { v: line.size || "—", style: 7 },
+          { t: "n", v: line.quantity, style: 7 },
+          {
+            v: cases != null ? cases : "—",
+            t: cases != null ? "n" : "s",
+            style: 7,
+          },
+        ],
+        22,
+      );
     });
-    const boxesTotal = source.reduce((s, l) => s + (l.boxes ?? 0), 0);
+    const boxesTotal = source.reduce((s, l) => s + (packingCases(l) ?? 0), 0);
     pushRow([
       { v: "", style: 9 },
       { v: "Total", style: 9 },
@@ -562,7 +720,7 @@ export async function buildInvoiceXlsx(
   }
 
   if (showMoney) {
-    pushRow([null], 8);
+    pushRow([null], 10);
     pushRow([{ v: "Bank Information", style: 4 }]);
     merges.push(`A${rows.length}:G${rows.length}`);
     for (const [label, value] of [
@@ -572,12 +730,16 @@ export async function buildInvoiceXlsx(
       ["Bank address", bank.bankAddress],
       ["Swift code", bank.swiftCode],
     ] as Array<[string, string]>) {
-      pushRow([{ v: label, style: 3 }, { v: value }]);
+      const text = String(value || "");
+      pushRow(
+        [{ v: label, style: 3 }, { v: text, style: 13 }],
+        rowHeightForLines(lineCount(text), 14, 6),
+      );
       merges.push(`B${rows.length}:G${rows.length}`);
     }
   }
 
-  pushRow([null], 8);
+  pushRow([null], 12);
   pushRow(
     [
       {
@@ -585,7 +747,7 @@ export async function buildInvoiceXlsx(
         style: 11,
       },
     ],
-    28,
+    30,
   );
   merges.push(`A${rows.length}:G${rows.length}`);
 
@@ -606,18 +768,25 @@ export async function buildInvoiceXlsx(
   const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
+  <dimension ref="A1:G${rows.length}"/>
+  <sheetViews>
+    <sheetView workbookViewId="0" showGridLines="0"/>
+  </sheetViews>
   <sheetFormatPr defaultRowHeight="18"/>
   <cols>
-    <col min="1" max="1" width="12" customWidth="1"/>
-    <col min="2" max="2" width="18" customWidth="1"/>
-    <col min="3" max="3" width="16" customWidth="1"/>
-    <col min="4" max="4" width="28" customWidth="1"/>
-    <col min="5" max="5" width="14" customWidth="1"/>
-    <col min="6" max="6" width="11" customWidth="1"/>
-    <col min="7" max="7" width="16" customWidth="1"/>
+    <col min="1" max="1" width="11" customWidth="1"/>
+    <col min="2" max="2" width="20" customWidth="1"/>
+    <col min="3" max="3" width="20" customWidth="1"/>
+    <col min="4" max="4" width="26" customWidth="1"/>
+    <col min="5" max="5" width="11" customWidth="1"/>
+    <col min="6" max="6" width="18" customWidth="1"/>
+    <col min="7" max="7" width="20" customWidth="1"/>
   </cols>
   <sheetData>${sheetRowsXml}</sheetData>
   <mergeCells count="${merges.length}">${merges.map(mergeXml).join("")}</mergeCells>
+  <pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.2" footer="0.2"/>
+  <pageSetup orientation="portrait" fitToWidth="1" fitToHeight="0" paperSize="1"/>
   ${drawingRel}
 </worksheet>`;
 
@@ -805,7 +974,7 @@ export async function buildInvoicePdf(
   if (!showMoney && input.packingMeta) {
     const m = input.packingMeta;
     textLines.push(
-      `Boxes: ${m.boxCount ?? "—"}   CBM: ${m.cbm ?? "—"}   Weight (kg): ${m.weightKg ?? "—"}`,
+      `Cases: ${m.boxCount ?? "—"}   CBM: ${m.cbm ?? "—"}   Weight (kg): ${m.weightKg ?? "—"}`,
     );
     if (m.packingNote) textLines.push(`Packing note: ${m.packingNote}`);
     if (m.trackingNumber) {
@@ -853,12 +1022,26 @@ export async function buildInvoicePdf(
       input.packingLines && input.packingLines.length
         ? input.packingLines
         : input.items;
-    textLines.push("No  SKU                 Qty   Boxes");
+    textLines.push("No  Commodity / Puffs / Description / Size     Qty  Case");
     source.forEach((line, i) => {
-      const boxes =
-        "boxes" in line && line.boxes != null ? String(line.boxes) : "—";
+      const parts = invoiceLineParts(line.name);
+      const description =
+        ("flavor" in line && (line.flavor || "").trim()) ||
+        parts.description;
+      const size =
+        "size" in line && line.size ? String(line.size) : "—";
+      let boxes = "—";
+      if ("boxes" in line && line.boxes != null) {
+        boxes = String(line.boxes);
+      } else if (isCasePackedSku(line.sku)) {
+        const n = casesFromPcs(line.quantity);
+        if (n > 0) boxes = String(n);
+      }
       textLines.push(
-        `${String(i + 1).padStart(2, " ")}  ${(line.sku || "").padEnd(16, " ")}  ${String(line.quantity).padStart(4, " ")}  ${boxes.padStart(5, " ")}`,
+        `${String(i + 1).padStart(2, " ")}  ${description.slice(0, 36).padEnd(36, " ")}  ${String(line.quantity).padStart(4, " ")}  ${boxes.padStart(4, " ")}`,
+      );
+      textLines.push(
+        `    ${parts.commodity} · ${parts.puffs} · Size ${size}`,
       );
     });
   }

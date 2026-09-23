@@ -4,7 +4,14 @@ import {
   type InvoiceBankDetails,
 } from "@/lib/bank-accounts";
 import { paymentLabels } from "@/lib/catalog";
+import {
+  invoiceCommodity,
+  invoicePuffsLabel,
+} from "@/lib/invoice-labels";
+import { casesFromPcs, isCasePackedSku } from "@/lib/pack";
 import { SITE_CONTACT_EMAIL } from "@/lib/site";
+
+export { invoiceCommodity, invoicePuffsLabel } from "@/lib/invoice-labels";
 
 /** Seller (UMAXES) block on invoices — override via env when needed */
 export function sellerCompany() {
@@ -22,14 +29,6 @@ export function sellerCompany() {
     email: process.env.INVOICE_SELLER_EMAIL || SITE_CONTACT_EMAIL,
     phone: process.env.INVOICE_SELLER_PHONE || "",
   };
-}
-
-export function invoiceCommodity() {
-  return process.env.INVOICE_COMMODITY || "Umaxes Hookamax";
-}
-
-export function invoicePuffsLabel() {
-  return process.env.INVOICE_PUFFS_LABEL || "MTL/DLT - 80K/50K";
 }
 
 export type InvoiceAddress = {
@@ -328,26 +327,45 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
           boxes: null as number | null,
         }));
 
+  function packingCases(line: {
+    sku: string;
+    quantity: number;
+    boxes?: number | null;
+  }) {
+    if (line.boxes != null) return line.boxes;
+    if (!isCasePackedSku(line.sku)) return null;
+    const n = casesFromPcs(line.quantity);
+    return n > 0 ? n : null;
+  }
+
   const packingRows = packingSource
     .map((line, index) => {
       const parts = invoiceLineParts(line.name);
+      const description =
+        (line.flavor || "").trim() || parts.description;
+      const cases = packingCases(line);
       return `<tr>
         <td class="num center">${index + 1}</td>
-        <td class="sku">${escapeHtml(line.sku)}</td>
-        <td>${escapeHtml(parts.description)}</td>
-        <td>${escapeHtml(line.flavor || parts.description)}</td>
-        <td>${escapeHtml(line.size || "—")}</td>
+        <td>${escapeHtml(parts.commodity)}</td>
+        <td class="center">${escapeHtml(parts.puffs)}</td>
+        <td>${escapeHtml(description)}</td>
+        <td class="center">${escapeHtml(line.size || "—")}</td>
         <td class="num center">${line.quantity}</td>
-        <td class="num center">${line.boxes ?? "—"}</td>
+        <td class="num center">${cases ?? "—"}</td>
       </tr>`;
     })
     .join("");
+
+  const packingCasesTotal = packingSource.reduce((s, l) => {
+    const n = packingCases(l);
+    return s + (n ?? 0);
+  }, 0);
 
   const packingTotal = `<tr class="total-row">
         <td></td>
         <td colspan="4" class="total-label">Total</td>
         <td class="num center">${packingSource.reduce((s, l) => s + l.quantity, 0)}</td>
-        <td class="num center">${packingSource.reduce((s, l) => s + (l.boxes ?? 0), 0) || "—"}</td>
+        <td class="num center">${packingCasesTotal || "—"}</td>
       </tr>`;
 
   const toolbar = showToolbar
@@ -542,12 +560,12 @@ ${toolbar}
         <th>Quantity</th>
         <th>Total Price (USD)</th>`
             : `<th style="width:44px">No</th>
-        <th>SKU</th>
-        <th>Item</th>
-        <th>Flavor</th>
+        <th>Commodity</th>
+        <th>Puffs</th>
+        <th>Description of goods</th>
         <th>Size</th>
-        <th>Qty</th>
-        <th>Boxes</th>`
+        <th>Quantity</th>
+        <th>Case</th>`
         }
       </tr>
     </thead>

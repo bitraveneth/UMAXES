@@ -20,6 +20,8 @@ import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 export type PackingListDetailOrder = {
   id: string;
   orderNumber: string;
+  piNumber: string | null;
+  plNumber: string;
   status: OrderStatus;
   createdAt: string;
   updatedAt: string;
@@ -36,6 +38,9 @@ export type PackingListDetailOrder = {
   packingNote: string | null;
   carrier: string | null;
   trackingNumber: string | null;
+  /** Same labels as PI — passed from server (not imported client-side). */
+  commodity: string;
+  puffsLabel: string;
   lines: {
     id: string;
     orderItemId: string | null;
@@ -194,9 +199,14 @@ export default function PackingListDetail({
               {t("packingLists.documentTitle")}
             </p>
             <p className="mt-1 text-2xl font-semibold text-[var(--admin-text)]">
-              PL-{order.orderNumber}
+              {order.plNumber}
             </p>
             <p className="mt-1 text-sm text-[var(--admin-muted)]">
+              {order.piNumber ? (
+                <>
+                  PI: {order.piNumber} ·{" "}
+                </>
+              ) : null}
               {t("logistics.colOrder")}: {order.orderNumber} ·{" "}
               {formatDate(order.createdAt)}
             </p>
@@ -421,11 +431,12 @@ export default function PackingListDetail({
             <thead>
               <tr>
                 <th>#</th>
-                <th>{t("logistics.colSku")}</th>
-                <th>{t("logistics.flavor")}</th>
+                <th>{t("packingLists.colCommodity")}</th>
+                <th>{t("packingLists.colPuffs")}</th>
+                <th>{t("packingLists.colDescription")}</th>
                 <th>{t("logistics.size")}</th>
-                <th className="text-right">{t("logistics.qty")}</th>
-                <th className="text-right">{t("logistics.lineBoxes")}</th>
+                <th className="text-right">{t("packingLists.colQuantity")}</th>
+                <th className="text-right">{t("packingLists.colCase")}</th>
               </tr>
             </thead>
             <tbody>
@@ -434,11 +445,11 @@ export default function PackingListDetail({
                   <td className="tabular-nums text-[var(--admin-muted)]">
                     {idx + 1}
                   </td>
-                  <td>
-                    <p className="font-medium text-[var(--admin-text)]">
-                      {line.name}
-                    </p>
-                    <p className="text-xs text-[var(--admin-muted)]">{line.sku}</p>
+                  <td className="text-sm text-[var(--admin-text)]">
+                    {order.commodity}
+                  </td>
+                  <td className="text-sm text-[var(--admin-muted)]">
+                    {order.puffsLabel}
                   </td>
                   <td>
                     {editing ? (
@@ -447,10 +458,18 @@ export default function PackingListDetail({
                         onChange={(e) =>
                           updateLine(line.id, "flavor", e.target.value)
                         }
-                        className="admin-input w-full min-w-[6rem]"
+                        placeholder={line.name}
+                        className="admin-input w-full min-w-[8rem]"
                       />
                     ) : (
-                      line.flavor || "—"
+                      <div>
+                        <p className="font-medium text-[var(--admin-text)]">
+                          {line.flavor || line.name}
+                        </p>
+                        <p className="text-xs text-[var(--admin-muted)]">
+                          {line.sku}
+                        </p>
+                      </div>
                     )}
                   </td>
                   <td>
@@ -490,7 +509,7 @@ export default function PackingListDetail({
             {!editing ? (
               <tfoot>
                 <tr>
-                  <td colSpan={4} className="text-right font-medium">
+                  <td colSpan={5} className="text-right font-medium">
                     {t("packingLists.totalUnits")}
                   </td>
                   <td className="text-right tabular-nums font-semibold">

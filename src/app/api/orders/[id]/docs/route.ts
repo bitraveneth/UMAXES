@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getActiveBankAccount } from "@/lib/bank-accounts";
-import { buildInvoiceHtml, type InvoiceDocType } from "@/lib/invoice-html";
+import {
+  buildInvoiceHtml,
+  escapeHtml,
+  type InvoiceDocType,
+} from "@/lib/invoice-html";
 import { siblingDocNumber } from "@/lib/doc-number";
-import { buildInvoicePdf, buildInvoiceXlsx, loadInvoiceLogoDataUri } from "@/lib/document-file";
+import { buildInvoiceXlsx, loadInvoiceLogoDataUri } from "@/lib/document-file";
 import { prisma } from "@/lib/db";
 
 type Params = { params: Promise<{ id: string }> };
@@ -79,16 +83,16 @@ export async function GET(request: Request, { params }: Params) {
   const packingMetaHtml =
     type === "packing"
       ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:0 0 18px">
-  <div style="border:1px solid rgba(0,0,0,.08);padding:12px;border-radius:12px;background:#fff"><div class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase">Boxes</div><div style="font-size:18px;font-weight:800;margin-top:4px">${shipment?.boxCount ?? "—"}</div></div>
+  <div style="border:1px solid rgba(0,0,0,.08);padding:12px;border-radius:12px;background:#fff"><div class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase">Cases</div><div style="font-size:18px;font-weight:800;margin-top:4px">${shipment?.boxCount ?? "—"}</div></div>
   <div style="border:1px solid rgba(0,0,0,.08);padding:12px;border-radius:12px;background:#fff"><div class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase">CBM</div><div style="font-size:18px;font-weight:800;margin-top:4px">${shipment?.cbm ?? "—"}</div></div>
   <div style="border:1px solid rgba(0,0,0,.08);padding:12px;border-radius:12px;background:#fff"><div class="muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase">Weight (kg)</div><div style="font-size:18px;font-weight:800;margin-top:4px">${shipment?.weightKg ?? "—"}</div></div>
 </div>${
           shipment?.packingNote
-            ? `<p style="margin:0 0 12px;font-size:13px"><strong>Packing note:</strong> ${shipment.packingNote}</p>`
+            ? `<p style="margin:0 0 12px;font-size:13px"><strong>Packing note:</strong> ${escapeHtml(shipment.packingNote)}</p>`
             : ""
         }${
           shipment?.trackingNumber
-            ? `<p style="margin:0 0 12px;font-size:13px"><strong>Tracking:</strong> ${shipment.carrier || "—"} · ${shipment.trackingNumber}</p>`
+            ? `<p style="margin:0 0 12px;font-size:13px"><strong>Tracking:</strong> ${escapeHtml(shipment.carrier || "—")} · ${escapeHtml(shipment.trackingNumber)}</p>`
             : ""
         }`
       : "";
@@ -117,14 +121,14 @@ export async function GET(request: Request, { params }: Params) {
     items: order.items,
     packingLines: shipment?.lines?.length ? shipment.lines : null,
     packingMeta:
-      type === "packing" && shipment
+      type === "packing"
         ? {
-            boxCount: shipment.boxCount,
-            cbm: shipment.cbm,
-            weightKg: shipment.weightKg,
-            packingNote: shipment.packingNote,
-            carrier: shipment.carrier,
-            trackingNumber: shipment.trackingNumber,
+            boxCount: shipment?.boxCount ?? null,
+            cbm: shipment?.cbm ?? null,
+            weightKg: shipment?.weightKg ?? null,
+            packingNote: shipment?.packingNote ?? null,
+            carrier: shipment?.carrier ?? null,
+            trackingNumber: shipment?.trackingNumber ?? null,
           }
         : null,
     subtotal: order.subtotal,
@@ -146,11 +150,30 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   if (format === "pdf") {
-    const body = await buildInvoicePdf(exportInput);
-    return new NextResponse(new Uint8Array(body), {
+    // Same polished layout as on-screen / print view (old text PDF looked broken).
+    // Opens print dialog so Save as PDF matches the designed packing list / PI.
+    const html = buildInvoiceHtml({
+      ...exportInput,
+      packingMetaHtml,
+      forceDownloadHref: `?type=${type}&download=1`,
+      pdfHref: `?type=${type}&format=pdf`,
+      xlsxHref: `?type=${type}&format=xlsx`,
+      showToolbar: true,
+      bank,
+      origin,
+      logoSrc,
+    }).replace(
+      "</body>",
+      `<script>
+  window.addEventListener("load", function () {
+    setTimeout(function () { window.print(); }, 250);
+  });
+</script></body>`,
+    );
+    return new NextResponse(html, {
       headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filenames[type]}.pdf"`,
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Disposition": `inline; filename="${filenames[type]}.html"`,
       },
     });
   }

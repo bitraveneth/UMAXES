@@ -16,6 +16,25 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 const BUYER_PW = "Demo1234!";
+/** HOOKAMAX case size — keep packing seed aligned with live pack rules. */
+const PCS_PER_CASE = 95;
+const TEST_STATION_SKU = "test-station";
+
+function packingLineFromItem(it) {
+  const isCase = it.sku !== TEST_STATION_SKU;
+  const boxes = isCase
+    ? Math.max(1, Math.round(Number(it.quantity) / PCS_PER_CASE))
+    : null;
+  return {
+    sku: it.sku,
+    name: it.name,
+    quantity: it.quantity,
+    flavor: it.name.split("—")[0]?.trim() || it.name,
+    // Size is free-text for logistics; puffs live in the PI/PL Puffs column.
+    size: null,
+    boxes,
+  };
+}
 
 const ADDRESSES = {
   coastal: {
@@ -877,21 +896,14 @@ async function main() {
           cbm: s.shipment.cbm ?? null,
           weightKg: s.shipment.weightKg ?? null,
           packingNote: logistics
-            ? `Packed by logistics · ${s.shipment.carrier}`
-            : "Packed",
+            ? `Ready for ${s.shipment.carrier}`
+            : "Packed — awaiting handoff",
           packedAt: daysAgo(Math.max(0, s.days - 3)),
           lastTrackedAt: daysAgo(Math.max(0, s.days - 1)),
           trackingStatus:
             s.shipment.status === "delivered" ? "Delivered" : "In transit",
           lines: {
-            create: items.map((it, idx) => ({
-              sku: it.sku,
-              name: it.name,
-              quantity: it.quantity,
-              flavor: it.name.split("—")[0]?.trim() || it.name,
-              size: idx % 2 === 0 ? "80K" : "50K",
-              boxes: Math.max(1, Math.ceil(it.quantity / 10)),
-            })),
+            create: items.map((it) => packingLineFromItem(it)),
           },
         },
       });
@@ -908,14 +920,7 @@ async function main() {
           packingNote: "Awaiting carrier / tracking",
           packedAt: daysAgo(Math.max(0, s.days - 1)),
           lines: {
-            create: items.map((it, idx) => ({
-              sku: it.sku,
-              name: it.name,
-              quantity: it.quantity,
-              flavor: it.name.split("—")[0]?.trim() || it.name,
-              size: idx % 2 === 0 ? "80K" : "50K",
-              boxes: Math.max(1, Math.ceil(it.quantity / 10)),
-            })),
+            create: items.map((it) => packingLineFromItem(it)),
           },
         },
       });
