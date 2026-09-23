@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
 import AltchaField from "@/components/AltchaField";
 import AuthMessage from "@/components/auth/AuthMessage";
@@ -14,7 +14,6 @@ import {
   type AuthMethod,
 } from "@/components/auth/auth-shared";
 import { DEMO_ACCOUNTS } from "@/lib/demo-accounts";
-import { homeForRole } from "@/lib/rbac";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -65,7 +64,7 @@ export default function LoginForm() {
     setError(null);
 
     if (!altcha) {
-      setError("Please complete the captcha before signing in.");
+      setError("Please check “I am human” before signing in.");
       return;
     }
 
@@ -87,43 +86,37 @@ export default function LoginForm() {
 
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      identifier,
-      password,
-      altcha,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        identifier,
+        password,
+        altcha,
+        redirect: false,
+      });
 
-    setLoading(false);
-    setAltcha("");
+      setAltcha("");
 
-    if (!result || result.error || result.ok === false) {
-      setError(
-        "Invalid login details or captcha expired. Check your details and try again.",
-      );
-      return;
+      if (!result || result.error || result.ok === false) {
+        setError(
+          "Invalid login details. Check your details and try again.",
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Skip getSession — account/admin layouts already redirect staff → /admin
+      // and pending buyers → /account/pending. One less auth round-trip.
+      const cb = callbackUrl || "";
+      const dest =
+        cb.startsWith("/") && !cb.startsWith("//") ? cb : "/account";
+      router.push(dest);
+      router.refresh();
+      // Keep "Signing in..." until navigation; don't flip loading off on success.
+    } catch {
+      setAltcha("");
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
     }
-
-    const session = await getSession();
-    const next = session?.user
-      ? homeForRole(
-          session.user.role,
-          session.user.status,
-          session.user.companyLevel,
-        )
-      : "/account";
-    const cb = callbackUrl || "";
-    const dest =
-      session?.user &&
-      ["SUPER_ADMIN", "ADMIN", "SALES", "WAREHOUSE", "LOGISTICS"].includes(
-        session.user.role,
-      )
-        ? next
-        : cb.startsWith("/") && !cb.startsWith("//")
-          ? cb
-          : next;
-    router.push(dest);
-    router.refresh();
   }
 
   return (

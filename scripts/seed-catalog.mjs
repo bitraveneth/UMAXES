@@ -35,9 +35,9 @@ async function main() {
         inventory: { create: { quantity: 500, reserved: 0 } },
         prices: {
           create: [
-            { level: "DISTRO", unitPrice: money(f.price * 0.7), moq: 50 },
-            { level: "WHOLESALER", unitPrice: money(f.price * 0.85), moq: 20 },
-            { level: "SHOP", unitPrice: money(f.price), moq: 5 },
+            { level: "DISTRO", unitPrice: money(f.price * 0.7), moq: 95 },
+            { level: "WHOLESALER", unitPrice: 8.9, moq: 95 },
+            { level: "SHOP", unitPrice: money(f.price), moq: 95 },
           ],
         },
       },
@@ -48,10 +48,10 @@ async function main() {
       },
     });
 
-    for (const [level, mult, moq] of [
-      ["DISTRO", 0.7, 50],
-      ["WHOLESALER", 0.85, 20],
-      ["SHOP", 1, 5],
+    for (const [level, price, moq] of [
+      ["DISTRO", money(f.price * 0.7), 95],
+      ["WHOLESALER", 8.9, 95],
+      ["SHOP", money(f.price), 95],
     ]) {
       await prisma.priceByLevel.upsert({
         where: {
@@ -60,11 +60,11 @@ async function main() {
         create: {
           productId: product.id,
           level,
-          unitPrice: money(f.price * mult),
+          unitPrice: price,
           moq,
         },
         update: {
-          unitPrice: money(f.price * mult),
+          unitPrice: price,
           moq,
         },
       });
@@ -103,7 +103,70 @@ async function main() {
     update: { active: true },
   });
 
-  console.log("Catalog seeded:", flavors.length, "products + coupons");
+  const station = await prisma.product.upsert({
+    where: { sku: "test-station" },
+    create: {
+      sku: "test-station",
+      name: "Test Station (incl. 1 device)",
+      description: "Free test station kit. Includes 1 HOOKAMAX device.",
+      active: true,
+      visibleLevels: ["WHOLESALER", "DISTRO"],
+      inventory: { create: { quantity: 100000, reserved: 0 } },
+      prices: {
+        create: [
+          { level: "WHOLESALER", unitPrice: 0, moq: 1 },
+          { level: "DISTRO", unitPrice: 0, moq: 1 },
+          { level: "SHOP", unitPrice: 0, moq: 1 },
+        ],
+      },
+    },
+    update: {
+      name: "Test Station (incl. 1 device)",
+      active: true,
+    },
+  });
+  await prisma.inventory.upsert({
+    where: { productId: station.id },
+    create: { productId: station.id, quantity: 100000, reserved: 0 },
+    update: {},
+  });
+
+  await prisma.rebatePolicy.upsert({
+    where: { level: "WHOLESALER" },
+    create: {
+      level: "WHOLESALER",
+      active: true,
+      unitPrice: 8.9,
+      pcsPerCase: 95,
+      testStationsPerCase: 1,
+      firstOrderCases: 5,
+      firstOrderUnpaidPcs: 20,
+      timezone: "America/Los_Angeles",
+      tiers: [
+        { minQty: 5000, rateUsd: 0.2 },
+        { minQty: 10000, rateUsd: 0.4 },
+        { minQty: 20000, rateUsd: 0.6 },
+      ],
+    },
+    update: {},
+  });
+  await prisma.rebatePolicy.upsert({
+    where: { level: "DISTRO" },
+    create: {
+      level: "DISTRO",
+      active: false,
+      unitPrice: null,
+      pcsPerCase: 95,
+      testStationsPerCase: 1,
+      firstOrderCases: 5,
+      firstOrderUnpaidPcs: 20,
+      timezone: "America/Los_Angeles",
+      tiers: [],
+    },
+    update: {},
+  });
+
+  console.log("Catalog seeded:", flavors.length, "products + coupons + rebate SOP");
 }
 
 main()

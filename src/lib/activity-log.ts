@@ -44,8 +44,18 @@ const ACTION_META: Record<
     category: "orders",
     tone: "brand",
   },
+  PAYMENT_SLIP_UPLOADED: {
+    label: "Payment slip uploaded",
+    category: "payments",
+    tone: "warning",
+  },
+  PAYMENT_SLIP_DELETED: {
+    label: "Payment slip deleted",
+    category: "payments",
+    tone: "warning",
+  },
   PAYMENT_RECEIVED: {
-    label: "Payment marked paid",
+    label: "Funds confirmed",
     category: "payments",
     tone: "success",
   },
@@ -89,6 +99,16 @@ const ACTION_META: Record<
   },
   COMPANY_ADDRESS_ADDED: {
     label: "Ship-to address added",
+    category: "customers",
+    tone: "neutral",
+  },
+  COMPANY_PROFILE_UPDATED: {
+    label: "Company profile updated",
+    category: "customers",
+    tone: "neutral",
+  },
+  COMPANY_ADDRESS_UPDATED: {
+    label: "Ship-to address updated",
     category: "customers",
     tone: "neutral",
   },
@@ -312,6 +332,14 @@ export function formatActivityMeta(
       if (m.email) parts.push(String(m.email));
       else if (m.phone) parts.push(String(m.phone));
       if (m.reason) parts.push(String(m.reason));
+    }
+    if (action === "INVENTORY_ADJUST") {
+      if (m.name || m.sku) parts.push(String(m.name || m.sku));
+      if (m.previousQuantity != null && m.quantity != null) {
+        parts.push(`${m.previousQuantity} → ${m.quantity}`);
+      } else if (m.quantity != null) {
+        parts.push(`Qty ${m.quantity}`);
+      }
     }
     if (m.note && typeof m.note === "string") parts.push(m.note);
     if (m.levels && Array.isArray(m.levels)) {

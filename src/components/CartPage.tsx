@@ -5,9 +5,12 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { EmptyCart } from "@/components/EmptyCart";
+import { CaseQtyStepper } from "@/components/QtyStepper";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
-import { QtyStepper } from "@/components/QtyStepper";
+import { formatCases, formatPack } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
+import OrderQtySummary from "@/components/account/OrderQtySummary";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
@@ -15,15 +18,17 @@ import {
 import { getFlavor, product } from "@/lib/assets";
 
 export default function CartPage() {
-  const { items, quantity, setQuantity, remove, total } = useCart();
+  const { items, quantity, cases, setQuantity, remove, total } = useCart();
   const compactChrome = useCompactMobileStoreChrome();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor, testStationsPerCase } = useCatalogPrices();
+  const stationQty = cases * testStationsPerCase;
 
   return (
     <>
       <Header />
       <main
-        className={`flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
+        className={`umx-account-theme flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
       >
         <div
           className={`mx-auto ${quantity === 0 ? "max-w-5xl" : "max-w-3xl"}`}
@@ -38,7 +43,7 @@ export default function CartPage() {
             <p className="mt-2 font-body text-black/65">
               {quantity === 0
                 ? "No items yet — start with a flavor below or open the full shop."
-                : `${quantity} item${quantity === 1 ? "" : "s"} ready when you are.`}
+                : `${formatCases(cases)} · ${quantity.toLocaleString()} pcs ready when you are.`}
             </p>
           </header>
 
@@ -89,23 +94,31 @@ export default function CartPage() {
                             </Link>
                             <p className="mt-0.5 font-display text-sm text-black/55">
                               {showPrices ? (
-                                <>${flavor.price.toFixed(2)} each</>
+                                <StorePrice
+                                  amount={unitPriceFor(flavor.id)}
+                                  suffix=" / pc"
+                                />
                               ) : (
                                 "On request"
                               )}
                             </p>
+                            <p className="mt-0.5 font-body text-xs text-black/45">
+                              {formatPack(line.quantity)}
+                            </p>
                           </div>
-                          <p className="shrink-0 font-display text-base font-bold text-black">
-                            <StorePrice amount={flavor.price * line.quantity} />
+                          <p className="shrink-0 text-right font-display text-base font-bold text-black">
+                            <StorePrice
+                              amount={unitPriceFor(flavor.id) * line.quantity}
+                            />
                           </p>
                         </div>
 
                         <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-                          <QtyStepper
-                            value={line.quantity}
-                            ariaLabel={flavor.name}
+                          <CaseQtyStepper
+                            pcs={line.quantity}
+                            ariaLabel={`${flavor.name} cases`}
                             allowRemove
-                            onChange={(qty) =>
+                            onChangePcs={(qty) =>
                               setQuantity(line.flavorId, qty)
                             }
                           />
@@ -124,11 +137,12 @@ export default function CartPage() {
               </ul>
 
               <div className="rounded-2xl border border-black/10 bg-white p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-4">
+                <OrderQtySummary pcs={quantity} stationQty={stationQty} compact />
+                <div className="mt-4 flex items-center justify-between gap-4">
                   <span className="font-display text-sm text-black/60">
                     Subtotal
                   </span>
-                  <span className="font-display text-2xl font-bold text-black">
+                  <span className="text-right font-display text-2xl font-bold text-black">
                     <StorePrice amount={total} />
                   </span>
                 </div>

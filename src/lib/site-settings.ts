@@ -17,12 +17,21 @@ const DEFAULTS: SiteSettings = {
   publicSignInEnabled: true,
 };
 
+/** Short in-memory cache so login/authorize does not hit DB every time. */
+const SETTINGS_TTL_MS = 30_000;
+let settingsCache: { value: SiteSettings; expiresAt: number } | null = null;
+
 function parseBool(raw: string | undefined | null, fallback: boolean) {
   if (raw == null || raw === "") return fallback;
   return raw === "1" || raw.toLowerCase() === "true";
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
+  const now = Date.now();
+  if (settingsCache && settingsCache.expiresAt > now) {
+    return settingsCache.value;
+  }
+
   try {
     const rows = await prisma.siteSetting.findMany({
       where: {
@@ -35,7 +44,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       },
     });
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-    return {
+    const value: SiteSettings = {
       homepageAsLogin: parseBool(
         map[SITE_SETTING_KEYS.homepageAsLogin],
         DEFAULTS.homepageAsLogin,
@@ -45,6 +54,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
         DEFAULTS.publicSignInEnabled,
       ),
     };
+    settingsCache = { value, expiresAt: now + SETTINGS_TTL_MS };
+    return value;
   } catch {
     return { ...DEFAULTS };
   }
@@ -79,6 +90,7 @@ export async function setSiteSettings(
     );
   }
   await Promise.all(ops);
+  settingsCache = null;
   return getSiteSettings();
 }
 

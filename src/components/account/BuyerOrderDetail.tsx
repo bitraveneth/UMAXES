@@ -16,6 +16,9 @@ import {
   buyerStatusLabel,
   type BuyerDocType,
 } from "@/lib/buyer-order";
+import BuyerPaymentSlip from "@/components/account/BuyerPaymentSlip";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
+import PiNumberBlock from "@/components/account/PiNumberBlock";
 import OrderProgressBar from "@/components/account/OrderProgressBar";
 import type { OrderStatus } from "@/generated/prisma/enums";
 
@@ -52,12 +55,6 @@ const DOCS: {
     icon: FileText,
   },
   {
-    type: "invoice",
-    label: "Commercial invoice",
-    description: "Final invoice",
-    icon: FileText,
-  },
-  {
     type: "packing",
     label: "Packing list",
     description: "What ships in the boxes",
@@ -83,6 +80,12 @@ export default function BuyerOrderDetail({
     createdAt: string;
     items: OrderLine[];
     shipments: ShipmentInfo[];
+    paymentStatus: string | null;
+    paymentPaid: boolean;
+    hasPaymentSlip: boolean;
+    paymentSlipMime: string | null;
+    paymentSlipName: string | null;
+    paymentRef: string | null;
   };
   paymentLabel: string;
   companyLevel?: string | null;
@@ -113,23 +116,18 @@ export default function BuyerOrderDetail({
                 {order.orderNumber}
               </h1>
               <span
-                className={`inline-flex px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide uppercase ${buyerStatusClass(order.status)}`}
+                className={`inline-flex px-2.5 py-1 font-display text-[10px] font-semibold tracking-wide uppercase ${buyerStatusClass(order.status, { paid: order.paymentPaid, hasSlip: order.hasPaymentSlip })}`}
               >
-                {buyerStatusLabel(order.status)}
+                {buyerStatusLabel(order.status, {
+                  paid: order.paymentPaid,
+                  hasSlip: order.hasPaymentSlip,
+                })}
               </span>
             </div>
             <p className="mt-2 font-body text-sm text-black">
               {order.createdAt.slice(0, 10)}
               <span className="mx-2 text-black">·</span>
               {paymentLabel}
-              {order.piNumber ? (
-                <>
-                  <span className="mx-2 text-black">·</span>
-                  <span className="font-display font-semibold text-umx-orange">
-                    {order.piNumber}
-                  </span>
-                </>
-              ) : null}
             </p>
           </div>
 
@@ -144,12 +142,26 @@ export default function BuyerOrderDetail({
         </div>
       </header>
 
-      {isCreditBuyer && order.status === "PAYMENT_PENDING" ? (
+      {order.piNumber ? <PiNumberBlock value={order.piNumber} /> : null}
+
+      {order.status !== "CANCELLED" ? (
+        <BuyerPaymentSlip
+          orderId={order.id}
+          paid={order.paymentPaid}
+          hasSlip={order.hasPaymentSlip}
+          slipMime={order.paymentSlipMime}
+          fileName={order.paymentSlipName}
+          paymentRef={order.paymentRef}
+        />
+      ) : null}
+
+      {isCreditBuyer && order.status === "PAYMENT_PENDING" && !order.hasPaymentSlip ? (
         <div className="border border-umx-orange/25 bg-umx-orange-wash/60 px-5 py-4 font-body text-sm text-black">
           <span className="font-display font-semibold text-umx-orange">
             Payment pending.
           </span>{" "}
-          Your proforma is ready under Documents — confirm TT / check when paid.
+          Download the proforma under Documents, send the TT, then upload the
+          bank slip above.
         </div>
       ) : null}
 
@@ -180,10 +192,9 @@ export default function BuyerOrderDetail({
       {tab === "documents" ? (
         <section className="space-y-5">
           <p className="font-body text-sm text-black">
-            Open a document to view, print, or download. Locked items unlock as
-            the order moves forward.
+            Open a document to view it, or download PDF / Excel.
           </p>
-          <ul className="grid gap-4 sm:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2">
             {DOCS.map((doc) => {
               const state = docs[doc.type];
               const Icon = doc.icon;
@@ -205,27 +216,34 @@ export default function BuyerOrderDetail({
               }
               return (
                 <li key={doc.type}>
-                  <a
-                    href={`/api/orders/${order.id}/docs?type=${doc.type}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex h-full flex-col border border-black/10 bg-white p-5 transition hover:border-umx-orange"
-                  >
+                  <div className="flex h-full flex-col border border-black/10 bg-white p-5">
                     <Icon
-                      className="h-5 w-5 text-umx-orange transition group-hover:scale-105"
+                      className="h-5 w-5 text-umx-orange"
                       strokeWidth={1.75}
                     />
                     <p className="mt-4 font-display text-sm font-bold text-black">
                       {doc.label}
                     </p>
-                    <p className="mt-1 font-body text-xs text-black">
-                      {doc.description}
+                    <p className="mt-1 font-body text-xs text-black/55">
+                      Download as PDF or Excel
                     </p>
-                    <span className="mt-5 inline-flex items-center gap-1.5 font-display text-xs font-semibold text-umx-orange">
-                      Open document
-                      <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
-                    </span>
-                  </a>
+                    <div className="mt-5 flex flex-wrap items-center gap-2.5">
+                      <DocumentDownloadMenu
+                        orderId={order.id}
+                        type={doc.type}
+                        compact
+                      />
+                      <a
+                        href={`/api/orders/${order.id}/docs?type=${doc.type}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 border border-transparent px-2 py-1.5 font-display text-xs font-semibold text-umx-orange transition hover:border-umx-orange/25 hover:bg-umx-orange-wash/50"
+                      >
+                        Open
+                        <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
+                      </a>
+                    </div>
+                  </div>
                 </li>
               );
             })}

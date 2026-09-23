@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageCompanyAddresses } from "@/lib/rbac";
+import { isValidPhone } from "@/lib/phone";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -49,10 +50,66 @@ export async function PATCH(request: Request, { params }: Params) {
   const body = await request.json();
   const data: Record<string, unknown> = {};
 
-  for (const key of ["label", "line1", "line2", "city", "region", "postalCode", "country"] as const) {
+  for (const key of [
+    "label",
+    "recipientName",
+    "phone",
+    "line1",
+    "line2",
+    "city",
+    "region",
+    "postalCode",
+    "country",
+  ] as const) {
     if (body[key] !== undefined) {
       data[key] = body[key] === null ? null : String(body[key]).trim();
     }
+  }
+  if (body.fullName !== undefined && data.recipientName === undefined) {
+    data.recipientName = String(body.fullName).trim();
+  }
+
+  const line1 = data.line1 as string | undefined;
+  const city = data.city as string | undefined;
+  const postalCode = data.postalCode as string | undefined;
+  const country = data.country as string | undefined;
+  const recipientName = data.recipientName as string | undefined;
+  const phone = data.phone as string | undefined;
+
+  if (
+    (recipientName !== undefined && !recipientName) ||
+    (phone !== undefined && !phone) ||
+    (line1 !== undefined && !line1) ||
+    (city !== undefined && !city) ||
+    (postalCode !== undefined && !postalCode) ||
+    (country !== undefined && !country)
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Full name, phone number, address, city, postal code, and country are required",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (typeof phone === "string") {
+    if (!isValidPhone(phone)) {
+      return NextResponse.json(
+        { error: "Enter a valid phone number (7–15 digits)" },
+        { status: 400 },
+      );
+    }
+  }
+
+  if (
+    typeof country === "string" &&
+    (country.toLowerCase().includes("china") || country.toUpperCase() === "CN")
+  ) {
+    return NextResponse.json(
+      { error: "Shipping to China is not available" },
+      { status: 400 },
+    );
   }
 
   if (typeof body.isDefault === "boolean" && body.isDefault) {
@@ -76,6 +133,23 @@ export async function DELETE(_request: Request, { params }: Params) {
   const gate = await requireOwner(id, true);
   if ("error" in gate && gate.error) return gate.error;
 
+  const companyId = gate.session.user.companyId!;
+  const wasDefault = gate.address.isDefault;
+
   await prisma.address.delete({ where: { id } });
+
+  if (wasDefault) {
+    const next = await prisma.address.findFirst({
+      where: { companyId },
+      orderBy: { createdAt: "asc" },
+    });
+    if (next) {
+      await prisma.address.update({
+        where: { id: next.id },
+        data: { isDefault: true },
+      });
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }

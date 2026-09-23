@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { FileText, Package } from "lucide-react";
 import { auth } from "@/lib/auth";
@@ -13,6 +12,7 @@ import {
   buyerStatusClass,
   buyerStatusLabel,
 } from "@/lib/buyer-order";
+import { formatPack } from "@/lib/pack";
 
 export const metadata = { title: "Orders · UMAXES" };
 
@@ -40,9 +40,19 @@ export default async function OrdersPage() {
   const orders = await prisma.order.findMany({
     where: { companyId: session.user.companyId },
     include: {
-      items: {
-        select: { id: true, name: true, image: true, quantity: true },
-        take: 3,
+      payments: {
+        select: { status: true, paidAt: true, slipUrl: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
+      shipments: {
+        select: {
+          trackingNumber: true,
+          carrier: true,
+          trackingStatus: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1,
       },
       _count: { select: { items: true } },
     },
@@ -97,18 +107,21 @@ export default async function OrdersPage() {
       ) : (
         <ul className="space-y-4">
           {orders.map((order) => {
-            const itemCount = order._count.items;
-            const preview = order.items;
-            const extra = Math.max(0, itemCount - preview.length);
+            const payment = order.payments[0];
+            const shipment = order.shipments[0];
+            const paid =
+              payment?.status === "paid" && Boolean(payment.paidAt);
+            const hasSlip = Boolean(payment?.slipUrl);
+            const tracking = shipment?.trackingNumber;
+            const carrier = shipment?.carrier;
 
             return (
               <li key={order.id}>
                 <Link
                   href={`/account/orders/${order.id}`}
-                  className="group block overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(61,22,5,0.04)] transition hover:border-umx-orange hover:shadow-[0_12px_28px_rgba(255,91,4,0.1)]"
+                  className="group block overflow-hidden border border-black/10 bg-white shadow-[0_8px_24px_rgba(14,36,56,0.04)] transition hover:border-umx-orange hover:shadow-[0_12px_28px_rgba(27,79,114,0.1)]"
                 >
                   <div className="flex flex-col sm:flex-row">
-                    {/* Left: identity */}
                     <div className="flex items-start gap-3 border-b border-black/10 bg-umx-orange-wash/40 px-4 py-4 sm:w-52 sm:shrink-0 sm:border-r sm:border-b-0 sm:px-5 sm:py-5">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-umx-orange text-white sm:h-11 sm:w-11">
                         <FileText className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.85} />
@@ -126,68 +139,52 @@ export default async function OrdersPage() {
                       </div>
                     </div>
 
-                    {/* Body */}
                     <div className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
-                          className={`inline-flex px-2.5 py-1 font-display text-[10px] font-bold tracking-wide uppercase ${buyerStatusClass(order.status)}`}
+                          className={`inline-flex px-2.5 py-1 font-display text-[10px] font-bold tracking-wide uppercase ${buyerStatusClass(order.status, { paid, hasSlip })}`}
                         >
-                          {buyerStatusLabel(order.status)}
+                          {buyerStatusLabel(order.status, { paid, hasSlip })}
                         </span>
                         <span className="font-display text-[10px] font-semibold tracking-wide text-black uppercase">
                           {shortPayment(order.paymentMethod)}
                         </span>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5 font-body text-sm text-black/80">
+                        <p>
+                          {order.sellingQty > 0
+                            ? formatPack(order.sellingQty)
+                            : `${order._count.items} line${order._count.items === 1 ? "" : "s"}`}
+                          {order.testStationQty > 0
+                            ? ` · ${order.testStationQty} test station${order.testStationQty === 1 ? "" : "s"}`
+                            : ""}
+                        </p>
                         {order.piNumber ? (
-                          <span className="font-display text-[10px] font-semibold text-umx-orange">
-                            {order.piNumber}
-                          </span>
+                          <p>
+                            <span className="font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+                              PI
+                            </span>{" "}
+                            <span className="break-all font-display text-sm font-semibold text-[#1b4f72]">
+                              {order.piNumber}
+                            </span>
+                          </p>
                         ) : null}
+                        {tracking ? (
+                          <p>
+                            <span className="font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+                              Tracking
+                            </span>{" "}
+                            <span className="break-all font-mono text-sm font-semibold text-umx-orange">
+                              {carrier ? `${carrier} · ` : ""}
+                              {tracking}
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="text-black/45">Tracking not assigned yet</p>
+                        )}
                       </div>
 
-                      {/* Product thumbs — visual, mobile friendly */}
-                      <div className="mt-4 flex items-center gap-3">
-                        <div className="flex -space-x-2">
-                          {preview.map((item) => (
-                            <div
-                              key={item.id}
-                              className="relative h-12 w-12 overflow-hidden border-2 border-umx-cream-bright bg-umx-cream sm:h-14 sm:w-14"
-                            >
-                              {item.image ? (
-                                <Image
-                                  src={item.image}
-                                  alt=""
-                                  fill
-                                  className="object-contain p-1"
-                                  sizes="56px"
-                                />
-                              ) : (
-                                <span className="flex h-full w-full items-center justify-center">
-                                  <Package
-                                    className="h-4 w-4 text-black"
-                                    strokeWidth={1.75}
-                                  />
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                          {extra > 0 ? (
-                            <div className="flex h-12 w-12 items-center justify-center border-2 border-umx-cream-bright bg-black font-display text-xs font-bold text-white sm:h-14 sm:w-14">
-                              +{extra}
-                            </div>
-                          ) : null}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-display text-sm font-semibold text-black">
-                            {preview[0]?.name || "Order items"}
-                            {itemCount > 1 ? ` +${itemCount - 1}` : ""}
-                          </p>
-                          <p className="mt-0.5 font-body text-xs text-black">
-                            {itemCount} item{itemCount === 1 ? "" : "s"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Total + CTA row */}
                       <div className="mt-4 flex items-end justify-between gap-3 border-t border-black/8 pt-4">
                         <div>
                           <p className="font-display text-[10px] font-semibold tracking-[0.12em] text-black uppercase">

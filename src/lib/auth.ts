@@ -2,6 +2,10 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { verifyAltchaPayload } from "@/lib/altcha";
+import { toE164 } from "@/lib/phone";
+import { getSiteSettings, isStaffRole } from "@/lib/site-settings";
+import { recordUserLogin } from "@/lib/login-meta";
 import type {
   CompanyMemberRole,
   CustomerLevel,
@@ -81,7 +85,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         try {
-          const { verifyAltchaPayload } = await import("@/lib/altcha");
           const captcha = await verifyAltchaPayload(credentials?.altcha);
           if (!captcha.ok) return null;
 
@@ -89,7 +92,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const password = String(credentials?.password ?? "");
           if (!raw || !password) return null;
 
-          const { toE164 } = await import("@/lib/twilio");
+          // Use @/lib/phone — do not import @/lib/twilio (pulls the Twilio SDK).
           const asPhone = toE164(raw);
           const identifier = raw.includes("@")
             ? raw.toLowerCase()
@@ -110,18 +113,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null;
           }
 
-          const { getSiteSettings, isStaffRole } = await import(
-            "@/lib/site-settings"
-          );
-          const settings = await getSiteSettings();
-          if (!settings.publicSignInEnabled && !isStaffRole(user.role)) {
-            return null;
+          // Staff can always sign in; skip settings DB for them.
+          if (!isStaffRole(user.role)) {
+            const settings = await getSiteSettings();
+            if (!settings.publicSignInEnabled) return null;
           }
 
           const valid = await bcrypt.compare(password, user.passwordHash);
           if (!valid) return null;
 
-          const { recordUserLogin } = await import("@/lib/login-meta");
           void recordUserLogin(user.id);
 
           return sessionUserFromDb(user);

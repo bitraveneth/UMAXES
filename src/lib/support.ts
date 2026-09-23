@@ -1,6 +1,12 @@
-import { flavors, product } from "@/lib/assets";
+import { product } from "@/lib/assets";
 
-export const faqs = [
+export type SupportFaq = {
+  q: string;
+  a: string;
+  keys: readonly string[];
+};
+
+export const faqs: SupportFaq[] = [
   {
     q: "Who can buy UMAXES / HOOKAMAX?",
     a: "Only adults 21 years of age or older. Nicotine is an addictive chemical. Keep products out of reach of children and pets.",
@@ -43,8 +49,13 @@ export const faqs = [
   },
   {
     q: "What is HOOKAMAX?",
-    a: `${product.name} is UMAXES’ premium hookah-inspired disposable line — ${product.tagline} One device family with ${flavors.length} flavor options. Adults 21+ only.`,
+    a: `${product.name} is UMAXES’ premium hookah-inspired disposable line — ${product.tagline} One device family. Adults 21+ only.`,
     keys: ["what is hookamax", "hookamax", "product", "device", "disposable", "what is umaxes"],
+  },
+  {
+    q: "How is HOOKAMAX packed?",
+    a: "HOOKAMAX is sold by the case. Minimum order is 1 case (95 pieces). On the product page, + / − adds one case at a time — 1 case, 2 cases, and so on.",
+    keys: ["case", "pack", "95", "quantity", "pcs", "piece", "carton", "how many", "moq"],
   },
   {
     q: "Where can I shop?",
@@ -56,12 +67,13 @@ export const faqs = [
     a: "Nicotine is an addictive chemical. UMAXES products are only for adults 21+. Keep out of reach of children and pets. If you have health concerns, talk with a medical professional.",
     keys: ["safe", "health", "addictive", "kids", "children", "pet", "warning"],
   },
-] as const;
-
-export type SupportFaq = (typeof faqs)[number];
+];
 
 /** Score a user question against FAQ keys / question text. */
-export function findSupportAnswer(query: string): string {
+export function findSupportAnswer(
+  query: string,
+  items: SupportFaq[] = faqs,
+): string {
   const q = query.toLowerCase().trim();
   if (!q) {
     return "Ask about HOOKAMAX, shipping, returns, or contact — or tap a quick topic below.";
@@ -69,7 +81,7 @@ export function findSupportAnswer(query: string): string {
 
   let best: { score: number; a: string } | null = null;
 
-  for (const item of faqs) {
+  for (const item of items) {
     let score = 0;
     const qText = item.q.toLowerCase();
     if (qText === q || q.includes(qText) || qText.includes(q)) score += 8;
