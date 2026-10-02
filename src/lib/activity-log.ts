@@ -209,9 +209,14 @@ const ACTION_META: Record<
   },
   SYSTEM_DB_RESET: { label: "Database reset", category: "system", tone: "error" },
   SITE_ACCESS_UPDATED: {
-    label: "Site homepage mode changed",
+    label: "Site settings updated",
     category: "system",
     tone: "warning",
+  },
+  SYSTEM_CACHE_REVALIDATED: {
+    label: "Site cache refreshed",
+    category: "system",
+    tone: "neutral",
   },
   WAREHOUSE_UPSERT: { label: "Warehouse saved", category: "catalog", tone: "neutral" },
   WAREHOUSE_STOCK: { label: "Warehouse stock updated", category: "catalog", tone: "neutral" },

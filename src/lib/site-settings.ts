@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 export const SITE_SETTING_KEYS = {
   homepageAsLogin: "homepageAsLogin",
   publicSignInEnabled: "publicSignInEnabled",
+  maintenanceMode: "maintenanceMode",
 } as const;
 
 export type SiteSettings = {
@@ -10,11 +11,14 @@ export type SiteSettings = {
   homepageAsLogin: boolean;
   /** When false, shop/public users cannot sign in or register. Staff can still sign in. */
   publicSignInEnabled: boolean;
+  /** When true, public storefront shows maintenance; staff can still use ops + login. */
+  maintenanceMode: boolean;
 };
 
 const DEFAULTS: SiteSettings = {
   homepageAsLogin: false,
   publicSignInEnabled: true,
+  maintenanceMode: false,
 };
 
 /** Short in-memory cache so login/authorize does not hit DB every time. */
@@ -39,6 +43,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
           in: [
             SITE_SETTING_KEYS.homepageAsLogin,
             SITE_SETTING_KEYS.publicSignInEnabled,
+            SITE_SETTING_KEYS.maintenanceMode,
           ],
         },
       },
@@ -52,6 +57,10 @@ export async function getSiteSettings(): Promise<SiteSettings> {
       publicSignInEnabled: parseBool(
         map[SITE_SETTING_KEYS.publicSignInEnabled],
         DEFAULTS.publicSignInEnabled,
+      ),
+      maintenanceMode: parseBool(
+        map[SITE_SETTING_KEYS.maintenanceMode],
+        DEFAULTS.maintenanceMode,
       ),
     };
     settingsCache = { value, expiresAt: now + SETTINGS_TTL_MS };
@@ -86,6 +95,18 @@ export async function setSiteSettings(
           value: patch.publicSignInEnabled ? "true" : "false",
         },
         update: { value: patch.publicSignInEnabled ? "true" : "false" },
+      }),
+    );
+  }
+  if (typeof patch.maintenanceMode === "boolean") {
+    ops.push(
+      prisma.siteSetting.upsert({
+        where: { key: SITE_SETTING_KEYS.maintenanceMode },
+        create: {
+          key: SITE_SETTING_KEYS.maintenanceMode,
+          value: patch.maintenanceMode ? "true" : "false",
+        },
+        update: { value: patch.maintenanceMode ? "true" : "false" },
       }),
     );
   }

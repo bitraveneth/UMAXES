@@ -1131,9 +1131,9 @@ const en: AdminMessages = {
       "Internal team only — Admin, Sales, Warehouse, Logistics. Separate from customer Users.",
   },
   system: {
-    title: "System tools",
+    title: "System",
     description:
-      "Super-admin only: site access toggles, database backup, import, and reset.",
+      "Website backup, restore, site access, and maintenance — super admin only.",
   },
   activity: {
     title: "Activity",

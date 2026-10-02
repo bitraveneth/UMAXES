@@ -1094,8 +1094,8 @@ const zh: AdminMessages = {
     description: "仅内部团队 — 管理员、销售、仓库、物流。与客户用户分开。",
   },
   system: {
-    title: "系统工具",
-    description: "仅超级管理员：站点访问开关、数据库备份、导入与重置。",
+    title: "系统",
+    description: "网站备份、恢复、访问控制与维护模式 — 仅超级管理员。",
   },
   activity: {
     title: "操作记录",
