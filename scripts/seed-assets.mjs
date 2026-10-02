@@ -8,27 +8,21 @@ const prisma = new PrismaClient({ adapter });
 /** Keep DB assets in sync with the public media kit files. */
 const assets = [
   {
-    title: "UMAXES logo — orange on cream",
+    title: "UMAXES logo — blue wordmark",
     description: "Primary logo for light backgrounds.",
-    fileUrl: "/images/logo/orange-on-cream.png",
+    fileUrl: "/images/logo/umaxes-blue.png",
+    category: "logo",
+  },
+  {
+    title: "UMAXES logo — blue on dark",
+    description: "Logo for dark backgrounds.",
+    fileUrl: "/images/logo/umaxes-blue-on-dark.png",
     category: "logo",
   },
   {
     title: "UMAXES logo — cream on ink",
-    description: "Logo for dark backgrounds.",
+    description: "Inverse cream logo for dark backgrounds.",
     fileUrl: "/images/logo/cream-on-ink.png",
-    category: "logo",
-  },
-  {
-    title: "UMAXES logo — cream on orange",
-    description: "Logo for orange campaign panels.",
-    fileUrl: "/images/logo/cream-on-orange.png",
-    category: "logo",
-  },
-  {
-    title: "UMAXES logo — SVG",
-    description: "Scalable orange wordmark.",
-    fileUrl: "/images/logo/umaxes-orange.svg",
     category: "logo",
   },
   {

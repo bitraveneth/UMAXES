@@ -55,14 +55,11 @@ export const testimonialImages = [
 ] as const;
 
 export const logos = {
-  orangeOnCream: "/images/logo/orange-on-cream.png",
-  creamOnInk: "/images/logo/cream-on-ink.png",
-  creamOnOrange: "/images/logo/cream-on-orange.png",
-  orangeTransparent: "/images/logo/orange-transparent.png",
-  creamTransparent: "/images/logo/cream-transparent.png",
+  /** Primary site / ops logo — blue age-gate wordmark only */
   blueWordmark: "/images/logo/umaxes-blue.png",
   blueWordmarkOnDark: "/images/logo/umaxes-blue-on-dark.png",
-  markOrange: "/images/logo/umaxes-mark-orange.png",
+  creamOnInk: "/images/logo/cream-on-ink.png",
+  creamTransparent: "/images/logo/cream-transparent.png",
   markCream: "/images/logo/umaxes-mark-cream.png",
 } as const;
 

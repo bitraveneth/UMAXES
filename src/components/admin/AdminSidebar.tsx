@@ -105,7 +105,7 @@ export function AdminSidebar({
             {showLabels ? (
               <span className="relative h-8 w-[9.5rem] shrink-0">
                 <Image
-                  src={logos.orangeTransparent}
+                  src={logos.blueWordmark}
                   alt="UMAXES"
                   fill
                   className="admin-logo-light object-contain object-left"
@@ -113,7 +113,7 @@ export function AdminSidebar({
                   priority
                 />
                 <Image
-                  src={logos.creamTransparent}
+                  src={logos.blueWordmarkOnDark}
                   alt="UMAXES"
                   fill
                   className="admin-logo-dark object-contain object-left"
@@ -125,7 +125,7 @@ export function AdminSidebar({
               <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--admin-brand-50)] ring-1 ring-[var(--admin-brand-100)]">
                 <span className="relative h-6 w-6">
                   <Image
-                    src={logos.markOrange}
+                    src={logos.blueWordmark}
                     alt="UMAXES"
                     fill
                     className="admin-logo-light object-contain"
@@ -133,7 +133,7 @@ export function AdminSidebar({
                     priority
                   />
                   <Image
-                    src={logos.markCream}
+                    src={logos.blueWordmarkOnDark}
                     alt="UMAXES"
                     fill
                     className="admin-logo-dark object-contain"
