@@ -28,9 +28,19 @@ import {
   ADMIN_MODULES,
   canGrantSubmodule,
   effectiveSubmodules,
-  grantBlockedReason,
+  roleCeilingSubmodules,
   type AdminModuleDef,
 } from "@/lib/admin-modules";
+import { useAdminI18n } from "@/components/admin/AdminI18n";
+
+const MODULE_GROUP_I18N: Record<string, string> = {
+  ops: "nav.groupOps",
+  customers: "nav.groupCustomers",
+  money: "nav.groupMoney",
+  catalog: "nav.groupCatalog",
+  insights: "nav.groupInsights",
+  admin: "nav.groupAdmin",
+};
 
 export type StaffRow = {
   id: string;
@@ -69,15 +79,10 @@ function roleIcon(role: UserRole) {
   }
 }
 
-function roleLabel(role: UserRole) {
-  if (role === "SUPER_ADMIN") return "Super admin";
-  return ROLE_OPTIONS.find((r) => r.value === role)?.label || role;
-}
-
-function formatWhen(iso: string | null) {
+function formatWhen(iso: string | null, locale: string) {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString("en-US", {
+    return new Date(iso).toLocaleString(locale === "zh" ? "zh-CN" : "en-US", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -102,6 +107,7 @@ export default function StaffPanel({
   canManageModules = false,
   actorRole = "ADMIN",
 }: Props) {
+  const { t, locale } = useAdminI18n();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -113,6 +119,34 @@ export default function StaffPanel({
   const [nextRole, setNextRole] = useState<UserRole>("SALES");
   const [query, setQuery] = useState("");
   const { confirm, showToast, ui } = useAppFeedback();
+
+  function roleLabel(role: UserRole) {
+    return t(`role.${role}`) || role;
+  }
+
+  function moduleGroupLabel(mod: AdminModuleDef) {
+    const key = MODULE_GROUP_I18N[mod.id];
+    return (key && t(key)) || mod.label;
+  }
+
+  function submoduleLabel(href: string, fallback: string) {
+    const translated = t(`nav.${href}`);
+    return translated && translated !== `nav.${href}` ? translated : fallback;
+  }
+
+  function modulesBlockedReason(
+    targetRole: UserRole,
+    submoduleId: string,
+  ): string | null {
+    if (canGrantSubmodule(actorRole, targetRole, submoduleId)) return null;
+    if (submoduleId === "admin.system" && actorRole === "ADMIN") {
+      return t("staff.blockedSystem");
+    }
+    if (!roleCeilingSubmodules(targetRole).includes(submoduleId)) {
+      return t("staff.blockedRole", { role: roleLabel(targetRole) });
+    }
+    return t("staff.blockedGeneric");
+  }
 
   const counts = useMemo(() => {
     const active = staff.filter((s) => s.status === "APPROVED").length;
@@ -293,12 +327,8 @@ export default function StaffPanel({
           modules: selectedModules,
         });
         setModulesEdit(null);
-        flashOk(
-          res.mode === "role_defaults"
-            ? "Module access reset to role defaults."
-            : `Saved ${res.modules.length} modules for ${modulesEdit.name || modulesEdit.email}.`,
-        );
-        showToast("Module access updated", "success");
+        flashOk(t("staff.modulesSaved"));
+        showToast(t("staff.modulesSaved"), "success");
       } catch (e) {
         flashErr(e);
       }
@@ -403,18 +433,18 @@ export default function StaffPanel({
                       <td>
                         <span className="inline-flex items-center gap-1.5 text-sm font-medium">
                           <Icon className="h-3.5 w-3.5 text-[var(--admin-brand-500)]" />
-                          {roleLabel(u.role)}
-                        </span>
+                        {roleLabel(u.role)}
+                      </span>
                       </td>
                       <td>
                         <AdminBadge
                           tone={u.status === "APPROVED" ? "success" : "warning"}
                         >
-                          {u.status === "APPROVED" ? "Active" : u.status}
+                          {u.status === "APPROVED" ? t("common.active") : u.status}
                         </AdminBadge>
                       </td>
                       <td className="whitespace-nowrap text-sm text-[var(--admin-muted)]">
-                        {formatWhen(u.lastLoginAt)}
+                        {formatWhen(u.lastLoginAt, locale)}
                       </td>
                       <td className="text-xs text-[var(--admin-muted)]">
                         <p className="font-mono text-[var(--admin-text)]">
@@ -434,13 +464,13 @@ export default function StaffPanel({
                               disabled={pending}
                               onClick={() => openModules(u)}
                               className="admin-btn admin-btn-secondary admin-btn-sm"
-                              title="Choose which modules this staff can see"
+                              title={t("staff.modulesBtnTitle")}
                             >
                               <LayoutGrid className="h-3.5 w-3.5" />
-                              Modules
+                              {t("staff.modules")}
                               {u.moduleAccess != null ? (
                                 <span className="ml-0.5 text-[10px] font-bold uppercase text-[var(--admin-brand-500)]">
-                                  custom
+                                  {t("staff.modulesCustom")}
                                 </span>
                               ) : null}
                             </button>
@@ -509,15 +539,14 @@ export default function StaffPanel({
             <div className="flex items-start justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
               <div>
                 <h3 className="text-base font-semibold text-[var(--admin-text)]">
-                  Module access
+                  {t("staff.modulesTitle")}
                 </h3>
                 <p className="mt-1 text-sm text-[var(--admin-muted)]">
                   {modulesEdit.name || modulesEdit.email} ·{" "}
                   {roleLabel(modulesEdit.role)}
                 </p>
                 <p className="mt-1 text-xs text-[var(--admin-muted)]">
-                  Dashboard, Profile, and Notifications stay available. Changes
-                  are written to Activity.
+                  {t("staff.modulesHint")}
                 </p>
               </div>
               <button
@@ -525,7 +554,7 @@ export default function StaffPanel({
                 className="admin-btn admin-btn-ghost admin-btn-sm"
                 disabled={pending}
                 onClick={() => setModulesEdit(null)}
-                aria-label="Close"
+                aria-label={t("common.close")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -545,7 +574,7 @@ export default function StaffPanel({
                   <div key={mod.id}>
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-[var(--admin-text)]">
-                        {mod.label}
+                        {moduleGroupLabel(mod)}
                       </p>
                       {grantableIds.length > 0 ? (
                         <button
@@ -553,7 +582,9 @@ export default function StaffPanel({
                           className="text-xs font-medium text-[var(--admin-brand-500)]"
                           onClick={() => toggleModuleGroup(mod, !allOn)}
                         >
-                          {allOn ? "Clear" : "Select all"}
+                          {allOn
+                            ? t("staff.modulesClear")
+                            : t("staff.modulesSelectAll")}
                         </button>
                       ) : null}
                     </div>
@@ -565,8 +596,7 @@ export default function StaffPanel({
                           modulesEdit.role,
                           sub.id,
                         );
-                        const blocked = grantBlockedReason(
-                          actorRole,
+                        const blocked = modulesBlockedReason(
                           modulesEdit.role,
                           sub.id,
                         );
@@ -590,7 +620,7 @@ export default function StaffPanel({
                               onChange={() => toggleModule(sub.id)}
                             />
                             <span className="font-medium text-[var(--admin-text)]">
-                              {sub.label}
+                              {submoduleLabel(sub.href, sub.label)}
                             </span>
                           </label>
                         );
@@ -608,7 +638,7 @@ export default function StaffPanel({
                 disabled={pending}
                 onClick={resetModulesToDefaults}
               >
-                Role defaults
+                {t("staff.modulesRoleDefaults")}
               </button>
               <div className="flex gap-2">
                 <button
@@ -617,7 +647,7 @@ export default function StaffPanel({
                   disabled={pending}
                   onClick={() => setModulesEdit(null)}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="button"
@@ -625,7 +655,7 @@ export default function StaffPanel({
                   disabled={pending}
                   onClick={saveModules}
                 >
-                  {pending ? "Saving…" : "Save modules"}
+                  {pending ? t("common.saving") : t("staff.modulesSave")}
                 </button>
               </div>
             </div>
@@ -654,7 +684,7 @@ export default function StaffPanel({
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r.value} value={r.value}>
-                    {r.label}
+                    {roleLabel(r.value)}
                   </option>
                 ))}
               </select>
@@ -665,7 +695,7 @@ export default function StaffPanel({
                 className="admin-btn admin-btn-secondary"
                 onClick={() => setRoleEdit(null)}
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -673,7 +703,7 @@ export default function StaffPanel({
                 disabled={pending}
                 onClick={onSaveRole}
               >
-                Save
+                {pending ? t("common.saving") : t("common.save")}
               </button>
             </div>
           </div>
@@ -745,7 +775,7 @@ export default function StaffPanel({
                 >
                   {ROLE_OPTIONS.map((r) => (
                     <option key={r.value} value={r.value}>
-                      {r.label}
+                      {roleLabel(r.value)}
                     </option>
                   ))}
                 </select>
@@ -760,8 +790,8 @@ export default function StaffPanel({
                     }
                     className="admin-input mt-1.5 w-full"
                   >
-                    <option value="APPROVED">Active</option>
-                    <option value="DISABLED">Disabled</option>
+                    <option value="APPROVED">{t("common.active")}</option>
+                    <option value="DISABLED">{t("common.inactive")}</option>
                   </select>
                 </label>
               ) : null}

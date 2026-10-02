@@ -1129,6 +1129,20 @@ const en: AdminMessages = {
     title: "Staff",
     description:
       "Internal team only — Admin, Sales, Warehouse, Logistics. Separate from customer Users.",
+    modules: "Modules",
+    modulesCustom: "custom",
+    modulesTitle: "Module access",
+    modulesHint:
+      "Dashboard, Profile, and Notifications stay available. Changes are written to Activity.",
+    modulesSelectAll: "Select all",
+    modulesClear: "Clear",
+    modulesRoleDefaults: "Role defaults",
+    modulesSave: "Save modules",
+    modulesSaved: "Module access updated",
+    modulesBtnTitle: "Choose which modules this staff can see",
+    blockedSystem: "Only Super Admin can grant System access",
+    blockedRole: "Not available for {role} role",
+    blockedGeneric: "You cannot change this module",
   },
   system: {
     title: "System",
