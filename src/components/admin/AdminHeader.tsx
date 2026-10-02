@@ -166,16 +166,24 @@ export function AdminHeader({
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
               aria-haspopup="menu"
-              className="flex items-center gap-1.5 rounded-full p-0.5 ring-1 ring-[var(--admin-brand-100)] transition hover:ring-[var(--admin-brand-500)]"
+              className="flex max-w-[16rem] items-center gap-2.5 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-card)] py-1.5 pr-2 pl-1.5 transition hover:border-[var(--admin-brand-500)]/40 hover:bg-[var(--admin-hover)]"
               title={displayName}
             >
-              <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--admin-brand-50)]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--admin-brand-50)] ring-1 ring-[var(--admin-brand-100)]">
                 <span className="text-sm font-bold text-[var(--admin-brand-500)]">
                   {initial}
                 </span>
               </span>
+              <span className="hidden min-w-0 flex-1 flex-col items-start text-left sm:flex">
+                <span className="w-full truncate text-sm leading-tight font-semibold text-[var(--admin-text)]">
+                  {displayName}
+                </span>
+                <span className="mt-0.5 w-full truncate text-[11px] leading-tight font-medium tracking-wide text-[var(--admin-muted)]">
+                  {roleLabel}
+                </span>
+              </span>
               <ChevronDown
-                className={`hidden h-4 w-4 text-[var(--admin-muted)] sm:block ${
+                className={`hidden h-4 w-4 shrink-0 text-[var(--admin-muted)] sm:block ${
                   open ? "rotate-180" : ""
                 }`}
                 strokeWidth={1.75}

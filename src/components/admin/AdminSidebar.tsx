@@ -92,63 +92,48 @@ export function AdminSidebar({
         ].join(" ")}
       >
         <div
-          className={`flex items-center gap-3 border-b border-[var(--admin-border)] px-4 py-5 ${
-            isExpanded ? "justify-start" : "lg:justify-center lg:px-2"
+          className={`border-b border-[var(--admin-border)] px-4 py-4 ${
+            showLabels ? "" : "lg:px-2"
           }`}
         >
           <Link
             href="/admin"
             onClick={closeMobile}
-            className="flex min-w-0 items-center gap-3"
             aria-label={t("brand.home")}
+            className={`flex w-full flex-col gap-2 ${
+              showLabels ? "items-start" : "items-center"
+            }`}
           >
             {showLabels ? (
-              <span className="relative h-8 w-[9.5rem] shrink-0">
-                <Image
-                  src={logos.orangeTransparent}
-                  alt="UMAXES"
-                  fill
-                  className="admin-logo-light object-contain object-left"
-                  sizes="152px"
-                  priority
-                />
-                <Image
-                  src={logos.creamTransparent}
-                  alt="UMAXES"
-                  fill
-                  className="admin-logo-dark object-contain object-left"
-                  sizes="152px"
-                  priority
-                />
-              </span>
-            ) : (
-              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--admin-brand-50)] ring-1 ring-[var(--admin-brand-100)]">
-                <span className="relative h-6 w-6">
+              <>
+                <span className="relative h-9 w-full max-w-[11rem]">
                   <Image
-                    src={logos.markOrange}
+                    src={logos.blueWordmark}
                     alt="UMAXES"
                     fill
-                    className="admin-logo-light object-contain"
-                    sizes="24px"
+                    className="admin-logo-light object-contain object-left"
+                    sizes="176px"
                     priority
                   />
                   <Image
-                    src={logos.markCream}
+                    src={logos.blueWordmarkOnDark}
                     alt="UMAXES"
                     fill
-                    className="admin-logo-dark object-contain"
-                    sizes="24px"
+                    className="admin-logo-dark object-contain object-left"
+                    sizes="176px"
                     priority
                   />
                 </span>
+                <span className="rounded-md bg-[var(--admin-brand-50)] px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-[var(--admin-brand-700)]">
+                  {t("brand.ops")}
+                </span>
+              </>
+            ) : (
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--admin-brand-50)] text-sm font-bold tracking-tight text-[var(--admin-brand-600)] ring-1 ring-[var(--admin-brand-100)]">
+                U
               </span>
             )}
           </Link>
-          {showLabels && (
-            <span className="rounded-md bg-[var(--admin-brand-50)] px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-[var(--admin-brand-700)]">
-              {t("brand.ops")}
-            </span>
-          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 py-4">
