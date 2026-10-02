@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { useAdminSidebar } from "./AdminSidebarContext";
 import { useAdminI18n } from "./AdminI18n";
 import { adminNavIcons, ExternalLink, LogOut, Package } from "./icons";
@@ -23,6 +24,21 @@ export function AdminSidebar({
   const { isMobileOpen, isExpanded, closeMobile } = useAdminSidebar();
   const { t } = useAdminI18n();
   const roleLabel = role ? t(`role.${role}`) || role : t("brand.ops");
+  const activeLinkRef = useRef<HTMLAnchorElement | null>(null);
+  /** Auto-scroll active nav into view — Super Admin / Admin only (long menus). */
+  const scrollActiveNav =
+    role === "SUPER_ADMIN" || role === "ADMIN";
+
+  useEffect(() => {
+    if (!scrollActiveNav) return;
+    const el = activeLinkRef.current;
+    if (!el) return;
+    // Keep highlight visible when landing deep in the menu (e.g. Staff).
+    const id = window.requestAnimationFrame(() => {
+      el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [pathname, scrollActiveNav, isExpanded, isMobileOpen]);
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -178,9 +194,17 @@ export function AdminSidebar({
                     return (
                       <li key={`${item.href}:${navKey}`}>
                         <Link
+                          ref={
+                            active && scrollActiveNav
+                              ? (node) => {
+                                  activeLinkRef.current = node;
+                                }
+                              : undefined
+                          }
                           href={item.href}
                           onClick={closeMobile}
                           title={label}
+                          aria-current={active ? "page" : undefined}
                           className={[
                             "admin-menu-item",
                             active ? "admin-menu-item-active" : "",
