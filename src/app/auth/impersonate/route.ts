@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { AuthError } from "next-auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { signIn } from "@/lib/auth";
+import { verifyImpersonationToken } from "@/lib/impersonation";
+import { prisma } from "@/lib/db";
 
 /**
  * Super-admin "Login as" lands here (new tab).
@@ -10,18 +12,35 @@ import { signIn } from "@/lib/auth";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
+  const failPath = url.searchParams.get("from") || "/admin/users";
   const fail = (code: string) => {
-    const users = new URL("/admin/users", url.origin);
-    users.searchParams.set("impersonate", code);
-    return NextResponse.redirect(users);
+    const dest = new URL(failPath, url.origin);
+    dest.searchParams.set("impersonate", code);
+    return NextResponse.redirect(dest);
   };
 
   if (!token) return fail("missing");
 
+  let redirectTo = "/account";
+  try {
+    const payload = verifyImpersonationToken(token);
+    if (payload?.typ === "start") {
+      const target = await prisma.user.findUnique({
+        where: { id: payload.targetId },
+        select: { role: true },
+      });
+      if (target && target.role !== "CUSTOMER") {
+        redirectTo = "/admin";
+      }
+    }
+  } catch {
+    /* fall through — signIn will validate again */
+  }
+
   try {
     await signIn("impersonate", {
       token,
-      redirectTo: "/account",
+      redirectTo,
     });
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -33,5 +52,5 @@ export async function GET(request: Request) {
     return fail("failed");
   }
 
-  return NextResponse.redirect(new URL("/account", url.origin));
+  return NextResponse.redirect(new URL(redirectTo, url.origin));
 }

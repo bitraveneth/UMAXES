@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   createStaffUser,
   deleteStaffUser,
+  prepareImpersonateStaff,
   setUserRole,
   updateStaffUser,
 } from "@/lib/admin-actions";
@@ -19,8 +20,11 @@ import {
   Truck,
   Briefcase,
   ArrowUpCircle,
+  LogIn,
+  ExternalLink,
 } from "lucide-react";
 import type { UserRole, UserStatus } from "@/generated/prisma/enums";
+import { useSession } from "next-auth/react";
 import { useAppFeedback } from "@/components/ui/AppFeedback";
 
 export type StaffRow = {
@@ -80,15 +84,27 @@ function formatWhen(iso: string | null) {
 type Props = {
   staff: StaffRow[];
   currentUserId: string;
+  /** Super admin only — login as this staff account */
+  canImpersonate?: boolean;
+  initialError?: string | null;
 };
 
-export default function StaffPanel({ staff, currentUserId }: Props) {
+export default function StaffPanel({
+  staff,
+  currentUserId,
+  canImpersonate = false,
+  initialError = null,
+}: Props) {
+  const { data: session } = useSession();
+  const showLoginAs =
+    canImpersonate && session?.user?.role === "SUPER_ADMIN";
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [message, setMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState<StaffRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [roleEdit, setRoleEdit] = useState<StaffRow | null>(null);
+  const [loginAs, setLoginAs] = useState<StaffRow | null>(null);
   const [nextRole, setNextRole] = useState<UserRole>("SALES");
   const [query, setQuery] = useState("");
   const { confirm, showToast, ui } = useAppFeedback();
@@ -224,6 +240,54 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
     });
   }
 
+  function canLoginAs(row: StaffRow) {
+    if (!showLoginAs) return false;
+    if (row.id === currentUserId) return false;
+    if (row.role === "SUPER_ADMIN") return false;
+    if (row.status === "DISABLED" || row.status === "REJECTED") return false;
+    return (
+      row.role === "ADMIN" ||
+      row.role === "SALES" ||
+      row.role === "WAREHOUSE" ||
+      row.role === "LOGISTICS"
+    );
+  }
+
+  function openLoginAs(row: StaffRow) {
+    if (!canLoginAs(row)) {
+      if (row.status === "DISABLED" || row.status === "REJECTED") {
+        setError("Cannot open a disabled account.");
+      }
+      return;
+    }
+    setLoginAs(row);
+    setError(null);
+    setMessage(null);
+  }
+
+  function confirmLoginAs() {
+    if (!loginAs) return;
+    startTransition(async () => {
+      try {
+        const { token } = await prepareImpersonateStaff(loginAs.id);
+        const url = `/auth/impersonate?token=${encodeURIComponent(token)}&from=${encodeURIComponent("/admin/staff")}`;
+        const win = window.open(url, "_blank", "noopener,noreferrer");
+        setLoginAs(null);
+        if (!win) {
+          setError(
+            "Pop-up blocked — allow pop-ups for this site, or try again.",
+          );
+          return;
+        }
+        flashOk(
+          `Opened as ${loginAs.name || loginAs.email || "staff"} in a new tab. Use the yellow bar there to return to admin.`,
+        );
+      } catch (e) {
+        flashErr(e);
+      }
+    });
+  }
+
   return (
     <div className="space-y-6">
       {ui}
@@ -342,6 +406,18 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
                       </td>
                       <td>
                         <div className="flex flex-wrap justify-end gap-1.5">
+                          {showLoginAs && canLoginAs(u) ? (
+                            <button
+                              type="button"
+                              disabled={pending}
+                              onClick={() => openLoginAs(u)}
+                              className="admin-btn admin-btn-secondary admin-btn-sm"
+                              title="Open ops as this staff account in a new tab"
+                            >
+                              <LogIn className="h-3.5 w-3.5" />
+                              Login as
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             disabled={pending || locked}
@@ -391,6 +467,80 @@ export default function StaffPanel({ staff, currentUserId }: Props) {
           </div>
         )}
       </AdminCard>
+
+      {loginAs && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !pending && setLoginAs(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-5 shadow-[var(--admin-shadow-theme)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-[var(--admin-text)]">
+                  Open as staff
+                </h3>
+                <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                  View ops exactly as this staff account sees it.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="admin-btn admin-btn-ghost admin-btn-sm"
+                disabled={pending}
+                onClick={() => setLoginAs(null)}
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-bg)] px-4 py-3">
+              <p className="font-semibold text-[var(--admin-text)]">
+                {loginAs.name || "Unnamed"}
+              </p>
+              <p className="mt-0.5 text-sm text-[var(--admin-muted)]">
+                {[loginAs.email, loginAs.phone].filter(Boolean).join(" · ") ||
+                  "—"}
+              </p>
+              <p className="mt-2 text-xs text-[var(--admin-muted)]">
+                {roleLabel(loginAs.role)}
+              </p>
+            </div>
+
+            <p className="mt-3 text-xs leading-relaxed text-[var(--admin-muted)]">
+              Opens in a <span className="font-semibold">new tab</span>. Use
+              the yellow{" "}
+              <span className="font-semibold">Back to admin</span> bar in that
+              tab when you are done. This Staff page stays open here.
+            </p>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary"
+                disabled={pending}
+                onClick={() => setLoginAs(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="admin-btn admin-btn-primary"
+                disabled={pending}
+                onClick={confirmLoginAs}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                {pending ? "Opening…" : "Open in new tab"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {roleEdit && (
         <div

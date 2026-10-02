@@ -7,7 +7,11 @@ import StaffPanel from "@/components/admin/StaffPanel";
 
 export const metadata = { title: "Staff · UMAXES Ops" };
 
-export default async function StaffPage() {
+export default async function StaffPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ impersonate?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -16,6 +20,14 @@ export default async function StaffPage() {
   ) {
     redirect("/admin");
   }
+
+  const sp = await searchParams;
+  const impersonateError =
+    sp.impersonate === "failed"
+      ? "Could not open that staff account. Try Login as again."
+      : sp.impersonate === "missing"
+        ? "Login link was incomplete. Try Login as again."
+        : null;
 
   const staff = await prisma.user.findMany({
     where: {
@@ -45,6 +57,8 @@ export default async function StaffPage() {
       />
       <StaffPanel
         currentUserId={session.user.id}
+        canImpersonate={session.user.role === "SUPER_ADMIN"}
+        initialError={impersonateError}
         staff={staff.map((u) => ({
           ...u,
           createdAt: u.createdAt.toISOString(),

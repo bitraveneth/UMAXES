@@ -164,7 +164,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               where: { id: payload.targetId },
               include: { company: true },
             });
-            if (!target || target.role !== "CUSTOMER") return null;
+            if (!target) return null;
+            // Customers + staff ops roles (not another super admin)
+            const allowed =
+              target.role === "CUSTOMER" ||
+              target.role === "ADMIN" ||
+              target.role === "SALES" ||
+              target.role === "WAREHOUSE" ||
+              target.role === "LOGISTICS";
+            if (!allowed) return null;
             if (target.status === "DISABLED" || target.status === "REJECTED") {
               return null;
             }
