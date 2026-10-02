@@ -40,7 +40,7 @@ const assets = [
   {
     title: "HOOKAMAX pack shot set",
     description: "Product pack imagery for POS and menus.",
-    fileUrl: "/images/product/pack-01.webp",
+    fileUrl: "/images/product/pack-peach-mango.webp",
     category: "pos",
   },
   {
