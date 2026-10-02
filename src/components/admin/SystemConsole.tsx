@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AdminBadge, AdminCard, AdminStat } from "@/components/admin/ui";
+import { AdminCard } from "@/components/admin/ui";
 import type { BackupScope, DbBackup } from "@/lib/system-db";
 import type { SiteSettings } from "@/lib/site-settings";
 import {
@@ -18,13 +18,6 @@ import {
   Wrench,
   RefreshCw,
   Activity,
-  HardDrive,
-  Package,
-  Users,
-  ShoppingBag,
-  CheckCircle2,
-  XCircle,
-  FileJson,
 } from "lucide-react";
 
 export type SystemActivityRow = {
@@ -36,35 +29,26 @@ export type SystemActivityRow = {
   userEmail: string | null;
 };
 
-const SCOPES: {
-  id: BackupScope;
-  label: string;
-  hint: string;
-  tone: "brand" | "success" | "warning" | "neutral";
-}[] = [
+const SCOPES: { id: BackupScope; label: string; hint: string }[] = [
   {
     id: "ops",
     label: "Orders & shipping",
-    hint: "Day-to-day safety copy — orders, payments, shipments, credit, RMA",
-    tone: "brand",
+    hint: "Orders, payments, shipments, credit ledger, RMA, notifications",
   },
   {
     id: "catalog",
-    label: "Catalog",
-    hint: "Products, prices, stock, warehouses, coupons, FAQ",
-    tone: "success",
+    label: "Catalog only",
+    hint: "Products, prices, inventory, options, warehouses, coupons",
   },
   {
     id: "accounts",
     label: "Accounts",
     hint: "Companies, buyers, staff (non–super-admin), addresses, suppliers",
-    tone: "neutral",
   },
   {
     id: "full",
-    label: "Full website",
-    hint: "Complete JSON snapshot — use before major changes or VPS migrate",
-    tone: "warning",
+    label: "Full database",
+    hint: "Everything — use before major changes or migration",
   },
 ];
 
@@ -124,7 +108,6 @@ export default function SystemConsole({
   const [importConfirm, setImportConfirm] = useState("");
   const [importReplace, setImportReplace] = useState(true);
   const [importPreview, setImportPreview] = useState<DbBackup | null>(null);
-  const [dangerOpen, setDangerOpen] = useState(false);
 
   const settingsDirty =
     homepageAsLogin !== savedSettings.homepageAsLogin ||
@@ -162,7 +145,7 @@ export default function SystemConsole({
         setHomepageAsLogin(next.homepageAsLogin);
         setPublicSignInEnabled(next.publicSignInEnabled);
         setMaintenanceMode(next.maintenanceMode);
-        setMessage("Site controls saved.");
+        setMessage("Site settings saved.");
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Save failed");
@@ -197,24 +180,6 @@ export default function SystemConsole({
     });
   }
 
-  function downloadSettingsJson() {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      kind: "umaxes-site-settings",
-      settings: savedSettings,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `umaxes-site-settings-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setMessage("Downloaded site settings JSON.");
-  }
-
   function onPickFile(file: File | null) {
     clearFlash();
     setImportPreview(null);
@@ -228,7 +193,7 @@ export default function SystemConsole({
         }
         setImportPreview(parsed);
         setMessage(
-          `Ready to restore · ${parsed.scope} · exported ${formatWhen(parsed.exportedAt)}`,
+          `Ready to import · ${parsed.scope} · ${formatWhen(parsed.exportedAt)}`,
         );
       } catch (e) {
         setError(e instanceof Error ? e.message : "Invalid file");
@@ -256,7 +221,7 @@ export default function SystemConsole({
         });
         const j = await res.json();
         if (!res.ok) throw new Error(j.error || "Import failed");
-        setMessage("Import complete. Refreshing counts…");
+        setMessage("Import complete.");
         setImportConfirm("");
         setImportPreview(null);
         router.refresh();
@@ -295,7 +260,7 @@ export default function SystemConsole({
         });
         const j = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(j.error || "Refresh failed");
-        setMessage("Storefront & ops caches refreshed.");
+        setMessage("Site cache refreshed.");
         router.refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Refresh failed");
@@ -303,8 +268,8 @@ export default function SystemConsole({
     });
   }
 
-  const toggleClass =
-    "flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-bg)] px-4 py-3.5 transition has-[:checked]:border-[var(--admin-brand-500)]/50 has-[:checked]:bg-[var(--admin-brand-50)]/50";
+  const optionClass =
+    "flex cursor-pointer gap-3 rounded-lg border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-[var(--admin-brand-500)] has-[:checked]:bg-[var(--admin-brand-50)]/40";
 
   return (
     <div className="space-y-6">
@@ -320,131 +285,60 @@ export default function SystemConsole({
         </div>
       )}
 
-      {/* Purpose strip */}
-      <AdminCard className="overflow-hidden !p-0">
-        <div className="relative border-b border-[var(--admin-border)] bg-[linear-gradient(135deg,var(--admin-brand-50)_0%,var(--admin-bg)_55%,transparent_100%)] px-5 py-5 sm:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="max-w-2xl">
-              <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-brand-600)] uppercase">
-                Website backup & controls
+      <AdminCard>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
+              <Database className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="admin-section-title mb-1">Database snapshot</h2>
+              <p className="text-sm text-[var(--admin-muted)]">
+                Live row counts · {envLabel}
+                {lastBackup
+                  ? ` · Last backup ${formatWhen(lastBackup.createdAt)}`
+                  : ""}
               </p>
-              <h2 className="mt-1 text-xl font-semibold tracking-tight text-[var(--admin-text)]">
-                Keep a safe copy of the site, then restore when you need it
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--admin-muted)]">
-                Export JSON backups of orders, catalog, accounts, or the full
-                database. Toggle public access and maintenance while you work.
-                Super admin only.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <AdminBadge tone={maintenanceMode ? "warning" : "success"}>
-                {maintenanceMode ? "Maintenance on" : "Storefront live"}
-              </AdminBadge>
-              <AdminBadge tone={publicSignInEnabled ? "brand" : "warning"}>
-                {publicSignInEnabled ? "Public sign-in on" : "Public sign-in off"}
-              </AdminBadge>
-              <AdminBadge tone="neutral">{envLabel}</AdminBadge>
             </div>
           </div>
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
+              className="admin-btn admin-btn-secondary admin-btn-sm"
               disabled={pending}
               onClick={() => downloadBackup("ops")}
-              className="admin-btn admin-btn-primary admin-btn-sm"
             >
               <Download className="h-3.5 w-3.5" />
-              Quick backup · orders
+              Backup orders
             </button>
             <button
               type="button"
-              disabled={pending}
-              onClick={() => downloadBackup("full")}
-              className="admin-btn admin-btn-secondary admin-btn-sm"
-            >
-              <HardDrive className="h-3.5 w-3.5" />
-              Full website backup
-            </button>
-            <button
-              type="button"
+              className="admin-btn admin-btn-ghost admin-btn-sm"
               disabled={pending}
               onClick={revalidateCache}
-              className="admin-btn admin-btn-ghost admin-btn-sm"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              Refresh site cache
+              Refresh cache
             </button>
             <button
               type="button"
-              onClick={downloadSettingsJson}
               className="admin-btn admin-btn-ghost admin-btn-sm"
+              onClick={() => router.refresh()}
             >
-              <FileJson className="h-3.5 w-3.5" />
-              Export settings
+              Refresh counts
             </button>
           </div>
-          {lastBackup ? (
-            <p className="mt-3 text-xs text-[var(--admin-muted)]">
-              Last backup download: {formatWhen(lastBackup.createdAt)}
-              {lastBackup.userName || lastBackup.userEmail
-                ? ` · ${lastBackup.userName || lastBackup.userEmail}`
-                : ""}
-            </p>
-          ) : (
-            <p className="mt-3 text-xs text-[var(--admin-muted)]">
-              No backup downloads logged yet — run a quick backup before any
-              reset or import.
-            </p>
-          )}
         </div>
-      </AdminCard>
-
-      {/* Snapshot */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminStat
-          label="Orders"
-          value={stats.orders ?? 0}
-          icon={ShoppingBag}
-        />
-        <AdminStat label="Users" value={stats.users ?? 0} icon={Users} />
-        <AdminStat
-          label="Products"
-          value={stats.products ?? 0}
-          icon={Package}
-        />
-        <AdminStat
-          label="Audit events"
-          value={stats.auditLogs ?? 0}
-          icon={Activity}
-        />
-      </div>
-
-      <AdminCard padded={false}>
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
-          <div className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-[var(--admin-brand-500)]" />
-            <h3 className="admin-section-title mb-0">Database snapshot</h3>
-          </div>
-          <button
-            type="button"
-            className="admin-btn admin-btn-ghost admin-btn-sm"
-            onClick={() => router.refresh()}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            Refresh counts
-          </button>
-        </div>
-        <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {Object.entries(stats).map(([k, v]) => (
             <div
               key={k}
-              className="rounded-lg border border-[var(--admin-border)] px-3 py-2"
+              className="rounded-lg border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-3 py-2"
             >
               <p className="text-[10px] font-semibold tracking-wide text-[var(--admin-muted)] uppercase">
                 {k}
               </p>
-              <p className="mt-0.5 text-lg font-semibold tabular-nums text-[var(--admin-text)]">
+              <p className="mt-0.5 font-semibold tabular-nums text-[var(--admin-text)]">
                 {v < 0 ? "—" : v.toLocaleString()}
               </p>
             </div>
@@ -452,24 +346,24 @@ export default function SystemConsole({
         </div>
       </AdminCard>
 
-      {/* Site controls */}
       <AdminCard>
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--admin-brand-50)] text-[var(--admin-brand-500)]">
             <Shield className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <h3 className="admin-section-title mb-1">Site controls</h3>
+            <h2 className="admin-section-title mb-1">Site access</h2>
             <p className="text-sm text-[var(--admin-muted)]">
-              What the public sees while you back up or restore.
+              Homepage, public sign-in, and maintenance while you backup or
+              restore.
             </p>
 
-            <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
               <div className="space-y-2">
-                <p className="text-xs font-semibold tracking-wide text-[var(--admin-muted)] uppercase">
+                <p className="text-xs font-semibold text-[var(--admin-muted)] uppercase">
                   Homepage
                 </p>
-                <label className={toggleClass}>
+                <label className={optionClass}>
                   <input
                     type="radio"
                     name="home-mode"
@@ -481,14 +375,14 @@ export default function SystemConsole({
                   <span>
                     <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--admin-text)]">
                       <Globe2 className="h-3.5 w-3.5 text-[var(--admin-brand-500)]" />
-                      Marketing home
+                      Home page
                     </span>
                     <span className="mt-0.5 block text-xs text-[var(--admin-muted)]">
-                      Guests see /
+                      Marketing homepage
                     </span>
                   </span>
                 </label>
-                <label className={toggleClass}>
+                <label className={optionClass}>
                   <input
                     type="radio"
                     name="home-mode"
@@ -500,20 +394,20 @@ export default function SystemConsole({
                   <span>
                     <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--admin-text)]">
                       <LogIn className="h-3.5 w-3.5 text-[var(--admin-brand-500)]" />
-                      Sign-in first
+                      Sign in page
                     </span>
                     <span className="mt-0.5 block text-xs text-[var(--admin-muted)]">
-                      Guests go to /login
+                      Guests go to login
                     </span>
                   </span>
                 </label>
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold tracking-wide text-[var(--admin-muted)] uppercase">
-                  Public accounts
+                <p className="text-xs font-semibold text-[var(--admin-muted)] uppercase">
+                  Public sign-in
                 </p>
-                <label className={toggleClass}>
+                <label className={optionClass}>
                   <input
                     type="radio"
                     name="public-signin"
@@ -523,16 +417,15 @@ export default function SystemConsole({
                     onChange={() => setPublicSignInEnabled(true)}
                   />
                   <span>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--admin-text)]">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-[var(--admin-success-500)]" />
-                      Sign-in & register open
+                    <span className="block text-sm font-semibold text-[var(--admin-text)]">
+                      Open
                     </span>
                     <span className="mt-0.5 block text-xs text-[var(--admin-muted)]">
-                      Buyers can create accounts
+                      Buyers can sign in / register
                     </span>
                   </span>
                 </label>
-                <label className={toggleClass}>
+                <label className={optionClass}>
                   <input
                     type="radio"
                     name="public-signin"
@@ -542,9 +435,8 @@ export default function SystemConsole({
                     onChange={() => setPublicSignInEnabled(false)}
                   />
                   <span>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--admin-text)]">
-                      <XCircle className="h-3.5 w-3.5 text-[var(--admin-warning-500)]" />
-                      Close public sign-in
+                    <span className="block text-sm font-semibold text-[var(--admin-text)]">
+                      Closed
                     </span>
                     <span className="mt-0.5 block text-xs text-[var(--admin-muted)]">
                       Staff can still sign in
@@ -554,10 +446,10 @@ export default function SystemConsole({
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold tracking-wide text-[var(--admin-muted)] uppercase">
+                <p className="text-xs font-semibold text-[var(--admin-muted)] uppercase">
                   Maintenance
                 </p>
-                <label className={toggleClass}>
+                <label className={optionClass}>
                   <input
                     type="radio"
                     name="maintenance"
@@ -567,15 +459,15 @@ export default function SystemConsole({
                     onChange={() => setMaintenanceMode(false)}
                   />
                   <span>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--admin-text)]">
-                      Storefront open
+                    <span className="block text-sm font-semibold text-[var(--admin-text)]">
+                      Storefront live
                     </span>
                     <span className="mt-0.5 block text-xs text-[var(--admin-muted)]">
-                      Normal shopping experience
+                      Normal public site
                     </span>
                   </span>
                 </label>
-                <label className={toggleClass}>
+                <label className={optionClass}>
                   <input
                     type="radio"
                     name="maintenance"
@@ -587,10 +479,10 @@ export default function SystemConsole({
                   <span>
                     <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--admin-text)]">
                       <Wrench className="h-3.5 w-3.5 text-[var(--admin-warning-500)]" />
-                      Maintenance page
+                      Maintenance on
                     </span>
                     <span className="mt-0.5 block text-xs text-[var(--admin-muted)]">
-                      Public sees /maintenance; ops stays available
+                      Public sees /maintenance
                     </span>
                   </span>
                 </label>
@@ -604,15 +496,15 @@ export default function SystemConsole({
                 disabled={pending || !settingsDirty}
                 className="admin-btn admin-btn-primary"
               >
-                {pending ? "Saving…" : "Save site controls"}
+                {pending ? "Saving…" : "Save"}
               </button>
               {maintenanceMode ? (
                 <Link
                   href="/maintenance"
                   target="_blank"
-                  className="text-sm font-medium text-[var(--admin-brand-600)] underline-offset-2 hover:underline"
+                  className="text-sm font-medium text-[var(--admin-brand-600)] hover:underline"
                 >
-                  Preview maintenance page
+                  Preview maintenance
                 </Link>
               ) : null}
             </div>
@@ -620,25 +512,19 @@ export default function SystemConsole({
         </div>
       </AdminCard>
 
-      {/* Backup + restore */}
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <AdminCard>
           <div className="flex items-center gap-2">
             <Download className="h-4 w-4 text-[var(--admin-brand-500)]" />
-            <h3 className="admin-section-title mb-0">Backup / export</h3>
+            <h2 className="admin-section-title mb-0">Backup / export</h2>
           </div>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            Download an offline JSON copy. Prefer{" "}
-            <strong className="text-[var(--admin-text)]">Orders & shipping</strong>{" "}
-            daily; use <strong className="text-[var(--admin-text)]">Full website</strong>{" "}
-            before big changes.
+            Download a JSON backup to keep offline or import later. Prefer
+            scoped exports for day-to-day use.
           </p>
           <div className="mt-4 space-y-2">
             {SCOPES.map((s) => (
-              <label
-                key={s.id}
-                className="flex cursor-pointer gap-3 rounded-xl border border-[var(--admin-border)] px-3 py-3 transition has-[:checked]:border-[var(--admin-brand-500)] has-[:checked]:bg-[var(--admin-brand-50)]/45"
-              >
+              <label key={s.id} className={optionClass}>
                 <input
                   type="radio"
                   name="scope"
@@ -646,14 +532,11 @@ export default function SystemConsole({
                   onChange={() => setScope(s.id)}
                   className="mt-1 accent-[var(--admin-brand-500)]"
                 />
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-[var(--admin-text)]">
-                      {s.label}
-                    </span>
-                    <AdminBadge tone={s.tone}>{s.id}</AdminBadge>
+                <span>
+                  <span className="block text-sm font-semibold text-[var(--admin-text)]">
+                    {s.label}
                   </span>
-                  <span className="mt-0.5 block text-xs text-[var(--admin-muted)]">
+                  <span className="block text-xs text-[var(--admin-muted)]">
                     {s.hint}
                   </span>
                 </span>
@@ -664,21 +547,21 @@ export default function SystemConsole({
             type="button"
             disabled={pending}
             onClick={() => downloadBackup(scope)}
-            className="admin-btn admin-btn-primary mt-4 w-full sm:w-auto"
+            className="admin-btn admin-btn-primary mt-4"
           >
             <Download className="h-4 w-4" />
-            Download {SCOPES.find((s) => s.id === scope)?.label} backup
+            Download JSON backup
           </button>
         </AdminCard>
 
         <AdminCard>
           <div className="flex items-center gap-2">
             <Upload className="h-4 w-4 text-[var(--admin-brand-500)]" />
-            <h3 className="admin-section-title mb-0">Restore / import</h3>
+            <h2 className="admin-section-title mb-0">Import backup</h2>
           </div>
           <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            Restore from a previous export. Super admin users are never deleted.
-            Turn on maintenance first if buyers might hit the site mid-import.
+            Restore from a previous export. Replace mode clears matching data
+            first. Super admin users are never deleted.
           </p>
           <label className="admin-label mt-4 block">
             Backup file (.json)
@@ -690,31 +573,12 @@ export default function SystemConsole({
             />
           </label>
           {importPreview ? (
-            <div className="mt-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-bg)] px-3 py-3 text-xs text-[var(--admin-muted)]">
-              <p>
-                Scope:{" "}
-                <strong className="text-[var(--admin-text)]">
-                  {importPreview.scope}
-                </strong>{" "}
-                · Exported {formatWhen(importPreview.exportedAt)} · v
-                {importPreview.version}
-              </p>
-              <p className="mt-2 font-medium text-[var(--admin-text)]">
-                Tables in file
-              </p>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {Object.entries(importPreview.counts || {}).map(([k, n]) => (
-                  <span
-                    key={k}
-                    className="rounded-md border border-[var(--admin-border)] bg-[var(--admin-card)] px-2 py-0.5 tabular-nums"
-                  >
-                    {k}: {n}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <p className="mt-2 text-xs text-[var(--admin-muted)]">
+              Scope: <strong>{importPreview.scope}</strong> · Tables:{" "}
+              {Object.keys(importPreview.data || {}).join(", ")}
+            </p>
           ) : null}
-          <label className="mt-3 flex items-center gap-2 text-sm text-[var(--admin-text)]">
+          <label className="mt-3 flex items-center gap-2 text-sm">
             <input
               type="checkbox"
               checked={importReplace}
@@ -736,20 +600,18 @@ export default function SystemConsole({
             type="button"
             disabled={pending || !importPreview || importConfirm !== "IMPORT"}
             onClick={runImport}
-            className="admin-btn admin-btn-secondary mt-4 w-full sm:w-auto"
+            className="admin-btn admin-btn-secondary mt-4"
           >
-            <Upload className="h-4 w-4" />
             Import now
           </button>
         </AdminCard>
       </div>
 
-      {/* Recent system activity */}
       <AdminCard padded={false}>
         <div className="flex items-center justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-[var(--admin-brand-500)]" />
-            <h3 className="admin-section-title mb-0">Recent system activity</h3>
+            <h2 className="admin-section-title mb-0">Recent system activity</h2>
           </div>
           <Link
             href="/admin/activity?cat=system"
@@ -786,98 +648,80 @@ export default function SystemConsole({
         )}
       </AdminCard>
 
-      {/* Danger zone */}
       <AdminCard>
+        <div className="flex items-center gap-2">
+          <Trash2 className="h-4 w-4 text-[var(--admin-error-500)]" />
+          <h2 className="admin-section-title mb-0">Reset database</h2>
+        </div>
+        <div className="mt-2 flex items-start gap-2 rounded-lg border border-[var(--admin-warning-500)]/35 bg-[var(--admin-warning-50)] px-3 py-2 text-sm text-[var(--admin-warning-700)]">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Destructive. Download a backup first. Catalog / product images are
+            kept unless you import a catalog or full backup that replaces them.
+          </p>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-[var(--admin-error-500)] has-[:checked]:bg-[var(--admin-error-50)]">
+            <input
+              type="radio"
+              name="resetMode"
+              checked={resetMode === "ops"}
+              onChange={() => setResetMode("ops")}
+              className="mt-1 accent-[var(--admin-error-500)]"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-[var(--admin-text)]">
+                Reset ops only
+              </span>
+              <span className="block text-xs text-[var(--admin-muted)]">
+                Clears orders, shipments, credit, RMA, notifications, audit.
+                Keeps products + companies.
+              </span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer gap-3 rounded-lg border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-[var(--admin-error-500)] has-[:checked]:bg-[var(--admin-error-50)]">
+            <input
+              type="radio"
+              name="resetMode"
+              checked={resetMode === "accounts"}
+              onChange={() => setResetMode("accounts")}
+              className="mt-1 accent-[var(--admin-error-500)]"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-[var(--admin-text)]">
+                Reset ops + customers
+              </span>
+              <span className="block text-xs text-[var(--admin-muted)]">
+                Also deletes buyer companies/users. Keeps staff + catalog.
+              </span>
+            </span>
+          </label>
+        </div>
+        <label className="admin-label mt-4 block">
+          Type{" "}
+          <span className="font-mono">
+            {resetMode === "ops" ? "RESET OPS" : "RESET ACCOUNTS"}
+          </span>{" "}
+          to confirm
+          <input
+            value={resetConfirm}
+            onChange={(e) => setResetConfirm(e.target.value)}
+            className="admin-input mt-1.5 w-full font-mono"
+            autoComplete="off"
+          />
+        </label>
         <button
           type="button"
-          className="flex w-full items-center justify-between gap-3 text-left"
-          onClick={() => setDangerOpen((v) => !v)}
+          disabled={
+            pending ||
+            resetConfirm !==
+              (resetMode === "ops" ? "RESET OPS" : "RESET ACCOUNTS")
+          }
+          onClick={runReset}
+          className="admin-btn mt-4 border border-red-300 bg-red-50 text-red-800 hover:bg-red-100"
         >
-          <span className="flex items-center gap-2">
-            <Trash2 className="h-4 w-4 text-[var(--admin-error-500)]" />
-            <span className="admin-section-title mb-0">Danger zone · reset</span>
-          </span>
-          <span className="text-xs font-semibold text-[var(--admin-muted)]">
-            {dangerOpen ? "Hide" : "Show"}
-          </span>
+          Run reset
         </button>
-        {dangerOpen ? (
-          <div className="mt-4 space-y-4">
-            <div className="flex items-start gap-2 rounded-lg border border-[var(--admin-warning-500)]/35 bg-[var(--admin-warning-50)] px-3 py-2 text-sm text-[var(--admin-warning-700)]">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>
-                Destructive. Download a backup first. Catalog images stay unless
-                you import a catalog/full backup that replaces them.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="flex cursor-pointer gap-3 rounded-xl border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-[var(--admin-error-500)] has-[:checked]:bg-[var(--admin-error-50)]">
-                <input
-                  type="radio"
-                  name="resetMode"
-                  checked={resetMode === "ops"}
-                  onChange={() => setResetMode("ops")}
-                  className="mt-1 accent-[var(--admin-error-500)]"
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-[var(--admin-text)]">
-                    Reset ops only
-                  </span>
-                  <span className="block text-xs text-[var(--admin-muted)]">
-                    Clears orders, shipments, credit, RMA, notifications, audit.
-                    Keeps products + companies.
-                  </span>
-                </span>
-              </label>
-              <label className="flex cursor-pointer gap-3 rounded-xl border border-[var(--admin-border)] px-3 py-2.5 has-[:checked]:border-[var(--admin-error-500)] has-[:checked]:bg-[var(--admin-error-50)]">
-                <input
-                  type="radio"
-                  name="resetMode"
-                  checked={resetMode === "accounts"}
-                  onChange={() => setResetMode("accounts")}
-                  className="mt-1 accent-[var(--admin-error-500)]"
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-[var(--admin-text)]">
-                    Reset ops + customers
-                  </span>
-                  <span className="block text-xs text-[var(--admin-muted)]">
-                    Also deletes buyer companies/users. Keeps staff + catalog.
-                  </span>
-                </span>
-              </label>
-            </div>
-            <label className="admin-label block">
-              Type{" "}
-              <span className="font-mono">
-                {resetMode === "ops" ? "RESET OPS" : "RESET ACCOUNTS"}
-              </span>{" "}
-              to confirm
-              <input
-                value={resetConfirm}
-                onChange={(e) => setResetConfirm(e.target.value)}
-                className="admin-input mt-1.5 w-full font-mono"
-                autoComplete="off"
-              />
-            </label>
-            <button
-              type="button"
-              disabled={
-                pending ||
-                resetConfirm !==
-                  (resetMode === "ops" ? "RESET OPS" : "RESET ACCOUNTS")
-              }
-              onClick={runReset}
-              className="admin-btn border border-red-300 bg-red-50 text-red-800 hover:bg-red-100"
-            >
-              Run reset
-            </button>
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-[var(--admin-muted)]">
-            Clear transactional data after you have a verified backup.
-          </p>
-        )}
       </AdminCard>
     </div>
   );

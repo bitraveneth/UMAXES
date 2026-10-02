@@ -1133,7 +1133,7 @@ const en: AdminMessages = {
   system: {
     title: "System",
     description:
-      "Website backup, restore, site access, and maintenance — super admin only.",
+      "Backup, import, site access, and reset — super admin only.",
   },
   activity: {
     title: "Activity",

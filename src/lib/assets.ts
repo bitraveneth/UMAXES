@@ -1,4 +1,5 @@
-export const heroBanner = "/images/hero/hookamax-banner.webp";
+/** Homepage hero + /products first panel — Cool Mint cosmic stage (cache-busted filename). */
+export const heroBanner = "/images/hero/hookamax-cool-mint.webp";
 
 export const heroSceneImages = [
   "/images/hero/desert-carry.webp",
@@ -77,9 +78,9 @@ export const product = {
   introductionImage: "/images/product/hookamax-introduction.jpg",
 } as const;
 
-/** Full-bleed detail panels after Specs (shared on every flavor page) */
+/** Full-bleed detail panels on /products — first panel matches homepage hero */
 export const productStoryImages = [
-  "/images/product/story/01-fit.webp",
+  "/images/product/story/hero-cool-mint.webp",
   "/images/product/story/02.webp",
   "/images/product/story/03.webp",
   "/images/product/story/04.webp",
