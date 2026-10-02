@@ -5,6 +5,10 @@ import type {
   UserStatus,
 } from "@/generated/prisma/enums";
 import { canAccessAdminPath, isStaffRole } from "@/lib/admin-access";
+import {
+  hasSubmoduleAccess,
+  submoduleForNavHref,
+} from "@/lib/admin-modules";
 
 /** OWNER and BUYER can place orders; FINANCE is view-only. Null role treated as OWNER (legacy). */
 export function canOrder(
@@ -175,6 +179,19 @@ export function navForRole(role: UserRole) {
   return adminNav.filter((item) => item.roles.includes(role));
 }
 
+export function navForUser(
+  role: UserRole,
+  moduleAccess?: string[] | null,
+) {
+  return adminNav.filter((item) => {
+    if (!item.roles.includes(role)) return false;
+    if (moduleAccess === undefined) return true;
+    const sub = submoduleForNavHref(item.href, item.navKey);
+    if (!sub) return true;
+    return hasSubmoduleAccess(role, moduleAccess, sub);
+  });
+}
+
 export function groupedNavForRole(role: UserRole) {
   const items = navForRole(role);
   return ADMIN_NAV_GROUPS.map((group) => ({
@@ -183,6 +200,10 @@ export function groupedNavForRole(role: UserRole) {
   })).filter((section) => section.items.length > 0);
 }
 
-export function canAccessPath(role: UserRole, pathname: string) {
-  return canAccessAdminPath(role, pathname);
+export function canAccessPath(
+  role: UserRole,
+  pathname: string,
+  moduleAccess?: string[] | null,
+) {
+  return canAccessAdminPath(role, pathname, moduleAccess);
 }

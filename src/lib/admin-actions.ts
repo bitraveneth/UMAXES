@@ -2397,6 +2397,7 @@ export async function updateStaffUser(input: {
 
   const email = input.email.trim().toLowerCase();
   const becomingStaff = input.role !== "CUSTOMER";
+  const roleChanged = target.role !== input.role;
   const data: {
     name: string;
     email: string;
@@ -2405,6 +2406,7 @@ export async function updateStaffUser(input: {
     passwordHash?: string;
     companyId?: string | null;
     companyRole?: null;
+    moduleAccess?: string | null;
   } = {
     name: input.name.trim(),
     email,
@@ -2418,6 +2420,9 @@ export async function updateStaffUser(input: {
     if (data.status !== "DISABLED" && data.status !== "REJECTED") {
       data.status = "APPROVED";
     }
+  }
+  if (roleChanged || !becomingStaff) {
+    data.moduleAccess = null;
   }
 
   const nextPassword = input.password?.trim();
@@ -2568,17 +2573,20 @@ export async function setUserRole(input: {
   }
 
   const becomingStaff = input.role !== "CUSTOMER";
+  const roleChanged = target.role !== input.role;
   await prisma.user.update({
     where: { id: input.id },
     data: {
       role: input.role,
+      // Role change resets custom module toggles back to role defaults
+      ...(roleChanged ? { moduleAccess: null } : {}),
       ...(becomingStaff
         ? {
             status: "APPROVED" as const,
             companyId: null,
             companyRole: null,
           }
-        : {}),
+        : { moduleAccess: null }),
     },
   });
 
@@ -2594,11 +2602,108 @@ export async function setUserRole(input: {
         phone: target.phone,
         previousRole: target.role,
         role: input.role,
+        moduleAccessReset: roleChanged || !becomingStaff,
       }),
     },
   });
   revalidatePath("/admin/staff");
   revalidatePath("/admin/users");
+}
+
+/** Super admin / admin: set which modules & submodules a staff account can see. */
+export async function setStaffModuleAccess(input: {
+  id: string;
+  /** null = reset to role defaults; otherwise explicit submodule allowlist */
+  modules: string[] | null;
+}) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const target = await prisma.user.findUnique({ where: { id: input.id } });
+  if (!target) throw new Error("User not found");
+  assertCanManageUser(session.user.role, target, session.user.id);
+
+  if (
+    target.role !== "ADMIN" &&
+    target.role !== "SALES" &&
+    target.role !== "WAREHOUSE" &&
+    target.role !== "LOGISTICS"
+  ) {
+    throw new Error("Module access only applies to staff roles");
+  }
+
+  const {
+    assignableSubmodulesFor,
+    effectiveSubmodules,
+    parseModuleAccess,
+    serializeModuleAccess,
+    submoduleLabel,
+  } = await import("@/lib/admin-modules");
+
+  const assignable = new Set(
+    assignableSubmodulesFor(session.user.role, target.role),
+  );
+  const previousCustom = parseModuleAccess(target.moduleAccess);
+  const previousEffective = effectiveSubmodules(target.role, previousCustom);
+
+  let nextStored: string | null = null;
+  let nextEffective: string[];
+
+  if (input.modules == null) {
+    nextStored = null;
+    nextEffective = effectiveSubmodules(target.role, null);
+  } else {
+    const cleaned = [
+      ...new Set(input.modules.filter((id) => assignable.has(id))),
+    ].sort();
+    const defaultsSorted = [...effectiveSubmodules(target.role, null)].sort();
+    const sameAsDefaults =
+      cleaned.length === defaultsSorted.length &&
+      cleaned.every((id, i) => id === defaultsSorted[i]);
+    if (sameAsDefaults) {
+      nextStored = null;
+      nextEffective = defaultsSorted;
+    } else {
+      nextStored = serializeModuleAccess(cleaned);
+      nextEffective = effectiveSubmodules(target.role, cleaned);
+    }
+  }
+
+  await prisma.user.update({
+    where: { id: input.id },
+    data: { moduleAccess: nextStored },
+  });
+
+  const added = nextEffective.filter((id) => !previousEffective.includes(id));
+  const removed = previousEffective.filter((id) => !nextEffective.includes(id));
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "STAFF_MODULE_ACCESS_UPDATED",
+      entity: "User",
+      entityId: input.id,
+      meta: JSON.stringify({
+        name: target.name,
+        email: target.email,
+        phone: target.phone,
+        targetRole: target.role,
+        mode: nextStored == null ? "role_defaults" : "custom",
+        previousMode: previousCustom == null ? "role_defaults" : "custom",
+        previous: previousEffective,
+        next: nextEffective,
+        added,
+        removed,
+        addedLabels: added.map(submoduleLabel),
+        removedLabels: removed.map(submoduleLabel),
+      }),
+    },
+  });
+
+  revalidatePath("/admin/staff");
+  revalidatePath("/admin/activity");
+  return {
+    mode: nextStored == null ? ("role_defaults" as const) : ("custom" as const),
+    modules: nextEffective,
+  };
 }
 
 export async function deleteStaffUser(id: string) {

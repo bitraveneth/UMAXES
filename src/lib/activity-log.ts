@@ -167,6 +167,11 @@ const ACTION_META: Record<
     category: "system",
     tone: "neutral",
   },
+  STAFF_MODULE_ACCESS_UPDATED: {
+    label: "Staff module access updated",
+    category: "system",
+    tone: "warning",
+  },
   CUSTOMER_DELETED: {
     label: "Customer account deleted",
     category: "system",
@@ -332,6 +337,20 @@ export function formatActivityMeta(
       if (m.email) parts.push(String(m.email));
       else if (m.phone) parts.push(String(m.phone));
       if (m.reason) parts.push(String(m.reason));
+    }
+    if (action === "STAFF_MODULE_ACCESS_UPDATED") {
+      if (m.name) parts.push(String(m.name));
+      if (m.email) parts.push(String(m.email));
+      if (m.mode === "role_defaults") parts.push("Role defaults");
+      else if (m.mode === "custom") parts.push("Custom modules");
+      const addedLabels = Array.isArray(m.addedLabels)
+        ? m.addedLabels.map(String)
+        : [];
+      const removedLabels = Array.isArray(m.removedLabels)
+        ? m.removedLabels.map(String)
+        : [];
+      if (addedLabels.length) parts.push(`+ ${addedLabels.join(", ")}`);
+      if (removedLabels.length) parts.push(`− ${removedLabels.join(", ")}`);
     }
     if (action === "INVENTORY_ADJUST") {
       if (m.name || m.sku) parts.push(String(m.name || m.sku));

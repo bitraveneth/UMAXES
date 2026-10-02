@@ -142,6 +142,8 @@ model User {
   lastLoginCountry   String?
   lastLoginUserAgent String?
   lastLoginDevice    String?
+  /// JSON string[] of admin submodule ids. Null = role defaults (full role ceiling).
+  moduleAccess       String?
 }
 
 /// Ops staff profile (avatar, company card, address) — not buyer company

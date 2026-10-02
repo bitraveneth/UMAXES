@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { canAccessPath } from "@/lib/rbac";
+import { parseModuleAccess } from "@/lib/admin-modules";
 import { prisma } from "@/lib/db";
 import { AdminPageHeaderI18n } from "@/components/admin/AdminPageHeaderI18n";
 import StaffPanel from "@/components/admin/StaffPanel";
@@ -34,6 +35,7 @@ export default async function StaffPage() {
       lastLoginIp: true,
       lastLoginCountry: true,
       lastLoginDevice: true,
+      moduleAccess: true,
     },
   });
 
@@ -45,10 +47,23 @@ export default async function StaffPage() {
       />
       <StaffPanel
         currentUserId={session.user.id}
+        canManageModules={
+          session.user.role === "SUPER_ADMIN" || session.user.role === "ADMIN"
+        }
+        actorRole={session.user.role}
         staff={staff.map((u) => ({
-          ...u,
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          role: u.role,
+          status: u.status,
           createdAt: u.createdAt.toISOString(),
           lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
+          lastLoginIp: u.lastLoginIp,
+          lastLoginCountry: u.lastLoginCountry,
+          lastLoginDevice: u.lastLoginDevice,
+          moduleAccess: parseModuleAccess(u.moduleAccess),
         }))}
       />
     </div>

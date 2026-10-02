@@ -1,7 +1,8 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Outfit, Noto_Sans_SC } from "next/font/google";
 import { auth, signOut } from "@/lib/auth";
-import { canAccessAdmin, navForRole } from "@/lib/rbac";
+import { canAccessAdmin, canAccessPath, navForUser } from "@/lib/rbac";
+import { parseModuleAccess } from "@/lib/admin-modules";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import {
@@ -44,9 +45,27 @@ export default async function AdminLayout({
     ? cookieLocale
     : "en";
 
-  const items = navForRole(session.user.role);
+  const headerStore = await headers();
+  const pathname = headerStore.get("x-pathname") || "/admin";
+
+  const accessRow = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { moduleAccess: true, role: true },
+  });
+  const moduleAccess = parseModuleAccess(accessRow?.moduleAccess);
+  const role = accessRow?.role ?? session.user.role;
+
+  if (
+    pathname.startsWith("/admin") &&
+    pathname !== "/admin" &&
+    pathname !== "/admin/" &&
+    !canAccessPath(role, pathname, moduleAccess)
+  ) {
+    redirect("/admin");
+  }
+
+  const items = navForUser(role, moduleAccess);
   const email = session.user.email || session.user.name || "Staff";
-  const role = session.user.role;
 
   const unreadCount = await prisma.notification.count({
     where: { userId: session.user.id, readAt: null },
