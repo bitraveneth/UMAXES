@@ -26,8 +26,9 @@ import type { UserRole, UserStatus } from "@/generated/prisma/enums";
 import { useAppFeedback } from "@/components/ui/AppFeedback";
 import {
   ADMIN_MODULES,
-  assignableSubmodulesFor,
+  canGrantSubmodule,
   effectiveSubmodules,
+  grantBlockedReason,
   type AdminModuleDef,
 } from "@/lib/admin-modules";
 
@@ -257,30 +258,26 @@ export default function StaffPanel({
 
   function openModules(row: StaffRow) {
     if (!canEditModules(row)) return;
-    const assignable = assignableSubmodulesFor(actorRole, row.role);
-    const effective = effectiveSubmodules(row.role, row.moduleAccess);
-    setSelectedModules(effective.filter((id) => assignable.includes(id)));
+    setSelectedModules(effectiveSubmodules(row.role, row.moduleAccess));
     setModulesEdit(row);
     setError(null);
     setMessage(null);
   }
 
-  function modulesForRole(role: UserRole): AdminModuleDef[] {
-    const assignable = new Set(assignableSubmodulesFor(actorRole, role));
-    return ADMIN_MODULES.map((mod) => ({
-      ...mod,
-      submodules: mod.submodules.filter((s) => assignable.has(s.id)),
-    })).filter((mod) => mod.submodules.length > 0);
-  }
-
   function toggleModule(id: string) {
+    if (!modulesEdit) return;
+    if (!canGrantSubmodule(actorRole, modulesEdit.role, id)) return;
     setSelectedModules((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
 
   function toggleModuleGroup(mod: AdminModuleDef, on: boolean) {
-    const ids = mod.submodules.map((s) => s.id);
+    if (!modulesEdit) return;
+    const ids = mod.submodules
+      .map((s) => s.id)
+      .filter((id) => canGrantSubmodule(actorRole, modulesEdit.role, id));
+    if (ids.length === 0) return;
     setSelectedModules((prev) => {
       if (on) return [...new Set([...prev, ...ids])];
       return prev.filter((id) => !ids.includes(id));
@@ -310,9 +307,7 @@ export default function StaffPanel({
 
   function resetModulesToDefaults() {
     if (!modulesEdit) return;
-    const defaults = effectiveSubmodules(modulesEdit.role, null);
-    const assignable = assignableSubmodulesFor(actorRole, modulesEdit.role);
-    setSelectedModules(defaults.filter((id) => assignable.includes(id)));
+    setSelectedModules(effectiveSubmodules(modulesEdit.role, null));
   }
 
   return (
@@ -537,32 +532,51 @@ export default function StaffPanel({
             </div>
 
             <div className="space-y-4 overflow-y-auto px-5 py-4">
-              {modulesForRole(modulesEdit.role).map((mod) => {
-                const ids = mod.submodules.map((s) => s.id);
-                const allOn = ids.every((id) => selectedModules.includes(id));
-                const someOn =
-                  !allOn && ids.some((id) => selectedModules.includes(id));
+              {ADMIN_MODULES.map((mod) => {
+                const grantableIds = mod.submodules
+                  .map((s) => s.id)
+                  .filter((id) =>
+                    canGrantSubmodule(actorRole, modulesEdit.role, id),
+                  );
+                const allOn =
+                  grantableIds.length > 0 &&
+                  grantableIds.every((id) => selectedModules.includes(id));
                 return (
                   <div key={mod.id}>
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-[var(--admin-text)]">
                         {mod.label}
                       </p>
-                      <button
-                        type="button"
-                        className="text-xs font-medium text-[var(--admin-brand-500)]"
-                        onClick={() => toggleModuleGroup(mod, !allOn)}
-                      >
-                        {allOn ? "Clear" : someOn ? "Select all" : "Select all"}
-                      </button>
+                      {grantableIds.length > 0 ? (
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-[var(--admin-brand-500)]"
+                          onClick={() => toggleModuleGroup(mod, !allOn)}
+                        >
+                          {allOn ? "Clear" : "Select all"}
+                        </button>
+                      ) : null}
                     </div>
                     <div className="grid gap-1.5 sm:grid-cols-2">
                       {mod.submodules.map((sub) => {
                         const checked = selectedModules.includes(sub.id);
+                        const grantable = canGrantSubmodule(
+                          actorRole,
+                          modulesEdit.role,
+                          sub.id,
+                        );
+                        const blocked = grantBlockedReason(
+                          actorRole,
+                          modulesEdit.role,
+                          sub.id,
+                        );
                         return (
                           <label
                             key={sub.id}
-                            className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                            title={blocked ?? undefined}
+                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                              grantable ? "cursor-pointer" : "cursor-not-allowed opacity-60"
+                            } ${
                               checked
                                 ? "border-[var(--admin-brand-500)]/40 bg-[var(--admin-brand-50)] text-[var(--admin-text)]"
                                 : "border-[var(--admin-border)] bg-[var(--admin-bg)] text-[var(--admin-muted)]"
@@ -572,6 +586,7 @@ export default function StaffPanel({
                               type="checkbox"
                               className="rounded border-[var(--admin-border)]"
                               checked={checked}
+                              disabled={!grantable}
                               onChange={() => toggleModule(sub.id)}
                             />
                             <span className="font-medium text-[var(--admin-text)]">

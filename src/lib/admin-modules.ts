@@ -294,3 +294,35 @@ export function assignableSubmodulesFor(
   }
   return [];
 }
+
+/** Whether an actor may toggle this submodule for a target in the Modules UI / save. */
+export function canGrantSubmodule(
+  actorRole: UserRole,
+  targetRole: UserRole,
+  submoduleId: string,
+): boolean {
+  if (targetRole === "SUPER_ADMIN") return false;
+  if (!roleCeilingSubmodules(targetRole).includes(submoduleId)) return false;
+  if (actorRole === "SUPER_ADMIN") return true;
+  if (actorRole === "ADMIN") return submoduleId !== "admin.system";
+  return false;
+}
+
+export function grantBlockedReason(
+  actorRole: UserRole,
+  targetRole: UserRole,
+  submoduleId: string,
+): string | null {
+  if (canGrantSubmodule(actorRole, targetRole, submoduleId)) return null;
+  if (submoduleId === "admin.system" && actorRole === "ADMIN") {
+    return "Only Super Admin can grant System access";
+  }
+  if (!roleCeilingSubmodules(targetRole).includes(submoduleId)) {
+    const role =
+      targetRole === "SUPER_ADMIN"
+        ? "Super admin"
+        : targetRole.charAt(0) + targetRole.slice(1).toLowerCase();
+    return `Not available for ${role} role`;
+  }
+  return "You cannot change this module";
+}
