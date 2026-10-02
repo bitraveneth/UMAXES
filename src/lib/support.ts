@@ -1,10 +1,25 @@
-import { product } from "@/lib/assets";
+import { flavors, product, PUFF_OPTIONS } from "@/lib/assets";
+import { SITE_CONTACT_EMAIL } from "@/lib/site";
 
 export type SupportFaq = {
   q: string;
   a: string;
   keys: readonly string[];
 };
+
+const FLAVOR_LIST = flavors.map((f) => f.name).join(", ");
+
+/** Topics we never answer in chat — steer to email. */
+const PRIVATE_TOPIC_PATTERN =
+  /\b(price|pricing|prices|cost|costs|quote|quotes|wholesale\s*price|how\s*much|\$|usd|dollar|margin|discount\s*rate|net\s*price|list\s*price|unit\s*price|per\s*case\s*price|invoice\s*amount)\b/i;
+
+export function isPrivateSupportTopic(query: string): boolean {
+  return PRIVATE_TOPIC_PATTERN.test(query);
+}
+
+export function privateTopicEmailReply(): string {
+  return `For pricing and other account-private details, please email ${SITE_CONTACT_EMAIL} with your company name and what you need. We’ll reply from there — this chat stays on product FAQ and how HOOKAMAX works.`;
+}
 
 export const faqs: SupportFaq[] = [
   {
@@ -13,9 +28,27 @@ export const faqs: SupportFaq[] = [
     keys: ["age", "21", "adult", "who can", "legal", "buy"],
   },
   {
+    q: "What flavors / variations are available?",
+    a: `HOOKAMAX flavors: ${FLAVOR_LIST}. Each flavor is the same device family — pick the taste that fits your customers. Puff options: ${PUFF_OPTIONS.join(" / ")}.`,
+    keys: [
+      "flavor",
+      "flavors",
+      "variation",
+      "variations",
+      "options",
+      "taste",
+      "sku",
+      "lineup",
+      "which flavors",
+      "puff",
+      "80k",
+      "50k",
+    ],
+  },
+  {
     q: "What coil and airflow does it use?",
     a: "HOOKAMAX uses a MaxCore™ mesh coil with bottom airflow control, so you can switch between MTL and DTL.",
-    keys: ["coil", "mesh", "maxcore", "ohm", "0.6", "airflow", "mtl", "dl", "draw"],
+    keys: ["coil", "mesh", "maxcore", "ohm", "0.6", "airflow", "mtl", "dl", "draw", "feature", "features"],
   },
   {
     q: "What nicotine strength is HOOKAMAX?",
@@ -24,42 +57,37 @@ export const faqs: SupportFaq[] = [
   },
   {
     q: "How long does shipping take?",
-    a: "About 2–7 business days. You’ll get tracking once the order ships.",
+    a: "About 2–7 business days after the order ships. You’ll get tracking once it leaves the warehouse.",
     keys: ["shipping", "delivery", "arrive", "transit", "how long ship", "tracking", "business days"],
   },
   {
-    q: "Do you offer coupon codes?",
-    a: "Yes. Larger order quantities can qualify for a coupon.",
-    keys: ["coupon", "discount", "promo", "code", "sale", "quantity"],
-  },
-  {
     q: "How do I know my device is authentic?",
-    a: "Buy HOOKAMAX from official UMAXES channels. If you have questions about a device, use the Contact Us form with your order details.",
+    a: "Buy HOOKAMAX from official UMAXES channels. If you have questions about a device, email support with your order details.",
     keys: ["authentic", "authenticity", "verify", "fake", "real"],
   },
   {
     q: "What is your return policy?",
-    a: "If there is a quality issue, send evidence (photos or video). UMAXES will contact you to replace it.",
+    a: "If there is a quality issue, send evidence (photos or video) to support. UMAXES will contact you about replacement.",
     keys: ["return", "refund", "exchange", "defective", "broken", "warranty", "quality", "replace"],
   },
   {
     q: "How do I contact support?",
-    a: "Use the Contact Us form and include your order number so we can help faster. We usually reply within 1–2 business days.",
+    a: `Email ${SITE_CONTACT_EMAIL} and include your company and order number when you have one. We usually reply within 1–2 business days.`,
     keys: ["contact", "email", "support", "help", "reach", "message"],
   },
   {
     q: "What is HOOKAMAX?",
-    a: `${product.name} is UMAXES’ premium hookah-inspired disposable line — ${product.tagline} One device family. Adults 21+ only.`,
+    a: `${product.name} is UMAXES’ premium hookah-inspired disposable line — ${product.tagline} One device family with multiple flavor variations. Adults 21+ only.`,
     keys: ["what is hookamax", "hookamax", "product", "device", "disposable", "what is umaxes"],
   },
   {
     q: "How is HOOKAMAX packed?",
     a: "HOOKAMAX is sold by the case. Minimum order is 1 case (95 pieces). On the product page, + / − adds one case at a time — 1 case, 2 cases, and so on.",
-    keys: ["case", "pack", "95", "quantity", "pcs", "piece", "carton", "how many", "moq"],
+    keys: ["case", "pack", "95", "quantity", "pcs", "piece", "carton", "how many", "moq", "packing"],
   },
   {
     q: "Where can I shop?",
-    a: "Shop HOOKAMAX on the UMAXES Shop page (/shop). Adults 21+ only.",
+    a: "After you sign in, open Shop (/shop) to browse HOOKAMAX flavors and place B2B orders. Adults 21+ only.",
     keys: ["shop", "store", "order", "purchase", "buy online", "catalog"],
   },
   {
@@ -76,7 +104,11 @@ export function findSupportAnswer(
 ): string {
   const q = query.toLowerCase().trim();
   if (!q) {
-    return "Ask about HOOKAMAX, shipping, returns, or contact — or tap a quick topic below.";
+    return "Ask about flavors, product features, shipping, or packing — or tap a topic below.";
+  }
+
+  if (isPrivateSupportTopic(q)) {
+    return privateTopicEmailReply();
   }
 
   let best: { score: number; a: string } | null = null;
@@ -90,7 +122,6 @@ export function findSupportAnswer(
       if (q.includes(key)) score += key.length > 6 ? 4 : 3;
     }
 
-    // light word overlap on the answer/question
     for (const word of q.split(/\s+/)) {
       if (word.length < 4) continue;
       if (qText.includes(word)) score += 1;
@@ -100,7 +131,13 @@ export function findSupportAnswer(
     if (!best || score > best.score) best = { score, a: item.a };
   }
 
-  if (best && best.score >= 3) return best.a;
+  // Never surface an FAQ answer that looks like it quotes prices
+  if (best && best.score >= 3) {
+    if (isPrivateSupportTopic(best.a) || /\$\s*\d/.test(best.a)) {
+      return privateTopicEmailReply();
+    }
+    return best.a;
+  }
 
-  return "I can help with HOOKAMAX, shipping, coupons, returns, and contact. Try asking “What is HOOKAMAX?” or tap a topic below.";
+  return `I can help with HOOKAMAX flavors, features, packing, shipping, and FAQ. For pricing or account-private details, email ${SITE_CONTACT_EMAIL}.`;
 }
