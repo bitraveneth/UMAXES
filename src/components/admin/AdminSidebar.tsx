@@ -12,14 +12,17 @@ import { ADMIN_NAV_GROUPS } from "@/lib/rbac";
 
 export function AdminSidebar({
   items,
+  role,
   signOutAction,
 }: {
   items: AdminNavItem[];
+  role?: string;
   signOutAction: () => Promise<void>;
 }) {
   const pathname = usePathname();
   const { isMobileOpen, isExpanded, closeMobile } = useAdminSidebar();
   const { t } = useAdminI18n();
+  const roleLabel = role ? t(`role.${role}`) || role : t("brand.ops");
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -92,24 +95,26 @@ export function AdminSidebar({
         ].join(" ")}
       >
         <div
-          className={`flex items-center gap-3 border-b border-[var(--admin-border)] px-4 py-5 ${
-            isExpanded ? "justify-start" : "lg:justify-center lg:px-2"
+          className={`flex items-center border-b border-[var(--admin-border)] py-4 ${
+            isExpanded
+              ? "justify-start gap-2.5 px-5 pl-6"
+              : "justify-start gap-2.5 px-5 pl-6 lg:justify-center lg:px-2 lg:pl-2"
           }`}
         >
           <Link
             href="/admin"
             onClick={closeMobile}
-            className="flex min-w-0 items-center gap-3"
+            className="flex min-w-0 items-center gap-2.5"
             aria-label={t("brand.home")}
           >
             {showLabels ? (
-              <span className="relative h-8 w-[9.5rem] shrink-0">
+              <span className="relative h-7 w-[6.75rem] shrink-0">
                 <Image
                   src={logos.blueWordmark}
                   alt="UMAXES"
                   fill
                   className="admin-logo-light object-contain object-left"
-                  sizes="152px"
+                  sizes="108px"
                   priority
                 />
                 <Image
@@ -117,19 +122,19 @@ export function AdminSidebar({
                   alt="UMAXES"
                   fill
                   className="admin-logo-dark object-contain object-left"
-                  sizes="152px"
+                  sizes="108px"
                   priority
                 />
               </span>
             ) : (
               <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--admin-brand-50)] ring-1 ring-[var(--admin-brand-100)]">
-                <span className="relative h-6 w-6">
+                <span className="relative h-5 w-8">
                   <Image
                     src={logos.blueWordmark}
                     alt="UMAXES"
                     fill
                     className="admin-logo-light object-contain"
-                    sizes="24px"
+                    sizes="32px"
                     priority
                   />
                   <Image
@@ -137,18 +142,18 @@ export function AdminSidebar({
                     alt="UMAXES"
                     fill
                     className="admin-logo-dark object-contain"
-                    sizes="24px"
+                    sizes="32px"
                     priority
                   />
                 </span>
               </span>
             )}
+            {showLabels ? (
+              <span className="shrink-0 rounded-md bg-[var(--admin-brand-50)] px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide whitespace-nowrap text-[var(--admin-brand-700)]">
+                {roleLabel}
+              </span>
+            ) : null}
           </Link>
-          {showLabels && (
-            <span className="rounded-md bg-[var(--admin-brand-50)] px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-[var(--admin-brand-700)]">
-              {t("brand.ops")}
-            </span>
-          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 py-4">

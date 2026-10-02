@@ -86,7 +86,11 @@ export default async function AdminLayout({
       <AdminSidebarProvider>
         <AdminI18nProvider initialLocale={initialLocale}>
           <AdminToastProvider>
-            <AdminSidebar items={items} signOutAction={signOutAction} />
+            <AdminSidebar
+              items={items}
+              role={role}
+              signOutAction={signOutAction}
+            />
             <AdminMain>
               <AdminHeader
                 email={email}
