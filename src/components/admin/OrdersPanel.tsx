@@ -10,6 +10,7 @@ import {
 import type { OrderStatus, PaymentMethod } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { Package } from "@/components/admin/icons";
+import { ClipboardList, FileText } from "lucide-react";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { useAppFeedback } from "@/components/ui/AppFeedback";
 import {
@@ -421,37 +422,40 @@ function OrderDocLinks({
   const docs = [
     {
       type: "pi" as const,
-      short: t("orders.docPi"),
-      full: t("orders.viewPi"),
+      label: t("orders.docPiBtn"),
+      tone: "pi" as const,
+      Icon: FileText,
     },
     {
       type: "packing" as const,
-      short: t("orders.docPackShort"),
-      full: t("orders.viewPacking"),
+      label: t("orders.docPackBtn"),
+      tone: "pack" as const,
+      Icon: ClipboardList,
     },
   ];
 
-  const btnClass = compact
-    ? "admin-btn admin-btn-secondary admin-btn-sm !px-3 !text-xs font-semibold"
-    : "admin-btn admin-btn-secondary !px-4 !py-2.5 !text-sm font-semibold";
-
   return (
     <div
-      className={`flex flex-wrap items-center ${compact ? "gap-1.5" : "gap-2.5"}`}
+      className={`flex flex-wrap items-center ${compact ? "gap-2" : "gap-2.5"}`}
       onClick={(e) => e.stopPropagation()}
     >
-      {docs.map((doc) => (
-        <a
-          key={doc.type}
-          href={`/api/orders/${orderId}/docs?type=${doc.type}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={doc.full}
-          className={btnClass}
-        >
-          {compact ? doc.short : doc.full}
-        </a>
-      ))}
+      {docs.map((doc) => {
+        const Icon = doc.Icon;
+        return (
+          <a
+            key={doc.type}
+            href={`/api/orders/${orderId}/docs?type=${doc.type}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`admin-order-doc-btn admin-order-doc-btn-${doc.tone} ${
+              compact ? "is-compact" : ""
+            }`}
+          >
+            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} aria-hidden />
+            {doc.label}
+          </a>
+        );
+      })}
     </div>
   );
 }

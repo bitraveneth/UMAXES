@@ -510,6 +510,8 @@ const en: AdminMessages = {
     docPi: "PI",
     docPack: "Packing list",
     docPackShort: "Packing",
+    docPiBtn: "Proforma invoice",
+    docPackBtn: "Packing list",
     docCi: "CI",
     viewPi: "Proforma invoice (PI)",
     viewPacking: "Packing list",

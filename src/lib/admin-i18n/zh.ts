@@ -496,6 +496,8 @@ const zh: AdminMessages = {
     docPi: "PI",
     docPack: "装箱单",
     docPackShort: "装箱单",
+    docPiBtn: "形式发票",
+    docPackBtn: "装箱单",
     docCi: "CI",
     viewPi: "形式发票 PI",
     viewPacking: "装箱单",
