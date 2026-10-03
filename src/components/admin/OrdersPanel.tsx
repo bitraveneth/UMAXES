@@ -443,8 +443,6 @@ function OrderDocLinks({
           <a
             key={doc.type}
             href={`/api/orders/${orderId}/docs?type=${doc.type}`}
-            target="_blank"
-            rel="noopener noreferrer"
             title={doc.label}
             className="admin-order-doc-btn"
           >
@@ -728,8 +726,6 @@ function OrderExpand({
               {order.paymentSlipUrl ? (
                 <a
                   href={slipHref(order.id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="admin-btn admin-btn-secondary admin-btn-sm"
                 >
                   {t("orders.docSlip")}
