@@ -2852,17 +2852,53 @@ export async function prepareExitImpersonation() {
   return { token };
 }
 
+const IMPERSONATE_ROLES = [
+  "CUSTOMER",
+  "ADMIN",
+  "SALES",
+  "WAREHOUSE",
+  "LOGISTICS",
+] as const;
+
 /** Super admin: one-time token to open the site as this customer. */
 export async function prepareImpersonateCustomer(userId: string) {
-  const session = await requireRoles(["SUPER_ADMIN"]);
+  return prepareImpersonateUser(userId, {
+    actor: ["SUPER_ADMIN"],
+    only: ["CUSTOMER"],
+  });
+}
+
+/** Super admin / admin: one-time token to open ops as this staff account. */
+export async function prepareImpersonateStaff(userId: string) {
+  return prepareImpersonateUser(userId, {
+    actor: ["SUPER_ADMIN", "ADMIN"],
+    only: ["ADMIN", "SALES", "WAREHOUSE", "LOGISTICS"],
+  });
+}
+
+/** One-time token to view as a customer or staff user. */
+export async function prepareImpersonateUser(
+  userId: string,
+  opts?: {
+    actor?: UserRole[];
+    only?: readonly (typeof IMPERSONATE_ROLES)[number][];
+  },
+) {
+  const session = await requireRoles(opts?.actor ?? ["SUPER_ADMIN"]);
   if (session.user.id === userId) {
     throw new Error("You cannot impersonate yourself");
   }
 
   const target = await prisma.user.findUnique({ where: { id: userId } });
   if (!target) throw new Error("User not found");
-  if (target.role !== "CUSTOMER") {
-    throw new Error("Only customer accounts can be opened this way");
+
+  const allowed = opts?.only ?? IMPERSONATE_ROLES;
+  if (!allowed.includes(target.role as (typeof IMPERSONATE_ROLES)[number])) {
+    throw new Error(
+      target.role === "SUPER_ADMIN"
+        ? "Cannot open another super admin this way"
+        : "This account cannot be opened this way",
+    );
   }
   if (target.status === "DISABLED" || target.status === "REJECTED") {
     throw new Error("This account is disabled");
@@ -2886,11 +2922,15 @@ export async function prepareImpersonateCustomer(userId: string) {
         targetName: target.name,
         targetEmail: target.email,
         targetPhone: target.phone,
+        targetRole: target.role,
       }),
     },
   });
 
-  return { token, redirectTo: "/account" as const };
+  const redirectTo =
+    target.role === "CUSTOMER" ? ("/account" as const) : ("/admin" as const);
+
+  return { token, redirectTo };
 }
 
 export async function setProductVisibility(
