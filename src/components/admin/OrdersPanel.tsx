@@ -563,12 +563,6 @@ function OrderExpand({
       ? t("orders.payStatusPaid")
       : t("orders.payOnTerms")
     : t(paymentStatusLabelKey(order.paymentStatus));
-  const payFootMeta =
-    isCredit && !order.paymentPaid
-      ? methodLabel
-      : paySituation === methodLabel
-        ? methodLabel
-        : paySituation;
   const totalPcs = order.items.reduce((sum, item) => sum + item.quantity, 0);
   const payTone = paymentTone(
     isCredit
@@ -659,16 +653,15 @@ function OrderExpand({
           )}
 
           <div className="admin-order-lines-foot">
-            <div className="admin-order-lines-foot-stat">
+            <div className="admin-order-lines-foot-row">
               <span className="admin-order-lines-foot-label">
                 {t("orders.paymentPanelTitle")}
               </span>
               <strong className="admin-order-lines-foot-amount">
                 {money(order.total)}
               </strong>
-              <p className="admin-order-lines-foot-pay-meta">{payFootMeta}</p>
             </div>
-            <div className="admin-order-lines-foot-stat admin-order-lines-foot-stat-end">
+            <div className="admin-order-lines-foot-row">
               <span className="admin-order-lines-foot-label">
                 {t("orders.quantity")}
               </span>
