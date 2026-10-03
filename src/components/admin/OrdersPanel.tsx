@@ -423,13 +423,11 @@ function OrderDocLinks({
     {
       type: "pi" as const,
       label: t("orders.docPiBtn"),
-      tone: "pi" as const,
       Icon: FileText,
     },
     {
       type: "packing" as const,
       label: t("orders.docPackBtn"),
-      tone: "pack" as const,
       Icon: ClipboardList,
     },
   ];
@@ -448,7 +446,7 @@ function OrderDocLinks({
             target="_blank"
             rel="noopener noreferrer"
             title={doc.label}
-            className={`admin-order-doc-btn admin-order-doc-btn-${doc.tone}`}
+            className="admin-order-doc-btn"
           >
             <Icon
               className={compact ? "h-3.5 w-3.5 shrink-0" : "h-4 w-4 shrink-0"}
