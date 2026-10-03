@@ -852,11 +852,11 @@
 .admin-order-line,
 .admin-order-lines-foot {
   display: grid;
-  grid-template-columns: minmax(8.5rem, 15rem) 4.75rem 6rem minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 5.25rem 6.75rem;
   align-items: center;
-  column-gap: 1.15rem;
+  column-gap: 1.5rem;
   row-gap: 0.25rem;
-  padding: 0.7rem 1.1rem;
+  padding: 0.8rem 1.2rem;
 }
 
 .admin-order-lines-head {
