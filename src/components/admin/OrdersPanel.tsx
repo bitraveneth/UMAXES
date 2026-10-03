@@ -647,16 +647,42 @@ function OrderExpand({
           )}
 
           <div className="admin-order-lines-pay">
-            <div className="admin-order-lines-pay-stat">
-              <span>{t("orders.paymentAmount")}</span>
-              <strong>{money(order.total)}</strong>
+            <div className="admin-order-lines-pay-block">
+              <span className="admin-order-lines-pay-kicker">
+                {t("orders.totalPayment")}
+              </span>
+              <strong className="admin-order-lines-pay-value">
+                {money(order.total)}
+              </strong>
+              <div className="admin-order-lines-pay-sub">
+                <span className="admin-order-lines-pay-sub-label">
+                  {t("orders.paymentPanelTitle")}
+                </span>
+                <p className="admin-order-lines-pay-sub-value">
+                  {paySituation}
+                  <span className="admin-order-lines-pay-dot" aria-hidden>
+                    ·
+                  </span>
+                  {payLabel(order.paymentMethod)}
+                </p>
+              </div>
             </div>
-            <div className="admin-order-lines-pay-stat">
-              <span>{t("orders.totalQty")}</span>
-              <strong>
+            <div className="admin-order-lines-pay-block">
+              <span className="admin-order-lines-pay-kicker">
+                {t("orders.totalQty")}
+              </span>
+              <strong className="admin-order-lines-pay-value">
                 {order.items.reduce((sum, item) => sum + item.quantity, 0)}{" "}
                 {t("orders.pcs")}
               </strong>
+              <div className="admin-order-lines-pay-sub">
+                <span className="admin-order-lines-pay-sub-label">
+                  {t("orders.quantity")}
+                </span>
+                <p className="admin-order-lines-pay-sub-value">
+                  {t("orders.linesCount", { count: order.items.length })}
+                </p>
+              </div>
             </div>
           </div>
         </section>
