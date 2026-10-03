@@ -436,7 +436,7 @@ function OrderDocLinks({
 
   return (
     <div
-      className={`flex flex-wrap items-center ${compact ? "gap-2" : "gap-2.5"}`}
+      className={`admin-order-doc-links ${compact ? "is-compact" : ""}`}
       onClick={(e) => e.stopPropagation()}
     >
       {docs.map((doc) => {
@@ -447,12 +447,15 @@ function OrderDocLinks({
             href={`/api/orders/${orderId}/docs?type=${doc.type}`}
             target="_blank"
             rel="noopener noreferrer"
-            className={`admin-order-doc-btn admin-order-doc-btn-${doc.tone} ${
-              compact ? "is-compact" : ""
-            }`}
+            title={doc.label}
+            className={`admin-order-doc-btn admin-order-doc-btn-${doc.tone}`}
           >
-            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} aria-hidden />
-            {doc.label}
+            <Icon
+              className={compact ? "h-3.5 w-3.5 shrink-0" : "h-4 w-4 shrink-0"}
+              strokeWidth={2}
+              aria-hidden
+            />
+            <span>{doc.label}</span>
           </a>
         );
       })}
@@ -723,7 +726,7 @@ function OrderExpand({
               ) : null}
             </dl>
             <div className="admin-order-detail-docs">
-              <OrderDocLinks orderId={order.id} compact />
+              <OrderDocLinks orderId={order.id} />
               {order.paymentSlipUrl ? (
                 <a
                   href={slipHref(order.id)}

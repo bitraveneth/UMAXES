@@ -787,59 +787,93 @@
 .admin-order-detail-docs {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.95rem 1.1rem 0.15rem;
+}
+
+.admin-order-doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.55rem;
-  padding: 0.85rem 1.1rem 0;
+}
+
+.admin-order-doc-links.is-compact {
+  gap: 0.4rem;
 }
 
 .admin-order-doc-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  border-radius: 0.85rem;
-  padding: 0.55rem 0.9rem;
+  gap: 0.45rem;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 0.62rem 1.05rem;
   font-size: 0.8125rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   line-height: 1.2;
   white-space: nowrap;
+  text-decoration: none;
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
     background-color 0.15s ease,
-    border-color 0.15s ease;
+    border-color 0.15s ease,
+    filter 0.15s ease;
 }
 
-.admin-order-doc-btn.is-compact {
-  padding: 0.45rem 0.75rem;
-  font-size: 0.78rem;
+.admin-order-doc-links.is-compact .admin-order-doc-btn {
+  padding: 0.42rem 0.78rem;
+  font-size: 0.75rem;
+  gap: 0.35rem;
 }
 
 .admin-order-doc-btn-pi {
   color: #fff;
   background: var(--admin-brand-500);
   border: 1px solid var(--admin-brand-500);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--admin-brand-500) 32%, transparent);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--admin-brand-500) 34%, transparent);
+}
+
+.admin-order-doc-btn:focus-visible {
+  outline: 2px solid var(--admin-brand-500);
+  outline-offset: 2px;
 }
 
 .admin-order-doc-btn-pi:hover {
   transform: translateY(-1px);
-  background: var(--admin-brand-600, var(--admin-brand-500));
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--admin-brand-500) 42%, transparent);
+  background: var(--admin-brand-600);
+  border-color: var(--admin-brand-600);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--admin-brand-500) 44%, transparent);
 }
 
 .admin-order-doc-btn-pack {
-  color: var(--admin-text);
-  background: var(--admin-card);
-  border: 1px solid var(--admin-border);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  color: #fff;
+  background: #0e7490;
+  border: 1px solid #0e7490;
+  box-shadow: 0 8px 18px color-mix(in srgb, #0e7490 34%, transparent);
 }
 
 .admin-order-doc-btn-pack:hover {
   transform: translateY(-1px);
-  border-color: var(--admin-brand-500);
-  color: var(--admin-brand-600, var(--admin-brand-500));
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--admin-brand-500) 18%, transparent);
+  background: #155e75;
+  border-color: #155e75;
+  box-shadow: 0 10px 22px color-mix(in srgb, #0e7490 44%, transparent);
+}
+
+.admin-shell.dark .admin-order-doc-btn-pack {
+  background: #22d3ee;
+  border-color: #22d3ee;
+  color: #083344;
+  box-shadow: 0 8px 18px color-mix(in srgb, #22d3ee 28%, transparent);
+}
+
+.admin-shell.dark .admin-order-doc-btn-pack:hover {
+  background: #67e8f9;
+  border-color: #67e8f9;
 }
 
 .admin-order-expand-head {
