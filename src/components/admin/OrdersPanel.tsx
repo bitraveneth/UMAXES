@@ -553,7 +553,7 @@ function OrderExpand({
   const isCredit = order.paymentMethod === "CREDIT";
 
   const fulfillmentStatuses: OrderStatus[] = allowedStatuses.filter(
-    (s) => s !== "SUBMITTED",
+    (s) => s !== "SUBMITTED" && s !== "PAYMENT_PENDING",
   );
   const preferredStatus: OrderStatus =
     order.status === "PICKING" ? "SENT_TO_SUPPLIER" : order.status;
@@ -568,13 +568,17 @@ function OrderExpand({
       ? t("orders.payStatusPaid")
       : t("orders.payOnTerms")
     : t(paymentStatusLabelKey(order.paymentStatus));
+  const payTone = paymentTone(
+    isCredit
+      ? order.paymentPaid
+        ? "paid"
+        : "on_terms"
+      : order.paymentStatus,
+  );
   const totalPcs = order.items.reduce((sum, item) => sum + item.quantity, 0);
   const trackingRows = order.shipments.filter(
     (s) => s.trackingNumber || s.carrier,
   );
-  const trackingNumber =
-    trackingRows[0]?.trackingNumber || shipment?.trackingNumber || "";
-  const trackingCarrier = trackingRows[0]?.carrier || shipment?.carrier || "";
 
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
@@ -762,26 +766,14 @@ function OrderExpand({
           </section>
         </div>
 
-        <div className="admin-order-ops">
-          <section className="admin-order-ops-card">
-            <div className="admin-order-ops-head">
-              <h4 className="admin-order-ops-title">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h4 className="m-0 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
                 {t("orders.paymentPanelTitle")}
               </h4>
+              <AdminBadge tone={payTone}>{paySituation}</AdminBadge>
             </div>
-
-            <div className="admin-order-ops-tiles">
-              <div className="admin-order-ops-tile">
-                <span>{t("orders.paymentAmount")}</span>
-                <strong>{money(order.total)}</strong>
-              </div>
-              <div className="admin-order-ops-tile">
-                <span>{t("orders.payMethod")}</span>
-                <strong>{methodLabel}</strong>
-                {isCredit ? <em>{paySituation}</em> : null}
-              </div>
-            </div>
-
             {!isCredit ? (
               <form
                 action={async (fd) => {
@@ -796,13 +788,13 @@ function OrderExpand({
                   );
                   onClose();
                 }}
-                className="admin-order-ops-frame"
+                className="space-y-3"
               >
                 <select
                   name="paymentStatus"
                   defaultValue={currentPayStatus}
                   aria-label={t("orders.paymentStatus")}
-                  className="admin-input"
+                  className="admin-input w-full"
                 >
                   {ADMIN_PAYMENT_STATUSES.map((s) => (
                     <option key={s} value={s}>
@@ -818,7 +810,7 @@ function OrderExpand({
                 </button>
               </form>
             ) : !order.paymentPaid ? (
-              <div className="admin-order-ops-frame admin-order-ops-frame-stack">
+              <div className="space-y-3">
                 <p className="text-sm text-[var(--admin-muted)]">
                   {t("orders.markPaidHint")}
                 </p>
@@ -840,35 +832,26 @@ function OrderExpand({
                 </form>
               </div>
             ) : (
-              <p className="admin-order-ops-note text-[var(--admin-success-700)]">
+              <p className="text-sm font-medium text-[var(--admin-success-700)]">
                 {t("orders.payStatusPaid")}
               </p>
             )}
             {!isCredit && !order.paymentSlipUrl ? (
-              <p className="admin-order-ops-note text-[var(--admin-warning-700)]">
+              <p className="mt-3 text-sm font-medium text-[var(--admin-warning-700)]">
                 {t("orders.noSlip")}
               </p>
             ) : null}
           </section>
 
-          <section className="admin-order-ops-card">
-            <div className="admin-order-ops-head">
-              <h4 className="admin-order-ops-title">
+          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h4 className="m-0 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
                 {t("orders.shippingPanelTitle")}
               </h4>
+              <AdminBadge tone={orderTone(order.status)}>
+                {statusLabel(order.status)}
+              </AdminBadge>
             </div>
-
-            <div className="admin-order-ops-tiles">
-              <div className="admin-order-ops-tile">
-                <span>{t("orders.trackingFooter")}</span>
-                <strong>{trackingNumber || t("orders.noTracking")}</strong>
-              </div>
-              <div className="admin-order-ops-tile">
-                <span>{t("orders.carrier")}</span>
-                <strong>{trackingCarrier || "—"}</strong>
-              </div>
-            </div>
-
             {fulfillmentStatuses.length > 0 ? (
               <form
                 action={async (fd) => {
@@ -879,13 +862,13 @@ function OrderExpand({
                   await updateOrderStatus(order.id, nextStatus);
                   onClose();
                 }}
-                className="admin-order-ops-frame"
+                className="space-y-3"
               >
                 <select
                   name="status"
                   defaultValue={defaultFulfillment}
                   aria-label={t("orders.statusLabel")}
-                  className="admin-input"
+                  className="admin-input w-full"
                 >
                   {fulfillmentStatuses.map((s) => (
                     <option key={s} value={s}>
@@ -901,7 +884,7 @@ function OrderExpand({
                 </button>
               </form>
             ) : (
-              <p className="admin-order-ops-note text-[var(--admin-muted)]">
+              <p className="text-sm text-[var(--admin-muted)]">
                 {statusLabel(order.status)}
               </p>
             )}
