@@ -709,29 +709,28 @@
 }
 
 .admin-order-lines-pay {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding: 0.35rem 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  gap: 1rem 2rem;
+  padding: 1.1rem 1.35rem;
   border-top: 1px solid var(--admin-border);
   background: var(--admin-hover);
 }
 
-.admin-order-lines-pay-block {
+.admin-order-lines-pay-stat {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 0.28rem;
   min-width: 0;
-  width: 100%;
-  padding: 1.15rem 1.35rem 1.25rem;
 }
 
-.admin-order-lines-pay-block + .admin-order-lines-pay-block {
-  border-top: 1px solid var(--admin-border);
+.admin-order-lines-pay-stat:last-child {
+  align-items: flex-end;
+  text-align: right;
 }
 
-.admin-order-lines-pay-kicker {
+.admin-order-lines-pay-stat > span {
   font-size: 0.7rem;
   font-weight: 650;
   letter-spacing: 0.12em;
@@ -739,19 +738,19 @@
   color: var(--admin-muted);
 }
 
-.admin-order-lines-pay-value {
-  font-size: 1.35rem;
+.admin-order-lines-pay-stat > strong {
+  font-size: 1.15rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--admin-text);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .admin-order-lines-pay-sub {
   display: flex;
   flex-direction: column;
   gap: 0.18rem;
-  margin-top: 0.55rem;
+  margin-top: 0.45rem;
 }
 
 .admin-order-lines-pay-sub-label {
@@ -939,8 +938,9 @@
     display: inline;
   }
 
-  .admin-order-lines-pay-block {
-    padding: 1.05rem 1.1rem 1.15rem;
+  .admin-order-lines-pay {
+    padding: 1rem 1.1rem;
+    gap: 0.85rem 1.25rem;
   }
 }
 
