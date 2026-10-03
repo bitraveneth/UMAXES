@@ -557,7 +557,6 @@ function OrderExpand({
     : fulfillmentStatuses[0] || preferredStatus;
 
   const currentPayStatus = normalizePaymentStatus(order.paymentStatus);
-  const totalQty = order.items.reduce((sum, item) => sum + item.quantity, 0);
   const paySituation = isCredit
     ? order.paymentPaid
       ? t("orders.payStatusPaid")
@@ -612,25 +611,8 @@ function OrderExpand({
         </div>
 
         <section className="admin-order-lines">
-          <div className="admin-order-lines-summary">
-            <div>
-              <p className="admin-order-lines-kicker">{t("orders.lineItems")}</p>
-              <div className="admin-order-lines-stats">
-                <span>
-                  {order.items.length} {t("orders.colLines").toLowerCase()}
-                </span>
-                <span className="admin-order-lines-dot" aria-hidden>
-                  ·
-                </span>
-                <span className="is-strong">
-                  {totalQty} {t("orders.pcs")}
-                </span>
-              </div>
-            </div>
-          </div>
-
           {order.items.length === 0 ? (
-            <p className="px-4 pb-4 text-sm text-[var(--admin-muted)] sm:px-5">
+            <p className="px-4 py-3 text-sm text-[var(--admin-muted)] sm:px-5">
               {t("common.noData")}
             </p>
           ) : (
@@ -638,10 +620,10 @@ function OrderExpand({
               {order.items.map((item) => (
                 <li key={item.id} className="admin-order-line">
                   <div className="admin-order-line-main">
-                    <p className="admin-order-line-name">{item.name}</p>
                     <span className="admin-order-line-sku" title={item.sku}>
                       {item.sku}
                     </span>
+                    <p className="admin-order-line-name">{item.name}</p>
                   </div>
 
                   <div className="admin-order-line-qty" title={t("orders.qty")}>
