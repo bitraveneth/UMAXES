@@ -762,7 +762,7 @@ function OrderExpand({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 sm:p-5">
+          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:p-5">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
               <div>
                 <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
@@ -774,6 +774,29 @@ function OrderExpand({
               </div>
               <AdminBadge tone={payTone}>{paySituation}</AdminBadge>
             </div>
+
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-3 py-3">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-[var(--admin-muted)] uppercase">
+                  {t("orders.paymentAmount")}
+                </p>
+                <p className="mt-1 text-lg font-bold tabular-nums text-[var(--admin-text)]">
+                  {money(order.total)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-3 py-3">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-[var(--admin-muted)] uppercase">
+                  {t("orders.colPayment")}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[var(--admin-text)]">
+                  {methodLabel}
+                </p>
+                <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
+                  {paySituation === methodLabel ? "" : paySituation}
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-4">
               {!isCredit ? (
                 <form
@@ -789,7 +812,7 @@ function OrderExpand({
                     );
                     onClose();
                   }}
-                  className="space-y-3"
+                  className="space-y-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/30 p-3 sm:p-4"
                 >
                   <label className="block text-sm font-medium text-[var(--admin-text)]">
                     {t("orders.paymentStatus")}
@@ -813,7 +836,7 @@ function OrderExpand({
                   </button>
                 </form>
               ) : !order.paymentPaid ? (
-                <div className="space-y-3">
+                <div className="space-y-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/30 p-3 sm:p-4">
                   <p className="text-sm text-[var(--admin-muted)]">
                     {t("orders.markPaidHint")}
                   </p>
