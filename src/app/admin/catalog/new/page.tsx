@@ -6,6 +6,7 @@ import { AdminCard } from "@/components/admin/ui";
 import { AdminPageHeaderI18n } from "@/components/admin/AdminPageHeaderI18n";
 import { AdminLinkBtn, AdminText } from "@/components/admin/AdminI18nBits";
 import { ProductImageField } from "@/components/admin/ProductImageField";
+import { CASE_MOQ_PCS } from "@/lib/pack";
 import { PRODUCT_IMAGE_HELP } from "@/lib/product-image";
 import { Plus } from "lucide-react";
 
@@ -75,9 +76,9 @@ export default async function NewCatalogProductPage() {
               distroPrice: Number(fd.get("distroPrice") || 0),
               wholesalerPrice: Number(fd.get("wholesalerPrice") || 0),
               shopPrice: Number(fd.get("shopPrice") || 0),
-              distroMoq: Number(fd.get("distroMoq") || 50),
-              wholesalerMoq: Number(fd.get("wholesalerMoq") || 20),
-              shopMoq: Number(fd.get("shopMoq") || 5),
+              distroMoq: Number(fd.get("distroMoq") || CASE_MOQ_PCS),
+              wholesalerMoq: Number(fd.get("wholesalerMoq") || CASE_MOQ_PCS),
+              shopMoq: Number(fd.get("shopMoq") || CASE_MOQ_PCS),
             });
             redirect("/admin/catalog");
           }}
@@ -147,7 +148,7 @@ export default async function NewCatalogProductPage() {
               name="distroMoq"
               type="number"
               min={1}
-              defaultValue={50}
+              defaultValue={CASE_MOQ_PCS}
               className="admin-input mt-1.5 w-full"
             />
           </label>
@@ -168,7 +169,7 @@ export default async function NewCatalogProductPage() {
               name="wholesalerMoq"
               type="number"
               min={1}
-              defaultValue={20}
+              defaultValue={CASE_MOQ_PCS}
               className="admin-input mt-1.5 w-full"
             />
           </label>
@@ -189,7 +190,7 @@ export default async function NewCatalogProductPage() {
               name="shopMoq"
               type="number"
               min={1}
-              defaultValue={5}
+              defaultValue={CASE_MOQ_PCS}
               className="admin-input mt-1.5 w-full"
             />
           </label>

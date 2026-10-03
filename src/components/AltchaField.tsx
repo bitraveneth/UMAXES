@@ -1,29 +1,15 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useSyncExternalStore,
-  type CSSProperties,
-} from "react";
-import "altcha";
-import type {} from "altcha/types/react";
+import { HUMAN_CHECK_PAYLOAD } from "@/lib/human-check";
 
 type AltchaFieldProps = {
   value: string;
   onChange: (payload: string) => void;
   className?: string;
-  /** When false, render widget only (no framed panel). Default true. */
+  /** When false, render checkbox only (no framed panel). Default true. */
   framed?: boolean;
   title?: string;
   hint?: string;
-};
-
-const CHALLENGE_URL = "/api/altcha/challenge";
-
-type AltchaEl = HTMLElement & {
-  challenge?: string;
-  reset?: () => void;
 };
 
 function ShieldIcon() {
@@ -51,98 +37,47 @@ function ShieldIcon() {
   );
 }
 
+/**
+ * Lightweight human check — checkbox only (no Altcha PoW).
+ * Same value/onChange API as the old captcha field so login/register keep working.
+ */
 export default function AltchaField({
   value,
   onChange,
   className = "",
   framed = true,
   title = "Security check",
-  hint = "Confirm you are human to continue.",
+  hint = "Check the box to continue. No waiting.",
 }: AltchaFieldProps) {
-  const ref = useRef<AltchaEl | null>(null);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+  const verified = value === HUMAN_CHECK_PAYLOAD;
+  const inputId = "umaxes-human-check";
 
-  const isClient = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
-
-  function bindWidget(el: AltchaEl | null) {
-    ref.current = el;
-    if (!el) return;
-    el.challenge = CHALLENGE_URL;
-    el.setAttribute("challenge", CHALLENGE_URL);
-    el.setAttribute("name", "altcha");
-  }
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const onStateChange = (event: Event) => {
-      const detail = (event as CustomEvent<{ state?: string; payload?: string }>)
-        .detail;
-      if (detail?.state === "verified" && detail.payload) {
-        onChangeRef.current(detail.payload);
-        return;
-      }
-      if (detail?.state && detail.state !== "verified") {
-        onChangeRef.current("");
-      }
-    };
-
-    const onVerified = (event: Event) => {
-      const detail = (event as CustomEvent<{ payload?: string }>).detail;
-      if (detail?.payload) {
-        onChangeRef.current(detail.payload);
-      }
-    };
-
-    el.addEventListener("statechange", onStateChange);
-    el.addEventListener("verified", onVerified);
-    return () => {
-      el.removeEventListener("statechange", onStateChange);
-      el.removeEventListener("verified", onVerified);
-    };
-  }, [isClient]);
-
-  useEffect(() => {
-    if (value) return;
-    ref.current?.reset?.();
-  }, [value]);
-
-  const verified = Boolean(value);
-
-  const widget = !isClient ? (
-    <div className="min-h-[52px] rounded-xl border border-black/10 bg-white px-4 py-3.5 font-body text-sm text-black/45">
-      Loading security check…
-    </div>
-  ) : (
-    <div className={`altcha-field ${className}`}>
-      <altcha-widget
-        ref={bindWidget as never}
-        challenge={CHALLENGE_URL}
+  const checkbox = (
+    <label
+      htmlFor={inputId}
+      className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white px-3.5 py-3.5 transition ${className} ${
+        verified
+          ? "border-emerald-400/70"
+          : "border-black/14 hover:border-black/25"
+      }`}
+    >
+      <input
+        id={inputId}
+        type="checkbox"
         name="altcha"
-        style={
-          {
-            "--altcha-border-radius": "0.75rem",
-            "--altcha-color-base": "#ffffff",
-            "--altcha-color-base-content": "#111111",
-            "--altcha-color-neutral": "rgba(17,17,17,0.2)",
-            "--altcha-color-primary": "#1b4f72",
-            "--altcha-color-primary-content": "#ffffff",
-            "--altcha-border-color": "rgba(0,0,0,0.14)",
-            "--altcha-input-background-color": "#ffffff",
-            "--altcha-input-color": "#111111",
-          } as CSSProperties
+        checked={verified}
+        onChange={(e) =>
+          onChange(e.target.checked ? HUMAN_CHECK_PAYLOAD : "")
         }
+        className="h-5 w-5 shrink-0 rounded border-black/30 accent-[#1b4f72]"
       />
-    </div>
+      <span className="font-body text-sm font-medium text-black">
+        I am human
+      </span>
+    </label>
   );
 
-  if (!framed) return widget;
+  if (!framed) return checkbox;
 
   return (
     <div
@@ -169,10 +104,10 @@ export default function AltchaField({
               : "bg-umx-orange/15 text-umx-orange"
           }`}
         >
-          {verified ? "Verified" : "Required"}
+          {verified ? "Ready" : "Required"}
         </span>
       </div>
-      {widget}
+      {checkbox}
     </div>
   );
 }

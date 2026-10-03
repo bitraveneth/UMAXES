@@ -10,8 +10,10 @@ import ProductShowcase from "@/components/ProductShowcase";
 import Testimonials from "@/components/Testimonials";
 import { auth } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
+import { enforceStorefrontAccess } from "@/lib/storefront-gate";
 
 export default async function Home() {
+  await enforceStorefrontAccess();
   const settings = await getSiteSettings();
   // Guests land on login when site access = "Sign in page".
   // Logged-in members still see the marketing homepage (e.g. Visit website).

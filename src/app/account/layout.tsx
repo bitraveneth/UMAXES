@@ -11,6 +11,7 @@ import {
   isBuyerLocale,
   type BuyerLocale,
 } from "@/lib/buyer-i18n";
+import { enforceStorefrontAccess } from "@/lib/storefront-gate";
 
 export default async function AccountLayout({
   children,
@@ -27,8 +28,13 @@ export default async function AccountLayout({
     session.user.status === "REJECTED" ||
     session.user.status === "DISABLED"
   ) {
+    if (!session?.user || !isStaff(session.user.role)) {
+      await enforceStorefrontAccess();
+    }
     return children;
   }
+
+  await enforceStorefrontAccess();
 
   let companyName: string | null = null;
   let image: string | null = null;

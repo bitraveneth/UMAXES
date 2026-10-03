@@ -3,35 +3,89 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { useAdminSidebar } from "./AdminSidebarContext";
 import { useAdminI18n } from "./AdminI18n";
 import { adminNavIcons, ExternalLink, LogOut, Package } from "./icons";
 import { logos } from "@/lib/assets";
-import type { AdminNavItem } from "@/lib/rbac";
+import type { AdminNavGroup, AdminNavItem } from "@/lib/rbac";
+import { ADMIN_NAV_GROUPS } from "@/lib/rbac";
 
 export function AdminSidebar({
   items,
+  role,
   signOutAction,
 }: {
   items: AdminNavItem[];
+  role?: string;
   signOutAction: () => Promise<void>;
 }) {
   const pathname = usePathname();
   const { isMobileOpen, isExpanded, closeMobile } = useAdminSidebar();
   const { t } = useAdminI18n();
+  const roleLabel = role ? t(`role.${role}`) || role : t("brand.ops");
+  const activeLinkRef = useRef<HTMLAnchorElement | null>(null);
+  /** Auto-scroll active nav into view — Super Admin / Admin only (long menus). */
+  const scrollActiveNav =
+    role === "SUPER_ADMIN" || role === "ADMIN";
+
+  useEffect(() => {
+    if (!scrollActiveNav) return;
+    const el = activeLinkRef.current;
+    if (!el) return;
+    // Keep highlight visible when landing deep in the menu (e.g. Staff).
+    const id = window.requestAnimationFrame(() => {
+      el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [pathname, scrollActiveNav, isExpanded, isMobileOpen]);
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
+    if (href === "/admin/orders/new") {
+      return pathname.startsWith("/admin/orders/new");
+    }
+    if (href === "/admin/users/new") {
+      return pathname.startsWith("/admin/users/new");
+    }
+    if (href === "/admin/users") {
+      return (
+        pathname === "/admin/users" ||
+        (pathname.startsWith("/admin/users/") &&
+          !pathname.startsWith("/admin/users/new"))
+      );
+    }
+    if (href === "/admin/orders") {
+      return (
+        pathname === "/admin/orders" ||
+        (pathname.startsWith("/admin/orders/") &&
+          !pathname.startsWith("/admin/orders/new"))
+      );
+    }
     if (href === "/admin/logistics") {
       if (pathname === "/admin/logistics" || pathname === "/admin/logistics/") {
         return true;
       }
       if (pathname.startsWith("/admin/logistics/shipments")) return false;
       if (pathname.startsWith("/admin/logistics/packing-lists")) return false;
-      // Order desk detail: /admin/logistics/orders/[id]
       return pathname.startsWith("/admin/logistics/orders/");
     }
     return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const sections = ADMIN_NAV_GROUPS.map((group) => ({
+    group,
+    items: items.filter((item) => (item.group || "home") === group),
+  })).filter((section) => section.items.length > 0);
+
+  const groupLabelKey: Record<AdminNavGroup, string | null> = {
+    home: null,
+    ops: "nav.groupOps",
+    customers: "nav.groupCustomers",
+    money: "nav.groupMoney",
+    catalog: "nav.groupCatalog",
+    insights: "nav.groupInsights",
+    admin: "nav.groupAdmin",
   };
 
   const widthClass = isExpanded ? "lg:w-[290px]" : "lg:w-[90px]";
@@ -57,102 +111,122 @@ export function AdminSidebar({
         ].join(" ")}
       >
         <div
-          className={`flex items-center gap-3 border-b border-[var(--admin-border)] px-4 py-5 ${
-            isExpanded ? "justify-start" : "lg:justify-center lg:px-2"
+          className={`flex items-center border-b border-[var(--admin-border)] py-4 ${
+            isExpanded
+              ? "justify-start gap-2.5 px-5 pl-6"
+              : "justify-start gap-2.5 px-5 pl-6 lg:justify-center lg:px-2 lg:pl-2"
           }`}
         >
           <Link
             href="/admin"
             onClick={closeMobile}
-            className="flex min-w-0 items-center gap-3"
+            className="flex min-w-0 items-center gap-2.5"
             aria-label={t("brand.home")}
           >
             {showLabels ? (
-              <span className="relative h-8 w-[9.5rem] shrink-0">
+              <span className="relative h-7 w-[6.75rem] shrink-0">
                 <Image
-                  src={logos.orangeTransparent}
+                  src={logos.blueWordmark}
                   alt="UMAXES"
                   fill
                   className="admin-logo-light object-contain object-left"
-                  sizes="152px"
+                  sizes="108px"
                   priority
                 />
                 <Image
-                  src={logos.creamTransparent}
+                  src={logos.blueWordmarkOnDark}
                   alt="UMAXES"
                   fill
                   className="admin-logo-dark object-contain object-left"
-                  sizes="152px"
+                  sizes="108px"
                   priority
                 />
               </span>
             ) : (
               <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--admin-brand-50)] ring-1 ring-[var(--admin-brand-100)]">
-                <span className="relative h-6 w-6">
+                <span className="relative h-5 w-8">
                   <Image
-                    src={logos.markOrange}
+                    src={logos.blueWordmark}
                     alt="UMAXES"
                     fill
                     className="admin-logo-light object-contain"
-                    sizes="24px"
+                    sizes="32px"
                     priority
                   />
                   <Image
-                    src={logos.markCream}
+                    src={logos.blueWordmarkOnDark}
                     alt="UMAXES"
                     fill
                     className="admin-logo-dark object-contain"
-                    sizes="24px"
+                    sizes="32px"
                     priority
                   />
                 </span>
               </span>
             )}
+            {showLabels ? (
+              <span className="shrink-0 rounded-md bg-[var(--admin-brand-50)] px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide whitespace-nowrap text-[var(--admin-brand-700)]">
+                {roleLabel}
+              </span>
+            ) : null}
           </Link>
-          {showLabels && (
-            <span className="rounded-md bg-[var(--admin-brand-50)] px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-[var(--admin-brand-700)]">
-              {t("brand.ops")}
-            </span>
-          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto px-4 py-4">
-          <p
-            className={`mb-3 px-3 text-xs font-medium uppercase tracking-wider text-[var(--admin-muted)] ${
-              !isExpanded ? "lg:text-center lg:px-0" : ""
-            }`}
-          >
-            {showLabels ? t("brand.menu") : "···"}
-          </p>
-          <ul className="flex flex-col gap-1">
-            {items.map((item) => {
-              const active = isActive(item.href);
-              const Icon = adminNavIcons[item.href] || Package;
-              const navKey = item.navKey || item.href;
-              const label = t(`nav.${navKey}`) || item.label;
-              return (
-                <li key={`${item.href}:${navKey}`}>
-                  <Link
-                    href={item.href}
-                    onClick={closeMobile}
-                    title={label}
-                    className={[
-                      "admin-menu-item",
-                      active ? "admin-menu-item-active" : "",
-                      !isExpanded ? "lg:justify-center lg:px-2" : "",
-                    ].join(" ")}
-                  >
-                    <Icon
-                      className="h-5 w-5 shrink-0"
-                      strokeWidth={1.75}
-                      aria-hidden
-                    />
-                    {showLabels && <span className="truncate">{label}</span>}
-                  </Link>
-                </li>
-              );
-            })}
-            <li className="mt-1 border-t border-[var(--admin-border)] pt-2">
+          {sections.map((section) => {
+            const labelKey = groupLabelKey[section.group];
+            return (
+              <div
+                key={section.group}
+                className={section.group === "home" ? "" : "mt-4"}
+              >
+                {showLabels && labelKey ? (
+                  <p className="admin-menu-group">{t(labelKey)}</p>
+                ) : !showLabels && labelKey ? (
+                  <p className="admin-menu-group lg:text-center lg:px-0">···</p>
+                ) : null}
+                <ul className="flex flex-col gap-1">
+                  {section.items.map((item) => {
+                    const navKey = item.navKey || item.href;
+                    const active = isActive(item.href);
+                    const Icon = adminNavIcons[item.href] || Package;
+                    const label = t(`nav.${navKey}`) || item.label;
+                    return (
+                      <li key={`${item.href}:${navKey}`}>
+                        <Link
+                          ref={
+                            active && scrollActiveNav
+                              ? (node) => {
+                                  activeLinkRef.current = node;
+                                }
+                              : undefined
+                          }
+                          href={item.href}
+                          onClick={closeMobile}
+                          title={label}
+                          aria-current={active ? "page" : undefined}
+                          className={[
+                            "admin-menu-item",
+                            active ? "admin-menu-item-active" : "",
+                            !isExpanded ? "lg:justify-center lg:px-2" : "",
+                          ].join(" ")}
+                        >
+                          <Icon
+                            className="h-5 w-5 shrink-0"
+                            strokeWidth={1.75}
+                            aria-hidden
+                          />
+                          {showLabels && <span className="truncate">{label}</span>}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
+          <ul className="mt-4 flex flex-col gap-1 border-t border-[var(--admin-border)] pt-2">
+            <li>
               <form action={signOutAction}>
                 <button
                   type="submit"

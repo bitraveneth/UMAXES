@@ -5,14 +5,17 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { EmptyCart } from "@/components/EmptyCart";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
-import { QtyStepper } from "@/components/QtyStepper";
+import { CaseQtyStepper, PackNote } from "@/components/QtyStepper";
+import { formatPack } from "@/lib/pack";
 import { useCart } from "@/context/CartContext";
+import { useCatalogPrices } from "@/context/CatalogPricesContext";
 import { getFlavor, product } from "@/lib/assets";
 
 export default function CartDrawer() {
   const { items, quantity, open, setOpen, setQuantity, remove, total } =
     useCart();
   const showPrices = useShowStorePrices();
+  const { unitPriceFor } = useCatalogPrices();
 
   useEffect(() => {
     if (!open) return;
@@ -94,18 +97,24 @@ export default function CartDrawer() {
                       </p>
                       <p className="mt-0.5 font-display text-sm text-black/60">
                         {showPrices ? (
-                          <>${flavor.price.toFixed(2)} each</>
+                          <StorePrice
+                            amount={unitPriceFor(flavor.id)}
+                            suffix=" / pc"
+                          />
                         ) : (
                           "On request"
                         )}
                       </p>
+                      <p className="mt-0.5 font-body text-xs text-black/45">
+                        {formatPack(line.quantity)}
+                      </p>
                       <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-                        <QtyStepper
-                          value={line.quantity}
+                        <CaseQtyStepper
+                          pcs={line.quantity}
                           size="sm"
-                          ariaLabel={flavor.name}
+                          ariaLabel={`${flavor.name} cases`}
                           allowRemove
-                          onChange={(qty) =>
+                          onChangePcs={(qty) =>
                             setQuantity(line.flavorId, qty)
                           }
                         />
@@ -127,9 +136,10 @@ export default function CartDrawer() {
 
         {quantity > 0 && (
           <div className="border-t border-black/10 px-5 py-5 sm:px-6">
+            <PackNote className="mb-3" />
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-sm text-black/60">Subtotal</span>
-              <span className="font-display text-lg font-semibold text-black">
+              <span className="text-right font-display text-lg font-semibold text-black">
                 <StorePrice amount={total} />
               </span>
             </div>

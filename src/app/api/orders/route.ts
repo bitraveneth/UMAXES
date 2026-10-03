@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { createOrder } from "@/lib/create-order";
 import { prisma } from "@/lib/db";
 import { canOrder } from "@/lib/rbac";
+import { PCS_PER_CASE, isWholeCases } from "@/lib/pack";
 import { orderCompanyScopeForStaff } from "@/lib/sales-scope";
 
 export async function GET() {
@@ -67,13 +68,26 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
+  const items = Array.isArray(body.items) ? body.items : [];
+  if (
+    items.some(
+      (row: { quantity?: unknown }) => !isWholeCases(Number(row?.quantity)),
+    )
+  ) {
+    return NextResponse.json(
+      {
+        error: `Quantity must be whole cases (${PCS_PER_CASE} pcs each).`,
+      },
+      { status: 400 },
+    );
+  }
   const result = await createOrder({
     companyId: session.user.companyId,
     customerUserId: session.user.id,
     customerEmail: session.user.email,
     addressId: String(body.addressId ?? ""),
     paymentMethod: String(body.paymentMethod ?? "").toUpperCase() as PaymentMethod,
-    items: Array.isArray(body.items) ? body.items : [],
+    items,
     couponCode: body.couponCode ? String(body.couponCode) : undefined,
     paymentRef: body.paymentRef ? String(body.paymentRef) : undefined,
     notes: body.notes ? String(body.notes) : undefined,

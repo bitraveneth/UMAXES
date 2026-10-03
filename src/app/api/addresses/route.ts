@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canManageCompanyAddresses } from "@/lib/rbac";
+import { isValidPhone } from "@/lib/phone";
 
 const MAX_ADDRESSES = 10;
 
@@ -70,10 +71,21 @@ export async function POST(request: Request) {
   const city = String(body.city ?? "").trim();
   const postalCode = String(body.postalCode ?? "").trim();
   const country = String(body.country ?? "").trim();
+  const recipientName = String(body.recipientName ?? body.fullName ?? "").trim();
+  const phone = String(body.phone ?? "").trim();
 
-  if (!line1 || !city || !postalCode || !country) {
+  if (!recipientName || !phone || !line1 || !city || !postalCode || !country) {
     return NextResponse.json(
-      { error: "Address, city, postal code, and country are required" },
+      {
+        error:
+          "Full name, phone number, address, city, postal code, and country are required",
+      },
+      { status: 400 },
+    );
+  }
+  if (!isValidPhone(phone)) {
+    return NextResponse.json(
+      { error: "Enter a valid phone number (7–15 digits)" },
       { status: 400 },
     );
   }
@@ -98,6 +110,8 @@ export async function POST(request: Request) {
     data: {
       companyId: gate.companyId,
       label: body.label ? String(body.label).trim() : null,
+      recipientName,
+      phone,
       line1,
       line2: body.line2 ? String(body.line2).trim() : null,
       city,

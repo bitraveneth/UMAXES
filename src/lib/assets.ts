@@ -1,4 +1,5 @@
-export const heroBanner = "/images/hero/hookamax-banner.webp";
+/** Homepage hero + /products first panel — Cool Mint cosmic stage (cache-busted filename). */
+export const heroBanner = "/images/hero/hookamax-cool-mint.webp";
 
 export const heroSceneImages = [
   "/images/hero/desert-carry.webp",
@@ -17,6 +18,15 @@ export const heroImages = [
   "/images/hero/04.webp",
 ] as const;
 
+/** Login / register split-panel slides (cache-busted filenames). */
+export const loginImages = [
+  "/images/login/login-cool-mint-podium.webp",
+  "/images/login/login-glam-neon.webp",
+  "/images/login/login-80k-podium.webp",
+  "/images/login/login-cool-mint-selfie.webp",
+  "/images/login/login-purple-canyon.webp",
+] as const;
+
 export const productImages = [
   "/images/product/01.webp",
   "/images/product/02.webp",
@@ -31,16 +41,16 @@ export const productImages = [
 ] as const;
 
 export const productPackImages = [
-  "/images/product/pack-01.webp",
-  "/images/product/pack-02.webp",
-  "/images/product/pack-03.webp",
-  "/images/product/pack-04.webp",
-  "/images/product/pack-05.webp",
-  "/images/product/pack-06.webp",
-  "/images/product/pack-07.webp",
-  "/images/product/pack-08.webp",
-  "/images/product/pack-09.webp",
-  "/images/product/pack-10.webp",
+  "/images/product/pack-peach-mango.webp",
+  "/images/product/pack-watermelon-ice.webp",
+  "/images/product/pack-fcuking-fab.webp",
+  "/images/product/pack-strawberry-watermelon-ice.webp",
+  "/images/product/pack-miami-sunset.webp",
+  "/images/product/pack-cool-mint.webp",
+  "/images/product/pack-blue-razz-ice.webp",
+  "/images/product/pack-grape-ice.webp",
+  "/images/product/pack-blueberry-ice.webp",
+  "/images/product/pack-love-max.webp",
 ] as const;
 
 export const testimonialImages = [
@@ -55,14 +65,11 @@ export const testimonialImages = [
 ] as const;
 
 export const logos = {
-  orangeOnCream: "/images/logo/orange-on-cream.png",
-  creamOnInk: "/images/logo/cream-on-ink.png",
-  creamOnOrange: "/images/logo/cream-on-orange.png",
-  orangeTransparent: "/images/logo/orange-transparent.png",
-  creamTransparent: "/images/logo/cream-transparent.png",
+  /** Primary site / ops logo — blue age-gate wordmark only */
   blueWordmark: "/images/logo/umaxes-blue.png",
   blueWordmarkOnDark: "/images/logo/umaxes-blue-on-dark.png",
-  markOrange: "/images/logo/umaxes-mark-orange.png",
+  creamOnInk: "/images/logo/cream-on-ink.png",
+  creamTransparent: "/images/logo/cream-transparent.png",
   markCream: "/images/logo/umaxes-mark-cream.png",
 } as const;
 
@@ -77,11 +84,12 @@ export const product = {
   deviceImage: "/images/product/device-transparent.png",
   deviceDuoImage: "/images/product/device-duo.webp",
   featuresHero: "/images/product/features-hero.webp",
+  introductionImage: "/images/product/hookamax-introduction.jpg",
 } as const;
 
-/** Full-bleed detail panels after Specs (shared on every flavor page) */
+/** Full-bleed detail panels on /products — first panel matches homepage hero */
 export const productStoryImages = [
-  "/images/product/story/01-fit.webp",
+  "/images/product/story/hero-cool-mint.webp",
   "/images/product/story/02.webp",
   "/images/product/story/03.webp",
   "/images/product/story/04.webp",
@@ -184,7 +192,7 @@ export const flavors = [
     tagline: "Juicy stone fruit · Tropical",
     description: "Ripe peach meets sweet mango in a smooth, sunny draw.",
     image: "/images/product/01.webp",
-    packageImage: "/images/product/pack-01.webp",
+    packageImage: "/images/product/pack-peach-mango.webp",
     price: 34.5,
     profile: "Tropical",
     accent: "#e8891a",
@@ -195,7 +203,7 @@ export const flavors = [
     tagline: "Fresh melon · Cool finish",
     description: "Crisp watermelon with a chilled, refreshing exhale.",
     image: "/images/product/02.webp",
-    packageImage: "/images/product/pack-02.webp",
+    packageImage: "/images/product/pack-watermelon-ice.webp",
     price: 34.5,
     profile: "Ice",
     accent: "#e05a6a",
@@ -206,7 +214,7 @@ export const flavors = [
     tagline: "Bold mix · Candy bright",
     description: "A playful peach-citrus blend with candy-sweet energy.",
     image: "/images/product/03.webp",
-    packageImage: "/images/product/pack-03.webp",
+    packageImage: "/images/product/pack-fcuking-fab.webp",
     price: 34.5,
     profile: "Candy",
     accent: "#f06aa8",
@@ -217,7 +225,7 @@ export const flavors = [
     tagline: "Berry · Melon · Ice",
     description: "Strawberry and watermelon layered with a cool kick.",
     image: "/images/product/04.webp",
-    packageImage: "/images/product/pack-04.webp",
+    packageImage: "/images/product/pack-strawberry-watermelon-ice.webp",
     price: 34.5,
     profile: "Berry",
     accent: "#d6455d",
@@ -228,7 +236,7 @@ export const flavors = [
     tagline: "Tropical blend · Warm glow",
     description: "Citrus and tropical fruit in a warm sunset profile.",
     image: "/images/product/05.webp",
-    packageImage: "/images/product/pack-05.webp",
+    packageImage: "/images/product/pack-miami-sunset.webp",
     price: 34.5,
     profile: "Tropical",
     accent: "#ff7a33",
@@ -239,7 +247,7 @@ export const flavors = [
     tagline: "Crisp · Clean · Icy",
     description: "Pure mint clarity with a sharp, cooling finish.",
     image: "/images/product/06.webp",
-    packageImage: "/images/product/pack-06.webp",
+    packageImage: "/images/product/pack-cool-mint.webp",
     price: 34.5,
     profile: "Mint",
     accent: "#2f8f7b",
@@ -250,7 +258,7 @@ export const flavors = [
     tagline: "Blue raspberry · Frost",
     description: "Tangy blue raspberry wrapped in cool ice notes.",
     image: "/images/product/07.webp",
-    packageImage: "/images/product/pack-07.webp",
+    packageImage: "/images/product/pack-blue-razz-ice.webp",
     price: 34.5,
     profile: "Ice",
     accent: "#3b6fd9",
@@ -261,7 +269,7 @@ export const flavors = [
     tagline: "Ripe grape · Chill",
     description: "Classic grape sweetness with a frosty edge.",
     image: "/images/product/08.webp",
-    packageImage: "/images/product/pack-08.webp",
+    packageImage: "/images/product/pack-grape-ice.webp",
     price: 34.5,
     profile: "Ice",
     accent: "#7a3db8",
@@ -272,7 +280,7 @@ export const flavors = [
     tagline: "Deep berry · Cool",
     description: "Lush blueberry flavor with a refreshing ice finish.",
     image: "/images/product/09.webp",
-    packageImage: "/images/product/pack-09.webp",
+    packageImage: "/images/product/pack-blueberry-ice.webp",
     price: 34.5,
     profile: "Berry",
     accent: "#3d5aab",
@@ -283,7 +291,7 @@ export const flavors = [
     tagline: "Peach · Melon · Mint ice",
     description: "Peach and melon with a cool mint finish.",
     image: "/images/product/10.webp",
-    packageImage: "/images/product/pack-10.webp",
+    packageImage: "/images/product/pack-love-max.webp",
     price: 34.5,
     profile: "Ice",
     accent: "#e8899a",

@@ -3,11 +3,14 @@ export type LearnSlug =
   | "approvals"
   | "customers"
   | "catalog"
-  | "coupons"
+  | "warehouse"
   | "orders"
+  | "payments"
+  | "coupons"
   | "suppliers"
   | "packing"
   | "credit"
+  | "rebates"
   | "rma"
   | "commissions"
   | "reports"
@@ -21,17 +24,20 @@ export type LearnMeta = {
   saOnly?: boolean;
 };
 
-/** Ordered tutorials for the Learning Hub. */
+/** Ordered tutorials for the Learning Hub (course path). */
 export const LEARN_CATALOG: LearnMeta[] = [
   { slug: "overview", relatedHref: "/admin" },
   { slug: "approvals", relatedHref: "/admin/approvals" },
   { slug: "customers", relatedHref: "/admin/distributors" },
   { slug: "catalog", relatedHref: "/admin/catalog" },
-  { slug: "coupons", relatedHref: "/admin/coupons" },
+  { slug: "warehouse", relatedHref: "/admin/warehouse" },
   { slug: "orders", relatedHref: "/admin/orders" },
+  { slug: "payments", relatedHref: "/admin/payments" },
+  { slug: "coupons", relatedHref: "/admin/coupons" },
   { slug: "suppliers", relatedHref: "/admin/suppliers" },
   { slug: "packing", relatedHref: "/admin/logistics" },
   { slug: "credit", relatedHref: "/admin/credit" },
+  { slug: "rebates", relatedHref: "/admin/rebates" },
   { slug: "rma", relatedHref: "/admin/rma" },
   { slug: "commissions", relatedHref: "/admin/commissions" },
   { slug: "reports", relatedHref: "/admin/reports" },

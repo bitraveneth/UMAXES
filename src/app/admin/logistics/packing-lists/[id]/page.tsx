@@ -1,6 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { canAccessPath } from "@/lib/rbac";
+import { siblingDocNumber } from "@/lib/doc-number";
+import { invoiceCommodity, invoicePuffsLabel } from "@/lib/invoice-labels";
+import { casesFromPcs, isCasePackedSku } from "@/lib/pack";
 import { prisma } from "@/lib/db";
 import { AdminPageHeaderI18n } from "@/components/admin/AdminPageHeaderI18n";
 import { AdminLinkBtn } from "@/components/admin/AdminI18nBits";
@@ -88,7 +91,12 @@ export default async function PackingListViewPage({ params }: Params) {
           quantity: l.quantity,
           flavor: l.flavor,
           size: l.size,
-          boxes: l.boxes,
+          boxes:
+            l.boxes != null
+              ? l.boxes
+              : isCasePackedSku(l.sku)
+                ? casesFromPcs(l.quantity)
+                : null,
         }))
       : order.items.map((item) => {
           const g = guessFlavorSize(item.name);
@@ -100,7 +108,10 @@ export default async function PackingListViewPage({ params }: Params) {
             quantity: item.quantity,
             flavor: g.flavor || null,
             size: g.size || null,
-            boxes: null as number | null,
+            // Qty is pieces; Case = pcs ÷ 95 until logistics overrides on save.
+            boxes: isCasePackedSku(item.sku)
+              ? casesFromPcs(item.quantity)
+              : null,
           };
         });
 
@@ -121,6 +132,8 @@ export default async function PackingListViewPage({ params }: Params) {
         order={{
           id: order.id,
           orderNumber: order.orderNumber,
+          piNumber: order.piNumber,
+          plNumber: siblingDocNumber(order.piNumber, "PL", order.orderNumber),
           status: order.status,
           createdAt: order.createdAt.toISOString(),
           updatedAt: order.updatedAt.toISOString(),
@@ -137,6 +150,8 @@ export default async function PackingListViewPage({ params }: Params) {
           packingNote: shipment?.packingNote ?? null,
           carrier: shipment?.carrier ?? null,
           trackingNumber: shipment?.trackingNumber ?? null,
+          commodity: invoiceCommodity(),
+          puffsLabel: invoicePuffsLabel(),
           lines,
         }}
       />
