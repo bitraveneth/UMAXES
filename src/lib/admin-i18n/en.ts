@@ -579,6 +579,7 @@ const en: AdminMessages = {
     payCheck: "Check",
     payOnline: "Online",
     payCredit: "Credit",
+    payOnTerms: "On terms",
     payShortTT: "TT",
     payShortCheck: "Check",
     payShortOnline: "Online",

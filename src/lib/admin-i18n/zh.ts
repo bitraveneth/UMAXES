@@ -562,6 +562,7 @@ const zh: AdminMessages = {
     payCheck: "支票",
     payOnline: "在线支付",
     payCredit: "授信余额",
+    payOnTerms: "账期",
     payShortTT: "TT",
     payShortCheck: "支票",
     payShortOnline: "在线",

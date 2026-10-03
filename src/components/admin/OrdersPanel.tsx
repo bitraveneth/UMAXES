@@ -557,11 +557,19 @@ function OrderExpand({
     : fulfillmentStatuses[0] || preferredStatus;
 
   const currentPayStatus = normalizePaymentStatus(order.paymentStatus);
+  const methodLabel = payLabel(order.paymentMethod);
   const paySituation = isCredit
     ? order.paymentPaid
       ? t("orders.payStatusPaid")
-      : t("orders.payCredit")
+      : t("orders.payOnTerms")
     : t(paymentStatusLabelKey(order.paymentStatus));
+  const payFootMeta =
+    isCredit && !order.paymentPaid
+      ? methodLabel
+      : paySituation === methodLabel
+        ? methodLabel
+        : paySituation;
+  const totalPcs = order.items.reduce((sum, item) => sum + item.quantity, 0);
   const payTone = paymentTone(
     isCredit
       ? order.paymentPaid
@@ -577,20 +585,16 @@ function OrderExpand({
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
       {ui}
       <div className="space-y-6 px-5 py-6 sm:px-6 sm:py-7">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 flex-1 space-y-2">
-            <h3 className="text-lg font-semibold tracking-tight text-[var(--admin-text)] sm:text-xl">
-              {order.orderNumber}
-            </h3>
-            <p className="text-sm text-[var(--admin-muted)]">
-              {order.companyName}
-              <span className="mx-2 text-[var(--admin-border)]">·</span>
-              {payLabel(order.paymentMethod)}
-              <span className="mx-2 text-[var(--admin-border)]">·</span>
-              <span className="tabular-nums font-medium text-[var(--admin-text)]">
+        <div className="admin-order-expand-head">
+          <div className="admin-order-expand-head-main">
+            <h3 className="admin-order-expand-no">{order.orderNumber}</h3>
+            <p className="admin-order-expand-company">{order.companyName}</p>
+            <div className="admin-order-expand-meta">
+              <span className="admin-order-expand-chip">{methodLabel}</span>
+              <span className="admin-order-expand-chip admin-order-expand-chip-amount">
                 {money(order.total)}
               </span>
-            </p>
+            </div>
           </div>
           <button
             type="button"
@@ -646,37 +650,25 @@ function OrderExpand({
             </ul>
           )}
 
-          <div className="admin-order-lines-pay">
-            <div className="admin-order-lines-pay-stat">
-              <span>{t("orders.paymentAmount")}</span>
-              <strong>{money(order.total)}</strong>
-              <div className="admin-order-lines-pay-sub">
-                <span className="admin-order-lines-pay-sub-label">
-                  {t("orders.paymentPanelTitle")}
-                </span>
-                <p className="admin-order-lines-pay-sub-value">
-                  {paySituation}
-                  <span className="admin-order-lines-pay-dot" aria-hidden>
-                    ·
-                  </span>
-                  {payLabel(order.paymentMethod)}
-                </p>
+          <div className="admin-order-lines-foot">
+            <div className="admin-order-lines-foot-row">
+              <span className="admin-order-lines-foot-label">
+                {t("orders.paymentPanelTitle")}
+              </span>
+              <div className="admin-order-lines-foot-vals">
+                <strong className="admin-order-lines-foot-amount">
+                  {money(order.total)}
+                </strong>
+                <p className="admin-order-lines-foot-pay-meta">{payFootMeta}</p>
               </div>
             </div>
-            <div className="admin-order-lines-pay-stat">
-              <span>{t("orders.totalQty")}</span>
-              <strong>
-                {order.items.reduce((sum, item) => sum + item.quantity, 0)}{" "}
-                {t("orders.pcs")}
+            <div className="admin-order-lines-foot-row">
+              <span className="admin-order-lines-foot-label">
+                {t("orders.quantity")}
+              </span>
+              <strong className="admin-order-lines-foot-qty">
+                {totalPcs} {t("orders.pcs")}
               </strong>
-              <div className="admin-order-lines-pay-sub">
-                <span className="admin-order-lines-pay-sub-label">
-                  {t("orders.quantity")}
-                </span>
-                <p className="admin-order-lines-pay-sub-value">
-                  {t("orders.linesCount", { count: order.items.length })}
-                </p>
-              </div>
             </div>
           </div>
         </section>
