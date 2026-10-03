@@ -569,16 +569,12 @@ function OrderExpand({
       : t("orders.payOnTerms")
     : t(paymentStatusLabelKey(order.paymentStatus));
   const totalPcs = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  const payTone = paymentTone(
-    isCredit
-      ? order.paymentPaid
-        ? "paid"
-        : "on_terms"
-      : order.paymentStatus,
-  );
   const trackingRows = order.shipments.filter(
     (s) => s.trackingNumber || s.carrier,
   );
+  const trackingNumber =
+    trackingRows[0]?.trackingNumber || shipment?.trackingNumber || "";
+  const trackingCarrier = trackingRows[0]?.carrier || shipment?.carrier || "";
 
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
@@ -772,7 +768,6 @@ function OrderExpand({
               <h4 className="admin-order-ops-title">
                 {t("orders.paymentPanelTitle")}
               </h4>
-              <AdminBadge tone={payTone}>{paySituation}</AdminBadge>
             </div>
 
             <div className="admin-order-ops-tiles">
@@ -781,9 +776,9 @@ function OrderExpand({
                 <strong>{money(order.total)}</strong>
               </div>
               <div className="admin-order-ops-tile">
-                <span>{t("orders.paymentSituation")}</span>
-                <strong>{paySituation}</strong>
-                <em>{methodLabel}</em>
+                <span>{t("orders.payMethod")}</span>
+                <strong>{methodLabel}</strong>
+                {isCredit ? <em>{paySituation}</em> : null}
               </div>
             </div>
 
@@ -803,20 +798,18 @@ function OrderExpand({
                 }}
                 className="admin-order-ops-frame"
               >
-                <label>
-                  {t("orders.paymentStatus")}
-                  <select
-                    name="paymentStatus"
-                    defaultValue={currentPayStatus}
-                    className="admin-input mt-1.5 w-full"
-                  >
-                    {ADMIN_PAYMENT_STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {t(paymentStatusLabelKey(s))}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <select
+                  name="paymentStatus"
+                  defaultValue={currentPayStatus}
+                  aria-label={t("orders.paymentStatus")}
+                  className="admin-input"
+                >
+                  {ADMIN_PAYMENT_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {t(paymentStatusLabelKey(s))}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="submit"
                   className="admin-btn admin-btn-primary admin-btn-sm"
@@ -825,7 +818,7 @@ function OrderExpand({
                 </button>
               </form>
             ) : !order.paymentPaid ? (
-              <div className="admin-order-ops-frame">
+              <div className="admin-order-ops-frame admin-order-ops-frame-stack">
                 <p className="text-sm text-[var(--admin-muted)]">
                   {t("orders.markPaidHint")}
                 </p>
@@ -863,26 +856,16 @@ function OrderExpand({
               <h4 className="admin-order-ops-title">
                 {t("orders.shippingPanelTitle")}
               </h4>
-              <AdminBadge tone={orderTone(order.status)}>
-                {statusLabel(order.status)}
-              </AdminBadge>
             </div>
 
             <div className="admin-order-ops-tiles">
               <div className="admin-order-ops-tile">
-                <span>{t("orders.statusLabel")}</span>
-                <strong>{statusLabel(order.status)}</strong>
+                <span>{t("orders.trackingFooter")}</span>
+                <strong>{trackingNumber || t("orders.noTracking")}</strong>
               </div>
               <div className="admin-order-ops-tile">
-                <span>{t("orders.trackingFooter")}</span>
-                <strong>
-                  {trackingRows[0]?.trackingNumber ||
-                    shipment?.trackingNumber ||
-                    t("orders.noTracking")}
-                </strong>
-                {trackingRows[0]?.carrier || shipment?.carrier ? (
-                  <em>{trackingRows[0]?.carrier || shipment?.carrier}</em>
-                ) : null}
+                <span>{t("orders.carrier")}</span>
+                <strong>{trackingCarrier || "—"}</strong>
               </div>
             </div>
 
@@ -898,20 +881,18 @@ function OrderExpand({
                 }}
                 className="admin-order-ops-frame"
               >
-                <label>
-                  {t("orders.statusLabel")}
-                  <select
-                    name="status"
-                    defaultValue={defaultFulfillment}
-                    className="admin-input mt-1.5 w-full"
-                  >
-                    {fulfillmentStatuses.map((s) => (
-                      <option key={s} value={s}>
-                        {statusLabel(s)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <select
+                  name="status"
+                  defaultValue={defaultFulfillment}
+                  aria-label={t("orders.statusLabel")}
+                  className="admin-input"
+                >
+                  {fulfillmentStatuses.map((s) => (
+                    <option key={s} value={s}>
+                      {statusLabel(s)}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="submit"
                   className="admin-btn admin-btn-primary admin-btn-sm"
@@ -920,7 +901,7 @@ function OrderExpand({
                 </button>
               </form>
             ) : (
-              <p className="text-sm text-[var(--admin-muted)]">
+              <p className="admin-order-ops-note text-[var(--admin-muted)]">
                 {statusLabel(order.status)}
               </p>
             )}
