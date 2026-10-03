@@ -766,169 +766,164 @@ function OrderExpand({
           </section>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:p-5">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
-                  {t("orders.paymentPanelTitle")}
-                </p>
-                <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                  {t("orders.paymentPanelHint")}
-                </p>
-              </div>
+        <div className="admin-order-ops">
+          <section className="admin-order-ops-card">
+            <div className="admin-order-ops-head">
+              <h4 className="admin-order-ops-title">
+                {t("orders.paymentPanelTitle")}
+              </h4>
               <AdminBadge tone={payTone}>{paySituation}</AdminBadge>
             </div>
 
-            <div className="mb-4 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-3 py-3">
-                <p className="text-[10px] font-semibold tracking-[0.12em] text-[var(--admin-muted)] uppercase">
-                  {t("orders.paymentAmount")}
-                </p>
-                <p className="mt-1 text-lg font-bold tabular-nums text-[var(--admin-text)]">
-                  {money(order.total)}
-                </p>
+            <div className="admin-order-ops-tiles">
+              <div className="admin-order-ops-tile">
+                <span>{t("orders.paymentAmount")}</span>
+                <strong>{money(order.total)}</strong>
               </div>
-              <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-3 py-3">
-                <p className="text-[10px] font-semibold tracking-[0.12em] text-[var(--admin-muted)] uppercase">
-                  {t("orders.colPayment")}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-[var(--admin-text)]">
-                  {methodLabel}
-                </p>
-                <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
-                  {paySituation === methodLabel ? "" : paySituation}
-                </p>
+              <div className="admin-order-ops-tile">
+                <span>{t("orders.paymentSituation")}</span>
+                <strong>{paySituation}</strong>
+                <em>{methodLabel}</em>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {!isCredit ? (
+            {!isCredit ? (
+              <form
+                action={async (fd) => {
+                  const nextPay = String(
+                    fd.get("paymentStatus") || "",
+                  ) as AdminPaymentStatus;
+                  if (!ADMIN_PAYMENT_STATUSES.includes(nextPay)) return;
+                  await updateOrderPaymentStatus(
+                    order.id,
+                    nextPay,
+                    order.paymentRef || undefined,
+                  );
+                  onClose();
+                }}
+                className="admin-order-ops-frame"
+              >
+                <label>
+                  {t("orders.paymentStatus")}
+                  <select
+                    name="paymentStatus"
+                    defaultValue={currentPayStatus}
+                    className="admin-input mt-1.5 w-full"
+                  >
+                    {ADMIN_PAYMENT_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {t(paymentStatusLabelKey(s))}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  className="admin-btn admin-btn-primary admin-btn-sm"
+                >
+                  {t("orders.savePayment")}
+                </button>
+              </form>
+            ) : !order.paymentPaid ? (
+              <div className="admin-order-ops-frame">
+                <p className="text-sm text-[var(--admin-muted)]">
+                  {t("orders.markPaidHint")}
+                </p>
                 <form
-                  action={async (fd) => {
-                    const nextPay = String(
-                      fd.get("paymentStatus") || "",
-                    ) as AdminPaymentStatus;
-                    if (!ADMIN_PAYMENT_STATUSES.includes(nextPay)) return;
-                    await updateOrderPaymentStatus(
+                  action={async () => {
+                    await markPaymentReceived(
                       order.id,
-                      nextPay,
-                      order.paymentRef || undefined,
+                      order.paymentRef || "Credit settlement",
                     );
                     onClose();
                   }}
-                  className="space-y-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/30 p-3 sm:p-4"
                 >
-                  <label className="block text-sm font-medium text-[var(--admin-text)]">
-                    {t("orders.paymentStatus")}
-                    <select
-                      name="paymentStatus"
-                      defaultValue={currentPayStatus}
-                      className="admin-input mt-1.5 w-full"
-                    >
-                      {ADMIN_PAYMENT_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {t(paymentStatusLabelKey(s))}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                   <button
                     type="submit"
                     className="admin-btn admin-btn-primary admin-btn-sm"
                   >
-                    {t("orders.savePayment")}
+                    {t("orders.markPaid")}
                   </button>
                 </form>
-              ) : !order.paymentPaid ? (
-                <div className="space-y-3 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/30 p-3 sm:p-4">
-                  <p className="text-sm text-[var(--admin-muted)]">
-                    {t("orders.markPaidHint")}
-                  </p>
-                  <form
-                    action={async () => {
-                      await markPaymentReceived(
-                        order.id,
-                        order.paymentRef || "Credit settlement",
-                      );
-                      onClose();
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="admin-btn admin-btn-primary admin-btn-sm"
-                    >
-                      {t("orders.markPaid")}
-                    </button>
-                  </form>
-                </div>
-              ) : (
-                <p className="text-sm font-medium text-[var(--admin-success-700)]">
-                  {t("orders.payStatusPaid")}
-                </p>
-              )}
-              {!isCredit && !order.paymentSlipUrl ? (
-                <p className="text-sm font-medium text-[var(--admin-warning-700)]">
-                  {t("orders.noSlip")}
-                </p>
-              ) : null}
-            </div>
+              </div>
+            ) : (
+              <p className="admin-order-ops-note text-[var(--admin-success-700)]">
+                {t("orders.payStatusPaid")}
+              </p>
+            )}
+            {!isCredit && !order.paymentSlipUrl ? (
+              <p className="admin-order-ops-note text-[var(--admin-warning-700)]">
+                {t("orders.noSlip")}
+              </p>
+            ) : null}
           </section>
 
-          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
-                  {t("orders.shippingPanelTitle")}
-                </p>
-                <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                  {t("orders.shippingPanelHint")}
-                </p>
-              </div>
+          <section className="admin-order-ops-card">
+            <div className="admin-order-ops-head">
+              <h4 className="admin-order-ops-title">
+                {t("orders.shippingPanelTitle")}
+              </h4>
               <AdminBadge tone={orderTone(order.status)}>
                 {statusLabel(order.status)}
               </AdminBadge>
             </div>
-            <div className="space-y-4">
-              {fulfillmentStatuses.length > 0 ? (
-                <form
-                  action={async (fd) => {
-                    const nextStatus = String(
-                      fd.get("status") || "",
-                    ) as OrderStatus;
-                    if (!nextStatus) return;
-                    await updateOrderStatus(order.id, nextStatus);
-                    onClose();
-                  }}
-                  className="space-y-3"
-                >
-                  <label className="block text-sm font-medium text-[var(--admin-text)]">
-                    {t("orders.statusLabel")}
-                    <select
-                      name="status"
-                      defaultValue={defaultFulfillment}
-                      className="admin-input mt-1.5 w-full"
-                    >
-                      {fulfillmentStatuses.map((s) => (
-                        <option key={s} value={s}>
-                          {statusLabel(s)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="submit"
-                    className="admin-btn admin-btn-primary admin-btn-sm"
-                  >
-                    {t("orders.applyStatus")}
-                  </button>
-                </form>
-              ) : (
-                <p className="text-sm text-[var(--admin-muted)]">
-                  {statusLabel(order.status)}
-                </p>
-              )}
+
+            <div className="admin-order-ops-tiles">
+              <div className="admin-order-ops-tile">
+                <span>{t("orders.statusLabel")}</span>
+                <strong>{statusLabel(order.status)}</strong>
+              </div>
+              <div className="admin-order-ops-tile">
+                <span>{t("orders.trackingFooter")}</span>
+                <strong>
+                  {trackingRows[0]?.trackingNumber ||
+                    shipment?.trackingNumber ||
+                    t("orders.noTracking")}
+                </strong>
+                {trackingRows[0]?.carrier || shipment?.carrier ? (
+                  <em>{trackingRows[0]?.carrier || shipment?.carrier}</em>
+                ) : null}
+              </div>
             </div>
+
+            {fulfillmentStatuses.length > 0 ? (
+              <form
+                action={async (fd) => {
+                  const nextStatus = String(
+                    fd.get("status") || "",
+                  ) as OrderStatus;
+                  if (!nextStatus) return;
+                  await updateOrderStatus(order.id, nextStatus);
+                  onClose();
+                }}
+                className="admin-order-ops-frame"
+              >
+                <label>
+                  {t("orders.statusLabel")}
+                  <select
+                    name="status"
+                    defaultValue={defaultFulfillment}
+                    className="admin-input mt-1.5 w-full"
+                  >
+                    {fulfillmentStatuses.map((s) => (
+                      <option key={s} value={s}>
+                        {statusLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  className="admin-btn admin-btn-primary admin-btn-sm"
+                >
+                  {t("orders.applyStatus")}
+                </button>
+              </form>
+            ) : (
+              <p className="text-sm text-[var(--admin-muted)]">
+                {statusLabel(order.status)}
+              </p>
+            )}
           </section>
         </div>
       </div>

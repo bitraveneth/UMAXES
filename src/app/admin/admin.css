@@ -792,6 +792,113 @@
   padding: 0.95rem 1.1rem 0.15rem;
 }
 
+.admin-order-ops {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .admin-order-ops {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem;
+  }
+}
+
+.admin-order-ops-card {
+  border: 1px solid var(--admin-border);
+  border-radius: 1rem;
+  background: var(--admin-card);
+  padding: 1.1rem 1.15rem 1.2rem;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.admin-order-ops-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.admin-order-ops-title {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-order-ops-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.admin-order-ops-tile {
+  min-width: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--admin-hover) 40%, var(--admin-card));
+  padding: 0.75rem 0.85rem;
+}
+
+.admin-order-ops-tile span {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-order-ops-tile strong {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.admin-order-ops-tile em {
+  display: block;
+  margin-top: 0.2rem;
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--admin-muted);
+}
+
+.admin-order-ops-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--admin-hover) 30%, var(--admin-card));
+  padding: 0.85rem 0.95rem;
+}
+
+.admin-order-ops-frame label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.admin-order-ops-note {
+  margin: 0.85rem 0 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 .admin-order-doc-links {
   display: flex;
   flex-wrap: wrap;
@@ -1116,6 +1223,14 @@
 
   .admin-order-expand-no {
     font-size: 1.125rem;
+  }
+
+  .admin-order-ops-tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-order-ops-card {
+    padding: 0.95rem 0.95rem 1.05rem;
   }
 }
 
