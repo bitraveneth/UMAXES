@@ -557,6 +557,22 @@ function OrderExpand({
     : fulfillmentStatuses[0] || preferredStatus;
 
   const currentPayStatus = normalizePaymentStatus(order.paymentStatus);
+  const totalQty = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const paySituation = isCredit
+    ? order.paymentPaid
+      ? t("orders.payStatusPaid")
+      : t("orders.payCredit")
+    : t(paymentStatusLabelKey(order.paymentStatus));
+  const payTone = paymentTone(
+    isCredit
+      ? order.paymentPaid
+        ? "paid"
+        : "on_terms"
+      : order.paymentStatus,
+  );
+  const trackingRows = order.shipments.filter(
+    (s) => s.trackingNumber || s.carrier,
+  );
 
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
@@ -595,6 +611,73 @@ function OrderExpand({
           />
         </div>
 
+        <section className="admin-order-lines">
+          <div className="admin-order-lines-summary">
+            <div>
+              <p className="admin-order-lines-kicker">{t("orders.lineItems")}</p>
+              <div className="admin-order-lines-stats">
+                <span>
+                  {order.items.length} {t("orders.colLines").toLowerCase()}
+                </span>
+                <span className="admin-order-lines-dot" aria-hidden>
+                  ·
+                </span>
+                <span className="is-strong">
+                  {totalQty} {t("orders.pcs")}
+                </span>
+              </div>
+            </div>
+            <div className="admin-order-lines-pay">
+              <span>{t("orders.paymentAmount")}</span>
+              <strong>{money(order.total)}</strong>
+            </div>
+          </div>
+
+          {order.items.length === 0 ? (
+            <p className="px-4 pb-4 text-sm text-[var(--admin-muted)] sm:px-5">
+              {t("common.noData")}
+            </p>
+          ) : (
+            <ul className="admin-order-lines-list">
+              {order.items.map((item) => (
+                <li key={item.id} className="admin-order-line">
+                  <div className="admin-order-line-thumb">
+                    {item.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={item.image} alt="" />
+                    ) : (
+                      <Package className="h-5 w-5 text-[var(--admin-muted)]" />
+                    )}
+                  </div>
+
+                  <div className="admin-order-line-main">
+                    <p className="admin-order-line-name">{item.name}</p>
+                    <span className="admin-order-line-sku" title={item.sku}>
+                      {item.sku}
+                    </span>
+                  </div>
+
+                  <div className="admin-order-line-qty" title={t("orders.qty")}>
+                    <span>{t("orders.qty")}</span>
+                    <strong>{item.quantity}</strong>
+                  </div>
+
+                  <div className="admin-order-line-money">
+                    <span className="admin-order-line-unit">
+                      {money(item.unitPrice)}
+                      <span className="admin-order-line-unit-x">
+                        {" "}
+                        × {item.quantity}
+                      </span>
+                    </span>
+                    <strong>{money(item.quantity * item.unitPrice)}</strong>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:p-5">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
@@ -606,21 +689,29 @@ function OrderExpand({
                   {t("orders.paymentPanelHint")}
                 </p>
               </div>
-              <AdminBadge
-                tone={paymentTone(
-                  isCredit
-                    ? order.paymentPaid
-                      ? "paid"
-                      : "on_terms"
-                    : order.paymentStatus,
-                )}
-              >
-                {isCredit
-                  ? order.paymentPaid
-                    ? t("orders.payStatusPaid")
-                    : t("orders.payCredit")
-                  : t(paymentStatusLabelKey(order.paymentStatus))}
-              </AdminBadge>
+              <AdminBadge tone={payTone}>{paySituation}</AdminBadge>
+            </div>
+
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-3 py-3">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-[var(--admin-muted)] uppercase">
+                  {t("orders.paymentAmount")}
+                </p>
+                <p className="mt-1 text-lg font-bold tabular-nums text-[var(--admin-text)]">
+                  {money(order.total)}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 px-3 py-3">
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-[var(--admin-muted)] uppercase">
+                  {t("orders.paymentSituation")}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-[var(--admin-text)]">
+                  {paySituation}
+                </p>
+                <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
+                  {payLabel(order.paymentMethod)}
+                </p>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -920,53 +1011,51 @@ function OrderExpand({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-4 sm:p-5">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-            <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
-              {t("orders.lineItems")}
-            </p>
-            <p className="text-sm font-semibold tabular-nums text-[var(--admin-text)]">
-              {money(order.total)}
-            </p>
+        <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-hover)]/40 p-4 sm:p-5">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+                {t("orders.trackingFooter")}
+              </p>
+              <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                {t("orders.trackingFooterHint")}
+              </p>
+            </div>
+            <AdminBadge tone={orderTone(order.status)}>
+              {statusLabel(order.status)}
+            </AdminBadge>
           </div>
-          <ul className="divide-y divide-[var(--admin-border)]">
-            {order.items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 sm:gap-4"
-              >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--admin-gray-100)] sm:h-14 sm:w-14">
-                  {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.image}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+
+          {trackingRows.length === 0 ? (
+            <p className="text-sm font-medium text-[var(--admin-muted)]">
+              {t("orders.noTracking")}
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {trackingRows.map((row) => (
+                <li key={row.id} className="admin-order-track">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[var(--admin-text)]">
+                      {row.carrier || t("orders.shipment")}
+                    </p>
+                    {row.status ? (
+                      <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
+                        {row.status}
+                      </p>
+                    ) : null}
+                  </div>
+                  {row.trackingNumber ? (
+                    <p className="admin-order-track-code">{row.trackingNumber}</p>
                   ) : (
-                    <Package className="h-5 w-5 text-[var(--admin-muted)]" />
+                    <p className="text-sm text-[var(--admin-muted)]">
+                      {t("orders.noTracking")}
+                    </p>
                   )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[var(--admin-text)] sm:text-base">
-                    {item.name}
-                  </p>
-                  <p className="mt-0.5 text-xs text-[var(--admin-muted)]">
-                    {item.sku}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right text-sm">
-                  <p className="tabular-nums text-[var(--admin-muted)]">
-                    {t("orders.qty")} {item.quantity} × {money(item.unitPrice)}
-                  </p>
-                  <p className="mt-0.5 font-semibold tabular-nums text-[var(--admin-text)]">
-                    {money(item.quantity * item.unitPrice)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );
