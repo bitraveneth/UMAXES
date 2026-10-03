@@ -654,19 +654,11 @@ function OrderExpand({
 
           <div className="admin-order-lines-foot">
             <div className="admin-order-lines-foot-row">
-              <span className="admin-order-lines-foot-label">
-                {t("orders.paymentPanelTitle")}
-              </span>
-              <strong className="admin-order-lines-foot-amount">
-                {money(order.total)}
-              </strong>
-            </div>
-            <div className="admin-order-lines-foot-row">
-              <span className="admin-order-lines-foot-label">
-                {t("orders.quantity")}
-              </span>
               <strong className="admin-order-lines-foot-qty">
                 {totalPcs} {t("orders.pcs")}
+              </strong>
+              <strong className="admin-order-lines-foot-amount">
+                {money(order.total)}
               </strong>
             </div>
           </div>

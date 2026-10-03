@@ -889,9 +889,6 @@
 }
 
 .admin-order-lines-foot {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
   padding: 1.05rem 1.35rem 1.15rem;
   border-top: 1px solid var(--admin-border);
   background: var(--admin-hover);
@@ -905,16 +902,15 @@
   min-width: 0;
 }
 
-.admin-order-lines-foot-label {
-  font-size: 0.7rem;
-  font-weight: 650;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--admin-muted);
+.admin-order-lines-foot-qty {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--admin-text);
+  line-height: 1.25;
 }
 
-.admin-order-lines-foot-amount,
-.admin-order-lines-foot-qty {
+.admin-order-lines-foot-amount {
   font-size: 1.1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
