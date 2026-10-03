@@ -18,6 +18,15 @@ export const heroImages = [
   "/images/hero/04.webp",
 ] as const;
 
+/** Login / register split-panel slides (cache-busted filenames). */
+export const loginImages = [
+  "/images/login/login-cool-mint-podium.webp",
+  "/images/login/login-glam-neon.webp",
+  "/images/login/login-80k-podium.webp",
+  "/images/login/login-cool-mint-selfie.webp",
+  "/images/login/login-purple-canyon.webp",
+] as const;
+
 export const productImages = [
   "/images/product/01.webp",
   "/images/product/02.webp",
