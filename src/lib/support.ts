@@ -7,11 +7,25 @@ export type SupportFaq = {
   keys: readonly string[];
 };
 
-export type FlavorGuideStep = "idle" | "ask_profile" | "ask_vibe";
+export type FlavorGuideStep =
+  | "idle"
+  | "ask_profile"
+  | "ask_finish"
+  | "ask_intensity"
+  | "ask_style";
 
 export type SupportChatState = {
   guide: FlavorGuideStep;
   profileHint?: string;
+  finish?: "icy" | "smooth";
+  intensity?: "light" | "bold";
+  style?: "classic" | "mixed";
+};
+
+export type SupportFlavorPick = {
+  id: string;
+  name: string;
+  image: string;
 };
 
 export type SupportTurn = {
@@ -19,6 +33,7 @@ export type SupportTurn = {
   nextState: SupportChatState;
   /** Optional chips to show under the reply */
   suggestions?: string[];
+  picks?: SupportFlavorPick[];
 };
 
 const FLAVOR_LIST = flavors.map((f) => f.name).join(", ");
@@ -39,7 +54,7 @@ export const faqs: SupportFaq[] = [
   {
     q: "Who can buy UMAXES / HOOKAMAX?",
     a: "Only adults 21 years of age or older. Nicotine is an addictive chemical. Keep products out of reach of children and pets.",
-    keys: ["age", "21", "adult", "who can", "legal", "buy"],
+    keys: ["age", "21", "adult", "who can", "legal", "can i buy", "old enough"],
   },
   {
     q: "What flavors / variations are available?",
@@ -204,10 +219,15 @@ function matchSmallTalk(q: string): string | null {
 
 function wantsFlavorGuide(q: string): boolean {
   return (
-    /\b(suggest|recommend|recommendation|which (flavor|vape|one)|help me (pick|choose)|what should i (get|stock|sell)|pick (a |for me)|guide me)\b/.test(
+    /\b(suggest|recommend|recommendation|which (flavor|vape|one|product|products)|help me (pick|choose)|what should i (get|stock|sell|buy)|pick (a |for me)|guide me|should i buy|what to buy|which one)\b/.test(
       q,
     ) ||
-    /\b(flavor for me|best flavor|popular flavor)\b/.test(q)
+    /\b(flavor for me|best flavor|popular flavor|best product)\b/.test(q) ||
+    (/\b(which|what)\b/.test(q) &&
+      /\b(product|products|flavor|flavours|flavour|vape|device|poroduct|porodfuct|prodcut)\b/.test(
+        q,
+      ) &&
+      /\b(buy|get|choose|pick|should)\b/.test(q))
   );
 }
 
@@ -222,8 +242,20 @@ function detectProfile(q: string): string | null {
 }
 
 function detectVibe(q: string): "icy" | "smooth" | null {
-  if (/\b(ice|icy|cool|chill|frost|cold|crisp)\b/.test(q)) return "icy";
+  if (/\b(ice|icy|cool|chill|frost|cold|crisp|chilled)\b/.test(q)) return "icy";
   if (/\b(smooth|sweet|soft|warm|juicy|candy|mellow)\b/.test(q)) return "smooth";
+  return null;
+}
+
+function detectIntensity(q: string): "light" | "bold" | null {
+  if (/\b(light|easy|mild|soft|refresh|subtle|gentle)\b/.test(q)) return "light";
+  if (/\b(bold|strong|intense|rich|heavy|sweet)\b/.test(q)) return "bold";
+  return null;
+}
+
+function detectStyle(q: string): "classic" | "mixed" | null {
+  if (/\b(mix|mixed|blend|combo|fusion)\b/.test(q)) return "mixed";
+  if (/\b(classic|single|simple|one flavor|straight)\b/.test(q)) return "classic";
   return null;
 }
 
@@ -258,15 +290,81 @@ function pickFlavor(profile?: string, vibe?: "icy" | "smooth" | null): Flavor {
   return preferred!;
 }
 
-function suggestFlavorReply(flavor: Flavor): SupportTurn {
+function pickFlavorPair(state: SupportChatState): Flavor[] {
+  let pool = [...flavors];
+  if (state.profileHint) {
+    const matched = pool.filter((f) => f.profile === state.profileHint);
+    if (matched.length) pool = matched;
+  }
+  if (state.finish === "icy") {
+    const icy = pool.filter((f) =>
+      /ice|mint|cool|chill/i.test(`${f.name} ${f.tagline}`),
+    );
+    if (icy.length) pool = icy;
+  } else if (state.finish === "smooth") {
+    const smooth = pool.filter((f) => !/ice/i.test(f.name));
+    if (smooth.length) pool = smooth;
+  }
+  if (state.intensity === "light") {
+    const light = pool.filter(
+      (f) => f.profile === "Mint" || /mint|ice/i.test(f.name),
+    );
+    if (light.length) pool = light;
+  } else if (state.intensity === "bold") {
+    const bold = pool.filter(
+      (f) => f.profile === "Candy" || f.profile === "Tropical",
+    );
+    if (bold.length) pool = bold;
+  }
+  if (state.intensity === "light" && pool.length < 2) {
+    /* keep the narrower pool */
+  }
+  if (state.style === "mixed") {
+    const mixed = pool.filter((f) =>
+      /sunset|love|fab|strawberry watermelon/i.test(f.name),
+    );
+    if (mixed.length) pool = mixed;
+  } else if (state.style === "classic") {
+    const classic = pool.filter((f) =>
+      /peach mango|cool mint|grape ice|watermelon ice|blueberry ice/i.test(
+        f.name,
+      ),
+    );
+    if (classic.length) pool = classic;
+  }
+
+  const picks: Flavor[] = [];
+  for (const flavor of pool) {
+    if (!picks.some((item) => item.id === flavor.id)) picks.push(flavor);
+    if (picks.length === 2) break;
+  }
+  if (picks.length < 2) {
+    for (const flavor of flavors) {
+      if (!picks.some((item) => item.id === flavor.id)) picks.push(flavor);
+      if (picks.length === 2) break;
+    }
+  }
+  return picks;
+}
+
+function toPick(flavor: Flavor): SupportFlavorPick {
   return {
-    reply: `Based on what you said, I’d start with **${flavor.name}** — ${flavor.tagline.toLowerCase()}. ${flavor.description} Same HOOKAMAX device family; puff options ${PUFF_OPTIONS.join(" / ")}. Want another direction (more ice, more fruit, or candy-sweet)?`,
+    id: flavor.id,
+    name: flavor.name,
+    image: flavor.packageImage,
+  };
+}
+
+function suggestFlavorReply(flavor: Flavor, also?: Flavor): SupportTurn {
+  const second = also && also.id !== flavor.id ? also : null;
+  return {
+    reply: "",
+    picks: second ? [toPick(flavor), toPick(second)] : [toPick(flavor)],
     nextState: { guide: "idle" },
     suggestions: [
       "More ice flavors",
       "More fruit flavors",
       "What flavors are available?",
-      "What is HOOKAMAX?",
     ],
   };
 }
@@ -330,46 +428,62 @@ export function handleSupportTurn(
     };
   }
 
-  // Flavor guide state machine
+  // Flavor guide — four short questions, then a product suggestion.
   if (state.guide === "ask_profile") {
     const profile = detectProfile(q);
     if (!profile && !/\b(skip|any|surprise|don'?t know|idk)\b/.test(q)) {
       return {
         reply:
-          "No worries — pick a lane: **fruit/tropical**, **berry**, **cool ice**, **mint**, or **candy-sweet**? (Or say “surprise me.”)",
+          "Which type of flavor do you like — tropical, berry, ice, mint, or candy?",
         nextState: { guide: "ask_profile" },
-        suggestions: ["Tropical", "Berry", "Ice", "Mint", "Candy", "Surprise me"],
+        suggestions: ["Tropical", "Berry", "Ice", "Mint", "Candy"],
       };
     }
     const hint = profile || "Ice";
     return {
-      reply: `Got it — ${hint.toLowerCase()} vibes. Last one: do you want it more **chilled/icy**, or more **smooth/sweet**?`,
-      nextState: { guide: "ask_vibe", profileHint: hint },
+      reply: `${hint} — nice. Do you want the finish chilled and icy, or smooth and sweet?`,
+      nextState: { guide: "ask_finish", profileHint: hint },
       suggestions: ["Chilled / icy", "Smooth / sweet"],
     };
   }
 
-  if (state.guide === "ask_vibe") {
-    const vibe = detectVibe(q);
-    const flavor = pickFlavor(state.profileHint, vibe);
-    return suggestFlavorReply(flavor);
+  if (state.guide === "ask_finish") {
+    const finish = detectVibe(q) || "icy";
+    return {
+      reply: "How strong should it taste — light and easy, or bold and sweet?",
+      nextState: { ...state, guide: "ask_intensity", finish },
+      suggestions: ["Light and easy", "Bold and sweet"],
+    };
+  }
+
+  if (state.guide === "ask_intensity") {
+    const intensity = detectIntensity(q) || "bold";
+    return {
+      reply: "Last one: a classic single flavor, or a mixed blend?",
+      nextState: { ...state, guide: "ask_style", intensity },
+      suggestions: ["Classic flavor", "Mixed blend"],
+    };
+  }
+
+  if (state.guide === "ask_style") {
+    const style = detectStyle(q) || "classic";
+    const [first, second] = pickFlavorPair({ ...state, style });
+    return suggestFlavorReply(first, second);
   }
 
   if (wantsFlavorGuide(q) || /\bsurprise me\b/.test(q)) {
-    if (/\bsurprise me\b/.test(q)) {
-      return suggestFlavorReply(pickFlavor("Ice", "icy"));
-    }
-    const already = detectProfile(q);
-    if (already) {
-      return {
-        reply: `Nice — leaning ${already.toLowerCase()}. More **chilled/icy**, or more **smooth/sweet**?`,
-        nextState: { guide: "ask_vibe", profileHint: already },
-        suggestions: ["Chilled / icy", "Smooth / sweet"],
-      };
+    if (/\bsurprise me\b/.test(q) && state.guide === "idle") {
+      const [first, second] = pickFlavorPair({
+        guide: "idle",
+        profileHint: "Ice",
+        finish: "icy",
+        intensity: "light",
+        style: "classic",
+      });
+      return suggestFlavorReply(first, second);
     }
     return {
-      reply:
-        "Happy to help pick one. What do your buyers lean toward — **fruit/tropical**, **berry**, **cool ice**, **mint**, or **candy-sweet**?",
+      reply: "Which type of flavor do you like?",
       nextState: { guide: "ask_profile" },
       suggestions: ["Tropical", "Berry", "Ice", "Mint", "Candy"],
     };

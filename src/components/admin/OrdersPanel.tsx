@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   markPaymentReceived,
   updateOrderPaymentStatus,
@@ -530,6 +530,130 @@ function OrderPipeline({
   );
 }
 
+function OpsMenu({
+  name,
+  value,
+  options,
+  ariaLabel,
+}: {
+  name: string;
+  value: string;
+  options: { value: string; label: string }[];
+  ariaLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState(value);
+  const [place, setPlace] = useState({ top: 0, left: 0, width: 0, up: false });
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const label = options.find((option) => option.value === current)?.label ?? current;
+
+  useEffect(() => {
+    if (!open) return;
+    function close() {
+      setOpen(false);
+    }
+    function onPointer(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) close();
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") close();
+    }
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
+  function toggle() {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    setPlace({
+      top: spaceBelow < 220 && rect.top > spaceBelow ? rect.top - 6 : rect.bottom + 6,
+      left: rect.left,
+      width: rect.width,
+      up: spaceBelow < 220 && rect.top > spaceBelow,
+    });
+    setOpen((next) => !next);
+  }
+
+  return (
+    <div className={`admin-order-menu${open ? " is-open" : ""}`} ref={rootRef}>
+      <input type="hidden" name={name} value={current} />
+      <button
+        ref={triggerRef}
+        type="button"
+        className="admin-order-menu-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        onClick={toggle}
+      >
+        <span>{label}</span>
+        <svg className="admin-order-menu-chevron" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <path
+            d="M4 6.2 8 10.2 12 6.2"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+      {open ? (
+        <ul
+          className="admin-order-menu-list"
+          role="listbox"
+          style={{
+            top: place.top,
+            left: place.left,
+            width: place.width,
+            transform: place.up ? "translateY(-100%)" : undefined,
+          }}
+        >
+          {options.map((option) => {
+            const selected = option.value === current;
+            return (
+              <li key={option.value}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={selected ? "is-selected" : undefined}
+                  onClick={() => {
+                    setCurrent(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  <span>{option.label}</span>
+                  {selected ? (
+                    <svg viewBox="0 0 16 16" fill="none" aria-hidden>
+                      <path
+                        d="M3.5 8.2 6.4 11l6.1-6.5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 function OrderExpand({
   order,
   allowedStatuses,
@@ -566,17 +690,13 @@ function OrderExpand({
       ? t("orders.payStatusPaid")
       : t("orders.payOnTerms")
     : t(paymentStatusLabelKey(order.paymentStatus));
-  const payTone = paymentTone(
-    isCredit
-      ? order.paymentPaid
-        ? "paid"
-        : "on_terms"
-      : order.paymentStatus,
-  );
   const totalPcs = order.items.reduce((sum, item) => sum + item.quantity, 0);
   const trackingRows = order.shipments.filter(
     (s) => s.trackingNumber || s.carrier,
   );
+  const trackingNumber =
+    trackingRows[0]?.trackingNumber || shipment?.trackingNumber || "";
+  const trackingCarrier = trackingRows[0]?.carrier || shipment?.carrier || "";
 
   return (
     <div className="border-t border-[var(--admin-border)] bg-[var(--admin-card)]">
@@ -762,14 +882,66 @@ function OrderExpand({
           </section>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h4 className="m-0 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+        <div className="admin-order-ops">
+          <section className="admin-order-ops-card">
+            <div className="admin-order-ops-head">
+              <h4 className="admin-order-ops-title">
                 {t("orders.paymentPanelTitle")}
               </h4>
-              <AdminBadge tone={payTone}>{paySituation}</AdminBadge>
             </div>
+
+            <div
+              className={`admin-order-ops-tiles${isCredit ? " is-single" : ""}`}
+            >
+              {!isCredit ? (
+                <div
+                  className={`admin-order-slip${order.paymentSlipUrl ? " is-in" : " is-empty"}`}
+                >
+                  <span className="admin-order-slip-mark" aria-hidden>
+                    {order.paymentSlipUrl ? (
+                      <svg viewBox="0 0 16 16" fill="none">
+                        <path
+                          d="M3.5 8.2 6.4 11l6.1-6.5"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 16 16" fill="none">
+                        <path
+                          d="M4.2 2.5h5.1L12.5 5.7V13a.8.8 0 0 1-.8.8H4.2a.8.8 0 0 1-.8-.8V3.3a.8.8 0 0 1 .8-.8Z"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M9 2.6V5.6h3"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="admin-order-slip-copy">
+                    <span>{t("orders.paymentSlip")}</span>
+                    <strong>
+                      {order.paymentSlipUrl
+                        ? order.paymentSlipName || t("orders.slipIn")
+                        : t("orders.noSlip")}
+                    </strong>
+                  </span>
+                </div>
+              ) : null}
+              <div className="admin-order-ops-tile">
+                <span>{t("orders.payMethod")}</span>
+                <strong>{methodLabel}</strong>
+                {isCredit ? <em>{paySituation}</em> : null}
+              </div>
+            </div>
+
             {!isCredit ? (
               <form
                 action={async (fd) => {
@@ -784,20 +956,17 @@ function OrderExpand({
                   );
                   onClose();
                 }}
-                className="space-y-3"
+                className="admin-order-ops-frame"
               >
-                <select
+                <OpsMenu
                   name="paymentStatus"
-                  defaultValue={currentPayStatus}
-                  aria-label={t("orders.paymentStatus")}
-                  className="admin-input w-full"
-                >
-                  {ADMIN_PAYMENT_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {t(paymentStatusLabelKey(s))}
-                    </option>
-                  ))}
-                </select>
+                  value={currentPayStatus}
+                  ariaLabel={t("orders.paymentStatus")}
+                  options={ADMIN_PAYMENT_STATUSES.map((s) => ({
+                    value: s,
+                    label: t(paymentStatusLabelKey(s)),
+                  }))}
+                />
                 <button
                   type="submit"
                   className="admin-btn admin-btn-primary admin-btn-sm"
@@ -806,7 +975,7 @@ function OrderExpand({
                 </button>
               </form>
             ) : !order.paymentPaid ? (
-              <div className="space-y-3">
+              <div className="admin-order-ops-frame admin-order-ops-frame-stack">
                 <p className="text-sm text-[var(--admin-muted)]">
                   {t("orders.markPaidHint")}
                 </p>
@@ -828,26 +997,30 @@ function OrderExpand({
                 </form>
               </div>
             ) : (
-              <p className="text-sm font-medium text-[var(--admin-success-700)]">
+              <p className="admin-order-ops-note text-[var(--admin-success-700)]">
                 {t("orders.payStatusPaid")}
               </p>
             )}
-            {!isCredit && !order.paymentSlipUrl ? (
-              <p className="mt-3 text-sm font-medium text-[var(--admin-warning-700)]">
-                {t("orders.noSlip")}
-              </p>
-            ) : null}
           </section>
 
-          <section className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h4 className="m-0 text-[11px] font-semibold tracking-[0.14em] text-[var(--admin-muted)] uppercase">
+          <section className="admin-order-ops-card">
+            <div className="admin-order-ops-head">
+              <h4 className="admin-order-ops-title">
                 {t("orders.shippingPanelTitle")}
               </h4>
-              <AdminBadge tone={orderTone(order.status)}>
-                {statusLabel(order.status)}
-              </AdminBadge>
             </div>
+
+            <div className="admin-order-ops-tiles">
+              <div className="admin-order-ops-tile">
+                <span>{t("orders.trackingFooter")}</span>
+                <strong>{trackingNumber || t("orders.noTracking")}</strong>
+              </div>
+              <div className="admin-order-ops-tile">
+                <span>{t("orders.carrier")}</span>
+                <strong>{trackingCarrier || "—"}</strong>
+              </div>
+            </div>
+
             {fulfillmentStatuses.length > 0 ? (
               <form
                 action={async (fd) => {
@@ -858,20 +1031,17 @@ function OrderExpand({
                   await updateOrderStatus(order.id, nextStatus);
                   onClose();
                 }}
-                className="space-y-3"
+                className="admin-order-ops-frame"
               >
-                <select
+                <OpsMenu
                   name="status"
-                  defaultValue={defaultFulfillment}
-                  aria-label={t("orders.statusLabel")}
-                  className="admin-input w-full"
-                >
-                  {fulfillmentStatuses.map((s) => (
-                    <option key={s} value={s}>
-                      {statusLabel(s)}
-                    </option>
-                  ))}
-                </select>
+                  value={defaultFulfillment}
+                  ariaLabel={t("orders.statusLabel")}
+                  options={fulfillmentStatuses.map((s) => ({
+                    value: s,
+                    label: statusLabel(s),
+                  }))}
+                />
                 <button
                   type="submit"
                   className="admin-btn admin-btn-primary admin-btn-sm"
@@ -880,7 +1050,7 @@ function OrderExpand({
                 </button>
               </form>
             ) : (
-              <p className="text-sm text-[var(--admin-muted)]">
+              <p className="admin-order-ops-note text-[var(--admin-muted)]">
                 {statusLabel(order.status)}
               </p>
             )}

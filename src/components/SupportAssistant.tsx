@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowUp,
   Headset,
@@ -17,12 +18,19 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import FloatingShopBadge from "@/components/FloatingShopBadge";
 import { logos } from "@/lib/assets";
 import { SITE_CONTACT_EMAIL } from "@/lib/site";
-import { faqs as DEFAULT_FAQS, findSupportAnswer, type SupportFaq } from "@/lib/support";
+import {
+  faqs as DEFAULT_FAQS,
+  handleSupportTurn,
+  type SupportChatState,
+  type SupportFaq,
+  type SupportFlavorPick,
+} from "@/lib/support";
 
 type ChatMessage = {
   id: string;
   role: "bot" | "user";
   text: string;
+  picks?: SupportFlavorPick[];
 };
 
 const QUICK_ACTIONS = [
@@ -71,6 +79,8 @@ export default function SupportAssistant() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatState, setChatState] = useState<SupportChatState>({ guide: "idle" });
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [faqItems, setFaqItems] = useState<SupportFaq[]>(DEFAULT_FAQS);
   const listRef = useRef<HTMLDivElement>(null);
   const hello = useMemo(() => greeting(), []);
@@ -115,21 +125,32 @@ export default function SupportAssistant() {
     return null;
   }
 
-  function pushBot(text: string) {
+  function pushBot(text: string, picks?: SupportFlavorPick[]) {
     setMessages((prev) => [
       ...prev,
-      { id: `b-${Date.now()}-${prev.length}`, role: "bot", text },
+      { id: `b-${Date.now()}-${prev.length}`, role: "bot", text, picks },
     ]);
   }
 
   function ask(prompt: string) {
     const trimmed = prompt.trim();
     if (!trimmed) return;
+    const fromPill = QUICK_ACTIONS.some((action) => action.prompt === trimmed);
+    const turn = handleSupportTurn(
+      trimmed,
+      fromPill ? { guide: "idle" } : chatState,
+      faqItems,
+    );
+    setChatState(turn.nextState);
+    setSuggestions(fromPill ? [] : (turn.suggestions ?? []));
     setMessages((prev) => [
       ...prev,
       { id: `u-${Date.now()}-${prev.length}`, role: "user", text: trimmed },
     ]);
-    window.setTimeout(() => pushBot(findSupportAnswer(trimmed, faqItems)), 280);
+    window.setTimeout(
+      () => pushBot(turn.reply.replace(/\*\*/g, ""), turn.picks),
+      280,
+    );
   }
 
   function onSubmit(e: FormEvent) {
@@ -146,31 +167,20 @@ export default function SupportAssistant() {
 
       {open && (
         <div className="pointer-events-auto flex max-h-[min(78dvh,34rem)] w-[min(calc(100vw-1.25rem),26rem)] origin-bottom-right animate-[float-badge-in_0.45s_cubic-bezier(0.22,1,0.36,1)_both] flex-col overflow-hidden rounded-2xl bg-[#f4f7fb] shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/10 sm:max-h-[min(68vh,34rem)]">
-          {/* Header — blue brand */}
           <div className="relative flex items-center justify-between gap-3 bg-[#0b3d91] px-4 py-3.5 text-white">
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_100%_0%,rgba(96,165,250,0.35),transparent_55%)]"
             />
-            <div className="relative flex min-w-0 items-center gap-3">
-              <span className="relative h-7 w-[7.25rem] shrink-0">
-                <Image
-                  src={logos.blueWordmarkOnDark}
-                  alt="UMAXES"
-                  fill
-                  className="object-contain object-left"
-                  sizes="116px"
-                />
-              </span>
-              <div className="min-w-0 border-l border-white/25 pl-3">
-                <p className="truncate font-display text-sm font-bold tracking-tight">
-                  Support desk
-                </p>
-                <p className="font-display text-[0.65rem] font-medium tracking-wide text-sky-100/90">
-                  FAQ · Members only
-                </p>
-              </div>
-            </div>
+            <span className="relative h-7 w-[7.25rem] shrink-0">
+              <Image
+                src={logos.blueWordmarkOnDark}
+                alt="UMAXES"
+                fill
+                className="object-contain object-left"
+                sizes="116px"
+              />
+            </span>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -193,12 +203,7 @@ export default function SupportAssistant() {
                   className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-sky-50 to-transparent"
                 />
                 <div className="relative">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-sky-50 px-2.5 py-1 font-display text-[0.6rem] font-bold tracking-[0.14em] text-[#0b3d91] uppercase ring-1 ring-sky-200/80">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#0b3d91]" />
-                    Support desk
-                  </span>
-
-                  <div className="mx-auto mt-6 flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-2xl bg-[#0b3d91] shadow-[0_12px_28px_rgba(11,61,145,0.35)] ring-[5px] ring-sky-100">
+                  <div className="mx-auto flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-2xl bg-[#0b3d91] shadow-[0_12px_28px_rgba(11,61,145,0.35)] ring-[5px] ring-sky-100">
                     <span className="relative h-8 w-[3.25rem]">
                       <Image
                         src={logos.blueWordmarkOnDark}
@@ -250,6 +255,30 @@ export default function SupportAssistant() {
                         </span>
                       </span>
                     )}
+                    {msg.picks?.length ? (
+                      <div className="grid max-w-[82%] grid-cols-2 gap-2">
+                        {msg.picks.map((pick) => (
+                          <Link
+                            key={pick.id}
+                            href={`/product/${pick.id}`}
+                            className="overflow-hidden rounded-2xl bg-white text-center shadow-sm ring-1 ring-slate-900/6"
+                          >
+                            <span className="relative block aspect-square bg-[#f4f7fb]">
+                              <Image
+                                src={pick.image}
+                                alt={pick.name}
+                                fill
+                                className="object-contain p-2"
+                                sizes="140px"
+                              />
+                            </span>
+                            <span className="block px-2 py-2 font-display text-xs font-semibold text-slate-900">
+                              {pick.name}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
                     <p
                       className={`max-w-[82%] px-3.5 py-2.5 font-body text-[0.9rem] leading-relaxed ${
                         msg.role === "user"
@@ -259,20 +288,40 @@ export default function SupportAssistant() {
                     >
                       {msg.text}
                     </p>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
 
-            <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {QUICK_ACTIONS.map((action) => {
+            {chatting && suggestions.length > 0 && (
+              <div className="grid grid-cols-2 gap-2">
+                {suggestions.map((label, index) => {
+                  const wide =
+                    index === suggestions.length - 1 && suggestions.length % 2 === 1;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => ask(label)}
+                      className={`inline-flex items-center justify-center rounded-full border border-[#0b3d91]/25 bg-sky-50 px-3 py-2.5 text-center font-display text-xs font-semibold text-[#0b3d91] shadow-sm transition hover:border-[#0b3d91] hover:bg-white ${wide ? "col-span-2" : ""}`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              {QUICK_ACTIONS.map((action, index) => {
                 const Icon = action.icon;
+                const wide = index === QUICK_ACTIONS.length - 1 && QUICK_ACTIONS.length % 2 === 1;
                 return (
                   <button
                     key={action.id}
                     type="button"
                     onClick={() => ask(action.prompt)}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2.5 font-display text-xs font-semibold text-slate-800 shadow-sm transition hover:border-sky-300 hover:text-[#0b3d91]"
+                    className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-2.5 font-display text-xs font-semibold text-slate-800 shadow-sm transition hover:border-sky-300 hover:text-[#0b3d91] ${wide ? "col-span-2" : ""}`}
                   >
                     <Icon
                       className="h-3.5 w-3.5 text-[#0b3d91]"

@@ -792,6 +792,302 @@
   padding: 0.95rem 1.1rem 0.15rem;
 }
 
+.admin-order-ops {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .admin-order-ops {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem;
+  }
+}
+
+.admin-order-ops-card {
+  border: 1px solid var(--admin-border);
+  border-radius: 1rem;
+  background: var(--admin-card);
+  padding: 1rem 1.1rem 1.1rem;
+  box-shadow:
+    0 1px 0 rgba(15, 23, 42, 0.04),
+    0 10px 24px rgba(27, 79, 114, 0.05);
+}
+
+.admin-order-ops-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-order-ops-title {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--admin-brand-600);
+}
+
+.admin-order-ops-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.admin-order-ops-tiles.is-single {
+  grid-template-columns: 1fr;
+}
+
+.admin-order-slip {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  border-radius: 0.85rem;
+  padding: 0.7rem 0.8rem;
+}
+
+.admin-order-slip.is-empty {
+  border: 1px solid color-mix(in srgb, var(--admin-warning-500) 55%, var(--admin-border));
+  background: var(--admin-warning-50);
+}
+
+.admin-order-slip.is-in {
+  border: 1px solid color-mix(in srgb, var(--admin-success-500) 45%, var(--admin-border));
+  background: var(--admin-success-50);
+}
+
+.admin-order-slip-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--admin-card) 72%, transparent);
+}
+
+.admin-order-slip-mark svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.admin-order-slip.is-empty .admin-order-slip-mark {
+  color: var(--admin-warning-700);
+}
+
+.admin-order-slip.is-in .admin-order-slip-mark {
+  color: var(--admin-success-700);
+}
+
+.admin-order-slip-copy {
+  min-width: 0;
+}
+
+.admin-order-slip-copy > span {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-order-slip-copy strong {
+  display: block;
+  margin-top: 0.16rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.admin-order-slip.is-empty .admin-order-slip-copy strong {
+  color: var(--admin-warning-700);
+}
+
+.admin-order-slip.is-in .admin-order-slip-copy strong {
+  color: var(--admin-success-700);
+}
+
+.admin-order-ops-tile {
+  min-width: 0;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--admin-brand-25) 70%, var(--admin-card));
+  padding: 0.7rem 0.8rem;
+}
+
+.admin-order-ops-tile span {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 650;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-order-ops-tile strong {
+  display: block;
+  margin-top: 0.28rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--admin-text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.admin-order-ops-tile em {
+  display: block;
+  margin-top: 0.15rem;
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--admin-muted);
+}
+
+.admin-order-ops-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--admin-hover) 55%, var(--admin-card));
+  padding: 0.7rem 0.75rem;
+}
+
+.admin-order-ops-frame-stack {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.admin-order-ops-frame .admin-input,
+.admin-order-ops-frame .admin-order-menu {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-order-menu {
+  position: relative;
+}
+
+.admin-order-menu-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.45rem 1.9rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-card);
+  color: var(--admin-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+}
+
+.admin-order-menu-trigger span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.admin-order-menu.is-open .admin-order-menu-trigger,
+.admin-order-menu-trigger:focus-visible {
+  border-color: var(--admin-brand-500);
+  box-shadow: 0 0 0 3px var(--admin-brand-100);
+  outline: none;
+}
+
+.admin-order-menu-chevron {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--admin-muted);
+  transform: translateY(-50%);
+  transition: transform 0.15s ease;
+}
+
+.admin-order-menu.is-open .admin-order-menu-chevron {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.admin-order-menu-list {
+  position: fixed;
+  z-index: 40;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  border-radius: 0.85rem;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-card);
+  box-shadow:
+    0 1px 0 rgba(15, 23, 42, 0.04),
+    0 16px 36px rgba(15, 23, 42, 0.12);
+}
+
+.admin-order-menu-list button {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  border-radius: 0.6rem;
+  padding: 0.5rem 1.7rem;
+  font-size: 0.875rem;
+  font-weight: 550;
+  color: var(--admin-text);
+  text-align: center;
+  cursor: pointer;
+}
+
+.admin-order-menu-list button:hover,
+.admin-order-menu-list button:focus-visible {
+  background: var(--admin-brand-25);
+  outline: none;
+}
+
+.admin-order-menu-list button.is-selected {
+  background: var(--admin-menu-active-bg);
+  color: var(--admin-brand-600);
+  font-weight: 700;
+}
+
+.admin-order-menu-list button svg {
+  position: absolute;
+  right: 0.65rem;
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.admin-order-ops-frame .admin-btn {
+  white-space: nowrap;
+}
+
+.admin-order-ops-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
 .admin-order-doc-links {
   display: flex;
   flex-wrap: wrap;
@@ -1116,6 +1412,18 @@
 
   .admin-order-expand-no {
     font-size: 1.125rem;
+  }
+
+  .admin-order-ops-tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-order-ops-frame {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-order-ops-card {
+    padding: 0.95rem 0.95rem 1.05rem;
   }
 }
 
