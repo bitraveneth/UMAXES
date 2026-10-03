@@ -647,8 +647,17 @@ function OrderExpand({
           )}
 
           <div className="admin-order-lines-pay">
-            <span>{t("orders.paymentAmount")}</span>
-            <strong>{money(order.total)}</strong>
+            <div className="admin-order-lines-pay-stat">
+              <span>{t("orders.paymentAmount")}</span>
+              <strong>{money(order.total)}</strong>
+            </div>
+            <div className="admin-order-lines-pay-stat">
+              <span>{t("orders.totalQty")}</span>
+              <strong>
+                {order.items.reduce((sum, item) => sum + item.quantity, 0)}{" "}
+                {t("orders.pcs")}
+              </strong>
+            </div>
           </div>
         </section>
 

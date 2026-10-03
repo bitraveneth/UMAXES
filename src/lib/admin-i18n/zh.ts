@@ -545,6 +545,7 @@ const zh: AdminMessages = {
     noSupplier: "未指定",
     qty: "数量",
     pcs: "件",
+    totalQty: "总数量",
     sku: "SKU",
     paymentAmount: "付款金额",
     paymentSituation: "付款情况",

@@ -562,6 +562,7 @@ const en: AdminMessages = {
     noSupplier: "Not assigned",
     qty: "Qty",
     pcs: "pcs",
+    totalQty: "Total qty",
     sku: "SKU",
     paymentAmount: "Payment amount",
     paymentSituation: "Payment situation",
