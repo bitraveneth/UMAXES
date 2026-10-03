@@ -545,6 +545,7 @@ const zh: AdminMessages = {
     noSupplier: "未指定",
     qty: "数量",
     quantity: "数量",
+    price: "价格",
     pcs: "件",
     totalQty: "总数量",
     linesCount: "{count} 行",

@@ -620,49 +620,55 @@ function OrderExpand({
               {t("common.noData")}
             </p>
           ) : (
-            <ul className="admin-order-lines-list">
-              {order.items.map((item) => (
-                <li key={item.id} className="admin-order-line">
-                  <div className="admin-order-line-main">
-                    <span className="admin-order-line-sku" title={item.sku}>
-                      {item.sku}
-                    </span>
-                    <p className="admin-order-line-name">{item.name}</p>
-                  </div>
-
-                  <div className="admin-order-line-qty" title={t("orders.qty")}>
-                    <span>{t("orders.qty")}</span>
-                    <strong>{item.quantity}</strong>
-                  </div>
-
-                  <div className="admin-order-line-money">
-                    <span className="admin-order-line-unit">
-                      {money(item.unitPrice)}
-                      <span className="admin-order-line-unit-x">
-                        {" "}
-                        × {item.quantity}
+            <>
+              <div className="admin-order-lines-head" role="row">
+                <span className="admin-order-lines-h-item">
+                  {t("orders.lineItems")}
+                </span>
+                <span className="admin-order-lines-h-qty">
+                  {t("orders.quantity")}
+                </span>
+                <span className="admin-order-lines-h-price">
+                  {t("orders.price")}
+                </span>
+              </div>
+              <ul className="admin-order-lines-list">
+                {order.items.map((item) => (
+                  <li key={item.id} className="admin-order-line">
+                    <div className="admin-order-line-main">
+                      <p className="admin-order-line-name">{item.name}</p>
+                      <span className="admin-order-line-sku" title={item.sku}>
+                        {item.sku}
                       </span>
-                    </span>
-                    <strong>{money(item.quantity * item.unitPrice)}</strong>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                    </div>
+
+                    <div className="admin-order-line-qty">
+                      <strong>{item.quantity}</strong>
+                    </div>
+
+                    <div className="admin-order-line-money">
+                      <strong>{money(item.unitPrice)}</strong>
+                      <span className="admin-order-line-total">
+                        {money(item.quantity * item.unitPrice)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
 
           <div className="admin-order-lines-foot">
-            <div className="admin-order-lines-foot-row">
+            <div className="admin-order-lines-foot-stat">
               <span className="admin-order-lines-foot-label">
                 {t("orders.paymentPanelTitle")}
               </span>
-              <div className="admin-order-lines-foot-vals">
-                <strong className="admin-order-lines-foot-amount">
-                  {money(order.total)}
-                </strong>
-                <p className="admin-order-lines-foot-pay-meta">{payFootMeta}</p>
-              </div>
+              <strong className="admin-order-lines-foot-amount">
+                {money(order.total)}
+              </strong>
+              <p className="admin-order-lines-foot-pay-meta">{payFootMeta}</p>
             </div>
-            <div className="admin-order-lines-foot-row">
+            <div className="admin-order-lines-foot-stat admin-order-lines-foot-stat-end">
               <span className="admin-order-lines-foot-label">
                 {t("orders.quantity")}
               </span>

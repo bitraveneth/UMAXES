@@ -562,6 +562,7 @@ const en: AdminMessages = {
     noSupplier: "Not assigned",
     qty: "Qty",
     quantity: "Quantity",
+    price: "Price",
     pcs: "pcs",
     totalQty: "Total quantity",
     linesCount: "{count} lines",
