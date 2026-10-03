@@ -627,10 +627,6 @@ function OrderExpand({
                 </span>
               </div>
             </div>
-            <div className="admin-order-lines-pay">
-              <span>{t("orders.paymentAmount")}</span>
-              <strong>{money(order.total)}</strong>
-            </div>
           </div>
 
           {order.items.length === 0 ? (
@@ -641,15 +637,6 @@ function OrderExpand({
             <ul className="admin-order-lines-list">
               {order.items.map((item) => (
                 <li key={item.id} className="admin-order-line">
-                  <div className="admin-order-line-thumb">
-                    {item.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.image} alt="" />
-                    ) : (
-                      <Package className="h-5 w-5 text-[var(--admin-muted)]" />
-                    )}
-                  </div>
-
                   <div className="admin-order-line-main">
                     <p className="admin-order-line-name">{item.name}</p>
                     <span className="admin-order-line-sku" title={item.sku}>
@@ -676,6 +663,11 @@ function OrderExpand({
               ))}
             </ul>
           )}
+
+          <div className="admin-order-lines-pay">
+            <span>{t("orders.paymentAmount")}</span>
+            <strong>{money(order.total)}</strong>
+          </div>
         </section>
 
         <div className="grid gap-4 lg:grid-cols-2">
