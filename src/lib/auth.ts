@@ -2,6 +2,10 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { verifyAltchaPayload } from "@/lib/altcha";
+import { toE164 } from "@/lib/phone";
+import { getSiteSettings, isStaffRole } from "@/lib/site-settings";
+import { recordUserLogin } from "@/lib/login-meta";
 import type {
   CompanyMemberRole,
   CustomerLevel,
@@ -81,7 +85,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         try {
-          const { verifyAltchaPayload } = await import("@/lib/altcha");
           const captcha = await verifyAltchaPayload(credentials?.altcha);
           if (!captcha.ok) return null;
 
@@ -89,7 +92,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const password = String(credentials?.password ?? "");
           if (!raw || !password) return null;
 
-          const { toE164 } = await import("@/lib/twilio");
+          // Use @/lib/phone — do not import @/lib/twilio (pulls the Twilio SDK).
           const asPhone = toE164(raw);
           const identifier = raw.includes("@")
             ? raw.toLowerCase()
@@ -110,18 +113,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null;
           }
 
-          const { getSiteSettings, isStaffRole } = await import(
-            "@/lib/site-settings"
-          );
-          const settings = await getSiteSettings();
-          if (!settings.publicSignInEnabled && !isStaffRole(user.role)) {
-            return null;
+          // Staff can always sign in; skip settings DB for them.
+          if (!isStaffRole(user.role)) {
+            const settings = await getSiteSettings();
+            if (!settings.publicSignInEnabled) return null;
           }
 
           const valid = await bcrypt.compare(password, user.passwordHash);
           if (!valid) return null;
 
-          const { recordUserLogin } = await import("@/lib/login-meta");
           void recordUserLogin(user.id);
 
           return sessionUserFromDb(user);
@@ -153,7 +153,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
           if (
             !admin ||
-            admin.role !== "SUPER_ADMIN" ||
+            (admin.role !== "SUPER_ADMIN" && admin.role !== "ADMIN") ||
             admin.status === "DISABLED"
           ) {
             return null;
@@ -164,20 +164,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               where: { id: payload.targetId },
               include: { company: true },
             });
-            if (!target || target.role !== "CUSTOMER") return null;
+            if (!target) return null;
+            const staffTarget =
+              target.role === "ADMIN" ||
+              target.role === "SALES" ||
+              target.role === "WAREHOUSE" ||
+              target.role === "LOGISTICS";
+            if (target.role === "CUSTOMER") {
+              if (admin.role !== "SUPER_ADMIN") return null;
+            } else if (staffTarget) {
+              /* Super Admin or Admin may open staff (never Super Admin) */
+            } else {
+              return null;
+            }
             if (target.status === "DISABLED" || target.status === "REJECTED") {
               return null;
             }
             return sessionUserFromDb(target, admin.id);
           }
 
-          // restore → back to super admin
+          // restore → back to the admin who started impersonation
           if (payload.targetId !== payload.adminId) return null;
           const restored = await prisma.user.findUnique({
             where: { id: payload.adminId },
             include: { company: true },
           });
-          if (!restored || restored.role !== "SUPER_ADMIN") return null;
+          if (
+            !restored ||
+            (restored.role !== "SUPER_ADMIN" && restored.role !== "ADMIN")
+          ) {
+            return null;
+          }
           return sessionUserFromDb(restored, null);
         } catch (err) {
           console.error("[auth.impersonate]", err);

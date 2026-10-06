@@ -54,27 +54,23 @@ export function AdminStat({
   trendUp?: boolean;
 }) {
   const inner = (
-    <div className="flex items-start justify-between gap-3">
-      <div>
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--admin-gray-100)] text-[var(--admin-brand-500)]">
-          {Icon ? <Icon className="h-7 w-7" strokeWidth={1.75} /> : null}
+    <div className="admin-stat">
+      {Icon ? (
+        <div className="admin-stat-icon" aria-hidden>
+          <Icon className="h-6 w-6" strokeWidth={1.75} />
         </div>
-        <p className="text-base text-[var(--admin-muted)]">{label}</p>
-        <div className="mt-2 flex flex-wrap items-end gap-2">
-          <p className="text-4xl font-bold tracking-tight text-[var(--admin-text)]">
-            {value}
-          </p>
-          {trend ? (
-            <span
-              className={`mb-1 admin-badge ${
-                trendUp === false ? "admin-badge-error" : "admin-badge-success"
-              }`}
-            >
-              {trend}
-            </span>
-          ) : null}
-        </div>
-      </div>
+      ) : null}
+      <p className="admin-stat-value">{value}</p>
+      <p className="admin-stat-label">{label}</p>
+      {trend ? (
+        <span
+          className={`admin-stat-trend admin-badge ${
+            trendUp === false ? "admin-badge-error" : "admin-badge-success"
+          }`}
+        >
+          {trend}
+        </span>
+      ) : null}
     </div>
   );
 
@@ -82,14 +78,16 @@ export function AdminStat({
     return (
       <Link
         href={href}
-        className="admin-card admin-card-pad block transition hover:border-[var(--admin-brand-500)]"
+        className="admin-card admin-card-pad admin-stat-card block transition hover:border-[var(--admin-brand-500)]"
       >
         {inner}
       </Link>
     );
   }
 
-  return <div className="admin-card admin-card-pad">{inner}</div>;
+  return (
+    <div className="admin-card admin-card-pad admin-stat-card">{inner}</div>
+  );
 }
 
 export function AdminBadge({

@@ -78,6 +78,8 @@ export async function GET(request: Request) {
     company.level !== "SHOP" &&
     company.paymentTermsDays >= 1 &&
     company.creditLimit > 0;
+  const { getPolicyForLevel, grantsTestStations } = await import("@/lib/rebate");
+  const policy = await getPolicyForLevel(company.level);
 
   return NextResponse.json({
     company: {
@@ -85,6 +87,10 @@ export async function GET(request: Request) {
       name: company.name,
       level: company.level,
       creditAllowed,
+      testStationsPerCase: grantsTestStations(policy)
+        ? policy?.testStationsPerCase || 0
+        : 0,
+      pcsPerCase: policy?.pcsPerCase || 95,
     },
     addresses: company.addresses,
     contacts: company.users,

@@ -44,8 +44,18 @@ const ACTION_META: Record<
     category: "orders",
     tone: "brand",
   },
+  PAYMENT_SLIP_UPLOADED: {
+    label: "Payment slip uploaded",
+    category: "payments",
+    tone: "warning",
+  },
+  PAYMENT_SLIP_DELETED: {
+    label: "Payment slip deleted",
+    category: "payments",
+    tone: "warning",
+  },
   PAYMENT_RECEIVED: {
-    label: "Payment marked paid",
+    label: "Funds confirmed",
     category: "payments",
     tone: "success",
   },
@@ -89,6 +99,16 @@ const ACTION_META: Record<
   },
   COMPANY_ADDRESS_ADDED: {
     label: "Ship-to address added",
+    category: "customers",
+    tone: "neutral",
+  },
+  COMPANY_PROFILE_UPDATED: {
+    label: "Company profile updated",
+    category: "customers",
+    tone: "neutral",
+  },
+  COMPANY_ADDRESS_UPDATED: {
+    label: "Ship-to address updated",
     category: "customers",
     tone: "neutral",
   },
@@ -147,6 +167,11 @@ const ACTION_META: Record<
     category: "system",
     tone: "neutral",
   },
+  STAFF_MODULE_ACCESS_UPDATED: {
+    label: "Staff module access updated",
+    category: "system",
+    tone: "warning",
+  },
   CUSTOMER_DELETED: {
     label: "Customer account deleted",
     category: "system",
@@ -184,9 +209,14 @@ const ACTION_META: Record<
   },
   SYSTEM_DB_RESET: { label: "Database reset", category: "system", tone: "error" },
   SITE_ACCESS_UPDATED: {
-    label: "Site homepage mode changed",
+    label: "Site settings updated",
     category: "system",
     tone: "warning",
+  },
+  SYSTEM_CACHE_REVALIDATED: {
+    label: "Site cache refreshed",
+    category: "system",
+    tone: "neutral",
   },
   WAREHOUSE_UPSERT: { label: "Warehouse saved", category: "catalog", tone: "neutral" },
   WAREHOUSE_STOCK: { label: "Warehouse stock updated", category: "catalog", tone: "neutral" },
@@ -312,6 +342,28 @@ export function formatActivityMeta(
       if (m.email) parts.push(String(m.email));
       else if (m.phone) parts.push(String(m.phone));
       if (m.reason) parts.push(String(m.reason));
+    }
+    if (action === "STAFF_MODULE_ACCESS_UPDATED") {
+      if (m.name) parts.push(String(m.name));
+      if (m.email) parts.push(String(m.email));
+      if (m.mode === "role_defaults") parts.push("Role defaults");
+      else if (m.mode === "custom") parts.push("Custom modules");
+      const addedLabels = Array.isArray(m.addedLabels)
+        ? m.addedLabels.map(String)
+        : [];
+      const removedLabels = Array.isArray(m.removedLabels)
+        ? m.removedLabels.map(String)
+        : [];
+      if (addedLabels.length) parts.push(`+ ${addedLabels.join(", ")}`);
+      if (removedLabels.length) parts.push(`− ${removedLabels.join(", ")}`);
+    }
+    if (action === "INVENTORY_ADJUST") {
+      if (m.name || m.sku) parts.push(String(m.name || m.sku));
+      if (m.previousQuantity != null && m.quantity != null) {
+        parts.push(`${m.previousQuantity} → ${m.quantity}`);
+      } else if (m.quantity != null) {
+        parts.push(`Qty ${m.quantity}`);
+      }
     }
     if (m.note && typeof m.note === "string") parts.push(m.note);
     if (m.levels && Array.isArray(m.levels)) {

@@ -2,10 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { heroImages } from "@/lib/assets";
+import { loginImages } from "@/lib/assets";
 
-/** Three cinematic device shots — no flavor-pack photography. */
-const SLIDES = [heroImages[0], heroImages[2], heroImages[3]] as const;
+const SLIDES = loginImages;
 
 const INTERVAL_MS = 4500;
 

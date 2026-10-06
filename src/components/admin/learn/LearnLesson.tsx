@@ -86,7 +86,7 @@ export function LearnLesson({ slug }: { slug: LearnSlug }) {
           <section className="space-y-6">
             <div>
               <h2 className="mb-2 text-base font-semibold text-[var(--admin-text)]">
-                {locale === "zh" ? "这是什么" : "What it is"}
+                {t("learn.whatHeading")}
               </h2>
               <p className="text-[var(--admin-muted)] leading-relaxed">
                 {card.what}
@@ -95,7 +95,7 @@ export function LearnLesson({ slug }: { slug: LearnSlug }) {
 
             <div>
               <h2 className="mb-3 text-base font-semibold text-[var(--admin-text)]">
-                {locale === "zh" ? "如何使用" : "How it works"}
+                {t("learn.howHeading")}
               </h2>
               <ol className="space-y-2">
                 {card.steps.map((step, i) => (

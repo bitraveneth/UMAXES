@@ -31,7 +31,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  // Used by admin layout for per-staff module path checks
+  res.headers.set("x-pathname", pathname);
+  return res;
 }
 
 export const config = {

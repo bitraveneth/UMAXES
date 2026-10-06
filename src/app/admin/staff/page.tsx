@@ -1,13 +1,18 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { canAccessPath } from "@/lib/rbac";
+import { parseModuleAccess } from "@/lib/admin-modules";
 import { prisma } from "@/lib/db";
 import { AdminPageHeaderI18n } from "@/components/admin/AdminPageHeaderI18n";
 import StaffPanel from "@/components/admin/StaffPanel";
 
 export const metadata = { title: "Staff · UMAXES Ops" };
 
-export default async function StaffPage() {
+export default async function StaffPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ impersonate?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -16,6 +21,14 @@ export default async function StaffPage() {
   ) {
     redirect("/admin");
   }
+
+  const sp = await searchParams;
+  const impersonateError =
+    sp.impersonate === "failed"
+      ? "Could not open that staff account. Try Login as again."
+      : sp.impersonate === "missing"
+        ? "Login link was incomplete. Try Login as again."
+        : null;
 
   const staff = await prisma.user.findMany({
     where: {
@@ -34,6 +47,7 @@ export default async function StaffPage() {
       lastLoginIp: true,
       lastLoginCountry: true,
       lastLoginDevice: true,
+      moduleAccess: true,
     },
   });
 
@@ -45,10 +59,27 @@ export default async function StaffPage() {
       />
       <StaffPanel
         currentUserId={session.user.id}
+        canManageModules={
+          session.user.role === "SUPER_ADMIN" || session.user.role === "ADMIN"
+        }
+        canImpersonate={
+          session.user.role === "SUPER_ADMIN" || session.user.role === "ADMIN"
+        }
+        initialError={impersonateError}
+        actorRole={session.user.role}
         staff={staff.map((u) => ({
-          ...u,
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          role: u.role,
+          status: u.status,
           createdAt: u.createdAt.toISOString(),
           lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
+          lastLoginIp: u.lastLoginIp,
+          lastLoginCountry: u.lastLoginCountry,
+          lastLoginDevice: u.lastLoginDevice,
+          moduleAccess: parseModuleAccess(u.moduleAccess),
         }))}
       />
     </div>

@@ -3,12 +3,11 @@ import { Download, Eye, Printer } from "lucide-react";
 const DOCS = [
   { type: "pi", label: "PI", title: "Proforma invoice" },
   { type: "packing", label: "Packing list", title: "Packing list" },
-  { type: "invoice", label: "Invoice", title: "Commercial invoice" },
 ] as const;
 
 export function AccountDocLinks({
   orderId,
-  types = ["pi", "invoice"],
+  types = ["pi", "packing"],
   compact = false,
 }: {
   orderId: string;

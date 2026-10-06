@@ -42,7 +42,11 @@ const statusByRole: Partial<Record<UserRole, OrderStatus[]>> = {
   ],
 };
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ open?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -51,33 +55,34 @@ export default async function AdminOrdersPage() {
     redirect("/admin");
   }
 
+  const params = searchParams ? await searchParams : {};
+  const openId = typeof params.open === "string" ? params.open : null;
+
   const role = session.user.role as UserRole;
   const allowedStatuses = statusByRole[role] ?? statusByRole.SALES!;
-  const canAssignSupplier =
-    role === "ADMIN" ||
-    role === "SUPER_ADMIN" ||
-    role === "SALES" ||
-    role === "WAREHOUSE";
+  const canDeleteSlip = role === "ADMIN" || role === "SUPER_ADMIN";
 
-  const [orders, suppliers] = await Promise.all([
-    prisma.order.findMany({
-      where: orderCompanyScopeForStaff(role, session.user.id),
-      include: {
-        company: true,
-        supplier: true,
-        items: true,
-        shipments: true,
-        placedByStaff: { select: { name: true, email: true } },
+  const orders = await prisma.order.findMany({
+    where: orderCompanyScopeForStaff(role, session.user.id),
+    include: {
+      company: true,
+      supplier: true,
+      items: true,
+      shipments: true,
+      payments: {
+        select: {
+          status: true,
+          paidAt: true,
+          slipUrl: true,
+          slipFileName: true,
+          slipMime: true,
+        },
       },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-    }),
-    prisma.supplier.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
+      placedByStaff: { select: { name: true, email: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 80,
+  });
 
   const pendingPayment = orders.filter((o) => o.status === "PAYMENT_PENDING")
     .length;
@@ -88,12 +93,19 @@ export default async function AdminOrdersPage() {
   const shipped = orders.filter((o) => o.status === "SHIPPED").length;
   const completed = orders.filter((o) => o.status === "COMPLETED").length;
 
-  const panelOrders = orders.map((o) => ({
+  const panelOrders = orders.map((o) => {
+    const payment = o.payments[0];
+    return {
     id: o.id,
     orderNumber: o.orderNumber,
     status: o.status,
     paymentMethod: o.paymentMethod,
     paymentRef: o.paymentRef,
+    paymentStatus: payment?.status ?? "pending",
+    paymentPaid: o.payments.some((p) => p.status === "paid" && p.paidAt),
+    paymentSlipUrl: payment?.slipUrl ?? null,
+    paymentSlipName: payment?.slipFileName ?? null,
+    paymentSlipMime: payment?.slipMime ?? null,
     notes: o.notes,
     total: o.total,
     createdAt: o.createdAt.toISOString(),
@@ -116,7 +128,8 @@ export default async function AdminOrdersPage() {
       trackingNumber: s.trackingNumber,
       status: s.status,
     })),
-  }));
+  };
+  });
 
   return (
     <div className="space-y-6">
@@ -174,9 +187,9 @@ export default async function AdminOrdersPage() {
 
       <OrdersPanel
         orders={panelOrders}
-        suppliers={suppliers}
         allowedStatuses={allowedStatuses}
-        canAssignSupplier={canAssignSupplier}
+        canDeleteSlip={canDeleteSlip}
+        openId={openId}
       />
     </div>
   );
