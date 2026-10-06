@@ -1,5 +1,5 @@
-/** Homepage hero + /products first panel — Cool Mint cosmic stage (cache-busted filename). */
-export const heroBanner = "/images/hero/hookamax-cool-mint.webp";
+/** Homepage hero first slide — Blueberry Ice cosmic stage. */
+export const heroBanner = "/images/hero/hookamax-hero.webp";
 
 export const heroSceneImages = [
   "/images/hero/desert-carry.webp",
@@ -18,9 +18,9 @@ export const heroImages = [
   "/images/hero/04.webp",
 ] as const;
 
-/** Login / register split-panel slides (cache-busted filenames). */
+/** Login / register split-panel slides — first slide matches homepage hero. */
 export const loginImages = [
-  "/images/login/login-cool-mint-podium.webp",
+  heroBanner,
   "/images/login/login-glam-neon.webp",
   "/images/login/login-80k-podium.webp",
   "/images/login/login-cool-mint-selfie.webp",
@@ -89,12 +89,14 @@ export const product = {
 
 /** Full-bleed detail panels on /products — first panel matches homepage hero */
 export const productStoryImages = [
-  "/images/product/story/hero-cool-mint.webp",
+  "/images/product/story/01-detail.webp",
   "/images/product/story/02.webp",
   "/images/product/story/03.webp",
   "/images/product/story/04.webp",
   "/images/product/story/05.webp",
-  "/images/product/story/06.webp",
+  "/images/product/story/08.webp",
+  "/images/product/story/08-2.webp",
+  "/images/product/story/pack-carton.webp",
 ] as const;
 
 /** Puff count options available on every flavor when ordering */
