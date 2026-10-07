@@ -14,7 +14,7 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
     id: "super",
     label: "1 · Super admin",
-    email: "super@umaxes.com",
+    email: "info@umaxesvape.com",
     password: "Super1234!",
     note: "Devs · full access",
   },

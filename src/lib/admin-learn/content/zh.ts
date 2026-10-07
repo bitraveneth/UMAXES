@@ -17,7 +17,7 @@ export const learnZh: Record<LearnSlug, LearnTutorial> = {
       "获批客户（或销售代客）下单后，在订单里分别确认「付款」与「物流」。",
       "生产环境不要跑演示数据重灌。目录与价格请保留，不要清空商品目录。",
     ],
-    tip: "默认账号（请尽快修改）：super@umaxes.com / Super1234! 与 admin@umaxes.com / Admin1234!",
+    tip: "默认账号（请尽快修改）：info@umaxesvape.com / Super1234! 与 admin@umaxes.com / Admin1234!",
   },
   overview: {
     title: "UMAXES 如何运作",
