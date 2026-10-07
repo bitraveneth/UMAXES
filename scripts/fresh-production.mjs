@@ -21,8 +21,8 @@
  *   npm run db:fresh-production
  *
  * Then sign in as:
- *   info@umaxesvape.com / Super1234!   (SUPER_ADMIN)
- *   admin@umaxes.com / Admin1234!      (ADMIN)
+ *   super@umaxesvape.com / Super1234!  (SUPER_ADMIN)
+ *   info@umaxesvape.com / Admin1234!   (ADMIN)
  * Change those passwords immediately.
  */
 import "dotenv/config";
@@ -129,22 +129,22 @@ async function main() {
   ).count;
 
   // 6) Only these two admin logins
-  const KEEP_EMAILS = ["info@umaxesvape.com", "admin@umaxes.com"];
+  const KEEP_EMAILS = ["super@umaxesvape.com", "info@umaxesvape.com"];
 
   await upsertAdmin({
-    email: "info@umaxesvape.com",
+    email: "super@umaxesvape.com",
     name: "UMAXES Super Admin",
     password: "Super1234!",
     role: "SUPER_ADMIN",
   });
   await upsertAdmin({
-    email: "admin@umaxes.com",
+    email: "info@umaxesvape.com",
     name: "UMAXES Admin",
     password: "Admin1234!",
     role: "ADMIN",
   });
 
-  // Drop old demo staff emails (e.g. super@umaxes.com)
+  // Drop old demo staff emails (e.g. super@umaxes.com, admin@umaxes.com)
   counts.extraAdminsRemoved = (
     await prisma.user.deleteMany({
       where: {
@@ -165,8 +165,8 @@ async function main() {
   console.log("\nStill in database:");
   console.log({ products, prices, adminUsers: admins });
   console.log("\nSign in (change passwords right away):");
-  console.log("  Super admin  info@umaxesvape.com / Super1234!");
-  console.log("  Admin        admin@umaxes.com / Admin1234!");
+  console.log("  Super admin  super@umaxesvape.com / Super1234!");
+  console.log("  Admin        info@umaxesvape.com / Admin1234!");
   console.log("\nNext: Learning Hub → Fresh start checklist");
   console.log("Done.\n");
 }

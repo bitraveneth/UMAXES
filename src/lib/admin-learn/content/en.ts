@@ -24,7 +24,7 @@ export const learnEn: Record<LearnSlug, LearnTutorial> = {
       "Orders start when an approved buyer (or sales) places an order. Confirm Payment and Shipping separately.",
       "Do not run demo reseed on production. Catalog prices stay; do not wipe the catalog.",
     ],
-    tip: "Default logins until you change them: info@umaxesvape.com / Super1234! and admin@umaxes.com / Admin1234!",
+    tip: "Default logins until you change them: super@umaxesvape.com / Super1234! and info@umaxesvape.com / Admin1234!",
   },
   overview: {
     title: "How UMAXES works",

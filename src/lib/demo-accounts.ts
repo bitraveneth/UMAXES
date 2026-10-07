@@ -14,14 +14,14 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
   {
     id: "super",
     label: "1 · Super admin",
-    email: "info@umaxesvape.com",
+    email: "super@umaxesvape.com",
     password: "Super1234!",
     note: "Devs · full access",
   },
   {
     id: "admin",
     label: "2 · Admin",
-    email: "admin@umaxes.com",
+    email: "info@umaxesvape.com",
     password: "Admin1234!",
     note: "Ops · no staff mgmt",
   },

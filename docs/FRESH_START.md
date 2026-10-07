@@ -30,8 +30,8 @@ npm run db:fresh-production
 
 | Role | Email | Temp password |
 |------|--------|----------------|
-| Super admin | `info@umaxesvape.com` | `Super1234!` |
-| Admin | `admin@umaxes.com` | `Admin1234!` |
+| Super admin | `super@umaxesvape.com` | `Super1234!` |
+| Admin | `info@umaxesvape.com` | `Admin1234!` |
 
 Profile → change password for both.
 
