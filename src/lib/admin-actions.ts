@@ -1874,6 +1874,151 @@ export async function deleteFaq(id: string) {
   revalidatePath("/faq");
 }
 
+function revalidateLoginSlides() {
+  revalidatePath("/admin/login-images");
+  revalidatePath("/login");
+  revalidatePath("/register");
+}
+
+export async function createLoginSlide(input: {
+  imageUrl: string;
+  sortOrder?: number;
+  active?: boolean;
+}) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const imageUrl = input.imageUrl.trim();
+  if (!imageUrl) throw new Error("Image is required");
+
+  const last = await prisma.loginSlide.findFirst({
+    orderBy: { sortOrder: "desc" },
+    select: { sortOrder: true },
+  });
+  const sortOrder =
+    typeof input.sortOrder === "number" && Number.isFinite(input.sortOrder)
+      ? Math.max(1, Math.floor(input.sortOrder))
+      : (last?.sortOrder ?? 0) + 1;
+
+  const row = await prisma.loginSlide.create({
+    data: {
+      imageUrl,
+      sortOrder,
+      active: input.active !== false,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "LOGIN_SLIDE_CREATE",
+      entity: "LoginSlide",
+      entityId: row.id,
+      meta: JSON.stringify({ imageUrl, sortOrder }),
+    },
+  });
+
+  revalidateLoginSlides();
+  return row;
+}
+
+export async function updateLoginSlide(input: {
+  id: string;
+  imageUrl?: string;
+  sortOrder?: number;
+  active?: boolean;
+}) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const existing = await prisma.loginSlide.findUnique({
+    where: { id: input.id },
+  });
+  if (!existing) throw new Error("Login slide not found");
+
+  const data: {
+    imageUrl?: string;
+    sortOrder?: number;
+    active?: boolean;
+  } = {};
+  if (typeof input.imageUrl === "string") {
+    const imageUrl = input.imageUrl.trim();
+    if (!imageUrl) throw new Error("Image is required");
+    data.imageUrl = imageUrl;
+  }
+  if (typeof input.sortOrder === "number" && Number.isFinite(input.sortOrder)) {
+    data.sortOrder = Math.max(1, Math.floor(input.sortOrder));
+  }
+  if (typeof input.active === "boolean") {
+    data.active = input.active;
+  }
+
+  const row = await prisma.loginSlide.update({
+    where: { id: input.id },
+    data,
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "LOGIN_SLIDE_UPDATE",
+      entity: "LoginSlide",
+      entityId: row.id,
+      meta: JSON.stringify(data),
+    },
+  });
+
+  revalidateLoginSlides();
+  return row;
+}
+
+export async function deleteLoginSlide(id: string) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const existing = await prisma.loginSlide.findUnique({ where: { id } });
+  if (!existing) throw new Error("Login slide not found");
+
+  await prisma.loginSlide.delete({ where: { id } });
+
+  const { removeStoredUpload } = await import("@/lib/upload-store");
+  await removeStoredUpload(existing.imageUrl);
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "LOGIN_SLIDE_DELETE",
+      entity: "LoginSlide",
+      entityId: id,
+      meta: JSON.stringify({ imageUrl: existing.imageUrl }),
+    },
+  });
+
+  revalidateLoginSlides();
+}
+
+/** Persist 1-based order for every slide id in the given sequence. */
+export async function reorderLoginSlides(orderedIds: string[]) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const ids = orderedIds.map((id) => id.trim()).filter(Boolean);
+  if (ids.length === 0) throw new Error("Nothing to reorder");
+
+  await prisma.$transaction(
+    ids.map((id, index) =>
+      prisma.loginSlide.update({
+        where: { id },
+        data: { sortOrder: index + 1 },
+      }),
+    ),
+  );
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "LOGIN_SLIDE_REORDER",
+      entity: "LoginSlide",
+      entityId: ids[0],
+      meta: JSON.stringify({ orderedIds: ids }),
+    },
+  });
+
+  revalidateLoginSlides();
+}
+
 export async function recordCreditPayment(companyId: string, amount: number, note?: string) {
   const session = await requireRoles(["ADMIN", "SALES"]);
   const amt = Math.round(amount * 100) / 100;

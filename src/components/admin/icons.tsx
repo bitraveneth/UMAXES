@@ -32,6 +32,7 @@ import {
   Store,
   ClipboardList,
   CircleHelp,
+  Images,
   Shield,
   Landmark,
 } from "lucide-react";
@@ -55,6 +56,7 @@ export const adminNavIcons: Record<string, LucideIcon> = {
   "/admin/catalog": Package,
   "/admin/warehouse": Warehouse,
   "/admin/faq": CircleHelp,
+  "/admin/login-images": Images,
   "/admin/coupons": TicketPercent,
   "/admin/rebates": Wallet,
   "/admin/payments": Landmark,

@@ -741,8 +741,11 @@ function OrderExpand({
             ) : (
               <>
                 <div className="admin-order-lines-head" role="row">
+                  <span className="admin-order-lines-h-no">
+                    {t("orders.lineNo")}
+                  </span>
                   <span className="admin-order-lines-h-item">
-                    {t("orders.sku")}
+                    {t("orders.item")}
                   </span>
                   <span className="admin-order-lines-h-qty">
                     {t("orders.quantity")}
@@ -752,13 +755,11 @@ function OrderExpand({
                   </span>
                 </div>
                 <ul className="admin-order-lines-list">
-                  {order.items.map((item) => (
+                  {order.items.map((item, index) => (
                     <li key={item.id} className="admin-order-line">
+                      <div className="admin-order-line-no">{index + 1}</div>
                       <div className="admin-order-line-main">
                         <p className="admin-order-line-name">{item.name}</p>
-                        <span className="admin-order-line-sku" title={item.sku}>
-                          {item.sku}
-                        </span>
                       </div>
                       <div className="admin-order-line-qty">
                         <strong>{item.quantity}</strong>
@@ -775,6 +776,7 @@ function OrderExpand({
               </>
             )}
             <div className="admin-order-lines-foot">
+              <span className="admin-order-lines-foot-spacer" aria-hidden />
               <span className="admin-order-lines-foot-spacer" aria-hidden />
               <strong className="admin-order-lines-foot-qty">
                 {totalPcs} {t("orders.pcs")}

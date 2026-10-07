@@ -95,6 +95,11 @@ export const ADMIN_MODULES: AdminModuleDef[] = [
       { id: "catalog.products", label: "Catalog", href: "/admin/catalog" },
       { id: "catalog.warehouse", label: "Warehouse", href: "/admin/warehouse" },
       { id: "catalog.faq", label: "FAQ", href: "/admin/faq" },
+      {
+        id: "catalog.login_images",
+        label: "Login images",
+        href: "/admin/login-images",
+      },
     ],
   },
   {

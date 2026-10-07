@@ -18,9 +18,8 @@ export const heroImages = [
   "/images/hero/04.webp",
 ] as const;
 
-/** Login / register split-panel slides — first slide matches homepage hero. */
+/** Login / register split-panel slides. */
 export const loginImages = [
-  heroBanner,
   "/images/login/login-glam-neon.webp",
   "/images/login/login-80k-podium.webp",
   "/images/login/login-cool-mint-selfie.webp",

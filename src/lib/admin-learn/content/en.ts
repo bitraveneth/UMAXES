@@ -9,6 +9,23 @@ export type LearnTutorial = {
 };
 
 export const learnEn: Record<LearnSlug, LearnTutorial> = {
+  "fresh-start": {
+    title: "Fresh start checklist",
+    summary: "Empty system, catalog kept — what to do first.",
+    what: "After a fresh install, products and prices are already in the catalog. Stock is zero. There are no buyers or orders yet. Only Super admin and Admin can sign in. Follow this page once, then use the daily SOP.",
+    steps: [
+      "Sign in as Super admin or Admin. Change both passwords immediately (Profile).",
+      "Payments → set the active bank account for PI / wire details.",
+      "Warehouse → receive real stock by cases (1 case = 95 pcs). Add test-station pieces if you use them.",
+      "Login images (optional) → upload / order the login panel photos.",
+      "Staff (Super admin) → add Sales / Logistics only when you need them.",
+      "When a buyer registers → Approvals → set level (Distributor / Wholesaler / Retail) → approve.",
+      "Or Admin → Users / Add user → create a company + login with password (immediate access).",
+      "Orders start when an approved buyer (or sales) places an order. Confirm Payment and Shipping separately.",
+      "Do not run demo reseed on production. Catalog prices stay; do not wipe the catalog.",
+    ],
+    tip: "Default logins until you change them: super@umaxes.com / Super1234! and admin@umaxes.com / Admin1234!",
+  },
   overview: {
     title: "How UMAXES works",
     summary: "Signup → approve → order → pay → ship → rebate / credit.",

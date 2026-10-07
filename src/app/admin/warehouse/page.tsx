@@ -69,9 +69,7 @@ export default async function WarehousePage() {
                 quantity?: number;
               };
               sku = m.sku || "";
-              product = m.name
-                ? `${m.name}${m.sku ? ` · ${m.sku}` : ""}`
-                : m.sku || "—";
+              product = m.name || m.sku || "—";
               previousQuantity = m.previousQuantity ?? null;
               quantity = m.quantity ?? null;
             } catch {

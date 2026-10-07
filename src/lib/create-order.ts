@@ -2,6 +2,7 @@ import type { PaymentMethod } from "@/generated/prisma/enums";
 import {
   nextOrderNumber,
   nextPiNumber,
+  nextSystemId,
   resolveCoupon,
   roundMoney,
 } from "@/lib/catalog";
@@ -285,13 +286,42 @@ export async function createOrder(
     }
   }
 
-  const orderNumber = nextOrderNumber();
-  const piNumber = nextPiNumber({
-    companyName: company.name,
-    customerName: address.recipientName || customerUser?.name,
+  const partyName = company.name;
+  const partyContact = address.recipientName || customerUser?.name;
+  let orderNumber = nextOrderNumber({
+    companyName: partyName,
+    customerName: partyContact,
+  });
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const taken = await prisma.order.findUnique({
+      where: { orderNumber },
+      select: { id: true },
+    });
+    if (!taken) break;
+    orderNumber = nextOrderNumber({
+      companyName: partyName,
+      customerName: partyContact,
+      seq: nextSystemId(),
+    });
+  }
+  let piNumber = nextPiNumber({
+    companyName: partyName,
+    customerName: partyContact,
     region: address.region,
     orderNumber,
   });
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const taken = await prisma.order.findUnique({
+      where: { piNumber },
+      select: { id: true },
+    });
+    if (!taken) break;
+    piNumber = `${nextPiNumber({
+      companyName: partyName,
+      customerName: partyContact,
+      region: address.region,
+    })}-${nextSystemId()}`;
+  }
   const addressSnap = JSON.stringify({
     label: address.label,
     recipientName: address.recipientName,

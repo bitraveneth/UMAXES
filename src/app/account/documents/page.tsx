@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ExternalLink, FileText, Package } from "lucide-react";
 import { auth } from "@/lib/auth";
+import { docNumberBody } from "@/lib/doc-number";
 import { prisma } from "@/lib/db";
 import AccountHeaderI18n from "@/components/account/AccountHeaderI18n";
 import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
@@ -96,7 +97,8 @@ export default async function DocumentsPage() {
                                 <>
                                   <span className="mx-2">·</span>
                                   <span className="break-all font-display font-semibold text-[#1b4f72]">
-                                    {order.piNumber}
+                                    {docNumberBody(order.piNumber) ||
+                                      order.piNumber}
                                   </span>
                                 </>
                               ) : null}

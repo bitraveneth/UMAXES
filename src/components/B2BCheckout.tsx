@@ -91,6 +91,7 @@ export default function B2BCheckout() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [doneOrderId, setDoneOrderId] = useState<string | null>(null);
+  const [doneOrderNumber, setDoneOrderNumber] = useState<string | null>(null);
   const [piNumber, setPiNumber] = useState<string | null>(null);
   const [addressForm, setAddressForm] =
     useState<AddressFormValues>(EMPTY_ADDRESS_FORM);
@@ -333,6 +334,7 @@ export default function B2BCheckout() {
     clear();
     setLoading(false);
     setDoneOrderId(data.order.id);
+    setDoneOrderNumber(data.order.orderNumber || null);
     setPiNumber(data.order.piNumber);
     setSlipAttached(attached);
   }
@@ -376,7 +378,10 @@ export default function B2BCheckout() {
 
             {piNumber ? (
               <div className="mt-7">
-                <PiNumberBlock value={piNumber} />
+                <PiNumberBlock
+                  value={piNumber}
+                  orderNumber={doneOrderNumber || undefined}
+                />
               </div>
             ) : null}
 

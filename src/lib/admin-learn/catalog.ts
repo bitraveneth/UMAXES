@@ -1,4 +1,5 @@
 export type LearnSlug =
+  | "fresh-start"
   | "overview"
   | "approvals"
   | "customers"
@@ -26,6 +27,7 @@ export type LearnMeta = {
 
 /** Ordered tutorials for the Learning Hub (course path). */
 export const LEARN_CATALOG: LearnMeta[] = [
+  { slug: "fresh-start", relatedHref: "/admin/warehouse" },
   { slug: "overview", relatedHref: "/admin" },
   { slug: "approvals", relatedHref: "/admin/approvals" },
   { slug: "customers", relatedHref: "/admin/distributors" },

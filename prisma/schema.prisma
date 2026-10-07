@@ -627,6 +627,19 @@ model Faq {
   @@index([published, sortOrder])
 }
 
+/// Login / register split-panel carousel slides (ADMIN / SUPER_ADMIN)
+model LoginSlide {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  /// 1-based display order on the login carousel
+  sortOrder Int      @default(1)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
 /// Wire / TT accounts printed on proforma and commercial invoices.
 /// Exactly one row should be isActive; that account is shown on documents.
 model BankAccount {

@@ -20,30 +20,42 @@ export function nextSystemId() {
   return String(Math.floor(Math.random() * 9000 + 1000));
 }
 
-/** Document date token: 20260921 (numeric, universal). */
+/** Document date token: 260923 (YYMMDD). */
 export function formatDocDate(date = new Date()) {
-  const y = date.getUTCFullYear();
+  const y = String(date.getUTCFullYear()).slice(-2);
   const m = String(date.getUTCMonth() + 1).padStart(2, "0");
   const d = String(date.getUTCDate()).padStart(2, "0");
   return `${y}${m}${d}`;
 }
 
-/** Human label for UI: 2026-09-21 */
+/** Human label for UI: 2026-09-23 */
 export function formatDocDateLabel(token: string) {
+  if (/^\d{6}$/.test(token)) {
+    return `20${token.slice(0, 2)}-${token.slice(2, 4)}-${token.slice(4, 6)}`;
+  }
   if (/^\d{8}$/.test(token)) {
     return `${token.slice(0, 4)}-${token.slice(4, 6)}-${token.slice(6, 8)}`;
   }
   return token;
 }
 
+/** 2-letter region: NY, CA; "New York" → NY; longer codes → first 2 letters. */
 export function slugState(region?: string | null) {
   const raw = (region || "").trim().toUpperCase();
   if (!raw) return "";
   if (/^[A-Z]{2}$/.test(raw)) return raw;
-  return raw.replace(/[^A-Z0-9]+/g, "").slice(0, 8);
+  const words = raw
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0] || ""}${words[1][0] || ""}`;
+  }
+  return (words[0] || "").replace(/[^A-Z0-9]+/g, "").slice(0, 2);
 }
 
-/** First two meaningful words only, e.g. "Pacific Distro Partners" → PACIFIC-DISTRO */
+/** First two meaningful words, e.g. "Pacific Distro Partners" → PACIFIC-DISTRO */
 export function slugCompany(name: string) {
   const words = (name || "")
     .toUpperCase()
@@ -57,45 +69,81 @@ export function slugCompany(name: string) {
   return slug || "CUSTOMER";
 }
 
-export function nextOrderNumber() {
-  const d = new Date();
-  const stamp = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-  return `UMX-${stamp}-${nextSystemId()}`;
+/** Company initials: "Pacific Distro Partners" → PD */
+export function companyInitials(name: string) {
+  const words = (name || "")
+    .toUpperCase()
+    .replace(COMPANY_NOISE, " ")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0] || ""}${words[1][0] || ""}` || "CU";
+  }
+  if (words[0]) {
+    return words[0].slice(0, 2) || "CU";
+  }
+  return "CU";
 }
 
 /**
- * Universal short doc id (stored on order.piNumber).
- * {COMPANY2}-{STATE}-{YYYYMMDD}
- * Example: PACIFIC-DISTRO-CA-20260921
- * CI/PL add their own prefix via siblingDocNumber.
+ * Order id: UMX-{COMPANY_INITIALS}{YYMMDD}
+ * Same body as PI, without client state. Example: UMX-PD260923
+ * Optional seq suffix when the same company places multiple orders that day.
+ */
+export function nextOrderNumber(opts?: {
+  companyName?: string | null;
+  customerName?: string | null;
+  date?: Date;
+  seq?: string | number | null;
+}) {
+  const party = (opts?.companyName || opts?.customerName || "CUSTOMER").trim();
+  const body = `${companyInitials(party)}${formatDocDate(opts?.date)}`;
+  const seq =
+    opts?.seq != null && String(opts.seq).trim() !== ""
+      ? `-${String(opts.seq).trim()}`
+      : "";
+  return `UMX-${body}${seq}`;
+}
+
+/**
+ * Short doc id stored on order.piNumber (no type prefix):
+ * {COMPANY_INITIALS}{YYMMDD}{STATE}
+ * Example: PD260923NY
+ * CI/PL/PI add prefix via siblingDocNumber → PI-PD260923NY
  */
 export function nextPiNumber(opts: {
   companyName?: string | null;
   customerName?: string | null;
   region?: string | null;
-  orderNumber: string;
+  orderNumber?: string;
   date?: Date;
 }) {
   const party = (opts.companyName || opts.customerName || "CUSTOMER").trim();
-  const parts = [
-    slugCompany(party),
-    slugState(opts.region),
-    formatDocDate(opts.date),
-  ].filter(Boolean);
-  return parts.join("-");
+  return `${companyInitials(party)}${formatDocDate(opts.date)}${slugState(opts.region)}`;
 }
 
+/** Strip optional PI-/CI-/PL- type prefix from a stored doc id. */
+export function docNumberBody(value: string | null | undefined) {
+  return (value || "").trim().replace(/^(PI|CI|PL)-/i, "");
+}
+
+/**
+ * Doc filename / export id.
+ * PI keeps the stored body (e.g. PD260923NY) — label is separate ("PI No.").
+ * PL/CI add their type prefix: PL-PD260923NY
+ */
 export function siblingDocNumber(
   piNumber: string | null | undefined,
   prefix: "PI" | "CI" | "PL",
   orderNumber: string,
 ) {
-  const raw = (piNumber || "").trim();
-  if (raw) {
-    const body = raw.replace(/^(PI|CI|PL)-/i, "");
-    return `${prefix}-${body}`;
-  }
-  return `${prefix}-${orderNumber.replace(/^UMX-/, "")}`;
+  const body =
+    docNumberBody(piNumber) || orderNumber.replace(/^UMX-/, "").trim();
+  if (!body) return prefix;
+  if (prefix === "PI") return body;
+  return `${prefix}-${body}`;
 }
 
 export type DocNumberParts = {
@@ -126,8 +174,21 @@ export function parseDocNumber(
   const prefix = hasTypePrefix ? (bits[0] || "PI").toUpperCase() : "";
   const rest = hasTypePrefix ? bits.slice(1) : bits.slice();
 
+  // Short style: PD260923NY or PL-PD260923NY
+  const compact = rest.join("-");
+  const short = compact.match(/^([A-Z]{2})(\d{6})([A-Z]{0,2})$/);
+  if (short && rest.length === 1) {
+    return {
+      prefix,
+      company: short[1],
+      dateLabel: formatDocDateLabel(short[2]),
+      state: short[3] || "",
+      systemId: "",
+      raw: value,
+    };
+  }
+
   let systemId = "";
-  // Only treat trailing 3–6 digit id as system id when not a full YYYYMMDD date
   if (
     rest.length &&
     /^\d{3,6}$/.test(rest[rest.length - 1] || "") &&
@@ -137,11 +198,11 @@ export function parseDocNumber(
   }
 
   let dateLabel = "";
-  // New universal numeric date: YYYYMMDD
   if (rest.length && /^\d{8}$/.test(rest[rest.length - 1] || "")) {
     dateLabel = formatDocDateLabel(rest.pop() as string);
+  } else if (rest.length && /^\d{6}$/.test(rest[rest.length - 1] || "")) {
+    dateLabel = formatDocDateLabel(rest.pop() as string);
   } else {
-    // Legacy: 21-SEP-2026
     const monthIdx = rest.findIndex(
       (part, i) =>
         MONTHS.includes(part as (typeof MONTHS)[number]) &&
@@ -157,20 +218,18 @@ export function parseDocNumber(
       rest.splice(monthIdx - 1, 3);
     } else if (rest.length) {
       const last = rest[rest.length - 1] || "";
-      const compact = last.match(/^(\d{2})([A-Z]{3})(\d{4})$/);
-      if (compact) {
-        dateLabel = `${compact[1]} ${compact[2]} ${compact[3]}`;
+      const legacyCompact = last.match(/^(\d{2})([A-Z]{3})(\d{4})$/);
+      if (legacyCompact) {
+        dateLabel = `${legacyCompact[1]} ${legacyCompact[2]} ${legacyCompact[3]}`;
         rest.pop();
       }
     }
   }
 
-  // Prefer trailing 2-letter state (new order: company then state)
   let state = "";
   if (rest.length && /^[A-Z]{2}$/.test(rest[rest.length - 1] || "")) {
     state = rest.pop() as string;
   } else if (rest[0] && /^[A-Z]{2}$/.test(rest[0])) {
-    // Legacy: state first
     state = rest.shift() as string;
   }
 

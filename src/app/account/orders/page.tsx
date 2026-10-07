@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FileText, Package } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { paymentLabels } from "@/lib/catalog";
+import { docNumberBody } from "@/lib/doc-number";
 import { prisma } from "@/lib/db";
 import {
   OrdersPageHeader,
@@ -166,7 +167,7 @@ export default async function OrdersPage() {
                               PI
                             </span>{" "}
                             <span className="break-all font-display text-sm font-semibold text-[#1b4f72]">
-                              {order.piNumber}
+                              {docNumberBody(order.piNumber) || order.piNumber}
                             </span>
                           </p>
                         ) : null}

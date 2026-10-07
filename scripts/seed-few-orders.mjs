@@ -30,20 +30,51 @@ function daysAgo(n) {
   return d;
 }
 
-function stamp(days) {
-  const d = daysAgo(days);
-  return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+const COMPANY_NOISE =
+  /\b(LLC|L\.L\.C|INC|LTD|CORP|CO|LIMITED|INCORPORATED|COMPANY|PARTNERS|PARTNER|GROUP|HOLDINGS|ENTERPRISES|ENTERPRISE|TRADING|INTERNATIONAL|INTL)\b\.?/gi;
+
+function companyInitials(name) {
+  const words = (name || "")
+    .toUpperCase()
+    .replace(COMPANY_NOISE, " ")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0] || ""}${words[1][0] || ""}` || "CU";
+  }
+  if (words[0]) return words[0].slice(0, 2) || "CU";
+  return "CU";
 }
 
-async function uniqueOrderNumber(days, seq) {
-  let n = seq;
-  for (let i = 0; i < 50; i++) {
-    const orderNumber = `UMX-${stamp(days)}-${2000 + n}`;
+function slugState(region) {
+  const raw = (region || "").trim().toUpperCase();
+  if (!raw) return "";
+  if (/^[A-Z]{2}$/.test(raw)) return raw;
+  return raw.replace(/[^A-Z0-9]+/g, "").slice(0, 2);
+}
+
+function formatDocDate(date) {
+  const y = String(date.getUTCFullYear()).slice(-2);
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${d}`;
+}
+
+async function uniqueOrderNumber(companyName, days, seq) {
+  const body = `${companyInitials(companyName)}${formatDocDate(daysAgo(days))}`;
+  const candidates = [`UMX-${body}`, `UMX-${body}-${seq}`, `UMX-${body}-${seq}-${Date.now() % 1000}`];
+  for (const orderNumber of candidates) {
     const exists = await prisma.order.findUnique({ where: { orderNumber } });
     if (!exists) return orderNumber;
-    n += 1;
   }
-  return `UMX-${stamp(days)}-${2000 + Date.now() % 10000}`;
+  return `UMX-${body}-${Date.now() % 10000}`;
+}
+
+function piNumberFor(companyName, days, region, seq) {
+  const body = `${companyInitials(companyName)}${formatDocDate(daysAgo(days))}${slugState(region)}`;
+  return seq > 1 ? `${body}-${seq}` : body;
 }
 
 function unitPriceFor(product, level) {
@@ -158,8 +189,13 @@ async function main() {
     const discount = 0;
     const total = subtotal + shipping - discount;
     const sellingQty = items.reduce((sum, it) => sum + it.quantity, 0);
-    const orderNumber = await uniqueOrderNumber(s.days, i + 1);
-    const piNumber = `PI-${orderNumber.replace("UMX-", "")}`;
+    const orderNumber = await uniqueOrderNumber(buyer.company.name, s.days, i + 1);
+    const piNumber = piNumberFor(
+      buyer.company.name,
+      s.days,
+      ADDRESS.region,
+      i + 1,
+    );
     const createdAt = daysAgo(s.days);
 
     const order = await prisma.order.create({

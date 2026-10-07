@@ -4,21 +4,29 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { loginImages } from "@/lib/assets";
 
-const SLIDES = loginImages;
-
 const INTERVAL_MS = 4500;
 
-export default function AuthImageCarousel() {
+export default function AuthImageCarousel({
+  images,
+}: {
+  images?: string[];
+}) {
+  const slides =
+    images && images.length > 0 ? images : ([...loginImages] as string[]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || slides.length <= 1) return;
     const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % SLIDES.length);
+      setIndex((i) => (i + 1) % slides.length);
     }, INTERVAL_MS);
     return () => window.clearInterval(id);
-  }, [paused]);
+  }, [paused, slides.length]);
+
+  useEffect(() => {
+    if (index >= slides.length) setIndex(0);
+  }, [index, slides.length]);
 
   return (
     <aside
@@ -28,9 +36,9 @@ export default function AuthImageCarousel() {
       aria-roledescription="carousel"
       aria-label="UMAXES product images"
     >
-      {SLIDES.map((src, i) => (
+      {slides.map((src, i) => (
         <div
-          key={src}
+          key={`${src}-${i}`}
           className={`absolute inset-0 transition-opacity duration-700 ease-out ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
@@ -54,22 +62,24 @@ export default function AuthImageCarousel() {
         className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-black/25"
       />
 
-      <div className="absolute inset-x-0 bottom-5 z-[1] flex justify-center gap-1.5 px-4">
-        {SLIDES.map((src, i) => (
-          <button
-            key={src}
-            type="button"
-            aria-label={`Show image ${i + 1}`}
-            aria-current={i === index}
-            onClick={() => setIndex(i)}
-            className={`h-1.5 rounded-full transition-all ${
-              i === index
-                ? "w-6 bg-umx-orange"
-                : "w-1.5 bg-white/45 hover:bg-white/75"
-            }`}
-          />
-        ))}
-      </div>
+      {slides.length > 1 ? (
+        <div className="absolute inset-x-0 bottom-5 z-[1] flex justify-center gap-1.5 px-4">
+          {slides.map((src, i) => (
+            <button
+              key={`dot-${src}-${i}`}
+              type="button"
+              aria-label={`Show image ${i + 1}`}
+              aria-current={i === index}
+              onClick={() => setIndex(i)}
+              className={`h-1.5 rounded-full transition-all ${
+                i === index
+                  ? "w-6 bg-umx-orange"
+                  : "w-1.5 bg-white/45 hover:bg-white/75"
+              }`}
+            />
+          ))}
+        </div>
+      ) : null}
     </aside>
   );
 }

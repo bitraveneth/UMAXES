@@ -9,7 +9,7 @@ export type LearnSop = {
 const sopEn: LearnSop = {
   title: "Simple daily SOP",
   intro:
-    "One short checklist for the usual day. Open a course below when you need more detail.",
+    "One short checklist for the usual day. New install? Open Fresh start checklist first. Open a course below when you need more detail.",
   steps: [
     {
       title: "Approve new buyers",
@@ -51,7 +51,8 @@ const sopEn: LearnSop = {
 
 const sopZh: LearnSop = {
   title: "简易日常 SOP",
-  intro: "日常操作一页清单。需要细节时，再打开下方课程。",
+  intro:
+    "日常操作一页清单。全新上线请先打开「全新上线清单」。需要细节时，再打开下方课程。",
   steps: [
     {
       title: "审批新买家",

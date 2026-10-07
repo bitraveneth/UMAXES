@@ -6,7 +6,7 @@ import {
   addTestStationProduct,
   adjustInventory,
 } from "@/lib/admin-actions";
-import { AdminBadge, AdminCard, AdminStat, AdminTable } from "@/components/admin/ui";
+import { AdminBadge, AdminCard, AdminStat } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
 import { useAdminToast } from "@/components/admin/AdminToast";
 import {
@@ -58,7 +58,7 @@ function ProductThumb({
   bonus?: boolean;
   size?: "md" | "lg";
 }) {
-  const box = size === "lg" ? "h-16 w-16 rounded-2xl" : "h-11 w-11 rounded-xl";
+  const box = size === "lg" ? "h-16 w-16 rounded-2xl" : "h-12 w-12 rounded-xl";
   return (
     <span
       className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-[var(--admin-gray-100)] ${box}`}
@@ -177,6 +177,8 @@ export default function WarehouseStockPanel({
       ? t("warehouse.qtyPcsAdd")
       : t("warehouse.qtyPcsSet");
 
+  const lineCount = flavors.length + (bonus ? 1 : 0);
+
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-3">
@@ -222,81 +224,103 @@ export default function WarehouseStockPanel({
                 {t("warehouse.receiveHint")}
               </p>
             </div>
-            <span className="wh-pack-pill">{t("warehouse.packHint")}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="wh-pack-pill">{t("warehouse.packHint")}</span>
+              {lineCount > 0 ? (
+                <span className="rounded-full border border-[var(--admin-border)] bg-[var(--admin-hover)] px-2.5 py-1 font-display text-[11px] font-semibold tabular-nums text-[var(--admin-muted)]">
+                  {lineCount} {t("warehouse.lines")}
+                </span>
+              ) : null}
+            </div>
           </div>
+
           {flavors.length === 0 ? (
             <p className="px-5 py-8 text-sm admin-muted">
               {t("warehouse.emptyFlavors")}
             </p>
           ) : (
-            <div>
-              {flavors.map((p) => {
-                const on = p.id === selected?.id;
-                const available = Math.max(0, p.quantity - p.reserved);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => pick(p)}
-                    className={`wh-flavor ${on ? "wh-flavor-on" : ""}`}
-                  >
-                    <ProductThumb image={p.image} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-[var(--admin-text)]">
-                        {p.name}
+            <>
+              <div className="wh-stock-head" role="row">
+                <span className="wh-stock-h-no">#</span>
+                <span className="wh-stock-h-item">{t("warehouse.product")}</span>
+                <span className="wh-stock-h-cases">{t("warehouse.cases")}</span>
+                <span className="wh-stock-h-pcs">{t("warehouse.pieces")}</span>
+              </div>
+              <div>
+                {flavors.map((p, index) => {
+                  const on = p.id === selected?.id;
+                  const available = Math.max(0, p.quantity - p.reserved);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => pick(p)}
+                      className={`wh-flavor ${on ? "wh-flavor-on" : ""}`}
+                    >
+                      <span className="wh-flavor-no">{index + 1}</span>
+                      <ProductThumb image={p.image} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-[var(--admin-text)]">
+                          {p.name}
+                        </span>
+                        {p.reserved > 0 ? (
+                          <span className="mt-0.5 block text-xs tabular-nums admin-muted">
+                            {t("warehouse.reserved")} {p.reserved.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="mt-0.5 block text-xs admin-muted">
+                            {t("warehouse.available")}
+                          </span>
+                        )}
                       </span>
-                      <span className="mt-0.5 block text-xs tabular-nums admin-muted">
-                        {p.sku}
-                        {p.reserved > 0
-                          ? ` · ${t("warehouse.reserved")} ${p.reserved.toLocaleString()}`
-                          : ""}
+                      <span className="wh-flavor-metric">
+                        <span className="wh-flavor-metric-value">
+                          {casesFromPcs(p.quantity)}
+                        </span>
+                      </span>
+                      <span className="wh-flavor-metric">
+                        <span className="wh-flavor-metric-value">
+                          {available.toLocaleString()}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+                {bonus ? (
+                  <button
+                    type="button"
+                    onClick={() => pick(bonus)}
+                    className={`wh-flavor wh-flavor-bonus ${
+                      bonus.id === selected?.id ? "wh-flavor-on" : ""
+                    }`}
+                  >
+                    <span className="wh-flavor-no">{flavors.length + 1}</span>
+                    <ProductThumb image={bonus.image} bonus />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-sm font-semibold">
+                          {bonus.name}
+                        </span>
+                        <AdminBadge tone="brand">{t("warehouse.bonus")}</AdminBadge>
+                      </span>
+                      <span className="mt-0.5 block text-xs admin-muted">
+                        {t("warehouse.testStationHint")}
                       </span>
                     </span>
-                    <span className="shrink-0 text-right">
-                      <span className="block text-lg font-bold tabular-nums leading-none text-[var(--admin-text)]">
-                        {casesFromPcs(p.quantity)}
+                    <span className="wh-flavor-metric">
+                      <span className="wh-flavor-metric-value text-[var(--admin-muted)]">
+                        —
                       </span>
-                      <span className="mt-1 block text-[11px] font-medium uppercase tracking-wide admin-muted">
-                        {t("warehouse.cases")}
-                      </span>
-                      <span className="mt-0.5 block text-xs tabular-nums admin-muted">
-                        {available.toLocaleString()} {t("warehouse.pieces")}
+                    </span>
+                    <span className="wh-flavor-metric">
+                      <span className="wh-flavor-metric-value">
+                        {bonus.quantity.toLocaleString()}
                       </span>
                     </span>
                   </button>
-                );
-              })}
-              {bonus ? (
-                <button
-                  type="button"
-                  onClick={() => pick(bonus)}
-                  className={`wh-flavor wh-flavor-bonus ${
-                    bonus.id === selected?.id ? "wh-flavor-on" : ""
-                  }`}
-                >
-                  <ProductThumb image={bonus.image} bonus />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <span className="truncate text-sm font-semibold">
-                        {bonus.name}
-                      </span>
-                      <AdminBadge tone="brand">{t("warehouse.bonus")}</AdminBadge>
-                    </span>
-                    <span className="mt-0.5 block text-xs admin-muted">
-                      {t("warehouse.testStationHint")}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-right">
-                    <span className="block text-lg font-bold tabular-nums leading-none">
-                      {bonus.quantity.toLocaleString()}
-                    </span>
-                    <span className="mt-1 block text-[11px] font-medium uppercase tracking-wide admin-muted">
-                      {t("warehouse.pieces")}
-                    </span>
-                  </span>
-                </button>
-              ) : null}
-            </div>
+                ) : null}
+              </div>
+            </>
           )}
         </AdminCard>
 
@@ -318,9 +342,6 @@ export default function WarehouseStockPanel({
                   />
                   <div className="min-w-0">
                     <h2 className="admin-section-title mb-0">{selected.name}</h2>
-                    <p className="mt-1 font-mono text-xs admin-muted">
-                      {selected.sku}
-                    </p>
                     {!packed ? (
                       <span className="mt-2 inline-block">
                         <AdminBadge tone="brand">{t("warehouse.bonus")}</AdminBadge>
@@ -462,53 +483,68 @@ export default function WarehouseStockPanel({
         </div>
       </div>
 
-      <AdminCard padded={false}>
-        <div className="border-b border-[var(--admin-border)] px-5 py-4">
-          <h2 className="admin-section-title mb-0">
-            {t("warehouse.activityTitle")}
-          </h2>
+      <AdminCard padded={false} className="overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--admin-border)] px-5 py-4">
+          <div>
+            <h2 className="admin-section-title mb-0">
+              {t("warehouse.activityTitle")}
+            </h2>
+            <p className="mt-1 text-sm admin-muted">
+              {t("warehouse.activityHint")}
+            </p>
+          </div>
+          {logs.length > 0 ? (
+            <span className="rounded-full border border-[var(--admin-border)] bg-[var(--admin-hover)] px-2.5 py-1 font-display text-[11px] font-semibold tabular-nums text-[var(--admin-muted)]">
+              {logs.length}
+            </span>
+          ) : null}
         </div>
         {logs.length === 0 ? (
-          <p className="px-5 py-6 text-sm admin-muted">
+          <p className="px-5 py-8 text-sm admin-muted">
             {t("warehouse.emptyActivity")}
           </p>
         ) : (
-          <AdminTable
-            headers={[
-              t("warehouse.colWhen"),
-              t("warehouse.colWho"),
-              t("warehouse.colProduct"),
-              t("warehouse.colChange"),
-            ]}
-          >
-            {logs.map((row) => {
-              const delta = changeDelta(row);
-              return (
-                <tr key={row.id}>
-                  <td className="whitespace-nowrap text-sm">{row.when}</td>
-                  <td className="text-sm">{row.who}</td>
-                  <td className="text-sm">{row.product}</td>
-                  <td className="tabular-nums text-sm font-semibold">
-                    {changeLabel(row)}
-                    {delta !== 0 ? (
-                      <span
-                        className={`ml-2 text-xs font-semibold ${
-                          delta > 0
-                            ? "text-[var(--admin-success-700)]"
-                            : "text-[var(--admin-error-700)]"
-                        }`}
-                      >
-                        {delta > 0 ? "+" : "−"}
-                        {isCasePackedSku(row.sku)
-                          ? formatPack(Math.abs(delta))
-                          : `${Math.abs(delta)} pcs`}
+          <>
+            <div className="wh-activity-head" role="row">
+              <span className="wh-activity-h-no">#</span>
+              <span>{t("warehouse.colWhen")}</span>
+              <span>{t("warehouse.colWho")}</span>
+              <span>{t("warehouse.colProduct")}</span>
+              <span className="text-right">{t("warehouse.colChange")}</span>
+            </div>
+            <ul className="wh-activity-list">
+              {logs.map((row, index) => {
+                const delta = changeDelta(row);
+                return (
+                  <li key={row.id} className="wh-activity-row">
+                    <span className="wh-activity-no">{index + 1}</span>
+                    <span className="wh-activity-when">{row.when}</span>
+                    <span className="wh-activity-who">{row.who}</span>
+                    <span className="wh-activity-product">{row.product}</span>
+                    <span className="wh-activity-change">
+                      <span className="wh-activity-change-main">
+                        {changeLabel(row)}
                       </span>
-                    ) : null}
-                  </td>
-                </tr>
-              );
-            })}
-          </AdminTable>
+                      {delta !== 0 ? (
+                        <span
+                          className={`wh-activity-delta ${
+                            delta > 0
+                              ? "wh-activity-delta-up"
+                              : "wh-activity-delta-down"
+                          }`}
+                        >
+                          {delta > 0 ? "+" : "−"}
+                          {isCasePackedSku(row.sku)
+                            ? formatPack(Math.abs(delta))
+                            : `${Math.abs(delta)} pcs`}
+                        </span>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </AdminCard>
     </div>

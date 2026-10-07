@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { CASE_MOQ_PCS } from "@/lib/pack";
 
 export {
+  companyInitials,
+  docNumberBody,
   formatDocDate,
   nextOrderNumber,
   nextPiNumber,

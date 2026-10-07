@@ -3,6 +3,7 @@ import AuthImageCarousel from "@/components/AuthImageCarousel";
 import Footer from "@/components/Footer";
 import MemberOnlyLink from "@/components/MemberOnlyLink";
 import { logos } from "@/lib/assets";
+import { getLoginSlideUrls } from "@/lib/login-slides";
 
 type AuthSplitShellProps = {
   eyebrow?: string;
@@ -13,11 +14,13 @@ type AuthSplitShellProps = {
   children: React.ReactNode;
 };
 
-export default function AuthSplitShell({
+export default async function AuthSplitShell({
   title,
   description,
   children,
 }: AuthSplitShellProps) {
+  const images = await getLoginSlideUrls();
+
   return (
     <div className="flex min-h-dvh w-full flex-col bg-[#e8eef6]">
       <main className="umx-brand-navy relative flex min-h-0 flex-1 flex-col">
@@ -52,7 +55,7 @@ export default function AuthSplitShell({
             </div>
 
             <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.12)] ring-1 ring-black/5 lg:h-[min(42.5rem,calc(100dvh-8rem))] lg:flex-row lg:rounded-[1.25rem]">
-              <AuthImageCarousel />
+              <AuthImageCarousel images={images} />
 
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <div className="h-1 w-full shrink-0 bg-gradient-to-r from-[#1b4f72] via-[#2b7aab] to-[#9bbdd4] lg:hidden" />

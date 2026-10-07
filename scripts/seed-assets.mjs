@@ -57,6 +57,13 @@ const assets = [
   },
 ];
 
+const loginSlides = [
+  "/images/login/login-glam-neon.webp",
+  "/images/login/login-80k-podium.webp",
+  "/images/login/login-cool-mint-selfie.webp",
+  "/images/login/login-purple-canyon.webp",
+];
+
 async function main() {
   for (const a of assets) {
     const existing = await prisma.brandAsset.findFirst({
@@ -72,6 +79,20 @@ async function main() {
     }
   }
   console.log("Brand assets seeded:", assets.length);
+
+  const loginCount = await prisma.loginSlide.count();
+  if (loginCount === 0) {
+    await prisma.loginSlide.createMany({
+      data: loginSlides.map((imageUrl, i) => ({
+        imageUrl,
+        sortOrder: i + 1,
+        active: true,
+      })),
+    });
+    console.log("Login slides seeded:", loginSlides.length);
+  } else {
+    console.log("Login slides kept:", loginCount);
+  }
 }
 
 main()

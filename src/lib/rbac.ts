@@ -149,6 +149,12 @@ export const adminNav: AdminNavItem[] = [
   { href: "/admin/catalog", label: "Catalog", roles: [SA, AD], group: "catalog" },
   { href: "/admin/warehouse", label: "Warehouse", roles: [SA, AD], group: "catalog" },
   { href: "/admin/faq", label: "FAQ", roles: [SA, AD], group: "catalog" },
+  {
+    href: "/admin/login-images",
+    label: "Login images",
+    roles: [SA, AD],
+    group: "catalog",
+  },
   { href: "/admin/reports", label: "Reports", roles: [SA, AD, "SALES"], group: "insights" },
   { href: "/admin/activity", label: "Activity", roles: [SA, AD], group: "insights" },
   { href: "/admin/users", label: "Users", roles: [SA, AD], group: "admin" },

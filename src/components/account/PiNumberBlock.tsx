@@ -1,17 +1,24 @@
-import { parseDocNumber } from "@/lib/doc-number";
+import { docNumberBody, parseDocNumber } from "@/lib/doc-number";
 
 export default function PiNumberBlock({
   value,
   compact = false,
 }: {
   value: string;
+  /** @deprecated unused — kept for call-site compat */
+  orderNumber?: string;
   compact?: boolean;
 }) {
-  const parts = parseDocNumber(value);
+  const display = docNumberBody(value) || value.trim();
+  const parts = parseDocNumber(display);
+  const codeLabel =
+    parts.company.length <= 3 && !parts.company.includes("-")
+      ? "Code"
+      : "Company";
   const facts = [
-    parts.state ? { label: "State", value: parts.state } : null,
-    parts.company ? { label: "Company", value: parts.company } : null,
+    parts.company ? { label: codeLabel, value: parts.company } : null,
     parts.dateLabel ? { label: "Date", value: parts.dateLabel } : null,
+    parts.state ? { label: "State", value: parts.state } : null,
     parts.systemId ? { label: "ID", value: parts.systemId } : null,
   ].filter(Boolean) as { label: string; value: string }[];
 
@@ -29,12 +36,12 @@ export default function PiNumberBlock({
           compact ? "text-base" : "text-xl sm:text-2xl"
         }`}
       >
-        {value}
+        {display}
       </p>
       {facts.length ? (
         <dl
           className={`mt-4 grid gap-3 ${
-            facts.length > 2 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"
+            facts.length >= 3 ? "grid-cols-3" : "grid-cols-2"
           }`}
         >
           {facts.map((fact) => (

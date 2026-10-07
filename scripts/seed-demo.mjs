@@ -1,7 +1,9 @@
 /**
  * Showcase seed — companies, buyers, suppliers, orders (all statuses),
  * sales-placed orders, shipments (+ packing lines), credit ledger, RMA.
- * Uses production-style order numbers: UMX-YYYYMMDD-####
+ * Uses production-style ids:
+ *   order  UMX-{INITIALS}{YYMMDD}   e.g. UMX-PD260923
+ *   PI     {INITIALS}{YYMMDD}{STATE} e.g. PD260923CA
  * Does not modify product catalog / images / prices.
  *
  * Run after catalog + staff exist: npm run db:seed-demo
@@ -89,14 +91,69 @@ function daysAgo(n) {
   return d;
 }
 
-function orderNumberFor(days, seq) {
-  const d = daysAgo(days);
-  const stamp = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-  return `UMX-${stamp}-${1000 + seq}`;
+const COMPANY_NOISE =
+  /\b(LLC|L\.L\.C|INC|LTD|CORP|CO|LIMITED|INCORPORATED|COMPANY|PARTNERS|PARTNER|GROUP|HOLDINGS|ENTERPRISES|ENTERPRISE|TRADING|INTERNATIONAL|INTL)\b\.?/gi;
+
+function companyInitials(name) {
+  const words = (name || "")
+    .toUpperCase()
+    .replace(COMPANY_NOISE, " ")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0] || ""}${words[1][0] || ""}` || "CU";
+  }
+  if (words[0]) return words[0].slice(0, 2) || "CU";
+  return "CU";
 }
 
-function piNumberFor(orderNumber) {
-  return `PI-${orderNumber.replace("UMX-", "")}`;
+function slugState(region) {
+  const raw = (region || "").trim().toUpperCase();
+  if (!raw) return "";
+  if (/^[A-Z]{2}$/.test(raw)) return raw;
+  const words = raw
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0] || ""}${words[1][0] || ""}`;
+  }
+  return (words[0] || "").replace(/[^A-Z0-9]+/g, "").slice(0, 2);
+}
+
+function formatDocDate(date) {
+  const y = String(date.getUTCFullYear()).slice(-2);
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${d}`;
+}
+
+const usedOrderNumbers = new Set();
+const usedPiNumbers = new Set();
+
+/** UMX-{INITIALS}{YYMMDD} — appends -seq only when same company/day collides. */
+function orderNumberFor(companyName, days, seq) {
+  const body = `${companyInitials(companyName)}${formatDocDate(daysAgo(days))}`;
+  let candidate = `UMX-${body}`;
+  if (usedOrderNumbers.has(candidate)) {
+    candidate = `UMX-${body}-${seq}`;
+  }
+  usedOrderNumbers.add(candidate);
+  return candidate;
+}
+
+/** Stored without PI- prefix: {INITIALS}{YYMMDD}{STATE} */
+function piNumberFor(companyName, days, region, seq) {
+  const body = `${companyInitials(companyName)}${formatDocDate(daysAgo(days))}${slugState(region)}`;
+  let candidate = body;
+  if (usedPiNumbers.has(candidate)) {
+    candidate = `${body}-${seq}`;
+  }
+  usedPiNumbers.add(candidate);
+  return candidate;
 }
 
 async function upsertCompany(data) {
@@ -827,8 +884,19 @@ async function main() {
     );
     const money = totals(items, s.shipping || 0, s.discount || 0);
     const createdAt = daysAgo(s.days);
-    const orderNumber = orderNumberFor(s.days, s.seq);
-    const piNumber = piNumberFor(orderNumber);
+    const companyName =
+      s.companyId === shop.id
+        ? shop.name
+        : s.companyId === wholesaler.id
+          ? wholesaler.name
+          : s.companyId === distro.id
+            ? distro.name
+            : s.companyId === metro.id
+              ? metro.name
+              : "Customer";
+    const region = (ADDRESSES[s.address] || ADDRESSES.coastal).region;
+    const orderNumber = orderNumberFor(companyName, s.days, s.seq);
+    const piNumber = piNumberFor(companyName, s.days, region, s.seq);
 
     const order = await prisma.order.create({
       data: {
@@ -982,7 +1050,7 @@ async function main() {
 
   if (rmaSourceOrder?.items?.[0]) {
     const item = rmaSourceOrder.items[0];
-    const rmaStamp = orderNumberFor(28, 15).replace("UMX-", "RMA-");
+    const rmaStamp = `RMA-${companyInitials(distro.name)}${formatDocDate(daysAgo(28))}-15`;
     await prisma.rma.create({
       data: {
         rmaNumber: rmaStamp,

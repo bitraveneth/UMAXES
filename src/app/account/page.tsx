@@ -14,6 +14,7 @@ import {
 import { Package } from "lucide-react";
 import OverviewRebateCard from "@/components/account/OverviewRebateCard";
 import { isChannelBuyerLevel } from "@/lib/channel-level";
+import { docNumberBody } from "@/lib/doc-number";
 import { formatPack } from "@/lib/pack";
 
 export const metadata = {
@@ -325,7 +326,7 @@ export default async function AccountPage() {
                                 PI
                               </span>{" "}
                               <span className="break-all font-display text-sm font-semibold text-[#1b4f72]">
-                                {order.piNumber}
+                                {docNumberBody(order.piNumber) || order.piNumber}
                               </span>
                             </p>
                           ) : null}

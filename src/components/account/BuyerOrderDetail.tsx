@@ -142,7 +142,9 @@ export default function BuyerOrderDetail({
         </div>
       </header>
 
-      {order.piNumber ? <PiNumberBlock value={order.piNumber} /> : null}
+      {order.piNumber ? (
+        <PiNumberBlock value={order.piNumber} orderNumber={order.orderNumber} />
+      ) : null}
 
       {order.status !== "CANCELLED" ? (
         <BuyerPaymentSlip
@@ -341,63 +343,101 @@ export default function BuyerOrderDetail({
             Line items
           </h2>
         </div>
+
+        <div
+          className="grid grid-cols-[2rem_minmax(0,1fr)_4.5rem_6.5rem] items-center gap-x-3 border-b border-black/8 px-5 py-2.5 sm:grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_7rem] sm:gap-x-5 sm:px-6"
+          role="row"
+        >
+          <span className="text-center font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+            #
+          </span>
+          <span className="font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+            Item
+          </span>
+          <span className="text-right font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+            Qty
+          </span>
+          <span className="text-right font-display text-[10px] font-semibold tracking-[0.12em] text-black/45 uppercase">
+            Price
+          </span>
+        </div>
+
         <ul className="divide-y divide-black/6">
-          {order.items.map((line) => (
+          {order.items.map((line, index) => (
             <li
               key={line.id}
-              className="flex items-center gap-4 px-5 py-4 sm:px-6"
+              className="grid grid-cols-[2rem_minmax(0,1fr)_4.5rem_6.5rem] items-center gap-x-3 px-5 py-3.5 sm:grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_7rem] sm:gap-x-5 sm:px-6"
             >
-              <div className="relative h-14 w-14 shrink-0 overflow-hidden bg-umx-cream">
-                {line.image ? (
-                  <Image
-                    src={line.image}
-                    alt=""
-                    fill
-                    className="object-contain p-1"
-                    sizes="56px"
-                  />
-                ) : null}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-sm font-semibold text-black">
+              <span className="text-center font-display text-sm font-semibold tabular-nums text-black/45">
+                {index + 1}
+              </span>
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden bg-umx-cream sm:h-14 sm:w-14">
+                  {line.image ? (
+                    <Image
+                      src={line.image}
+                      alt=""
+                      fill
+                      className="object-contain p-1"
+                      sizes="56px"
+                    />
+                  ) : null}
+                </div>
+                <p className="min-w-0 truncate font-display text-sm font-semibold text-black">
                   {line.name}
                 </p>
-                <p className="font-body text-xs text-black">
-                  {line.sku} · Qty {line.quantity}
+              </div>
+              <p className="text-right font-display text-sm font-semibold tabular-nums text-black">
+                {line.quantity}
+              </p>
+              <div className="text-right">
+                <p className="font-display text-sm font-bold tabular-nums text-black">
+                  ${(line.unitPrice * line.quantity).toFixed(2)}
+                </p>
+                <p className="mt-0.5 font-body text-xs tabular-nums text-black/45">
+                  ${line.unitPrice.toFixed(2)}/pc
                 </p>
               </div>
-              <p className="font-display text-sm font-semibold tabular-nums text-black">
-                ${(line.unitPrice * line.quantity).toFixed(2)}
-              </p>
             </li>
           ))}
         </ul>
-        <div className="space-y-2 border-t border-black/8 px-5 py-4 font-body text-sm sm:px-6">
-          <div className="flex justify-between text-black">
-            <span>Subtotal</span>
-            <span className="tabular-nums text-black">
+
+        <div className="space-y-2 border-t border-black/8 bg-[#f7f9fb] px-5 py-4 font-body text-sm sm:px-6">
+          <div className="grid grid-cols-[2rem_minmax(0,1fr)_4.5rem_6.5rem] items-baseline gap-x-3 sm:grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_7rem] sm:gap-x-5">
+            <span aria-hidden />
+            <span className="text-black/55">Subtotal</span>
+            <span aria-hidden />
+            <span className="text-right tabular-nums text-black">
               ${order.subtotal.toFixed(2)}
             </span>
           </div>
           {order.discount > 0 ? (
-            <div className="flex justify-between text-black">
-              <span>Discount</span>
-              <span className="tabular-nums text-black">
+            <div className="grid grid-cols-[2rem_minmax(0,1fr)_4.5rem_6.5rem] items-baseline gap-x-3 sm:grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_7rem] sm:gap-x-5">
+              <span aria-hidden />
+              <span className="text-black/55">Discount</span>
+              <span aria-hidden />
+              <span className="text-right tabular-nums text-black">
                 −${order.discount.toFixed(2)}
               </span>
             </div>
           ) : null}
           {order.shipping > 0 ? (
-            <div className="flex justify-between text-black">
-              <span>Shipping</span>
-              <span className="tabular-nums text-black">
+            <div className="grid grid-cols-[2rem_minmax(0,1fr)_4.5rem_6.5rem] items-baseline gap-x-3 sm:grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_7rem] sm:gap-x-5">
+              <span aria-hidden />
+              <span className="text-black/55">Shipping</span>
+              <span aria-hidden />
+              <span className="text-right tabular-nums text-black">
                 ${order.shipping.toFixed(2)}
               </span>
             </div>
           ) : null}
-          <div className="flex justify-between border-t border-black/8 pt-3 font-display text-base font-bold">
+          <div className="grid grid-cols-[2rem_minmax(0,1fr)_4.5rem_6.5rem] items-baseline gap-x-3 border-t border-black/8 pt-3 font-display text-base font-bold sm:grid-cols-[2.25rem_minmax(0,1fr)_5.5rem_7rem] sm:gap-x-5">
+            <span aria-hidden />
             <span className="text-black">Total</span>
-            <span className="tabular-nums text-umx-orange">
+            <span className="text-right tabular-nums text-black">
+              {order.items.reduce((s, l) => s + l.quantity, 0)} pcs
+            </span>
+            <span className="text-right tabular-nums text-umx-orange">
               ${order.total.toFixed(2)}
             </span>
           </div>
