@@ -7,22 +7,22 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /** Bump when models are added so HMR does not keep a stale PrismaClient. */
-const PRISMA_SCHEMA_VERSION = 17;
+const PRISMA_SCHEMA_VERSION = 18;
 
 function withVerifyFullSsl(connectionString: string) {
   try {
     const url = new URL(connectionString);
     const mode = url.searchParams.get("sslmode");
+    // Harden hosted SSL modes only. Leave unset alone so local Postgres works.
     if (mode === "prefer" || mode === "require" || mode === "verify-ca") {
-      url.searchParams.set("sslmode", "verify-full");
-    } else if (!mode) {
       url.searchParams.set("sslmode", "verify-full");
     }
     return url.toString();
   } catch {
-    return connectionString
-      .replace(/sslmode=(prefer|require|verify-ca)/i, "sslmode=verify-full")
-      .replace(/([?&])sslmode=(prefer|require|verify-ca)/i, "$1sslmode=verify-full");
+    return connectionString.replace(
+      /sslmode=(prefer|require|verify-ca)/i,
+      "sslmode=verify-full",
+    );
   }
 }
 
