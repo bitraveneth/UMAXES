@@ -550,6 +550,11 @@ const en: AdminMessages = {
     advanceTo: "Mark as {status}",
     otherStatus: "Or set another status",
     applyStatus: "Save shipping",
+    cancelOrder: "Cancel order",
+    cancelOrderTitle: "Cancel this order?",
+    cancelOrderConfirm:
+      "Are you sure you want to cancel this order? This cannot be undone from here.",
+    cancelOrderDone: "Order cancelled",
     statusLabel: "Shipping status",
     placedByStaff: "Staff · {name}",
     staffLabel: "Staff",

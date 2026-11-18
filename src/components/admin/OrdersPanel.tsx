@@ -177,14 +177,17 @@ export default function OrdersPanel({
   orders,
   allowedStatuses,
   canDeleteSlip,
+  canCancelOrder = false,
   openId = null,
 }: {
   orders: OrdersPanelItem[];
   allowedStatuses: OrderStatus[];
   canDeleteSlip: boolean;
+  canCancelOrder?: boolean;
   openId?: string | null;
 }) {
   const { t, locale } = useAdminI18n();
+  const { confirm, showToast, ui } = useAppFeedback();
   const [editingId, setEditingId] = useState<string | null>(openId);
   const [filter, setFilter] = useState<FilterKey>(() => {
     if (!openId) return "all";
@@ -210,6 +213,27 @@ export default function OrdersPanel({
     return t(`orders.status${status}`);
   }
 
+  async function onCancelOrder(order: OrdersPanelItem) {
+    if (!canCancelOrder || order.status === "CANCELLED") return;
+    const ok = await confirm({
+      title: t("orders.cancelOrderTitle"),
+      message: t("orders.cancelOrderConfirm"),
+      confirmLabel: t("orders.cancelOrder"),
+      tone: "danger",
+    });
+    if (!ok) return;
+    try {
+      await updateOrderStatus(order.id, "CANCELLED");
+      setEditingId(null);
+      showToast(t("orders.cancelOrderDone"), "danger");
+    } catch (e) {
+      showToast(
+        e instanceof Error ? e.message : "Cancel failed",
+        "danger",
+      );
+    }
+  }
+
   function formatDate(iso: string) {
     try {
       return new Date(iso).toLocaleDateString(
@@ -223,6 +247,7 @@ export default function OrdersPanel({
 
   return (
     <div className="space-y-4">
+      {ui}
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => {
           const count =
@@ -367,19 +392,35 @@ export default function OrdersPanel({
                           <OrderDocLinks orderId={order.id} compact />
                         </td>
                         <td className="w-[1%] whitespace-nowrap pr-5 text-right align-middle">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditingId(open ? null : order.id)
-                            }
-                            className={`admin-btn admin-btn-sm ml-auto ${
-                              open
-                                ? "admin-btn-secondary"
-                                : "admin-btn-primary"
-                            }`}
-                          >
-                            {open ? t("common.close") : t("orders.updateStatus")}
-                          </button>
+                          <div className="inline-flex items-center justify-end gap-1.5">
+                            {canCancelOrder && order.status !== "CANCELLED" ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void onCancelOrder(order);
+                                }}
+                                className="admin-btn admin-btn-sm border border-[var(--admin-error-500)]/30 bg-[var(--admin-error-50)] text-[var(--admin-error-700)]"
+                              >
+                                {t("orders.cancelOrder")}
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingId(open ? null : order.id)
+                              }
+                              className={`admin-btn admin-btn-sm ${
+                                open
+                                  ? "admin-btn-secondary"
+                                  : "admin-btn-primary"
+                              }`}
+                            >
+                              {open
+                                ? t("common.close")
+                                : t("orders.updateStatus")}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                       {open ? (
@@ -392,6 +433,8 @@ export default function OrdersPanel({
                               order={order}
                               allowedStatuses={allowedStatuses}
                               canDeleteSlip={canDeleteSlip}
+                              canCancelOrder={canCancelOrder}
+                              onCancelOrder={() => onCancelOrder(order)}
                               payLabel={payLabel}
                               statusLabel={statusLabel}
                               onClose={() => setEditingId(null)}
@@ -658,6 +701,8 @@ function OrderExpand({
   order,
   allowedStatuses,
   canDeleteSlip,
+  canCancelOrder = false,
+  onCancelOrder,
   payLabel,
   statusLabel,
   onClose,
@@ -665,6 +710,8 @@ function OrderExpand({
   order: OrdersPanelItem;
   allowedStatuses: OrderStatus[];
   canDeleteSlip: boolean;
+  canCancelOrder?: boolean;
+  onCancelOrder?: () => void | Promise<void>;
   payLabel: (m: PaymentMethod) => string;
   statusLabel: (s: OrderStatus) => string;
   onClose: () => void;
@@ -675,7 +722,11 @@ function OrderExpand({
   const isCredit = order.paymentMethod === "CREDIT";
 
   const fulfillmentStatuses: OrderStatus[] = allowedStatuses.filter(
-    (s) => s !== "SUBMITTED" && s !== "PAYMENT_PENDING",
+    (s) =>
+      s !== "SUBMITTED" &&
+      s !== "PAYMENT_PENDING" &&
+      // Admins get a dedicated Cancel button; keep CANCELLED out of the menu.
+      !(canCancelOrder && s === "CANCELLED"),
   );
   const preferredStatus: OrderStatus =
     order.status === "PICKING" ? "SENT_TO_SUPPLIER" : order.status;
@@ -1024,37 +1075,59 @@ function OrderExpand({
             </div>
 
             {fulfillmentStatuses.length > 0 ? (
-              <form
-                action={async (fd) => {
-                  const nextStatus = String(
-                    fd.get("status") || "",
-                  ) as OrderStatus;
-                  if (!nextStatus) return;
-                  await updateOrderStatus(order.id, nextStatus);
-                  onClose();
-                }}
-                className="admin-order-ops-frame"
-              >
-                <OpsMenu
-                  name="status"
-                  value={defaultFulfillment}
-                  ariaLabel={t("orders.statusLabel")}
-                  options={fulfillmentStatuses.map((s) => ({
-                    value: s,
-                    label: statusLabel(s),
-                  }))}
-                />
-                <button
-                  type="submit"
-                  className="admin-btn admin-btn-primary admin-btn-sm"
+              <div className="admin-order-ops-frame-stack space-y-2">
+                <form
+                  action={async (fd) => {
+                    const nextStatus = String(
+                      fd.get("status") || "",
+                    ) as OrderStatus;
+                    if (!nextStatus) return;
+                    await updateOrderStatus(order.id, nextStatus);
+                    onClose();
+                  }}
+                  className="admin-order-ops-frame"
                 >
-                  {t("orders.applyStatus")}
-                </button>
-              </form>
+                  <OpsMenu
+                    name="status"
+                    value={defaultFulfillment}
+                    ariaLabel={t("orders.statusLabel")}
+                    options={fulfillmentStatuses.map((s) => ({
+                      value: s,
+                      label: statusLabel(s),
+                    }))}
+                  />
+                  <button
+                    type="submit"
+                    className="admin-btn admin-btn-primary admin-btn-sm"
+                  >
+                    {t("orders.applyStatus")}
+                  </button>
+                </form>
+                {canCancelOrder && order.status !== "CANCELLED" ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-sm border border-[var(--admin-error-500)]/30 bg-[var(--admin-error-50)] text-[var(--admin-error-700)]"
+                    onClick={() => void onCancelOrder?.()}
+                  >
+                    {t("orders.cancelOrder")}
+                  </button>
+                ) : null}
+              </div>
             ) : (
-              <p className="admin-order-ops-note text-[var(--admin-muted)]">
-                {statusLabel(order.status)}
-              </p>
+              <div className="admin-order-ops-frame-stack space-y-2">
+                <p className="admin-order-ops-note text-[var(--admin-muted)]">
+                  {statusLabel(order.status)}
+                </p>
+                {canCancelOrder && order.status !== "CANCELLED" ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-sm border border-[var(--admin-error-500)]/30 bg-[var(--admin-error-50)] text-[var(--admin-error-700)]"
+                    onClick={() => void onCancelOrder?.()}
+                  >
+                    {t("orders.cancelOrder")}
+                  </button>
+                ) : null}
+              </div>
             )}
           </section>
         </div>

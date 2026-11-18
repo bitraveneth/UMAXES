@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import {
   deleteCustomerUser,
+  updateCustomerUser,
   assignUserAccess,
   prepareImpersonateCustomer,
 } from "@/lib/admin-actions";
@@ -18,6 +19,7 @@ import {
   Clock,
   ExternalLink,
   UserPlus,
+  Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -111,6 +113,7 @@ export default function UsersPanel({
   const [error, setError] = useState<string | null>(initialError);
   const [message, setMessage] = useState<string | null>(null);
   const [assigning, setAssigning] = useState<CustomerUserRow | null>(null);
+  const [editing, setEditing] = useState<CustomerUserRow | null>(null);
   const [loginAs, setLoginAs] = useState<CustomerUserRow | null>(null);
   const [assignment, setAssignment] = useState<AssignmentValue>("buyer:DISTRO");
   const [query, setQuery] = useState("");
@@ -147,6 +150,40 @@ export default function UsersPanel({
     else setAssignment("buyer:DISTRO");
     setError(null);
     setMessage(null);
+  }
+
+  function openEdit(u: CustomerUserRow) {
+    setEditing(u);
+    setError(null);
+    setMessage(null);
+  }
+
+  function onUpdate(fd: FormData) {
+    if (!editing) return;
+    startTransition(async () => {
+      try {
+        const password = String(fd.get("password") || "").trim();
+        await updateCustomerUser({
+          id: editing.id,
+          name: String(fd.get("name") || ""),
+          email: String(fd.get("email") || ""),
+          phone: String(fd.get("phone") || ""),
+          status: String(fd.get("status")) as
+            | "APPROVED"
+            | "DISABLED"
+            | "PENDING"
+            | "REJECTED",
+          password: password || undefined,
+        });
+        setEditing(null);
+        setError(null);
+        setMessage("Customer updated.");
+        showToast("Customer updated successfully", "success");
+      } catch (e) {
+        setMessage(null);
+        setError(e instanceof Error ? e.message : "Update failed");
+      }
+    });
   }
 
   function onAssign() {
@@ -401,6 +438,16 @@ export default function UsersPanel({
                         <button
                           type="button"
                           disabled={pending}
+                          onClick={() => openEdit(u)}
+                          className="admin-btn admin-btn-secondary admin-btn-sm"
+                          title="Edit name, email, phone, password"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pending}
                           onClick={() => openAssign(u)}
                           className="admin-btn admin-btn-primary admin-btn-sm"
                         >
@@ -503,6 +550,121 @@ export default function UsersPanel({
                 {pending ? "Opening…" : "Open in new tab"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {editing && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !pending && setEditing(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-5 shadow-[var(--admin-shadow-theme)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-[var(--admin-text)]">
+                  Edit customer
+                </h3>
+                <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                  Change name, email, phone, or set a new password.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="admin-btn admin-btn-ghost admin-btn-sm"
+                disabled={pending}
+                onClick={() => setEditing(null)}
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form action={onUpdate} className="grid gap-3">
+              <label className="admin-label text-xs">
+                Name
+                <input
+                  name="name"
+                  required
+                  defaultValue={editing.name || ""}
+                  className="admin-input mt-1.5 w-full"
+                />
+              </label>
+              <label className="admin-label text-xs">
+                Email
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  defaultValue={editing.email || ""}
+                  className="admin-input mt-1.5 w-full"
+                />
+              </label>
+              <label className="admin-label text-xs">
+                Phone
+                <input
+                  name="phone"
+                  type="tel"
+                  defaultValue={editing.phone || ""}
+                  className="admin-input mt-1.5 w-full"
+                  placeholder="+1 555 0100"
+                />
+              </label>
+              <label className="admin-label text-xs">
+                Status
+                <select
+                  name="status"
+                  defaultValue={
+                    editing.status === "DISABLED"
+                      ? "DISABLED"
+                      : editing.status === "PENDING"
+                        ? "PENDING"
+                        : editing.status === "REJECTED"
+                          ? "REJECTED"
+                          : "APPROVED"
+                  }
+                  className="admin-input mt-1.5 w-full"
+                >
+                  <option value="APPROVED">Active</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="DISABLED">Disabled</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+              </label>
+              <label className="admin-label text-xs">
+                New password (optional)
+                <input
+                  name="password"
+                  type="password"
+                  minLength={6}
+                  className="admin-input mt-1.5 w-full"
+                  autoComplete="new-password"
+                  placeholder="Leave blank to keep current"
+                />
+              </label>
+              <div className="mt-1 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary"
+                  disabled={pending}
+                  onClick={() => setEditing(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="admin-btn admin-btn-primary"
+                  disabled={pending}
+                >
+                  {pending ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

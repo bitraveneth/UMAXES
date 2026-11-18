@@ -2909,6 +2909,106 @@ export async function deleteStaffUser(id: string) {
   return { deleted: true as const };
 }
 
+/**
+ * Edit a customer login from /admin/users (name, email, phone, password, status).
+ * Same idea as staff edit — password optional (leave blank to keep current).
+ */
+export async function updateCustomerUser(input: {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  status: "APPROVED" | "DISABLED" | "PENDING" | "REJECTED";
+  password?: string;
+}) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+  const target = await prisma.user.findUnique({ where: { id: input.id } });
+  if (!target) throw new Error("User not found");
+  if (target.role !== "CUSTOMER") {
+    throw new Error("Only customer accounts can be edited here");
+  }
+
+  const name = input.name.trim();
+  const email = input.email.trim().toLowerCase();
+  const phoneRaw = input.phone?.trim() || "";
+  const phone = phoneRaw || null;
+
+  if (!name) throw new Error("Name is required");
+  if (!email) throw new Error("Email is required");
+  if (!email.includes("@") || !email.includes(".")) {
+    throw new Error("Enter a valid email");
+  }
+  if (phone) {
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+      throw new Error("Enter a valid phone number");
+    }
+  }
+
+  if (email !== (target.email || "").toLowerCase()) {
+    const taken = await prisma.user.findUnique({ where: { email } });
+    if (taken && taken.id !== target.id) {
+      throw new Error("Email is already registered");
+    }
+  }
+  if (phone && phone !== target.phone) {
+    const takenPhone = await prisma.user.findUnique({ where: { phone } });
+    if (takenPhone && takenPhone.id !== target.id) {
+      throw new Error("Phone is already registered");
+    }
+  }
+
+  const allowedStatus = ["APPROVED", "DISABLED", "PENDING", "REJECTED"] as const;
+  if (!allowedStatus.includes(input.status)) {
+    throw new Error("Invalid status");
+  }
+
+  const data: {
+    name: string;
+    email: string;
+    phone: string | null;
+    status: (typeof allowedStatus)[number];
+    passwordHash?: string;
+  } = {
+    name,
+    email,
+    phone,
+    status: input.status,
+  };
+
+  const nextPassword = input.password?.trim();
+  if (nextPassword) {
+    if (nextPassword.length < 6) {
+      throw new Error("Password must be at least 6 characters");
+    }
+    const bcrypt = await import("bcryptjs");
+    data.passwordHash = await bcrypt.hash(nextPassword, 12);
+  }
+
+  await prisma.user.update({
+    where: { id: input.id },
+    data,
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CUSTOMER_UPDATED",
+      entity: "User",
+      entityId: input.id,
+      meta: JSON.stringify({
+        email,
+        phone,
+        previousEmail: target.email,
+        status: data.status,
+        passwordChanged: Boolean(nextPassword),
+      }),
+    },
+  });
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/approvals");
+}
+
 /** Delete (or disable if linked) a customer account from /admin/users. */
 export async function deleteCustomerUser(id: string) {
   const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);

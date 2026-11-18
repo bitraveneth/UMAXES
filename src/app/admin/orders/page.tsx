@@ -61,6 +61,7 @@ export default async function AdminOrdersPage({
   const role = session.user.role as UserRole;
   const allowedStatuses = statusByRole[role] ?? statusByRole.SALES!;
   const canDeleteSlip = role === "ADMIN" || role === "SUPER_ADMIN";
+  const canCancelOrder = role === "ADMIN" || role === "SUPER_ADMIN";
 
   const orders = await prisma.order.findMany({
     where: orderCompanyScopeForStaff(role, session.user.id),
@@ -189,6 +190,7 @@ export default async function AdminOrdersPage({
         orders={panelOrders}
         allowedStatuses={allowedStatuses}
         canDeleteSlip={canDeleteSlip}
+        canCancelOrder={canCancelOrder}
         openId={openId}
       />
     </div>
