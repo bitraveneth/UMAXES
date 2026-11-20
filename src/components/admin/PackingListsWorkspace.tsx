@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
-import { Download, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
+import DocumentDownloadMenu from "@/components/account/DocumentDownloadMenu";
 
 export type PackingListRow = {
   id: string;
   orderNumber: string;
+  plNumber: string;
+  piNumber: string | null;
   status: OrderStatus;
   updatedAt: string;
   companyName: string;
@@ -54,7 +57,6 @@ export default function PackingListsWorkspace({
   rows: PackingListRow[];
 }) {
   const { t } = useAdminI18n();
-  const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
 
@@ -65,6 +67,8 @@ export default function PackingListsWorkspace({
       if (!needle) return true;
       return (
         row.orderNumber.toLowerCase().includes(needle) ||
+        row.plNumber.toLowerCase().includes(needle) ||
+        (row.piNumber || "").toLowerCase().includes(needle) ||
         row.companyName.toLowerCase().includes(needle) ||
         row.route.toLowerCase().includes(needle) ||
         (row.trackingNumber || "").toLowerCase().includes(needle)
@@ -145,68 +149,74 @@ export default function PackingListsWorkspace({
                 </tr>
               </thead>
               <tbody>
-                {list.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="cursor-pointer"
-                    onClick={() =>
-                      router.push(`/admin/logistics/packing-lists/${row.id}`)
-                    }
-                  >
-                    <td className="font-semibold text-[var(--admin-muted)]">
-                      PL-{row.orderNumber}
-                    </td>
-                    <td>
-                      <p className="font-medium text-[var(--admin-text)]">
-                        {row.companyName}
-                      </p>
-                      <p className="text-xs text-[var(--admin-muted)]">
-                        {row.companyLevel}
-                      </p>
-                    </td>
-                    <td className="max-w-[10rem] truncate text-sm">
-                      {row.route}
-                    </td>
-                    <td className="tabular-nums">{row.totalUnits}</td>
-                    <td className="max-w-[10rem] truncate text-sm text-[var(--admin-muted)]">
-                      {row.trackingNumber
-                        ? `${row.carrier || ""} ${row.trackingNumber}`.trim()
-                        : "—"}
-                    </td>
-                    <td>
-                      <AdminBadge tone={statusTone(row.status)}>
-                        {row.hasPacking
-                          ? statusLabel(row.status)
-                          : t("packingLists.notPacked")}
-                      </AdminBadge>
-                    </td>
-                    <td className="text-right">
-                      <div className="flex flex-wrap justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(
-                              `/admin/logistics/packing-lists/${row.id}`,
-                            );
-                          }}
-                          className="admin-btn admin-btn-primary admin-btn-sm"
+                {list.map((row) => {
+                  const href = `/admin/logistics/packing-lists/${row.id}`;
+                  return (
+                    <tr key={row.id} className="group relative">
+                      <td className="font-semibold text-[var(--admin-muted)]">
+                        <Link
+                          href={href}
+                          prefetch
+                          className="block text-[var(--admin-text)] hover:text-[var(--admin-brand-700)] hover:underline"
                         >
-                          <Eye className="h-3.5 w-3.5" />
-                          {t("packingLists.view")}
-                        </button>
-                        <a
-                          href={`/api/orders/${row.id}/docs?type=packing&download=1`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="admin-btn admin-btn-secondary admin-btn-sm"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          {t("packingLists.download")}
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {row.plNumber}
+                        </Link>
+                        {row.piNumber ? (
+                          <p className="text-xs font-normal text-[var(--admin-muted)]">
+                            PI · {row.piNumber}
+                          </p>
+                        ) : (
+                          <p className="text-xs font-normal text-[var(--admin-muted)]">
+                            {row.orderNumber}
+                          </p>
+                        )}
+                      </td>
+                      <td>
+                        <p className="font-medium text-[var(--admin-text)]">
+                          {row.companyName}
+                        </p>
+                        <p className="text-xs text-[var(--admin-muted)]">
+                          {row.companyLevel}
+                        </p>
+                      </td>
+                      <td className="max-w-[10rem] truncate text-sm">
+                        {row.route}
+                      </td>
+                      <td className="tabular-nums">{row.totalUnits}</td>
+                      <td className="max-w-[10rem] truncate text-sm text-[var(--admin-muted)]">
+                        {row.trackingNumber
+                          ? `${row.carrier || ""} ${row.trackingNumber}`.trim()
+                          : "—"}
+                      </td>
+                      <td>
+                        <AdminBadge tone={statusTone(row.status)}>
+                          {row.hasPacking
+                            ? statusLabel(row.status)
+                            : t("packingLists.notPacked")}
+                        </AdminBadge>
+                      </td>
+                      <td className="text-right">
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          <Link
+                            href={href}
+                            prefetch
+                            className="admin-btn admin-btn-primary admin-btn-sm"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            {t("packingLists.view")}
+                          </Link>
+                          <div className="inline-flex">
+                            <DocumentDownloadMenu
+                              orderId={row.id}
+                              type="packing"
+                              variant="admin"
+                            />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

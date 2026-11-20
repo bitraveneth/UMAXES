@@ -3,10 +3,12 @@
 import { useMemo, useState, useTransition } from "react";
 import {
   deleteCustomerUser,
+  updateCustomerUser,
   assignUserAccess,
   prepareImpersonateCustomer,
 } from "@/lib/admin-actions";
 import { AdminBadge, AdminCard, AdminStat } from "@/components/admin/ui";
+import { useAdminI18n } from "@/components/admin/AdminI18n";
 import {
   Users,
   Store,
@@ -16,7 +18,12 @@ import {
   X,
   Clock,
   ExternalLink,
+  UserPlus,
+  Pencil,
 } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useAppFeedback } from "@/components/ui/AppFeedback";
 import type {
   CustomerLevel,
   UserRole,
@@ -98,14 +105,20 @@ export default function UsersPanel({
   canImpersonate = false,
   initialError = null,
 }: Props) {
+  const { t } = useAdminI18n();
+  const { data: session } = useSession();
+  const showLoginAs =
+    canImpersonate && session?.user?.role === "SUPER_ADMIN";
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(initialError);
   const [message, setMessage] = useState<string | null>(null);
   const [assigning, setAssigning] = useState<CustomerUserRow | null>(null);
+  const [editing, setEditing] = useState<CustomerUserRow | null>(null);
   const [loginAs, setLoginAs] = useState<CustomerUserRow | null>(null);
   const [assignment, setAssignment] = useState<AssignmentValue>("buyer:DISTRO");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | UserStatus>("all");
+  const { confirm, showToast, ui } = useAppFeedback();
 
   const counts = useMemo(() => {
     const active = users.filter((u) => u.status === "APPROVED").length;
@@ -139,6 +152,40 @@ export default function UsersPanel({
     setMessage(null);
   }
 
+  function openEdit(u: CustomerUserRow) {
+    setEditing(u);
+    setError(null);
+    setMessage(null);
+  }
+
+  function onUpdate(fd: FormData) {
+    if (!editing) return;
+    startTransition(async () => {
+      try {
+        const password = String(fd.get("password") || "").trim();
+        await updateCustomerUser({
+          id: editing.id,
+          name: String(fd.get("name") || ""),
+          email: String(fd.get("email") || ""),
+          phone: String(fd.get("phone") || ""),
+          status: String(fd.get("status")) as
+            | "APPROVED"
+            | "DISABLED"
+            | "PENDING"
+            | "REJECTED",
+          password: password || undefined,
+        });
+        setEditing(null);
+        setError(null);
+        setMessage("Customer updated.");
+        showToast("Customer updated successfully", "success");
+      } catch (e) {
+        setMessage(null);
+        setError(e instanceof Error ? e.message : "Update failed");
+      }
+    });
+  }
+
   function onAssign() {
     if (!assigning) return;
     startTransition(async () => {
@@ -168,15 +215,15 @@ export default function UsersPanel({
     });
   }
 
-  function onDelete(row: CustomerUserRow) {
+  async function onDelete(row: CustomerUserRow) {
     const label = row.name || row.email || row.phone || "this user";
-    if (
-      !window.confirm(
-        `Delete ${label}? If they have orders or RMA history, the account will be disabled instead.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Delete customer?",
+      message: `Delete ${label}? If they have orders or RMA history, the account will be disabled instead.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     startTransition(async () => {
       try {
         const result = await deleteCustomerUser(row.id);
@@ -186,6 +233,12 @@ export default function UsersPanel({
             ? "Disabled (linked orders/RMA)."
             : "Customer deleted.",
         );
+        showToast(
+          "disabled" in result && result.disabled
+            ? "Customer disabled"
+            : "Customer deleted",
+          "danger",
+        );
       } catch (e) {
         setMessage(null);
         setError(e instanceof Error ? e.message : "Delete failed");
@@ -194,7 +247,7 @@ export default function UsersPanel({
   }
 
   function openLoginAs(row: CustomerUserRow) {
-    if (!canImpersonate) return;
+    if (!showLoginAs) return;
     if (row.status === "DISABLED" || row.status === "REJECTED") {
       setError("Cannot open a disabled account.");
       return;
@@ -230,6 +283,7 @@ export default function UsersPanel({
 
   return (
     <div className="space-y-6">
+      {ui}
       {(message || error) && (
         <div
           className={`rounded-xl border px-4 py-3 text-sm ${
@@ -257,6 +311,10 @@ export default function UsersPanel({
               staff (Sales, Logistics, Warehouse, Admin).
             </p>
           </div>
+          <Link href="/admin/users/new" className="admin-btn admin-btn-primary admin-btn-sm">
+            <UserPlus className="h-4 w-4" />
+            {t("users.addUser")}
+          </Link>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-b border-[var(--admin-border)] px-5 py-3">
@@ -361,7 +419,7 @@ export default function UsersPanel({
                     </td>
                     <td>
                       <div className="flex justify-end gap-1.5">
-                        {canImpersonate ? (
+                        {showLoginAs ? (
                           <button
                             type="button"
                             disabled={
@@ -377,6 +435,16 @@ export default function UsersPanel({
                             Login as
                           </button>
                         ) : null}
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => openEdit(u)}
+                          className="admin-btn admin-btn-secondary admin-btn-sm"
+                          title="Edit name, email, phone, password"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
                         <button
                           type="button"
                           disabled={pending}
@@ -482,6 +550,121 @@ export default function UsersPanel({
                 {pending ? "Opening…" : "Open in new tab"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {editing && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => !pending && setEditing(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card)] p-5 shadow-[var(--admin-shadow-theme)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-[var(--admin-text)]">
+                  Edit customer
+                </h3>
+                <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                  Change name, email, phone, or set a new password.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="admin-btn admin-btn-ghost admin-btn-sm"
+                disabled={pending}
+                onClick={() => setEditing(null)}
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form action={onUpdate} className="grid gap-3">
+              <label className="admin-label text-xs">
+                Name
+                <input
+                  name="name"
+                  required
+                  defaultValue={editing.name || ""}
+                  className="admin-input mt-1.5 w-full"
+                />
+              </label>
+              <label className="admin-label text-xs">
+                Email
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  defaultValue={editing.email || ""}
+                  className="admin-input mt-1.5 w-full"
+                />
+              </label>
+              <label className="admin-label text-xs">
+                Phone
+                <input
+                  name="phone"
+                  type="tel"
+                  defaultValue={editing.phone || ""}
+                  className="admin-input mt-1.5 w-full"
+                  placeholder="+1 555 0100"
+                />
+              </label>
+              <label className="admin-label text-xs">
+                Status
+                <select
+                  name="status"
+                  defaultValue={
+                    editing.status === "DISABLED"
+                      ? "DISABLED"
+                      : editing.status === "PENDING"
+                        ? "PENDING"
+                        : editing.status === "REJECTED"
+                          ? "REJECTED"
+                          : "APPROVED"
+                  }
+                  className="admin-input mt-1.5 w-full"
+                >
+                  <option value="APPROVED">Active</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="DISABLED">Disabled</option>
+                  <option value="REJECTED">Rejected</option>
+                </select>
+              </label>
+              <label className="admin-label text-xs">
+                New password (optional)
+                <input
+                  name="password"
+                  type="password"
+                  minLength={6}
+                  className="admin-input mt-1.5 w-full"
+                  autoComplete="new-password"
+                  placeholder="Leave blank to keep current"
+                />
+              </label>
+              <div className="mt-1 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary"
+                  disabled={pending}
+                  onClick={() => setEditing(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="admin-btn admin-btn-primary"
+                  disabled={pending}
+                >
+                  {pending ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

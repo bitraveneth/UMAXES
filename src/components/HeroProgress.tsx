@@ -10,7 +10,7 @@ const DURATION = 5500;
 const slides = [
   {
     src: heroBanner,
-    alt: "UMAXES HOOKAMAX Cool Mint on a cosmic stage",
+    alt: "UMAXES HOOKAMAX Blueberry Ice on a cosmic stage",
     kicker: "HOOKAMAX",
     title: siteSlogan,
     subtitle: "Crafted for Smooth Flavor & Lasting Satisfaction.",

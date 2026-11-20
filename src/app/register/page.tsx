@@ -3,6 +3,7 @@ import Link from "next/link";
 import AuthSplitShell from "@/components/AuthSplitShell";
 import RegisterForm from "@/components/RegisterForm";
 import { getSiteSettings } from "@/lib/site-settings";
+import { enforceStorefrontAccess } from "@/lib/storefront-gate";
 
 export const metadata = {
   title: "Register · UMAXES",
@@ -10,6 +11,7 @@ export const metadata = {
 };
 
 export default async function RegisterPage() {
+  await enforceStorefrontAccess();
   const settings = await getSiteSettings();
 
   if (!settings.publicSignInEnabled) {

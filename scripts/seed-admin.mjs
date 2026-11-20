@@ -29,19 +29,25 @@ async function upsertStaff({ email, name, password, role }) {
 
 async function main() {
   await upsertStaff({
-    email: "super@umaxes.com",
+    email: "super@umaxesvape.com",
     name: "UMAXES Super Admin",
     password: "Super1234!",
     role: "SUPER_ADMIN",
   });
   await upsertStaff({
-    email: "admin@umaxes.com",
+    email: "info@umaxesvape.com",
     name: "UMAXES Admin",
     password: "Admin1234!",
     role: "ADMIN",
   });
-  console.log("\n1 Super: super@umaxes.com / Super1234!");
-  console.log("2 Admin:  admin@umaxes.com / Admin1234!");
+  // Remove legacy demo emails if present
+  await prisma.user.deleteMany({
+    where: {
+      email: { in: ["super@umaxes.com", "admin@umaxes.com"] },
+    },
+  });
+  console.log("\n1 Super: super@umaxesvape.com / Super1234!");
+  console.log("2 Admin:  info@umaxesvape.com / Admin1234!");
 }
 
 main()

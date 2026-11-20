@@ -16,6 +16,9 @@ export default async function CustomersHubPage() {
     redirect("/admin");
   }
 
+  const canAddUser =
+    session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN";
+
   const [distro, wholesaler, retail] = await Promise.all([
     prisma.company.count({ where: { level: "DISTRO" } }),
     prisma.company.count({ where: { level: "WHOLESALER" } }),
@@ -51,6 +54,13 @@ export default async function CustomersHubPage() {
       <AdminPageHeaderI18n
         titleKey="customers.title"
         descriptionKey="customers.description"
+        actions={
+          canAddUser ? (
+            <Link href="/admin/users/new" className="admin-btn admin-btn-primary">
+              <AdminText id="users.addUser" />
+            </Link>
+          ) : null
+        }
       />
 
       <div className="grid gap-4 md:grid-cols-3">

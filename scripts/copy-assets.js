@@ -113,9 +113,9 @@ copyGroup(groups.testimonials, "D:/UMAXES/public/images/testimonials");
 
 const logoSrc = "D:/UMAXES/brand-guide/logo";
 const logos = [
-  ["umaxes-logo-orange-on-cream.png", "orange-on-cream.png"],
+  ["umaxes-logo-blue.png", "umaxes-blue.png"],
+  ["umaxes-logo-blue-on-dark.png", "umaxes-blue-on-dark.png"],
   ["umaxes-logo-cream-on-ink.png", "cream-on-ink.png"],
-  ["umaxes-logo-cream-on-orange.png", "cream-on-orange.png"],
 ];
 for (const [from, to] of logos) {
   const fromPath = path.join(logoSrc, from);

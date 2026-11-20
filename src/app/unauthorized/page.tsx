@@ -1,71 +1,68 @@
 import Image from "next/image";
+import { Noto_Sans_SC } from "next/font/google";
 import { logos } from "@/lib/assets";
+import { SITE_CONTACT_EMAIL } from "@/lib/site";
 
 export const metadata = {
-  title: "Access unavailable · UMAXES",
+  title: "地区暂不可用 · Access unavailable · UMAXES",
   robots: { index: false, follow: false },
 };
 
+const notoSc = Noto_Sans_SC({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-noto-sc",
+  display: "swap",
+});
+
 export default function UnauthorizedPage() {
   return (
-    <main className="relative flex min-h-dvh flex-col overflow-hidden bg-[#111111] text-white">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_20%,rgba(255,91,4,0.22),transparent_55%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "radial-gradient(rgba(255,255,255,0.7) 0.6px, transparent 0.6px)",
-          backgroundSize: "18px 18px",
-        }}
-      />
-
-      <div className="relative z-[1] flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-        <div className="relative mb-8 h-9 w-44">
+    <main
+      lang="zh-CN"
+      className={`${notoSc.variable} flex min-h-dvh flex-col bg-umx-cream px-5 py-12 text-black sm:px-8`}
+      style={{
+        fontFamily: "var(--font-noto-sc), var(--font-poppins), sans-serif",
+      }}
+    >
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center">
+        <div className="relative mb-8 h-9 w-[9.5rem]">
           <Image
-            src={logos.blueWordmarkOnDark}
+            src={logos.blueWordmark}
             alt="UMAXES"
             fill
-            className="object-contain"
-            sizes="176px"
+            className="object-contain object-center"
+            sizes="152px"
             priority
           />
         </div>
 
-        <p className="font-display text-[0.7rem] font-semibold tracking-[0.28em] text-umx-orange uppercase">
-          Access restricted
-        </p>
-
-        <h1 className="mt-4 max-w-xl font-display text-[1.85rem] font-bold leading-tight tracking-[-0.03em] sm:text-[2.35rem]">
-          You are not authorized to view this website
-        </h1>
-
-        <p className="mx-auto mt-5 max-w-md font-body text-[0.95rem] leading-relaxed text-white/60">
-          This UMAXES experience is not available in your region. If you reached
-          this page by mistake, please try again from an authorized location.
-        </p>
-
-        <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 backdrop-blur-sm">
-          <p className="font-display text-xs font-semibold tracking-[0.14em] text-white/45 uppercase">
-            Need help?
+        <div className="w-full rounded-[1.5rem] bg-white px-7 py-10 text-center shadow-[0_16px_48px_rgba(0,0,0,0.08)] ring-1 ring-black/8 sm:px-10 sm:py-12">
+          <p className="font-display text-[0.68rem] font-semibold tracking-[0.22em] text-black/40 uppercase">
+            地区限制 · Region
+          </p>
+          <h1 className="mt-4 font-display text-[1.65rem] font-extrabold leading-[1.2] tracking-[-0.03em] sm:text-[2rem]">
+            抱歉，当前地区暂无法访问
+          </h1>
+          <p className="mt-4 font-body text-base leading-relaxed text-black/70">
+            This UMAXES experience is not available in your region.
+          </p>
+          <p className="mt-3 font-body text-sm leading-relaxed text-black/55">
+            我们的线上体验面向授权市场。若您误达此页，请从可用地区重新访问，或通过邮箱与我们联系。
           </p>
           <a
-            href="mailto:info@umaxesvape.com"
-            className="mt-2 inline-block font-display text-sm font-semibold text-umx-orange transition hover:text-white"
+            href={`mailto:${SITE_CONTACT_EMAIL}`}
+            className="mt-8 inline-flex items-center justify-center rounded-full bg-black px-5 py-3 font-display text-sm font-semibold text-umx-cream transition hover:bg-black/80"
           >
-            info@umaxesvape.com
+            {SITE_CONTACT_EMAIL}
           </a>
         </div>
       </div>
 
-      <footer className="relative z-[1] border-t border-white/10 px-6 py-4 text-center">
-        <p className="font-body text-[0.7rem] text-white/35">
-          Adults 21+ only · Nicotine is an addictive chemical
-        </p>
-      </footer>
+      <p className="mx-auto mt-10 max-w-lg text-center font-display text-[0.65rem] leading-relaxed tracking-wide text-black/40">
+        仅限 21 岁及以上成人 · 尼古丁具有成瘾性
+        <span className="mx-2 text-black/20">·</span>
+        Adults 21+ only · Nicotine is an addictive chemical
+      </p>
     </main>
   );
 }

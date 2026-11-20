@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { StorePrice, useShowStorePrices } from "@/components/StorePrice";
 import { getFlavor, type FlavorId } from "@/lib/assets";
+import { PCS_PER_CASE, casesFromPcs, formatCases, formatPack } from "@/lib/pack";
 
 type FormState = {
   email: string;
@@ -243,7 +244,7 @@ function CartSummary({
             </h2>
           </div>
           <span className="rounded-full bg-white px-3 py-1.5 font-display text-sm font-bold text-umx-orange">
-            {quantity} item{quantity === 1 ? "" : "s"}
+            {formatCases(casesFromPcs(quantity))}
           </span>
         </div>
       </div>
@@ -275,8 +276,11 @@ function CartSummary({
                       </p>
                       <p className="mt-1 font-body text-sm text-black">
                         {showPrices
-                          ? `$${flavor.price.toFixed(2)} each`
+                          ? `$${flavor.price.toFixed(2)} / pc`
                           : "On request"}
+                      </p>
+                      <p className="mt-0.5 font-body text-xs text-black/50">
+                        {formatPack(line.quantity)}
                       </p>
                     </div>
                     <button
@@ -294,20 +298,20 @@ function CartSummary({
                         type="button"
                         aria-label={`Decrease ${flavor.name}`}
                         onClick={() =>
-                          onSetQuantity(line.flavorId, line.quantity - 1)
+                          onSetQuantity(line.flavorId, line.quantity - PCS_PER_CASE)
                         }
                         className="flex h-8 w-8 items-center justify-center text-black transition hover:text-umx-orange"
                       >
                         <Minus className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
                       </button>
                       <span className="min-w-7 text-center font-display text-sm font-bold text-black">
-                        {line.quantity}
+                        {casesFromPcs(line.quantity)}
                       </span>
                       <button
                         type="button"
                         aria-label={`Increase ${flavor.name}`}
                         onClick={() =>
-                          onSetQuantity(line.flavorId, line.quantity + 1)
+                          onSetQuantity(line.flavorId, line.quantity + PCS_PER_CASE)
                         }
                         className="flex h-8 w-8 items-center justify-center text-black transition hover:text-umx-orange"
                       >

@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
-import { Package } from "lucide-react";
+import { Package } from "@/components/admin/icons";
 
 export type LogisticsWorkspaceOrder = {
   id: string;
@@ -73,7 +73,6 @@ export default function LogisticsWorkspace({
   orders: LogisticsWorkspaceOrder[];
 }) {
   const { t, locale } = useAdminI18n();
-  const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
 
   const queue = useMemo(() => orders.filter(isOrderQueue), [orders]);
@@ -156,14 +155,9 @@ export default function LogisticsWorkspace({
               <tbody>
                 {list.map((order) => {
                   const units = order.items.reduce((n, i) => n + i.quantity, 0);
+                  const href = `/admin/logistics/orders/${order.id}`;
                   return (
-                    <tr
-                      key={order.id}
-                      className="cursor-pointer"
-                      onClick={() =>
-                        router.push(`/admin/logistics/orders/${order.id}`)
-                      }
-                    >
+                    <tr key={order.id} className="group relative">
                       <td>
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--admin-gray-100)]">
@@ -179,9 +173,13 @@ export default function LogisticsWorkspace({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-[var(--admin-muted)]">
+                            <Link
+                              href={href}
+                              prefetch
+                              className="font-semibold text-[var(--admin-muted)] hover:text-[var(--admin-brand-700)] hover:underline"
+                            >
                               {order.orderNumber}
-                            </p>
+                            </Link>
                             <p className="truncate text-xs text-[var(--admin-muted)]">
                               {order.items[0]?.name || "—"}
                               {order.items.length > 1
@@ -212,16 +210,13 @@ export default function LogisticsWorkspace({
                         </AdminBadge>
                       </td>
                       <td className="text-right">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/admin/logistics/orders/${order.id}`);
-                          }}
+                        <Link
+                          href={href}
+                          prefetch
                           className="admin-btn admin-btn-primary admin-btn-sm"
                         >
                           {t("logistics.createShipment")}
-                        </button>
+                        </Link>
                       </td>
                     </tr>
                   );

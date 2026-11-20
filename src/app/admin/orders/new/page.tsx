@@ -9,7 +9,11 @@ import CreateOrderPanel from "@/components/admin/CreateOrderPanel";
 
 export const metadata = { title: "Create order · UMAXES Ops" };
 
-export default async function AdminCreateOrderPage() {
+export default async function AdminCreateOrderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ company?: string; companyId?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -17,6 +21,8 @@ export default async function AdminCreateOrderPage() {
   ) {
     redirect("/admin");
   }
+
+  const sp = await searchParams;
 
   const companies = await prisma.company.findMany({
     where: {
@@ -68,7 +74,10 @@ export default async function AdminCreateOrderPage() {
           </Link>
         }
       />
-      <CreateOrderPanel companies={options} />
+      <CreateOrderPanel
+        companies={options}
+        initialCompanyId={sp.companyId || sp.company}
+      />
     </div>
   );
 }

@@ -42,7 +42,11 @@ const statusByRole: Partial<Record<UserRole, OrderStatus[]>> = {
   ],
 };
 
-export default async function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ open?: string }>;
+}) {
   const session = await auth();
   if (
     !session?.user ||
@@ -51,33 +55,35 @@ export default async function AdminOrdersPage() {
     redirect("/admin");
   }
 
+  const params = searchParams ? await searchParams : {};
+  const openId = typeof params.open === "string" ? params.open : null;
+
   const role = session.user.role as UserRole;
   const allowedStatuses = statusByRole[role] ?? statusByRole.SALES!;
-  const canAssignSupplier =
-    role === "ADMIN" ||
-    role === "SUPER_ADMIN" ||
-    role === "SALES" ||
-    role === "WAREHOUSE";
+  const canDeleteSlip = role === "ADMIN" || role === "SUPER_ADMIN";
+  const canCancelOrder = role === "ADMIN" || role === "SUPER_ADMIN";
 
-  const [orders, suppliers] = await Promise.all([
-    prisma.order.findMany({
-      where: orderCompanyScopeForStaff(role, session.user.id),
-      include: {
-        company: true,
-        supplier: true,
-        items: true,
-        shipments: true,
-        placedByStaff: { select: { name: true, email: true } },
+  const orders = await prisma.order.findMany({
+    where: orderCompanyScopeForStaff(role, session.user.id),
+    include: {
+      company: true,
+      supplier: true,
+      items: true,
+      shipments: true,
+      payments: {
+        select: {
+          status: true,
+          paidAt: true,
+          slipUrl: true,
+          slipFileName: true,
+          slipMime: true,
+        },
       },
-      orderBy: { createdAt: "desc" },
-      take: 80,
-    }),
-    prisma.supplier.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
+      placedByStaff: { select: { name: true, email: true } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 80,
+  });
 
   const pendingPayment = orders.filter((o) => o.status === "PAYMENT_PENDING")
     .length;
@@ -88,12 +94,70 @@ export default async function AdminOrdersPage() {
   const shipped = orders.filter((o) => o.status === "SHIPPED").length;
   const completed = orders.filter((o) => o.status === "COMPLETED").length;
 
-  const panelOrders = orders.map((o) => ({
+  const cancelledIds = orders
+    .filter((o) => o.status === "CANCELLED")
+    .map((o) => o.id);
+  const restoredIds = new Set<string>();
+  if (cancelledIds.length) {
+    const [markers, adjusts] = await Promise.all([
+      prisma.auditLog.findMany({
+        where: {
+          action: "ORDER_STOCK_RESTORED",
+          entity: "Order",
+          entityId: { in: cancelledIds },
+        },
+        select: { entityId: true },
+      }),
+      prisma.auditLog.findMany({
+        where: {
+          action: "INVENTORY_ADJUST",
+          OR: [
+            { meta: { contains: "ORDER_CANCELLED" } },
+            { meta: { contains: "ORDER_CANCELLED_RESTORE" } },
+          ],
+        },
+        select: { meta: true },
+        take: 800,
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+    for (const m of markers) {
+      if (m.entityId) restoredIds.add(m.entityId);
+    }
+    for (const row of adjusts) {
+      if (!row.meta) continue;
+      try {
+        const meta = JSON.parse(row.meta) as {
+          reason?: string;
+          orderId?: string;
+        };
+        if (
+          meta.orderId &&
+          cancelledIds.includes(meta.orderId) &&
+          (meta.reason === "ORDER_CANCELLED" ||
+            meta.reason === "ORDER_CANCELLED_RESTORE")
+        ) {
+          restoredIds.add(meta.orderId);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  const panelOrders = orders.map((o) => {
+    const payment = o.payments[0];
+    return {
     id: o.id,
     orderNumber: o.orderNumber,
     status: o.status,
     paymentMethod: o.paymentMethod,
     paymentRef: o.paymentRef,
+    paymentStatus: payment?.status ?? "pending",
+    paymentPaid: o.payments.some((p) => p.status === "paid" && p.paidAt),
+    paymentSlipUrl: payment?.slipUrl ?? null,
+    paymentSlipName: payment?.slipFileName ?? null,
+    paymentSlipMime: payment?.slipMime ?? null,
     notes: o.notes,
     total: o.total,
     createdAt: o.createdAt.toISOString(),
@@ -102,6 +166,8 @@ export default async function AdminOrdersPage() {
     supplierName: o.supplier?.name ?? null,
     supplierNote: o.supplierNote,
     placedByStaffName: o.placedByStaff?.name || o.placedByStaff?.email || null,
+    stockRestored:
+      o.status === "CANCELLED" ? restoredIds.has(o.id) : false,
     items: o.items.map((item) => ({
       id: item.id,
       name: item.name,
@@ -116,7 +182,8 @@ export default async function AdminOrdersPage() {
       trackingNumber: s.trackingNumber,
       status: s.status,
     })),
-  }));
+  };
+  });
 
   return (
     <div className="space-y-6">
@@ -174,9 +241,10 @@ export default async function AdminOrdersPage() {
 
       <OrdersPanel
         orders={panelOrders}
-        suppliers={suppliers}
         allowedStatuses={allowedStatuses}
-        canAssignSupplier={canAssignSupplier}
+        canDeleteSlip={canDeleteSlip}
+        canCancelOrder={canCancelOrder}
+        openId={openId}
       />
     </div>
   );

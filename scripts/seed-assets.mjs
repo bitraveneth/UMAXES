@@ -8,27 +8,21 @@ const prisma = new PrismaClient({ adapter });
 /** Keep DB assets in sync with the public media kit files. */
 const assets = [
   {
-    title: "UMAXES logo — orange on cream",
+    title: "UMAXES logo — blue wordmark",
     description: "Primary logo for light backgrounds.",
-    fileUrl: "/images/logo/orange-on-cream.png",
+    fileUrl: "/images/logo/umaxes-blue.png",
+    category: "logo",
+  },
+  {
+    title: "UMAXES logo — blue on dark",
+    description: "Logo for dark backgrounds.",
+    fileUrl: "/images/logo/umaxes-blue-on-dark.png",
     category: "logo",
   },
   {
     title: "UMAXES logo — cream on ink",
-    description: "Logo for dark backgrounds.",
+    description: "Inverse cream logo for dark backgrounds.",
     fileUrl: "/images/logo/cream-on-ink.png",
-    category: "logo",
-  },
-  {
-    title: "UMAXES logo — cream on orange",
-    description: "Logo for orange campaign panels.",
-    fileUrl: "/images/logo/cream-on-orange.png",
-    category: "logo",
-  },
-  {
-    title: "UMAXES logo — SVG",
-    description: "Scalable orange wordmark.",
-    fileUrl: "/images/logo/umaxes-orange.svg",
     category: "logo",
   },
   {
@@ -46,7 +40,7 @@ const assets = [
   {
     title: "HOOKAMAX pack shot set",
     description: "Product pack imagery for POS and menus.",
-    fileUrl: "/images/product/pack-01.webp",
+    fileUrl: "/images/product/pack-peach-mango.webp",
     category: "pos",
   },
   {
@@ -61,6 +55,13 @@ const assets = [
     fileUrl: "/images/product/device-transparent.png",
     category: "pos",
   },
+];
+
+const loginSlides = [
+  "/images/login/login-glam-neon.webp",
+  "/images/login/login-80k-podium.webp",
+  "/images/login/login-cool-mint-selfie.webp",
+  "/images/login/login-purple-canyon.webp",
 ];
 
 async function main() {
@@ -78,6 +79,20 @@ async function main() {
     }
   }
   console.log("Brand assets seeded:", assets.length);
+
+  const loginCount = await prisma.loginSlide.count();
+  if (loginCount === 0) {
+    await prisma.loginSlide.createMany({
+      data: loginSlides.map((imageUrl, i) => ({
+        imageUrl,
+        sortOrder: i + 1,
+        active: true,
+      })),
+    });
+    console.log("Login slides seeded:", loginSlides.length);
+  } else {
+    console.log("Login slides kept:", loginCount);
+  }
 }
 
 main()

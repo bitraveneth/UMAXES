@@ -5,17 +5,29 @@ import { useTransition } from "react";
 import { prepareExitImpersonation } from "@/lib/admin-actions";
 import { LogOut } from "lucide-react";
 
-/** Sticky bar while a super admin is viewing the site as a customer. */
+function isOpsStaffRole(role?: string | null) {
+  return (
+    role === "ADMIN" ||
+    role === "SALES" ||
+    role === "WAREHOUSE" ||
+    role === "LOGISTICS"
+  );
+}
+
+/** Sticky bar while a super admin / admin is viewing as a customer or staff user. */
 export default function ImpersonationBanner() {
   const { data } = useSession();
   const [pending, startTransition] = useTransition();
 
-  // Only while actually acting as a customer (avoids stale session flash)
-  const active =
-    Boolean(data?.user?.impersonatedBy) && data?.user?.role === "CUSTOMER";
+  const active = Boolean(data?.user?.impersonatedBy) && Boolean(data?.user);
   if (!active || !data?.user) return null;
 
-  const label = data.user.name || data.user.email || "customer";
+  const label = data.user.name || data.user.email || "user";
+  const staff = isOpsStaffRole(data.user.role);
+  const exitTo = staff ? "/admin/staff" : "/admin/users";
+  const modeLabel = staff
+    ? `${data.user.role.replace("_", " ").toLowerCase()} support mode`
+    : "customer support mode";
 
   return (
     <>
@@ -23,7 +35,7 @@ export default function ImpersonationBanner() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 text-sm">
           <p className="font-medium">
             Viewing as <span className="font-bold">{label}</span>
-            <span className="opacity-80"> — super admin support mode</span>
+            <span className="opacity-80"> — {modeLabel}</span>
           </p>
           <button
             type="button"
@@ -40,8 +52,7 @@ export default function ImpersonationBanner() {
                     console.error("[exitImpersonation]", res.error);
                     return;
                   }
-                  // Full reload so SessionProvider cannot keep the old customer session
-                  window.location.assign("/admin/users");
+                  window.location.assign(exitTo);
                 } catch (e) {
                   console.error("[exitImpersonation]", e);
                 }

@@ -49,6 +49,8 @@ export async function getDatabaseStats() {
     countSafe("notifications", () => prisma.notification.count()),
     countSafe("auditLogs", () => prisma.auditLog.count()),
     countSafe("coupons", () => prisma.coupon.count()),
+    countSafe("faqs", () => prisma.faq.count()),
+    countSafe("rebatePolicies", () => prisma.rebatePolicy.count()),
     countSafe("warehouses", () => prisma.warehouse.count()),
   ]);
   return Object.assign({}, ...parts) as Record<string, number>;
@@ -62,6 +64,15 @@ export async function resetOpsData() {
   const shipments = await prisma.shipment.deleteMany({});
   const payments = await prisma.payment.deleteMany({});
   const credit = await prisma.creditLedger.deleteMany({});
+  const rebateLedgers = await prisma.rebateLedger.deleteMany({});
+  const rebateMonths = await prisma.rebateMonth.deleteMany({});
+  await prisma.company.updateMany({
+    data: {
+      rebateBalanceUsd: 0,
+      firstOrderId: null,
+      firstCompletedOrderId: null,
+    },
+  });
   const items = await prisma.orderItem.deleteMany({});
   const orders = await prisma.order.deleteMany({});
   const favorites = await prisma.favorite.deleteMany({});
@@ -75,6 +86,8 @@ export async function resetOpsData() {
     shipments: shipments.count,
     payments: payments.count,
     creditLedger: credit.count,
+    rebateLedgers: rebateLedgers.count,
+    rebateMonths: rebateMonths.count,
     orderItems: items.count,
     orders: orders.count,
     favorites: favorites.count,
@@ -129,6 +142,8 @@ export async function exportBackup(scope: BackupScope): Promise<DbBackup> {
     data.inventory = serializeRows(await prisma.inventory.findMany());
     data.warehouseStocks = serializeRows(await prisma.warehouseStock.findMany());
     data.coupons = serializeRows(await prisma.coupon.findMany());
+    data.faqs = serializeRows(await prisma.faq.findMany());
+    data.rebatePolicies = serializeRows(await prisma.rebatePolicy.findMany());
     data.brandAssets = serializeRows(await prisma.brandAsset.findMany());
   }
 
@@ -159,6 +174,8 @@ export async function exportBackup(scope: BackupScope): Promise<DbBackup> {
     data.shipments = serializeRows(await prisma.shipment.findMany());
     data.shipmentLines = serializeRows(await prisma.shipmentLine.findMany());
     data.creditLedger = serializeRows(await prisma.creditLedger.findMany());
+    data.rebateMonths = serializeRows(await prisma.rebateMonth.findMany());
+    data.rebateLedgers = serializeRows(await prisma.rebateLedger.findMany());
     data.rmas = serializeRows(await prisma.rma.findMany());
     data.rmaItems = serializeRows(await prisma.rmaItem.findMany());
     data.favorites = serializeRows(await prisma.favorite.findMany());
@@ -223,6 +240,8 @@ export async function importBackup(backup: DbBackup, opts: { replace: boolean })
       await prisma.orderItem.updateMany({ data: { productId: null } });
       await prisma.product.deleteMany({});
       await prisma.coupon.deleteMany({});
+      await prisma.faq.deleteMany({});
+      await prisma.rebatePolicy.deleteMany({});
       await prisma.brandAsset.deleteMany({});
       // Keep warehouses structure — recreate from backup
       await prisma.warehouse.deleteMany({});
@@ -258,6 +277,8 @@ export async function importBackup(backup: DbBackup, opts: { replace: boolean })
     "inventory",
     "warehouseStocks",
     "coupons",
+    "faqs",
+    "rebatePolicies",
     "brandAssets",
     "companies",
     "users",
@@ -269,6 +290,8 @@ export async function importBackup(backup: DbBackup, opts: { replace: boolean })
     "shipments",
     "shipmentLines",
     "creditLedger",
+    "rebateMonths",
+    "rebateLedgers",
     "rmas",
     "rmaItems",
     "favorites",
@@ -285,6 +308,8 @@ export async function importBackup(backup: DbBackup, opts: { replace: boolean })
     inventory: "inventory",
     warehouseStocks: "warehouseStock",
     coupons: "coupon",
+    faqs: "faq",
+    rebatePolicies: "rebatePolicy",
     brandAssets: "brandAsset",
     companies: "company",
     users: "user",
@@ -296,6 +321,8 @@ export async function importBackup(backup: DbBackup, opts: { replace: boolean })
     shipments: "shipment",
     shipmentLines: "shipmentLine",
     creditLedger: "creditLedger",
+    rebateMonths: "rebateMonth",
+    rebateLedgers: "rebateLedger",
     rmas: "rma",
     rmaItems: "rmaItem",
     favorites: "favorite",

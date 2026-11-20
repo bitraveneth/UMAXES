@@ -37,32 +37,35 @@ const pillars: {
 export default function MaxCoreView() {
   return (
     <article className="bg-umx-cream text-black">
-      <header className="mx-auto max-w-[1480px] px-5 pb-16 sm:px-8 lg:pb-24">
-        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)] lg:gap-16">
-          <div>
-            <p className="font-display text-[0.7rem] font-semibold tracking-[0.22em] text-black/40 uppercase">
+      <header className="mx-auto max-w-[1560px] px-5 pb-20 sm:px-8 sm:pb-24 lg:pb-28">
+        <div className="flex flex-col gap-8 sm:gap-10 lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] lg:items-center lg:gap-12 xl:gap-16">
+          <div className="min-w-0 max-w-md lg:max-w-none">
+            <p className="flex items-center gap-3 font-display text-[0.68rem] font-semibold tracking-[0.32em] text-black/45 uppercase">
+              <span className="h-px w-8 shrink-0 bg-black/40" aria-hidden />
               Mesh coil
             </p>
-            <h1 className="mt-4 font-display text-[clamp(2.8rem,7vw,5.25rem)] font-extrabold leading-[0.86] tracking-[-0.055em]">
+            <h1 className="mt-5 font-display text-[clamp(2.85rem,3.6vw,4rem)] font-extrabold leading-[0.9] tracking-[-0.055em]">
               MaxCore™
             </h1>
-            <p className="mt-5 font-display text-xl font-semibold tracking-tight sm:text-2xl">
+            <p className="mt-5 font-display text-[clamp(1.2rem,1.45vw,1.5rem)] font-semibold leading-snug tracking-[-0.02em]">
               Even heat. Richer flavor.
             </p>
-            <p className="mt-5 max-w-md font-body text-base leading-[1.8] text-black/70 sm:text-lg">
+            <p className="mt-4 font-body text-[0.98rem] leading-[1.75] text-black/65 sm:text-base">
               The mesh heating structure inside every UMAXES device — denser
               vapor and a smoother draw from first puff to last. Adults 21+.
             </p>
           </div>
-          <div className="relative aspect-[5/4] overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] ring-1 ring-black/10 sm:aspect-[4/3]">
+
+          <div className="min-w-0">
             <Image
-              src="/images/maxcore/mesh-coil.webp"
-              alt="MaxCore mesh coil"
-              fill
+              src="/images/maxcore/coil.webp"
+              alt="Exploded MaxCore mesh coil showing the mesh layer, support structure, airflow channel, and insulating ring"
+              width={1221}
+              height={637}
               priority
-              className="object-contain object-center p-6 sm:p-10"
-              sizes="(max-width: 1024px) 100vw, 55vw"
-              quality={75}
+              quality={80}
+              sizes="(max-width: 1024px) 100vw, 70vw"
+              className="h-auto w-full"
             />
           </div>
         </div>

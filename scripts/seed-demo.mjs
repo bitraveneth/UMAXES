@@ -1,7 +1,9 @@
 /**
  * Showcase seed — companies, buyers, suppliers, orders (all statuses),
  * sales-placed orders, shipments (+ packing lines), credit ledger, RMA.
- * Uses production-style order numbers: UMX-YYYYMMDD-####
+ * Uses production-style ids:
+ *   order  UMX-{INITIALS}{YYMMDD}   e.g. UMX-PD260923
+ *   PI     {INITIALS}{YYMMDD}{STATE} e.g. PD260923CA
  * Does not modify product catalog / images / prices.
  *
  * Run after catalog + staff exist: npm run db:seed-demo
@@ -16,9 +18,30 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 const BUYER_PW = "Demo1234!";
+/** HOOKAMAX case size — keep packing seed aligned with live pack rules. */
+const PCS_PER_CASE = 95;
+const TEST_STATION_SKU = "test-station";
+
+function packingLineFromItem(it) {
+  const isCase = it.sku !== TEST_STATION_SKU;
+  const boxes = isCase
+    ? Math.max(1, Math.round(Number(it.quantity) / PCS_PER_CASE))
+    : null;
+  return {
+    sku: it.sku,
+    name: it.name,
+    quantity: it.quantity,
+    flavor: it.name.split("—")[0]?.trim() || it.name,
+    // Size is free-text for logistics; puffs live in the PI/PL Puffs column.
+    size: null,
+    boxes,
+  };
+}
 
 const ADDRESSES = {
   coastal: {
+    recipientName: "Alex Rivera",
+    phone: "+1 213 555 0140",
     line1: "1200 Commerce Ave",
     line2: "Suite 400",
     city: "Los Angeles",
@@ -27,6 +50,8 @@ const ADDRESSES = {
     country: "US",
   },
   pacific: {
+    recipientName: "Jordan Lee",
+    phone: "+1 562 555 0198",
     line1: "880 Harbor Blvd",
     line2: "Dock 12",
     city: "Long Beach",
@@ -35,6 +60,8 @@ const ADDRESSES = {
     country: "US",
   },
   national: {
+    recipientName: "Sam Patel",
+    phone: "+1 214 555 0172",
     line1: "4550 Industrial Pkwy",
     line2: null,
     city: "Dallas",
@@ -43,6 +70,8 @@ const ADDRESSES = {
     country: "US",
   },
   metro: {
+    recipientName: "Casey Nguyen",
+    phone: "+1 404 555 0116",
     line1: "210 Peachtree St NW",
     line2: "Floor 8",
     city: "Atlanta",
@@ -62,14 +91,69 @@ function daysAgo(n) {
   return d;
 }
 
-function orderNumberFor(days, seq) {
-  const d = daysAgo(days);
-  const stamp = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-  return `UMX-${stamp}-${1000 + seq}`;
+const COMPANY_NOISE =
+  /\b(LLC|L\.L\.C|INC|LTD|CORP|CO|LIMITED|INCORPORATED|COMPANY|PARTNERS|PARTNER|GROUP|HOLDINGS|ENTERPRISES|ENTERPRISE|TRADING|INTERNATIONAL|INTL)\b\.?/gi;
+
+function companyInitials(name) {
+  const words = (name || "")
+    .toUpperCase()
+    .replace(COMPANY_NOISE, " ")
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0] || ""}${words[1][0] || ""}` || "CU";
+  }
+  if (words[0]) return words[0].slice(0, 2) || "CU";
+  return "CU";
 }
 
-function piNumberFor(orderNumber) {
-  return `PI-${orderNumber.replace("UMX-", "")}`;
+function slugState(region) {
+  const raw = (region || "").trim().toUpperCase();
+  if (!raw) return "";
+  if (/^[A-Z]{2}$/.test(raw)) return raw;
+  const words = raw
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length >= 2) {
+    return `${words[0][0] || ""}${words[1][0] || ""}`;
+  }
+  return (words[0] || "").replace(/[^A-Z0-9]+/g, "").slice(0, 2);
+}
+
+function formatDocDate(date) {
+  const y = String(date.getUTCFullYear()).slice(-2);
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${d}`;
+}
+
+const usedOrderNumbers = new Set();
+const usedPiNumbers = new Set();
+
+/** UMX-{INITIALS}{YYMMDD} — appends -seq only when same company/day collides. */
+function orderNumberFor(companyName, days, seq) {
+  const body = `${companyInitials(companyName)}${formatDocDate(daysAgo(days))}`;
+  let candidate = `UMX-${body}`;
+  if (usedOrderNumbers.has(candidate)) {
+    candidate = `UMX-${body}-${seq}`;
+  }
+  usedOrderNumbers.add(candidate);
+  return candidate;
+}
+
+/** Stored without PI- prefix: {INITIALS}{YYMMDD}{STATE} */
+function piNumberFor(companyName, days, region, seq) {
+  const body = `${companyInitials(companyName)}${formatDocDate(daysAgo(days))}${slugState(region)}`;
+  let candidate = body;
+  if (usedPiNumbers.has(candidate)) {
+    candidate = `${body}-${seq}`;
+  }
+  usedPiNumbers.add(candidate);
+  return candidate;
 }
 
 async function upsertCompany(data) {
@@ -366,8 +450,8 @@ async function main() {
     return pool.map((p) => {
       const tier = p.prices.find((x) => x.level === level);
       const price = tier?.unitPrice ?? p.prices[0]?.unitPrice ?? 25;
-      const moq = tier?.moq || 5;
-      const qty = Math.max(5, Math.round(moq * qtyScale));
+      const moq = tier?.moq || 95;
+      const qty = Math.max(95, Math.round(moq * qtyScale));
       return {
         productId: p.id,
         sku: p.sku,
@@ -800,8 +884,19 @@ async function main() {
     );
     const money = totals(items, s.shipping || 0, s.discount || 0);
     const createdAt = daysAgo(s.days);
-    const orderNumber = orderNumberFor(s.days, s.seq);
-    const piNumber = piNumberFor(orderNumber);
+    const companyName =
+      s.companyId === shop.id
+        ? shop.name
+        : s.companyId === wholesaler.id
+          ? wholesaler.name
+          : s.companyId === distro.id
+            ? distro.name
+            : s.companyId === metro.id
+              ? metro.name
+              : "Customer";
+    const region = (ADDRESSES[s.address] || ADDRESSES.coastal).region;
+    const orderNumber = orderNumberFor(companyName, s.days, s.seq);
+    const piNumber = piNumberFor(companyName, s.days, region, s.seq);
 
     const order = await prisma.order.create({
       data: {
@@ -869,21 +964,14 @@ async function main() {
           cbm: s.shipment.cbm ?? null,
           weightKg: s.shipment.weightKg ?? null,
           packingNote: logistics
-            ? `Packed by logistics · ${s.shipment.carrier}`
-            : "Packed",
+            ? `Ready for ${s.shipment.carrier}`
+            : "Packed — awaiting handoff",
           packedAt: daysAgo(Math.max(0, s.days - 3)),
           lastTrackedAt: daysAgo(Math.max(0, s.days - 1)),
           trackingStatus:
             s.shipment.status === "delivered" ? "Delivered" : "In transit",
           lines: {
-            create: items.map((it, idx) => ({
-              sku: it.sku,
-              name: it.name,
-              quantity: it.quantity,
-              flavor: it.name.split("—")[0]?.trim() || it.name,
-              size: idx % 2 === 0 ? "80K" : "50K",
-              boxes: Math.max(1, Math.ceil(it.quantity / 10)),
-            })),
+            create: items.map((it) => packingLineFromItem(it)),
           },
         },
       });
@@ -900,14 +988,7 @@ async function main() {
           packingNote: "Awaiting carrier / tracking",
           packedAt: daysAgo(Math.max(0, s.days - 1)),
           lines: {
-            create: items.map((it, idx) => ({
-              sku: it.sku,
-              name: it.name,
-              quantity: it.quantity,
-              flavor: it.name.split("—")[0]?.trim() || it.name,
-              size: idx % 2 === 0 ? "80K" : "50K",
-              boxes: Math.max(1, Math.ceil(it.quantity / 10)),
-            })),
+            create: items.map((it) => packingLineFromItem(it)),
           },
         },
       });
@@ -969,7 +1050,7 @@ async function main() {
 
   if (rmaSourceOrder?.items?.[0]) {
     const item = rmaSourceOrder.items[0];
-    const rmaStamp = orderNumberFor(28, 15).replace("UMX-", "RMA-");
+    const rmaStamp = `RMA-${companyInitials(distro.name)}${formatDocDate(daysAgo(28))}-15`;
     await prisma.rma.create({
       data: {
         rmaNumber: rmaStamp,

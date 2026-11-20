@@ -5,6 +5,12 @@ import { prisma } from "@/lib/db";
 import { AdminStat } from "@/components/admin/ui";
 import { AdminPageHeaderI18n } from "@/components/admin/AdminPageHeaderI18n";
 import { AdminText } from "@/components/admin/AdminI18nBits";
+import {
+  AlertTriangle,
+  CalendarClock,
+  Clock3,
+  CreditCard,
+} from "lucide-react";
 
 export const metadata = { title: "Credit aging · UMAXES Ops" };
 
@@ -55,6 +61,29 @@ export default async function AgingPage() {
     return rows.reduce((s, r) => s + r.amount, 0);
   }
 
+  const cards = [
+    {
+      labelKey: "aging.current" as const,
+      rows: buckets.current,
+      icon: CreditCard,
+    },
+    {
+      labelKey: "aging.d1_30" as const,
+      rows: buckets.d1_30,
+      icon: Clock3,
+    },
+    {
+      labelKey: "aging.d31_60" as const,
+      rows: buckets.d31_60,
+      icon: CalendarClock,
+    },
+    {
+      labelKey: "aging.d60" as const,
+      rows: buckets.d60,
+      icon: AlertTriangle,
+    },
+  ];
+
   return (
     <div>
       <AdminPageHeaderI18n
@@ -69,16 +98,10 @@ export default async function AgingPage() {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {(
-          [
-            ["aging.current", buckets.current],
-            ["aging.d1_30", buckets.d1_30],
-            ["aging.d31_60", buckets.d31_60],
-            ["aging.d60", buckets.d60],
-          ] as const
-        ).map(([labelKey, rows]) => (
+        {cards.map(({ labelKey, rows, icon }) => (
           <AdminStat
             key={labelKey}
+            icon={icon}
             label={
               <>
                 <AdminText id={labelKey} />

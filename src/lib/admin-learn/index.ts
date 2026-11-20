@@ -8,9 +8,10 @@ import {
 } from "./catalog";
 import { learnEn, type LearnTutorial } from "./content/en";
 import { learnZh } from "./content/zh";
+import { getSimpleSop, type LearnSop } from "./sop";
 
-export type { LearnMeta, LearnSlug, LearnTutorial };
-export { LEARN_CATALOG, isLearnSlug, learnIndex };
+export type { LearnMeta, LearnSlug, LearnTutorial, LearnSop };
+export { LEARN_CATALOG, isLearnSlug, learnIndex, getSimpleSop };
 
 export type LearnCard = LearnMeta & LearnTutorial;
 
@@ -53,3 +54,4 @@ export function adjacentSlugs(slug: LearnSlug): {
     next: i < LEARN_CATALOG.length - 1 ? LEARN_CATALOG[i + 1]!.slug : null,
   };
 }
+

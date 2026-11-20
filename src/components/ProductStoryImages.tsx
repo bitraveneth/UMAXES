@@ -5,8 +5,7 @@ import { useCompactMobileStoreChrome } from "@/hooks/useStoreChrome";
 import { productStoryImages } from "@/lib/assets";
 
 /**
- * One complete artwork per section, full width, native aspect — no crop.
- * Cream page chrome meets the first panel flush so a black bar never shows.
+ * Full-width artworks stacked flush — no crop, no card chrome.
  */
 export default function ProductStoryImages() {
   const compact = useCompactMobileStoreChrome();
@@ -25,10 +24,10 @@ export default function ProductStoryImages() {
             src={src}
             alt=""
             width={1920}
-            height={i === 0 ? 1011 : 1080}
+            height={1080}
             className="h-auto w-full"
             sizes="100vw"
-            quality={88}
+            quality={75}
             priority={i === 0}
           />
         </div>

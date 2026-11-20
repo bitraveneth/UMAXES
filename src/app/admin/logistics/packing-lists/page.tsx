@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { canAccessPath } from "@/lib/rbac";
+import { siblingDocNumber } from "@/lib/doc-number";
 import { prisma } from "@/lib/db";
 import { AdminPageHeaderI18n } from "@/components/admin/AdminPageHeaderI18n";
 import PackingListsWorkspace from "@/components/admin/PackingListsWorkspace";
@@ -68,6 +69,8 @@ export default async function PackingListsPage() {
     return {
       id: o.id,
       orderNumber: o.orderNumber,
+      piNumber: o.piNumber,
+      plNumber: siblingDocNumber(o.piNumber, "PL", o.orderNumber),
       status: o.status,
       updatedAt: o.updatedAt.toISOString(),
       companyName: o.company.name,

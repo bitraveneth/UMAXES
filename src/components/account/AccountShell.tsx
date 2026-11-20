@@ -16,8 +16,11 @@ import {
   Store,
   Truck,
   UserRound,
+  Wallet,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { isChannelBuyerLevel } from "@/lib/channel-level";
 import {
   storeStickyTopClass,
   storeTopPadClass,
@@ -45,6 +48,13 @@ const NAV_PRIMARY = [
     labelKey: "nav.orders",
     icon: Package,
     exact: false,
+  },
+  {
+    href: "/account/rebate",
+    labelKey: "nav.rebate",
+    icon: Wallet,
+    exact: false,
+    channelOnly: true,
   },
   {
     href: "/account/documents",
@@ -108,7 +118,7 @@ function NavItem({
 }: {
   href: string;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: LucideIcon;
   active: boolean;
   onNavigate?: () => void;
 }) {
@@ -162,12 +172,16 @@ export default function AccountShell({
 
   function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     return (
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-h-full flex-col">
         <nav className="flex flex-col gap-0.5 px-3 py-4">
           <p className="mb-2 px-3 font-display text-[10px] font-semibold tracking-[0.16em] text-black uppercase">
             {t("nav.menu")}
           </p>
-          {NAV_PRIMARY.map((item) => (
+          {NAV_PRIMARY.filter(
+            (item) =>
+              !("channelOnly" in item && item.channelOnly) ||
+              isChannelBuyerLevel(user.companyLevel),
+          ).map((item) => (
             <NavItem
               key={item.href}
               href={item.href}
@@ -251,8 +265,8 @@ export default function AccountShell({
             className="absolute inset-0 bg-black/40"
             onClick={() => setOpen(false)}
           />
-          <aside className="absolute top-0 left-0 flex h-full w-[min(18.5rem,88vw)] flex-col border-r border-black/10 bg-umx-cream-bright shadow-2xl">
-            <div className="flex items-center justify-between border-b border-black/10 px-4 py-4">
+          <aside className="absolute top-0 left-0 flex h-full w-[min(18.5rem,88vw)] flex-col overflow-hidden border-r border-black/10 bg-umx-cream-bright shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-black/10 px-4 py-4">
               <p className="font-display text-sm font-bold text-black">
                 {t("nav.menu")}
               </p>
@@ -267,7 +281,7 @@ export default function AccountShell({
             <Link
               href="/account/profile"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 border-b border-black/10 px-4 py-4 transition hover:bg-umx-orange-wash/40"
+              className="flex shrink-0 items-center gap-3 border-b border-black/10 px-4 py-4 transition hover:bg-umx-orange-wash/40"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden bg-umx-orange font-display text-xs font-bold text-white">
                 {user.image ? (
@@ -290,21 +304,26 @@ export default function AccountShell({
                 </span>
               </span>
             </Link>
-            <NavLinks onNavigate={() => setOpen(false)} />
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <NavLinks onNavigate={() => setOpen(false)} />
+            </div>
           </aside>
         </div>
       ) : null}
 
       <div className="relative mx-auto flex w-full max-w-[90rem] flex-1">
         <aside
-          className={`sticky hidden h-[calc(100vh-9rem)] w-[14.5rem] shrink-0 flex-col border-r border-black/10 bg-umx-cream-bright lg:flex xl:w-[15.5rem] ${stickyTop}`}
+          className={`sticky hidden h-[calc(100vh-9rem)] w-[14.5rem] shrink-0 flex-col overflow-hidden border-r border-black/10 bg-umx-cream-bright lg:flex xl:w-[15.5rem] ${stickyTop}`}
         >
-          <div className="border-b border-black/10 px-5 py-4">
+          <div className="shrink-0 border-b border-black/10 px-5 py-4">
             <p className="font-display text-[10px] font-semibold tracking-[0.16em] text-umx-orange uppercase">
               {t("nav.portal")}
             </p>
           </div>
-          <NavLinks />
+          {/* Channel buyers get extra Rebate item — sidebar must scroll or Media Kit / Language sit off-screen */}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <NavLinks />
+          </div>
         </aside>
 
         <main className="min-w-0 flex-1">

@@ -24,3 +24,12 @@ export function toE164(
   if (local.length < 7 || local.length > 12) return null;
   return `+${cc}${local}`;
 }
+
+export function digitsOnly(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+export function isValidPhone(value: string) {
+  const digits = digitsOnly(value);
+  return digits.length >= 7 && digits.length <= 15;
+}

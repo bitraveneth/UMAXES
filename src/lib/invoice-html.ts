@@ -4,7 +4,14 @@ import {
   type InvoiceBankDetails,
 } from "@/lib/bank-accounts";
 import { paymentLabels } from "@/lib/catalog";
+import {
+  invoiceCommodity,
+  invoicePuffsLabel,
+} from "@/lib/invoice-labels";
+import { casesFromPcs, isCasePackedSku } from "@/lib/pack";
 import { SITE_CONTACT_EMAIL } from "@/lib/site";
+
+export { invoiceCommodity, invoicePuffsLabel } from "@/lib/invoice-labels";
 
 /** Seller (UMAXES) block on invoices — override via env when needed */
 export function sellerCompany() {
@@ -24,16 +31,10 @@ export function sellerCompany() {
   };
 }
 
-export function invoiceCommodity() {
-  return process.env.INVOICE_COMMODITY || "Umaxes Hookamax";
-}
-
-export function invoicePuffsLabel() {
-  return process.env.INVOICE_PUFFS_LABEL || "MTL/DLT - 80K/50K";
-}
-
 export type InvoiceAddress = {
   label?: string | null;
+  recipientName?: string | null;
+  phone?: string | null;
   line1: string;
   line2?: string | null;
   city: string;
@@ -48,7 +49,8 @@ export function parseAddressSnap(snap: string): InvoiceAddress {
 
 function addressLines(a: InvoiceAddress) {
   const cityLine = [a.city, a.region, a.postalCode].filter(Boolean).join(", ");
-  return [a.label, a.line1, a.line2, cityLine, a.country]
+  const nameLine = [a.recipientName, a.phone].filter(Boolean).join(" · ");
+  return [a.label, nameLine, a.line1, a.line2, cityLine, a.country]
     .map((v) => (v || "").trim())
     .filter(Boolean);
 }
@@ -165,6 +167,11 @@ type BuildInvoiceHtmlInput = {
   addressSnap: string;
   paymentMethod?: keyof typeof paymentLabels;
   couponCode?: string | null;
+  rebateAppliedUsd?: number | null;
+  firstOrderUnpaidPcs?: number | null;
+  testStationQty?: number | null;
+  chargedQty?: number | null;
+  sellingQty?: number | null;
   items: MoneyItem[];
   packingLines?: PackingLine[] | null;
   subtotal?: number;
@@ -173,9 +180,13 @@ type BuildInvoiceHtmlInput = {
   total?: number;
   packingMetaHtml?: string;
   forceDownloadHref?: string;
+  pdfHref?: string;
+  xlsxHref?: string;
   showToolbar?: boolean;
   bank?: InvoiceBankDetails | null;
   origin?: string;
+  /** Prefer embedded data URI so PDF/Excel/print never depend on a public URL. */
+  logoSrc?: string;
 };
 
 const titles: Record<InvoiceDocType, string> = {
@@ -224,7 +235,8 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
   const issued = formatIssuedDate(input.createdAt);
   const showToolbar = input.showToolbar !== false;
   const seller = sellerCompany();
-  const logoSrc = resolvePublicUrl(logos.blueWordmark, input.origin);
+  const logoSrc =
+    input.logoSrc || resolvePublicUrl(logos.blueWordmark, input.origin);
   const bank = input.bank || DEFAULT_INVOICE_BANK;
   const buyerContact = [input.clientPhone, input.clientEmail]
     .map((v) => (v || "").trim())
@@ -270,7 +282,11 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
         discount > 0
           ? `<tr class="sum-row">
         <td></td>
-        <td colspan="3" class="total-label">Discount</td>
+        <td colspan="3" class="total-label">${
+          input.rebateAppliedUsd && input.rebateAppliedUsd > 0
+            ? "Discount / rebate credit"
+            : "Discount"
+        }</td>
         <td></td>
         <td></td>
         <td class="num center">−${formatUsd(discount)}</td>
@@ -311,35 +327,69 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
           boxes: null as number | null,
         }));
 
+  function packingCases(line: {
+    sku: string;
+    quantity: number;
+    boxes?: number | null;
+  }) {
+    if (line.boxes != null) return line.boxes;
+    if (!isCasePackedSku(line.sku)) return null;
+    const n = casesFromPcs(line.quantity);
+    return n > 0 ? n : null;
+  }
+
   const packingRows = packingSource
     .map((line, index) => {
       const parts = invoiceLineParts(line.name);
+      const description =
+        (line.flavor || "").trim() || parts.description;
+      const cases = packingCases(line);
       return `<tr>
         <td class="num center">${index + 1}</td>
-        <td class="sku">${escapeHtml(line.sku)}</td>
-        <td>${escapeHtml(parts.description)}</td>
-        <td>${escapeHtml(line.flavor || parts.description)}</td>
-        <td>${escapeHtml(line.size || "—")}</td>
+        <td>${escapeHtml(parts.commodity)}</td>
+        <td class="center">${escapeHtml(parts.puffs)}</td>
+        <td>${escapeHtml(description)}</td>
+        <td class="center">${escapeHtml(line.size || "—")}</td>
         <td class="num center">${line.quantity}</td>
-        <td class="num center">${line.boxes ?? "—"}</td>
+        <td class="num center">${cases ?? "—"}</td>
       </tr>`;
     })
     .join("");
+
+  const packingCasesTotal = packingSource.reduce((s, l) => {
+    const n = packingCases(l);
+    return s + (n ?? 0);
+  }, 0);
 
   const packingTotal = `<tr class="total-row">
         <td></td>
         <td colspan="4" class="total-label">Total</td>
         <td class="num center">${packingSource.reduce((s, l) => s + l.quantity, 0)}</td>
-        <td class="num center">${packingSource.reduce((s, l) => s + (l.boxes ?? 0), 0) || "—"}</td>
+        <td class="num center">${packingCasesTotal || "—"}</td>
       </tr>`;
 
   const toolbar = showToolbar
     ? `<div class="toolbar no-print">
-  <p><strong>${titles[input.type]}</strong> · ${escapeHtml(input.orderNumber)}</p>
+  <p><strong>${titles[input.type]}</strong> · ${escapeHtml(input.docNumber)}</p>
   <div class="actions">
     <button type="button" class="primary" onclick="window.print()">Print</button>
     ${
-      input.forceDownloadHref
+      input.pdfHref || input.xlsxHref
+        ? `<span class="format-label">Choose format</span>`
+        : ""
+    }
+    ${
+      input.pdfHref
+        ? `<a href="${escapeHtml(input.pdfHref)}">PDF</a>`
+        : ""
+    }
+    ${
+      input.xlsxHref
+        ? `<a href="${escapeHtml(input.xlsxHref)}">Excel</a>`
+        : ""
+    }
+    ${
+      !input.pdfHref && input.forceDownloadHref
         ? `<a href="${escapeHtml(input.forceDownloadHref)}">Download</a>`
         : ""
     }
@@ -353,6 +403,22 @@ export function buildInvoiceHtml(input: BuildInvoiceHtmlInput) {
       : "",
     input.couponCode
       ? `<span><strong>Coupon</strong> · ${escapeHtml(input.couponCode)}</span>`
+      : "",
+    input.testStationQty
+      ? `<span><strong>Test stations</strong> · ${input.testStationQty} · including 1 device inside each</span>`
+      : "",
+    input.firstOrderUnpaidPcs
+      ? `<span><strong>First-order unpaid</strong> · ${input.firstOrderUnpaidPcs} pcs</span>`
+      : "",
+    input.rebateAppliedUsd
+      ? `<span><strong>Rebate credit</strong> · −${formatUsd(input.rebateAppliedUsd)}</span>`
+      : "",
+    input.sellingQty
+      ? `<span><strong>Shipped pcs</strong> · ${input.sellingQty}${
+          input.chargedQty != null && input.chargedQty !== input.sellingQty
+            ? ` · charged ${input.chargedQty}`
+            : ""
+        }</span>`
       : "",
     `<span><strong>Order</strong> · ${escapeHtml(input.orderNumber)}</span>`,
   ]
@@ -379,7 +445,8 @@ body{
   padding:12px 20px;background:#111;color:#fff;
 }
 .toolbar p{margin:0;font-size:13px;opacity:.9}
-.toolbar .actions{display:flex;flex-wrap:wrap;gap:8px}
+.toolbar .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .format-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.7;padding:0 4px}
 .toolbar a,.toolbar button{
   appearance:none;border:0;border-radius:999px;padding:10px 16px;
   font-size:13px;font-weight:700;cursor:pointer;text-decoration:none;color:#111;background:#fff;
@@ -493,12 +560,12 @@ ${toolbar}
         <th>Quantity</th>
         <th>Total Price (USD)</th>`
             : `<th style="width:44px">No</th>
-        <th>SKU</th>
-        <th>Item</th>
-        <th>Flavor</th>
+        <th>Commodity</th>
+        <th>Puffs</th>
+        <th>Description of goods</th>
         <th>Size</th>
-        <th>Qty</th>
-        <th>Boxes</th>`
+        <th>Quantity</th>
+        <th>Case</th>`
         }
       </tr>
     </thead>

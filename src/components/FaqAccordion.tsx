@@ -1,17 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { faqs } from "@/lib/support";
+import type { SupportFaq } from "@/lib/support";
 
-export default function FaqAccordion() {
+export default function FaqAccordion({ items }: { items: SupportFaq[] }) {
   const [open, setOpen] = useState<number | null>(0);
+
+  if (!items.length) {
+    return (
+      <p className="rounded-[1.5rem] bg-white px-6 py-10 text-center font-body text-black/55 ring-1 ring-black/6">
+        FAQ content is being updated.
+      </p>
+    );
+  }
 
   return (
     <ul className="divide-y divide-black/8 overflow-hidden rounded-[1.5rem] bg-white ring-1 ring-black/6 shadow-[0_12px_36px_rgba(61,22,5,0.08)]">
-      {faqs.map((item, i) => {
+      {items.map((item, i) => {
         const isOpen = open === i;
         return (
-          <li key={item.q} id={item.q.toLowerCase().includes("coupon") ? "coupons" : undefined}>
+          <li
+            key={`${item.q}-${i}`}
+            id={item.q.toLowerCase().includes("coupon") ? "coupons" : undefined}
+          >
             <button
               type="button"
               aria-expanded={isOpen}

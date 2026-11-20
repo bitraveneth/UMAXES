@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ProductStoryImages from "@/components/ProductStoryImages";
 import { requireMember } from "@/lib/require-member";
+import { enforceStorefrontAccess } from "@/lib/storefront-gate";
 
 export const metadata: Metadata = {
   title: "Products — UMAXES",
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ProductsPage() {
+  await enforceStorefrontAccess();
   await requireMember("/products");
 
   return (

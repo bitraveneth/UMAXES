@@ -1,4 +1,8 @@
 import type { UserRole } from "@/generated/prisma/enums";
+import {
+  hasSubmoduleAccess,
+  submoduleForPath,
+} from "@/lib/admin-modules";
 
 /** Edge-safe staff / path gates (no Node-only imports). */
 export function isStaffRole(role: string): role is UserRole {
@@ -31,7 +35,7 @@ const ADMIN_PATH_RULES: PathRule[] = [
   { href: "/admin/orders", roles: ["ADMIN", "SALES", "WAREHOUSE", "SUPER_ADMIN"] },
   { href: "/admin/orders/new", roles: ["ADMIN", "SALES", "SUPER_ADMIN"] },
   { href: "/admin/suppliers", roles: ["ADMIN", "SALES", "WAREHOUSE", "SUPER_ADMIN"] },
-  { href: "/admin/warehouse", roles: [] },
+  { href: "/admin/warehouse", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/warehouses", roles: [] },
   { href: "/admin/logistics", roles: ["ADMIN", "LOGISTICS", "SALES", "SUPER_ADMIN"] },
   {
@@ -39,8 +43,10 @@ const ADMIN_PATH_RULES: PathRule[] = [
     roles: ["ADMIN", "SALES", "WAREHOUSE", "LOGISTICS", "SUPER_ADMIN"],
   },
   { href: "/admin/catalog", roles: ["ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/faq", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/coupons", roles: ["ADMIN", "SUPER_ADMIN"] },
-  { href: "/admin/invoices", roles: ["ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/rebates", roles: ["ADMIN", "SUPER_ADMIN"] },
+  { href: "/admin/payments", roles: ["ADMIN", "SUPER_ADMIN"] },
   { href: "/admin/credit", roles: ["ADMIN", "SALES", "SUPER_ADMIN"] },
   { href: "/admin/aging", roles: ["ADMIN", "SALES", "SUPER_ADMIN"] },
   {
@@ -55,13 +61,25 @@ const ADMIN_PATH_RULES: PathRule[] = [
   { href: "/admin/audit", roles: ["ADMIN", "SUPER_ADMIN"] },
   /** Customer users directory — admin + super admin */
   { href: "/admin/users", roles: ["SUPER_ADMIN", "ADMIN"] },
+  { href: "/admin/users/new", roles: ["SUPER_ADMIN", "ADMIN"] },
   /** Internal staff accounts — admin + super admin */
   { href: "/admin/staff", roles: ["SUPER_ADMIN", "ADMIN"] },
   /** DB backup / reset / import — super admin only */
   { href: "/admin/system", roles: ["SUPER_ADMIN"] },
 ];
 
-export function canAccessAdminPath(role: string, pathname: string): boolean {
+/**
+ * Role + optional per-user module allowlist.
+ * `moduleAccess`:
+ *   - omit / undefined → role-only (legacy callers)
+ *   - null → role defaults (full ceiling)
+ *   - string[] → custom allowlist ∩ role ceiling
+ */
+export function canAccessAdminPath(
+  role: string,
+  pathname: string,
+  moduleAccess?: string[] | null,
+): boolean {
   if (!isStaffRole(role)) return false;
   if (pathname === "/admin" || pathname === "/admin/") return true;
 
@@ -70,7 +88,7 @@ export function canAccessAdminPath(role: string, pathname: string): boolean {
     pathname === "/admin/system" ||
     pathname.startsWith("/admin/system/")
   ) {
-    return role === "SUPER_ADMIN";
+    if (role !== "SUPER_ADMIN") return false;
   }
 
   // Users + Staff — admin + super admin
@@ -80,12 +98,11 @@ export function canAccessAdminPath(role: string, pathname: string): boolean {
     pathname === "/admin/staff" ||
     pathname.startsWith("/admin/staff/")
   ) {
-    return role === "SUPER_ADMIN" || role === "ADMIN";
+    if (role !== "SUPER_ADMIN" && role !== "ADMIN") return false;
   }
 
   if (role === "SUPER_ADMIN") {
     if (
-      pathname.startsWith("/admin/warehouse") ||
       pathname === "/admin/warehouses" ||
       pathname.startsWith("/admin/warehouses/")
     ) {
@@ -94,25 +111,41 @@ export function canAccessAdminPath(role: string, pathname: string): boolean {
     return true;
   }
 
-  // Regular ADMIN: almost everything except system / warehouse desk
+  // Regular ADMIN: almost everything except system / multi-warehouse
+  let roleOk = false;
   if (role === "ADMIN") {
     if (
-      pathname.startsWith("/admin/warehouse") ||
       pathname === "/admin/warehouses" ||
       pathname.startsWith("/admin/warehouses/")
     ) {
       return false;
     }
-    return true;
-  }
-
-  let best: PathRule | null = null;
-  for (const rule of ADMIN_PATH_RULES) {
-    if (pathname === rule.href || pathname.startsWith(`${rule.href}/`)) {
-      if (!best || rule.href.length > best.href.length) best = rule;
+    if (
+      pathname === "/admin/system" ||
+      pathname.startsWith("/admin/system/")
+    ) {
+      return false;
     }
+    roleOk = true;
+  } else {
+    let best: PathRule | null = null;
+    for (const rule of ADMIN_PATH_RULES) {
+      if (pathname === rule.href || pathname.startsWith(`${rule.href}/`)) {
+        if (!best || rule.href.length > best.href.length) best = rule;
+      }
+    }
+    if (!best) return false;
+    roleOk = best.roles.includes(role as UserRole);
   }
 
-  if (!best) return false;
-  return best.roles.includes(role as UserRole);
+  if (!roleOk) return false;
+
+  // Per-user module gate (when caller provided moduleAccess, including null)
+  if (moduleAccess !== undefined) {
+    const sub = submoduleForPath(pathname);
+    if (!sub) return roleOk;
+    return hasSubmoduleAccess(role as UserRole, moduleAccess, sub);
+  }
+
+  return true;
 }

@@ -72,13 +72,26 @@ export function buyerDocAvailability(
   };
 }
 
-export function buyerStatusLabel(status: OrderStatus) {
+export function buyerStatusLabel(
+  status: OrderStatus,
+  payment?: { paid?: boolean; hasSlip?: boolean },
+) {
+  if (status === "PAYMENT_PENDING" && payment?.paid) return "Payment confirmed";
+  if (status === "PAYMENT_PENDING" && payment?.hasSlip) {
+    return "Awaiting confirmation";
+  }
+  if (status === "PAYMENT_PENDING") return "Awaiting payment slip";
   return status.replaceAll("_", " ");
 }
 
-export function buyerStatusClass(status: string) {
+export function buyerStatusClass(
+  status: string,
+  payment?: { paid?: boolean; hasSlip?: boolean },
+) {
   if (status === "COMPLETED" || status === "SHIPPED")
     return "bg-emerald-50 text-emerald-800";
+  if (status === "PAYMENT_PENDING" && payment?.hasSlip && !payment.paid)
+    return "bg-sky-50 text-sky-900";
   if (status === "PAYMENT_PENDING" || status === "SUBMITTED")
     return "bg-amber-50 text-amber-900";
   if (status === "CANCELLED") return "bg-red-50 text-red-800";

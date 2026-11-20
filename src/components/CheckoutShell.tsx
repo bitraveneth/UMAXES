@@ -7,13 +7,14 @@ import Footer from "@/components/Footer";
 import B2BCheckout from "@/components/B2BCheckout";
 import { StorePrice } from "@/components/StorePrice";
 import { useCart } from "@/context/CartContext";
+import { formatCases, formatPack } from "@/lib/pack";
 import {
   storeTopPadClass,
   useCompactMobileStoreChrome,
 } from "@/hooks/useStoreChrome";
 
 function CheckoutAuthGate() {
-  const { quantity, total } = useCart();
+  const { quantity, cases, total } = useCart();
 
   return (
     <div className="relative mx-auto max-w-md">
@@ -43,10 +44,10 @@ function CheckoutAuthGate() {
                   In your bag
                 </p>
                 <p className="mt-0.5 font-display text-sm font-semibold text-black">
-                  {quantity} item{quantity === 1 ? "" : "s"}
+                  {formatCases(cases)}
                 </p>
               </div>
-              <p className="font-display text-lg font-bold text-black">
+              <p className="text-right font-display text-lg font-bold text-black">
                 <StorePrice amount={total} />
               </p>
             </div>
@@ -102,12 +103,13 @@ function CheckoutAuthGate() {
 export default function CheckoutShell() {
   const compactChrome = useCompactMobileStoreChrome();
   const { status } = useSession();
+  const { quantity } = useCart();
 
   return (
     <>
       <Header />
       <main
-        className={`flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
+        className={`umx-account-theme flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-16 lg:pb-12 ${storeTopPadClass(compactChrome)}`}
       >
         {status === "loading" ? (
           <p className="py-20 text-center font-body text-black/55">
@@ -120,9 +122,17 @@ export default function CheckoutShell() {
         ) : (
           <>
             <div className="mx-auto mb-8 max-w-6xl sm:mb-10">
-              <h1 className="font-display text-3xl font-bold tracking-tight text-black">
+              <p className="font-display text-xs font-semibold tracking-[0.18em] text-umx-orange uppercase">
+                Your order
+              </p>
+              <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-black">
                 Checkout
               </h1>
+              {quantity > 0 ? (
+                <p className="mt-2 font-body text-black/65">
+                  {formatPack(quantity)} ready to place.
+                </p>
+              ) : null}
             </div>
             <B2BCheckout />
           </>

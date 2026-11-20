@@ -116,7 +116,7 @@ export default function ForgotPasswordForm() {
     setDevOtpHint(null);
 
     if (!altchaSend) {
-      setSendError("Please complete the security check to send the code.");
+      setSendError("Please check “I am human” to send the code.");
       return;
     }
 
@@ -185,7 +185,7 @@ export default function ForgotPasswordForm() {
       return;
     }
     if (!altchaReset) {
-      setError("Please complete the security check to reset your password.");
+      setError("Please check “I am human” to reset your password.");
       return;
     }
     if (method === "email") {
