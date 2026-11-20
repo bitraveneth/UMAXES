@@ -943,11 +943,21 @@ export async function restoreCancelledOrderStock(orderId: string) {
     throw new Error("Stock was already restored for this order");
   }
 
-  await releaseOrderInventoryHold(orderId, {
-    actorUserId: session.user.id,
-    orderNumber: order.orderNumber,
-    source: "manual",
-  });
+  try {
+    await releaseOrderInventoryHold(orderId, {
+      actorUserId: session.user.id,
+      orderNumber: order.orderNumber,
+      source: "manual",
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("P2028") || msg.includes("expired transaction")) {
+      throw new Error(
+        "Stock restore timed out — please try again (database was slow)",
+      );
+    }
+    throw e instanceof Error ? e : new Error("Stock restore failed");
+  }
 
   await prisma.auditLog.create({
     data: {

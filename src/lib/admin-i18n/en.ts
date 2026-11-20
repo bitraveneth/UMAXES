@@ -563,6 +563,7 @@ const en: AdminMessages = {
       "Add the order line quantities back to warehouse stock. Use this if cancel did not restore inventory. Safe once only — will not run again after success.",
     restoreStockDone: "Stock restored",
     restoreStockAlready: "Stock already restored",
+    restoreStockFailed: "Could not restore stock. Check server logs and try again.",
     statusLabel: "Shipping status",
     placedByStaff: "Staff · {name}",
     staffLabel: "Staff",

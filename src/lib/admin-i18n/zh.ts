@@ -547,6 +547,7 @@ const zh: AdminMessages = {
       "将订单明细数量加回仓库库存。仅在取消时未自动回库时使用。成功后不可重复执行。",
     restoreStockDone: "库存已恢复",
     restoreStockAlready: "库存已恢复过",
+    restoreStockFailed: "无法恢复库存，请查看服务器日志后重试。",
     statusLabel: "物流状态",
     placedByStaff: "员工 · {name}",
     staffLabel: "员工",

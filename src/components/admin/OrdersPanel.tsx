@@ -257,10 +257,12 @@ export default function OrdersPanel({
       showToast(t("orders.restoreStockDone"), "success");
       router.refresh();
     } catch (e) {
-      showToast(
-        e instanceof Error ? e.message : t("orders.restoreStockAlready"),
-        "danger",
-      );
+      const raw = e instanceof Error ? e.message : String(e);
+      const friendly =
+        raw.includes("digest") || raw.includes("Server Components")
+          ? t("orders.restoreStockFailed")
+          : raw || t("orders.restoreStockFailed");
+      showToast(friendly, "danger");
     }
   }
 

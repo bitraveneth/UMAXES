@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useAdminSidebar } from "./AdminSidebarContext";
@@ -10,6 +11,13 @@ import { adminNavIcons, ExternalLink, LogOut, Package } from "./icons";
 import { logos } from "@/lib/assets";
 import type { AdminNavGroup, AdminNavItem } from "@/lib/rbac";
 import { ADMIN_NAV_GROUPS } from "@/lib/rbac";
+
+/** Must render as a descendant of the navigating <Link>. */
+function NavPendingMark() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return <span className="admin-menu-pending-dot" aria-hidden />;
+}
 
 export function AdminSidebar({
   items,
@@ -202,6 +210,7 @@ export function AdminSidebar({
                               : undefined
                           }
                           href={item.href}
+                          prefetch
                           onClick={closeMobile}
                           title={label}
                           aria-current={active ? "page" : undefined}
@@ -217,6 +226,7 @@ export function AdminSidebar({
                             aria-hidden
                           />
                           {showLabels && <span className="truncate">{label}</span>}
+                          <NavPendingMark />
                         </Link>
                       </li>
                     );

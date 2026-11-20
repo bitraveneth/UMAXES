@@ -177,6 +177,56 @@
 }
 
 /* Menu items */
+.admin-nav-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  height: 3px;
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    var(--admin-brand-500),
+    var(--admin-brand-200),
+    var(--admin-brand-500)
+  );
+  background-size: 200% 100%;
+  animation: admin-nav-progress-slide 0.9s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes admin-nav-progress-slide {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.admin-menu-pending-dot {
+  margin-left: auto;
+  height: 0.45rem;
+  width: 0.45rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--admin-brand-500);
+  animation: admin-menu-pending-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes admin-menu-pending-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .admin-menu-item {
   display: flex;
   align-items: center;

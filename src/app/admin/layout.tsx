@@ -16,6 +16,7 @@ import { AdminToastProvider } from "@/components/admin/AdminToast";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { AdminMain } from "@/components/admin/AdminMain";
+import AdminNavProgress from "@/components/admin/AdminNavProgress";
 import "./admin.css";
 
 const outfit = Outfit({
@@ -48,10 +49,16 @@ export default async function AdminLayout({
   const headerStore = await headers();
   const pathname = headerStore.get("x-pathname") || "/admin";
 
-  const accessRow = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { moduleAccess: true, role: true },
-  });
+  // Parallel DB — sequential calls made every menu click feel slow on live.
+  const [accessRow, unreadCount] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { moduleAccess: true, role: true },
+    }),
+    prisma.notification.count({
+      where: { userId: session.user.id, readAt: null },
+    }),
+  ]);
   const moduleAccess = parseModuleAccess(accessRow?.moduleAccess);
   const role = accessRow?.role ?? session.user.role;
 
@@ -66,10 +73,6 @@ export default async function AdminLayout({
 
   const items = navForUser(role, moduleAccess);
   const email = session.user.email || session.user.name || "Staff";
-
-  const unreadCount = await prisma.notification.count({
-    where: { userId: session.user.id, readAt: null },
-  });
 
   async function signOutAction() {
     "use server";
@@ -92,6 +95,7 @@ export default async function AdminLayout({
               signOutAction={signOutAction}
             />
             <AdminMain>
+              <AdminNavProgress />
               <AdminHeader
                 email={email}
                 name={session.user.name}

@@ -553,6 +553,9 @@ export async function orderStockAlreadyRestored(orderId: string) {
  *   shortfall back onto `quantity` so available stock still rises by the line qty
  * Always writes INVENTORY_ADJUST so Warehouse → Stock activity shows the restore.
  * Call only on first transition into CANCELLED, or via manual Restore stock.
+ *
+ * Product/inventory lookups run outside the transaction so multi-line orders
+ * don't hit Prisma's default 5s interactive-transaction timeout on slower DBs.
  */
 export async function releaseOrderInventoryHold(
   orderId: string,
@@ -586,65 +589,193 @@ export async function releaseOrderInventoryHold(
   const nameSuffix =
     source === "manual" ? `restore ${orderNumber}` : `cancel ${orderNumber}`;
 
-  await prisma.$transaction(async (tx) => {
-    for (const item of order.items) {
-      const qty = Math.max(0, Math.floor(item.quantity || 0));
-      if (!qty) continue;
+  const productIds = [
+    ...new Set(
+      order.items
+        .map((i) => i.productId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const skusNeedingLookup = [
+    ...new Set(
+      order.items.filter((i) => !i.productId && i.sku).map((i) => i.sku),
+    ),
+  ];
 
-      let productId = item.productId;
-      let productName = item.name;
-      let productSku = item.sku;
-
-      if (!productId) {
-        const product = await tx.product.findUnique({
-          where: { sku: item.sku },
+  const [productsById, productsBySku] = await Promise.all([
+    productIds.length
+      ? prisma.product.findMany({
+          where: { id: { in: productIds } },
           select: { id: true, name: true, sku: true },
-        });
-        if (!product) continue;
-        productId = product.id;
+        })
+      : Promise.resolve([]),
+    skusNeedingLookup.length
+      ? prisma.product.findMany({
+          where: { sku: { in: skusNeedingLookup } },
+          select: { id: true, name: true, sku: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const productMap = new Map(productsById.map((p) => [p.id, p]));
+  const skuMap = new Map(productsBySku.map((p) => [p.sku, p]));
+
+  type Line = {
+    productId: string;
+    productName: string;
+    productSku: string;
+    qty: number;
+    isTestStation: boolean;
+  };
+
+  const merged = new Map<string, Line>();
+  for (const item of order.items) {
+    const qty = Math.max(0, Math.floor(item.quantity || 0));
+    if (!qty) continue;
+
+    let productId = item.productId;
+    let productName = item.name;
+    let productSku = item.sku;
+
+    if (!productId) {
+      const product = skuMap.get(item.sku);
+      if (!product) continue;
+      productId = product.id;
+      productName = product.name;
+      productSku = product.sku;
+    } else {
+      const product = productMap.get(productId);
+      if (product) {
         productName = product.name;
         productSku = product.sku;
-      } else {
-        const product = await tx.product.findUnique({
-          where: { id: productId },
-          select: { name: true, sku: true },
-        });
-        if (product) {
-          productName = product.name;
-          productSku = product.sku;
-        }
       }
+    }
 
-      const inv = await tx.inventory.findUnique({
-        where: { productId },
-        select: { quantity: true, reserved: true },
+    const isTestStation =
+      item.sku === TEST_STATION_SKU || productSku === TEST_STATION_SKU;
+    const prev = merged.get(productId);
+    if (prev) {
+      prev.qty += qty;
+    } else {
+      merged.set(productId, {
+        productId,
+        productName,
+        productSku,
+        qty,
+        isTestStation,
       });
-      const onHand = inv?.quantity ?? 0;
-      const reserved = inv?.reserved ?? 0;
-      const prevAvailable = Math.max(0, onHand - reserved);
+    }
+  }
 
-      if (item.sku === TEST_STATION_SKU || productSku === TEST_STATION_SKU) {
-        const nextQty = onHand + qty;
+  const resolvedIds = [...merged.keys()];
+  if (!resolvedIds.length) return;
+
+  const inventories = await prisma.inventory.findMany({
+    where: { productId: { in: resolvedIds } },
+    select: { productId: true, quantity: true, reserved: true },
+  });
+  const invMap = new Map(
+    inventories.map((row) => [
+      row.productId,
+      { quantity: row.quantity, reserved: row.reserved },
+    ]),
+  );
+
+  type Step = {
+    productId: string;
+    productName: string;
+    productSku: string;
+    createQty: number;
+    createReserved: number;
+    nextOnHand: number;
+    nextReserved: number;
+    prevAvailable: number;
+    nextAvailable: number;
+    previousReserved: number;
+    onHandBefore: number;
+  };
+
+  const steps: Step[] = [];
+  for (const line of merged.values()) {
+    const inv = invMap.get(line.productId);
+    const onHand = inv?.quantity ?? 0;
+    const reserved = inv?.reserved ?? 0;
+    const prevAvailable = Math.max(0, onHand - reserved);
+
+    if (line.isTestStation) {
+      const nextQty = onHand + line.qty;
+      steps.push({
+        productId: line.productId,
+        productName: line.productName,
+        productSku: line.productSku,
+        createQty: line.qty,
+        createReserved: 0,
+        nextOnHand: nextQty,
+        nextReserved: 0,
+        prevAvailable: onHand,
+        nextAvailable: nextQty,
+        previousReserved: reserved,
+        onHandBefore: onHand,
+      });
+      invMap.set(line.productId, { quantity: nextQty, reserved: 0 });
+      continue;
+    }
+
+    const releasedFromReserved = Math.min(line.qty, reserved);
+    const shortfall = line.qty - releasedFromReserved;
+    const nextReserved = reserved - releasedFromReserved;
+    const nextOnHand = onHand + shortfall;
+    const nextAvailable = Math.max(0, nextOnHand - nextReserved);
+
+    steps.push({
+      productId: line.productId,
+      productName: line.productName,
+      productSku: line.productSku,
+      createQty: shortfall,
+      createReserved: 0,
+      nextOnHand,
+      nextReserved,
+      prevAvailable,
+      nextAvailable,
+      previousReserved: reserved,
+      onHandBefore: onHand,
+    });
+    invMap.set(line.productId, {
+      quantity: nextOnHand,
+      reserved: nextReserved,
+    });
+  }
+
+  await prisma.$transaction(
+    async (tx) => {
+      for (const step of steps) {
         await tx.inventory.upsert({
-          where: { productId },
+          where: { productId: step.productId },
           create: {
-            productId,
-            quantity: qty,
-            reserved: 0,
+            productId: step.productId,
+            quantity: step.createQty,
+            reserved: step.createReserved,
           },
-          update: { quantity: nextQty },
+          update: {
+            quantity: step.nextOnHand,
+            reserved: step.nextReserved,
+          },
         });
         await tx.auditLog.create({
           data: {
             userId: actorUserId,
             action: "INVENTORY_ADJUST",
             entity: "Product",
-            entityId: productId,
+            entityId: step.productId,
             meta: JSON.stringify({
-              sku: productSku,
-              name: `${productName} · ${nameSuffix}`,
-              previousQuantity: onHand,
-              quantity: nextQty,
+              sku: step.productSku,
+              name: `${step.productName} · ${nameSuffix}`,
+              previousQuantity: step.prevAvailable,
+              quantity: step.nextAvailable,
+              previousReserved: step.previousReserved,
+              reserved: step.nextReserved,
+              onHandBefore: step.onHandBefore,
+              onHandAfter: step.nextOnHand,
               reason,
               orderId,
               orderNumber,
@@ -652,62 +783,18 @@ export async function releaseOrderInventoryHold(
             }),
           },
         });
-        continue;
       }
 
-      const releasedFromReserved = Math.min(qty, reserved);
-      const shortfall = qty - releasedFromReserved;
-      const nextReserved = reserved - releasedFromReserved;
-      const nextOnHand = onHand + shortfall;
-      const nextAvailable = Math.max(0, nextOnHand - nextReserved);
-
-      await tx.inventory.upsert({
-        where: { productId },
-        create: {
-          productId,
-          quantity: shortfall,
-          reserved: 0,
-        },
-        update: {
-          quantity: nextOnHand,
-          reserved: nextReserved,
-        },
-      });
-
-      // Always log — Stock activity must show cancel restores.
       await tx.auditLog.create({
         data: {
           userId: actorUserId,
-          action: "INVENTORY_ADJUST",
-          entity: "Product",
-          entityId: productId,
-          meta: JSON.stringify({
-            sku: productSku,
-            name: `${productName} · ${nameSuffix}`,
-            previousQuantity: prevAvailable,
-            quantity: nextAvailable,
-            previousReserved: reserved,
-            reserved: nextReserved,
-            onHandBefore: onHand,
-            onHandAfter: nextOnHand,
-            reason,
-            orderId,
-            orderNumber,
-            source,
-          }),
+          action: "ORDER_STOCK_RESTORED",
+          entity: "Order",
+          entityId: orderId,
+          meta: JSON.stringify({ orderNumber, source }),
         },
       });
-    }
-
-    // One marker per order — blocks double Restore stock / double cancel restore.
-    await tx.auditLog.create({
-      data: {
-        userId: actorUserId,
-        action: "ORDER_STOCK_RESTORED",
-        entity: "Order",
-        entityId: orderId,
-        meta: JSON.stringify({ orderNumber, source }),
-      },
-    });
-  });
+    },
+    { timeout: 30000, maxWait: 10000 },
+  );
 }
