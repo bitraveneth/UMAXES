@@ -78,7 +78,7 @@ export default async function NewCatalogProductPage() {
               shopPrice: Number(fd.get("shopPrice") || 0),
               distroMoq: Number(fd.get("distroMoq") || CASE_MOQ_PCS),
               wholesalerMoq: Number(fd.get("wholesalerMoq") || CASE_MOQ_PCS),
-              shopMoq: Number(fd.get("shopMoq") || CASE_MOQ_PCS),
+              shopMoq: Number(fd.get("shopMoq") || 1),
             });
             redirect("/admin/catalog");
           }}
@@ -190,7 +190,7 @@ export default async function NewCatalogProductPage() {
               name="shopMoq"
               type="number"
               min={1}
-              defaultValue={CASE_MOQ_PCS}
+              defaultValue={1}
               className="admin-input mt-1.5 w-full"
             />
           </label>

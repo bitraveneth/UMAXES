@@ -18,6 +18,7 @@ export type AccountPriceLevel = "DISTRO" | "WHOLESALER" | "SHOP";
 export type CatalogPrice = {
   sku: string;
   unitPrice: number;
+  wholesalerPrice: number;
   retailPrice: number;
   /** Available pieces: Inventory.quantity − reserved. */
   stock: number;
@@ -30,6 +31,7 @@ type CatalogPricesValue = {
   testStationsPerCase: number;
   pcsPerCase: number;
   unitPriceFor: (sku?: string) => number;
+  wholesalerPriceFor: (sku?: string) => number;
   retailPriceFor: (sku?: string) => number;
   /** Available pieces from /api/catalog, or null if catalog has not loaded that SKU. */
   stockFor: (sku?: string) => number | null;
@@ -85,7 +87,10 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
           map.set(sku, {
             sku,
             unitPrice,
-            retailPrice: FALLBACK_RETAIL_PRICE,
+            wholesalerPrice: Number(row.wholesalerPrice) || 0,
+            retailPrice:
+              Number(row.retailPrice) ||
+              FALLBACK_RETAIL_PRICE,
             stock: Math.max(0, Math.floor(Number(row.stock) || 0)),
           });
         }
@@ -124,9 +129,24 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
     [prices, accountUnit],
   );
 
+  const wholesalerPriceFor = useCallback(
+    (sku?: string) => {
+      if (sku && prices.has(sku)) return prices.get(sku)!.wholesalerPrice;
+      return firstMapValue(prices)?.wholesalerPrice ?? 0;
+    },
+    [prices],
+  );
+
   const retailPriceFor = useCallback(
-    (_sku?: string) => FALLBACK_RETAIL_PRICE,
-    [],
+    (sku?: string) => {
+      if (sku && prices.has(sku)) {
+        const retail = prices.get(sku)!.retailPrice;
+        return retail > 0 ? retail : FALLBACK_RETAIL_PRICE;
+      }
+      const first = firstMapValue(prices)?.retailPrice;
+      return first && first > 0 ? first : FALLBACK_RETAIL_PRICE;
+    },
+    [prices],
   );
 
   const stockFor = useCallback(
@@ -145,6 +165,7 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
       testStationsPerCase,
       pcsPerCase,
       unitPriceFor,
+      wholesalerPriceFor,
       retailPriceFor,
       stockFor,
     }),
@@ -155,6 +176,7 @@ export function CatalogPricesProvider({ children }: { children: React.ReactNode 
       testStationsPerCase,
       pcsPerCase,
       unitPriceFor,
+      wholesalerPriceFor,
       retailPriceFor,
       stockFor,
     ],
@@ -177,6 +199,7 @@ export function useCatalogPrices() {
       testStationsPerCase: 0,
       pcsPerCase: 95,
       unitPriceFor: () => FALLBACK_RETAIL_PRICE,
+      wholesalerPriceFor: () => 0,
       retailPriceFor: () => FALLBACK_RETAIL_PRICE,
       stockFor: () => null,
     };

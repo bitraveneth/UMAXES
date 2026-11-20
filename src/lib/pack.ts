@@ -24,10 +24,32 @@ export function caseMoqFromStored(moq: number) {
   return n;
 }
 
-/** Minimum order quantity in pieces for a SKU. */
+/** Minimum order quantity in pieces for a SKU (case-packed → moq is cases). */
 export function minOrderPcs(sku: string, moq: number) {
   if (!isCasePackedSku(sku)) return Math.max(1, Math.floor(Number(moq) || 1));
   return caseMoqFromStored(moq) * PCS_PER_CASE;
+}
+
+/**
+ * SHOP (retail) MOQ is stored and enforced in pieces.
+ * Distro / Wholesaler keep case MOQ for case-packed SKUs.
+ */
+export function minOrderPcsForLevel(
+  level: "DISTRO" | "WHOLESALER" | "SHOP" | string,
+  sku: string,
+  moq: number,
+) {
+  if (level === "SHOP" || !isCasePackedSku(sku)) {
+    return Math.max(1, Math.floor(Number(moq) || 1));
+  }
+  return minOrderPcs(sku, moq);
+}
+
+export function sellsByCase(
+  level: "DISTRO" | "WHOLESALER" | "SHOP" | string,
+  sku: string,
+) {
+  return level !== "SHOP" && isCasePackedSku(sku);
 }
 
 export function pcsFromCases(cases: number) {

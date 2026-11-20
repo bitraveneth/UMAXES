@@ -32,21 +32,31 @@ export type WarehouseActivityRow = {
   who: string;
   sku: string;
   product: string;
+  detail?: string | null;
+  reason?: string | null;
+  orderNumber?: string | null;
   previousQuantity: number | null;
   quantity: number | null;
 };
 
-function changeLabel(row: WarehouseActivityRow) {
-  if (row.previousQuantity == null || row.quantity == null) return "—";
-  if (!isCasePackedSku(row.sku)) {
-    return `${row.previousQuantity.toLocaleString()} → ${row.quantity.toLocaleString()} pcs`;
-  }
-  return `${formatPack(row.previousQuantity)} → ${formatPack(row.quantity)}`;
-}
-
-function changeDelta(row: WarehouseActivityRow) {
+function changeDeltaPcs(row: WarehouseActivityRow) {
   if (row.previousQuantity == null || row.quantity == null) return 0;
   return row.quantity - row.previousQuantity;
+}
+
+/** Case counts for display — keep before/after/delta consistent (no piece-delta rounding mismatch). */
+function caseChange(row: WarehouseActivityRow) {
+  if (row.previousQuantity == null || row.quantity == null) return null;
+  const before = casesFromPcs(row.previousQuantity);
+  const after = casesFromPcs(row.quantity);
+  return { before, after, delta: after - before };
+}
+
+function reasonTone(reason?: string | null) {
+  if (reason === "ORDER_CANCELLED" || reason === "ORDER_CANCELLED_RESTORE") {
+    return "brand" as const;
+  }
+  return "neutral" as const;
 }
 
 function ProductThumb({
@@ -275,7 +285,7 @@ export default function WarehouseStockPanel({
                       </span>
                       <span className="wh-flavor-metric">
                         <span className="wh-flavor-metric-value">
-                          {casesFromPcs(p.quantity)}
+                          {casesFromPcs(available)}
                         </span>
                       </span>
                       <span className="wh-flavor-metric">
@@ -514,31 +524,104 @@ export default function WarehouseStockPanel({
             </div>
             <ul className="wh-activity-list">
               {logs.map((row, index) => {
-                const delta = changeDelta(row);
+                const byCase = isCasePackedSku(row.sku);
+                const pcsDelta = changeDeltaPcs(row);
+                const cases = byCase ? caseChange(row) : null;
+                const delta = byCase && cases ? cases.delta : pcsDelta;
+                const detail = row.detail || (row.sku ? row.sku : null);
+                const hasFlow =
+                  row.previousQuantity != null && row.quantity != null;
+
+                let deltaText = "0";
+                if (delta > 0) {
+                  deltaText = byCase
+                    ? t("warehouse.addedCases", { n: delta })
+                    : t("warehouse.addedPcs", { n: delta });
+                } else if (delta < 0) {
+                  const n = Math.abs(delta);
+                  deltaText = byCase
+                    ? t("warehouse.removedCases", { n })
+                    : t("warehouse.removedPcs", { n });
+                }
+
                 return (
                   <li key={row.id} className="wh-activity-row">
                     <span className="wh-activity-no">{index + 1}</span>
                     <span className="wh-activity-when">{row.when}</span>
-                    <span className="wh-activity-who">{row.who}</span>
-                    <span className="wh-activity-product">{row.product}</span>
-                    <span className="wh-activity-change">
-                      <span className="wh-activity-change-main">
-                        {changeLabel(row)}
+                    <span className="wh-activity-who" title={row.who}>
+                      {row.who}
+                    </span>
+                    <span className="wh-activity-product">
+                      <span
+                        className="wh-activity-product-name"
+                        title={row.product}
+                      >
+                        {row.product}
                       </span>
-                      {delta !== 0 ? (
-                        <span
-                          className={`wh-activity-delta ${
-                            delta > 0
-                              ? "wh-activity-delta-up"
-                              : "wh-activity-delta-down"
-                          }`}
-                        >
-                          {delta > 0 ? "+" : "−"}
-                          {isCasePackedSku(row.sku)
-                            ? formatPack(Math.abs(delta))
-                            : `${Math.abs(delta)} pcs`}
+                      {detail ? (
+                        <span className="wh-activity-product-detail">
+                          {row.reason ? (
+                            <AdminBadge tone={reasonTone(row.reason)}>
+                              {row.reason === "ORDER_CANCELLED"
+                                ? t("warehouse.reasonCancel")
+                                : row.reason === "ORDER_CANCELLED_RESTORE"
+                                  ? t("warehouse.reasonRestore")
+                                  : t("warehouse.reasonAdjust")}
+                            </AdminBadge>
+                          ) : null}
+                          <span className="wh-activity-product-meta">
+                            {row.orderNumber
+                              ? row.orderNumber
+                              : row.sku
+                                ? row.sku
+                                : detail}
+                          </span>
                         </span>
                       ) : null}
+                    </span>
+                    <span className="wh-activity-change">
+                      <span
+                        className={`wh-activity-delta ${
+                          delta > 0
+                            ? "wh-activity-delta-up"
+                            : delta < 0
+                              ? "wh-activity-delta-down"
+                              : "wh-activity-delta-flat"
+                        }`}
+                      >
+                        {deltaText}
+                      </span>
+                      {hasFlow ? (
+                        <span className="wh-activity-flow">
+                          <span className="wh-activity-flow-label">
+                            {t("warehouse.stockWas")}
+                          </span>
+                          <span className="wh-activity-flow-num">
+                            {byCase && cases
+                              ? cases.before.toLocaleString()
+                              : row.previousQuantity!.toLocaleString()}
+                          </span>
+                          <span className="wh-activity-flow-unit">
+                            {byCase ? t("warehouse.cases") : t("warehouse.pieces")}
+                          </span>
+                          <span className="wh-activity-flow-arrow" aria-hidden>
+                            →
+                          </span>
+                          <span className="wh-activity-flow-label">
+                            {t("warehouse.stockNow")}
+                          </span>
+                          <span className="wh-activity-flow-num">
+                            {byCase && cases
+                              ? cases.after.toLocaleString()
+                              : row.quantity!.toLocaleString()}
+                          </span>
+                          <span className="wh-activity-flow-unit">
+                            {byCase ? t("warehouse.cases") : t("warehouse.pieces")}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="wh-activity-flow-empty">—</span>
+                      )}
                     </span>
                   </li>
                 );

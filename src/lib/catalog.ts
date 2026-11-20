@@ -15,11 +15,21 @@ export {
   slugState,
 } from "@/lib/doc-number";
 
+/** Price tiers each buyer level is allowed to see on the storefront. */
+export function priceLevelsVisibleTo(
+  level: CustomerLevel,
+): CustomerLevel[] {
+  if (level === "DISTRO") return ["DISTRO", "WHOLESALER", "SHOP"];
+  if (level === "WHOLESALER") return ["WHOLESALER", "SHOP"];
+  return ["SHOP"];
+}
+
 export async function getCatalogForLevel(level: CustomerLevel) {
+  const visiblePriceLevels = priceLevelsVisibleTo(level);
   const products = await prisma.product.findMany({
     where: { active: true },
     include: {
-      prices: { where: { level: { in: [level, "SHOP"] } } },
+      prices: { where: { level: { in: visiblePriceLevels } } },
       inventory: true,
     },
     orderBy: { name: "asc" },
@@ -33,6 +43,7 @@ export async function getCatalogForLevel(level: CustomerLevel) {
     )
     .map((p) => {
       const account = p.prices.find((row) => row.level === level);
+      const wholesaler = p.prices.find((row) => row.level === "WHOLESALER");
       const shop = p.prices.find((row) => row.level === "SHOP");
       return {
         id: p.id,
@@ -41,6 +52,8 @@ export async function getCatalogForLevel(level: CustomerLevel) {
         description: p.description,
         image: p.image,
         unitPrice: account?.unitPrice ?? shop?.unitPrice ?? 0,
+        wholesalerPrice: wholesaler?.unitPrice ?? 0,
+        retailPrice: shop?.unitPrice ?? 0,
         moq: account?.moq ?? shop?.moq ?? CASE_MOQ_PCS,
         stock: Math.max(
           0,

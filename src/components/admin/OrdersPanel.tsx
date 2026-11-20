@@ -1,11 +1,13 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   markPaymentReceived,
   updateOrderPaymentStatus,
   updateOrderStatus,
   deletePaymentSlip,
+  restoreCancelledOrderStock,
 } from "@/lib/admin-actions";
 import type { OrderStatus, PaymentMethod } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
@@ -51,6 +53,8 @@ export type OrdersPanelItem = {
     trackingNumber: string | null;
     status: string;
   }[];
+  /** Cancelled order already had inventory restored (auto or manual). */
+  stockRestored?: boolean;
 };
 
 type FilterKey =
@@ -187,6 +191,7 @@ export default function OrdersPanel({
   openId?: string | null;
 }) {
   const { t, locale } = useAdminI18n();
+  const router = useRouter();
   const { confirm, showToast, ui } = useAppFeedback();
   const [editingId, setEditingId] = useState<string | null>(openId);
   const [filter, setFilter] = useState<FilterKey>(() => {
@@ -229,6 +234,31 @@ export default function OrdersPanel({
     } catch (e) {
       showToast(
         e instanceof Error ? e.message : "Cancel failed",
+        "danger",
+      );
+    }
+  }
+
+  async function onRestoreStock(order: OrdersPanelItem) {
+    if (!canCancelOrder || order.status !== "CANCELLED") return;
+    if (order.stockRestored) {
+      showToast(t("orders.restoreStockAlready"), "danger");
+      return;
+    }
+    const ok = await confirm({
+      title: t("orders.restoreStockTitle"),
+      message: t("orders.restoreStockConfirm"),
+      confirmLabel: t("orders.restoreStock"),
+      tone: "danger",
+    });
+    if (!ok) return;
+    try {
+      await restoreCancelledOrderStock(order.id);
+      showToast(t("orders.restoreStockDone"), "success");
+      router.refresh();
+    } catch (e) {
+      showToast(
+        e instanceof Error ? e.message : t("orders.restoreStockAlready"),
         "danger",
       );
     }
@@ -405,6 +435,20 @@ export default function OrdersPanel({
                                 {t("orders.cancelOrder")}
                               </button>
                             ) : null}
+                            {canCancelOrder &&
+                            order.status === "CANCELLED" &&
+                            !order.stockRestored ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void onRestoreStock(order);
+                                }}
+                                className="admin-btn admin-btn-secondary admin-btn-sm"
+                              >
+                                {t("orders.restoreStock")}
+                              </button>
+                            ) : null}
                             <button
                               type="button"
                               onClick={() =>
@@ -435,6 +479,7 @@ export default function OrdersPanel({
                               canDeleteSlip={canDeleteSlip}
                               canCancelOrder={canCancelOrder}
                               onCancelOrder={() => onCancelOrder(order)}
+                              onRestoreStock={() => onRestoreStock(order)}
                               payLabel={payLabel}
                               statusLabel={statusLabel}
                               onClose={() => setEditingId(null)}
@@ -703,6 +748,7 @@ function OrderExpand({
   canDeleteSlip,
   canCancelOrder = false,
   onCancelOrder,
+  onRestoreStock,
   payLabel,
   statusLabel,
   onClose,
@@ -712,6 +758,7 @@ function OrderExpand({
   canDeleteSlip: boolean;
   canCancelOrder?: boolean;
   onCancelOrder?: () => void | Promise<void>;
+  onRestoreStock?: () => void | Promise<void>;
   payLabel: (m: PaymentMethod) => string;
   statusLabel: (s: OrderStatus) => string;
   onClose: () => void;
@@ -1112,6 +1159,24 @@ function OrderExpand({
                     {t("orders.cancelOrder")}
                   </button>
                 ) : null}
+                {canCancelOrder &&
+                order.status === "CANCELLED" &&
+                !order.stockRestored ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-secondary admin-btn-sm"
+                    onClick={() => void onRestoreStock?.()}
+                  >
+                    {t("orders.restoreStock")}
+                  </button>
+                ) : null}
+                {canCancelOrder &&
+                order.status === "CANCELLED" &&
+                order.stockRestored ? (
+                  <p className="admin-order-ops-note text-[var(--admin-muted)]">
+                    {t("orders.restoreStockAlready")}
+                  </p>
+                ) : null}
               </div>
             ) : (
               <div className="admin-order-ops-frame-stack space-y-2">
@@ -1126,6 +1191,24 @@ function OrderExpand({
                   >
                     {t("orders.cancelOrder")}
                   </button>
+                ) : null}
+                {canCancelOrder &&
+                order.status === "CANCELLED" &&
+                !order.stockRestored ? (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-secondary admin-btn-sm"
+                    onClick={() => void onRestoreStock?.()}
+                  >
+                    {t("orders.restoreStock")}
+                  </button>
+                ) : null}
+                {canCancelOrder &&
+                order.status === "CANCELLED" &&
+                order.stockRestored ? (
+                  <p className="admin-order-ops-note text-[var(--admin-muted)]">
+                    {t("orders.restoreStockAlready")}
+                  </p>
                 ) : null}
               </div>
             )}

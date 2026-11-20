@@ -8,9 +8,9 @@ import {
 } from "@/lib/catalog";
 import { prisma } from "@/lib/db";
 import {
-  isCasePackedSku,
   isWholeCases,
-  minOrderPcs,
+  minOrderPcsForLevel,
+  sellsByCase,
 } from "@/lib/pack";
 import {
   TEST_STATION_NAME,
@@ -141,9 +141,9 @@ export async function createOrder(
         error: `No price for ${sku} at company level (${company.level})`,
       };
     }
-    // Same as storefront: case-packed SKUs sell in whole cases (95 pcs).
-    if (isCasePackedSku(sku)) {
-      const minPcs = minOrderPcs(sku, price.moq);
+    const minPcs = minOrderPcsForLevel(company.level, sku, price.moq);
+    if (sellsByCase(company.level, sku)) {
+      // Distro / Wholesaler: whole cases only.
       if (quantity < minPcs || !isWholeCases(quantity)) {
         return {
           ok: false,
@@ -151,11 +151,12 @@ export async function createOrder(
           error: `${product.name} is sold by the case (${minPcs} pcs / case)`,
         };
       }
-    } else if (quantity < Math.max(1, Math.floor(Number(price.moq) || 1))) {
+    } else if (quantity < minPcs) {
+      // SHOP (and non-case SKUs): MOQ in pieces.
       return {
         ok: false,
         status: 400,
-        error: `${product.name} MOQ is ${price.moq}`,
+        error: `${product.name} MOQ is ${minPcs} pcs`,
       };
     }
     const available =
@@ -502,4 +503,211 @@ export async function createOrder(
   }
 
   return { ok: true, order };
+}
+
+/** True if cancel/manual restore already ran for this order (blocks double restore). */
+export async function orderStockAlreadyRestored(orderId: string) {
+  const marker = await prisma.auditLog.findFirst({
+    where: {
+      action: "ORDER_STOCK_RESTORED",
+      entity: "Order",
+      entityId: orderId,
+    },
+    select: { id: true },
+  });
+  if (marker) return true;
+
+  const adjusts = await prisma.auditLog.findMany({
+    where: {
+      action: "INVENTORY_ADJUST",
+      meta: { contains: orderId },
+    },
+    select: { meta: true },
+    take: 40,
+  });
+  for (const row of adjusts) {
+    if (!row.meta) continue;
+    try {
+      const meta = JSON.parse(row.meta) as {
+        reason?: string;
+        orderId?: string;
+      };
+      if (
+        meta.orderId === orderId &&
+        (meta.reason === "ORDER_CANCELLED" ||
+          meta.reason === "ORDER_CANCELLED_RESTORE")
+      ) {
+        return true;
+      }
+    } catch {
+      /* ignore bad meta */
+    }
+  }
+  return false;
+}
+
+/**
+ * Reverse inventory taken/held when an order was created:
+ * - test-station: add `quantity` back (create deducted it)
+ * - normal SKUs: release `reserved`; if no hold exists (seed/legacy), add the
+ *   shortfall back onto `quantity` so available stock still rises by the line qty
+ * Always writes INVENTORY_ADJUST so Warehouse → Stock activity shows the restore.
+ * Call only on first transition into CANCELLED, or via manual Restore stock.
+ */
+export async function releaseOrderInventoryHold(
+  orderId: string,
+  opts?: {
+    actorUserId?: string | null;
+    orderNumber?: string | null;
+    source?: "cancel" | "manual";
+  },
+) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      orderNumber: true,
+      items: {
+        select: {
+          productId: true,
+          sku: true,
+          name: true,
+          quantity: true,
+        },
+      },
+    },
+  });
+  if (!order?.items.length) return;
+
+  const orderNumber = opts?.orderNumber || order.orderNumber;
+  const actorUserId = opts?.actorUserId || null;
+  const source = opts?.source === "manual" ? "manual" : "cancel";
+  const reason =
+    source === "manual" ? "ORDER_CANCELLED_RESTORE" : "ORDER_CANCELLED";
+  const nameSuffix =
+    source === "manual" ? `restore ${orderNumber}` : `cancel ${orderNumber}`;
+
+  await prisma.$transaction(async (tx) => {
+    for (const item of order.items) {
+      const qty = Math.max(0, Math.floor(item.quantity || 0));
+      if (!qty) continue;
+
+      let productId = item.productId;
+      let productName = item.name;
+      let productSku = item.sku;
+
+      if (!productId) {
+        const product = await tx.product.findUnique({
+          where: { sku: item.sku },
+          select: { id: true, name: true, sku: true },
+        });
+        if (!product) continue;
+        productId = product.id;
+        productName = product.name;
+        productSku = product.sku;
+      } else {
+        const product = await tx.product.findUnique({
+          where: { id: productId },
+          select: { name: true, sku: true },
+        });
+        if (product) {
+          productName = product.name;
+          productSku = product.sku;
+        }
+      }
+
+      const inv = await tx.inventory.findUnique({
+        where: { productId },
+        select: { quantity: true, reserved: true },
+      });
+      const onHand = inv?.quantity ?? 0;
+      const reserved = inv?.reserved ?? 0;
+      const prevAvailable = Math.max(0, onHand - reserved);
+
+      if (item.sku === TEST_STATION_SKU || productSku === TEST_STATION_SKU) {
+        const nextQty = onHand + qty;
+        await tx.inventory.upsert({
+          where: { productId },
+          create: {
+            productId,
+            quantity: qty,
+            reserved: 0,
+          },
+          update: { quantity: nextQty },
+        });
+        await tx.auditLog.create({
+          data: {
+            userId: actorUserId,
+            action: "INVENTORY_ADJUST",
+            entity: "Product",
+            entityId: productId,
+            meta: JSON.stringify({
+              sku: productSku,
+              name: `${productName} · ${nameSuffix}`,
+              previousQuantity: onHand,
+              quantity: nextQty,
+              reason,
+              orderId,
+              orderNumber,
+              source,
+            }),
+          },
+        });
+        continue;
+      }
+
+      const releasedFromReserved = Math.min(qty, reserved);
+      const shortfall = qty - releasedFromReserved;
+      const nextReserved = reserved - releasedFromReserved;
+      const nextOnHand = onHand + shortfall;
+      const nextAvailable = Math.max(0, nextOnHand - nextReserved);
+
+      await tx.inventory.upsert({
+        where: { productId },
+        create: {
+          productId,
+          quantity: shortfall,
+          reserved: 0,
+        },
+        update: {
+          quantity: nextOnHand,
+          reserved: nextReserved,
+        },
+      });
+
+      // Always log — Stock activity must show cancel restores.
+      await tx.auditLog.create({
+        data: {
+          userId: actorUserId,
+          action: "INVENTORY_ADJUST",
+          entity: "Product",
+          entityId: productId,
+          meta: JSON.stringify({
+            sku: productSku,
+            name: `${productName} · ${nameSuffix}`,
+            previousQuantity: prevAvailable,
+            quantity: nextAvailable,
+            previousReserved: reserved,
+            reserved: nextReserved,
+            onHandBefore: onHand,
+            onHandAfter: nextOnHand,
+            reason,
+            orderId,
+            orderNumber,
+            source,
+          }),
+        },
+      });
+    }
+
+    // One marker per order — blocks double Restore stock / double cancel restore.
+    await tx.auditLog.create({
+      data: {
+        userId: actorUserId,
+        action: "ORDER_STOCK_RESTORED",
+        entity: "Order",
+        entityId: orderId,
+        meta: JSON.stringify({ orderNumber, source }),
+      },
+    });
+  });
 }

@@ -156,30 +156,22 @@ export default function AddUserForm({
 
   function validate(fd: FormData) {
     const errors: Partial<Record<FieldKey, string>> = {};
-    const companyName = String(fd.get("companyName") || "").trim();
-    const contactName = String(fd.get("contactName") || "").trim();
     const email = String(fd.get("email") || "").trim();
     const phone = String(fd.get("phone") || "").trim();
     const password = String(fd.get("password") || "");
     const confirmPassword = String(fd.get("confirmPassword") || "");
-    const address = readAddress(fd);
 
-    if (!companyName) errors.companyName = t("users.errCompany");
-    if (!contactName) errors.contactName = t("users.errContact");
-    if (!email) errors.email = t("users.errEmail");
-    else if (!validEmail(email)) errors.email = t("users.errEmailInvalid");
-    if (!phone) errors.phone = t("users.errPhone");
-    else if (!validPhone(phone)) errors.phone = t("users.errPhoneInvalid");
-    if (!password) errors.password = t("users.errPassword");
-    else if (password.length < 6) errors.password = t("users.passwordHint");
-    if (!confirmPassword) errors.confirmPassword = t("users.errConfirm");
-    else if (password !== confirmPassword) {
-      errors.confirmPassword = t("users.passwordMismatch");
+    // Only Account type is required. Validate format when optional fields are filled.
+    if (email && !validEmail(email)) errors.email = t("users.errEmailInvalid");
+    if (phone && !validPhone(phone)) errors.phone = t("users.errPhoneInvalid");
+    if (password && password.length < 6) {
+      errors.password = t("users.passwordHint");
     }
-    if (!address.line1) errors.line1 = t("users.errLine1");
-    if (!address.city) errors.city = t("users.errCity");
-    if (!address.postalCode) errors.postalCode = t("users.errPostal");
-    if (!address.country) errors.country = t("users.errCountry");
+    if (password || confirmPassword) {
+      if (password !== confirmPassword) {
+        errors.confirmPassword = t("users.passwordMismatch");
+      }
+    }
 
     return errors;
   }
@@ -302,12 +294,11 @@ export default function AddUserForm({
           <Field
             icon={<Building2 className="h-3.5 w-3.5" strokeWidth={1.9} />}
             label={t("customers.company")}
-            required
+            optionalLabel={t("users.optional")}
             error={fieldErrors.companyName}
           >
             <input
               name="companyName"
-              required
               aria-invalid={Boolean(fieldErrors.companyName)}
               onChange={() => clearField("companyName")}
               placeholder={t("users.phCompany")}
@@ -317,12 +308,11 @@ export default function AddUserForm({
           <Field
             icon={<UserRound className="h-3.5 w-3.5" strokeWidth={1.9} />}
             label={t("customers.contactName")}
-            required
+            optionalLabel={t("users.optional")}
             error={fieldErrors.contactName}
           >
             <input
               name="contactName"
-              required
               aria-invalid={Boolean(fieldErrors.contactName)}
               onChange={() => clearField("contactName")}
               placeholder={t("users.phContact")}
@@ -332,13 +322,12 @@ export default function AddUserForm({
           <Field
             icon={<Mail className="h-3.5 w-3.5" strokeWidth={1.9} />}
             label={t("customers.email")}
-            required
+            optionalLabel={t("users.optional")}
             error={fieldErrors.email}
           >
             <input
               name="email"
               type="email"
-              required
               autoComplete="off"
               aria-invalid={Boolean(fieldErrors.email)}
               onChange={() => clearField("email")}
@@ -349,13 +338,12 @@ export default function AddUserForm({
           <Field
             icon={<Phone className="h-3.5 w-3.5" strokeWidth={1.9} />}
             label={t("customers.phone")}
-            required
+            optionalLabel={t("users.optional")}
             error={fieldErrors.phone}
           >
             <input
               name="phone"
               type="tel"
-              required
               autoComplete="off"
               aria-invalid={Boolean(fieldErrors.phone)}
               onChange={() => clearField("phone")}
@@ -377,14 +365,13 @@ export default function AddUserForm({
           <Field
             icon={<Lock className="h-3.5 w-3.5" strokeWidth={1.9} />}
             label={t("users.password")}
-            required
+            optionalLabel={t("users.optional")}
             error={fieldErrors.password}
             hint={fieldErrors.password ? undefined : t("users.passwordHint")}
           >
             <input
               name="password"
               type="password"
-              required
               minLength={6}
               autoComplete="new-password"
               aria-invalid={Boolean(fieldErrors.password)}
@@ -395,13 +382,12 @@ export default function AddUserForm({
           <Field
             icon={<Lock className="h-3.5 w-3.5" strokeWidth={1.9} />}
             label={t("users.confirmPassword")}
-            required
+            optionalLabel={t("users.optional")}
             error={fieldErrors.confirmPassword}
           >
             <input
               name="confirmPassword"
               type="password"
-              required
               minLength={6}
               autoComplete="new-password"
               aria-invalid={Boolean(fieldErrors.confirmPassword)}
@@ -448,47 +434,44 @@ export default function AddUserForm({
           <p className="mb-3 flex items-center gap-2 text-xs font-semibold tracking-wide text-[var(--admin-muted)] uppercase">
             <MapPin className="h-3.5 w-3.5 text-[var(--admin-brand-500)]" />
             {t("users.shipAddress")}
-            <span className="admin-req" title="Required">
-              *
+            <span className="text-[11px] font-normal normal-case tracking-normal text-[var(--admin-muted)]">
+              {t("users.optional")}
             </span>
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field
               icon={<UserRound className="h-3.5 w-3.5" strokeWidth={1.9} />}
               label={t("customers.fullName")}
-              required
+              optionalLabel={t("users.optional")}
               className="sm:col-span-1"
             >
               <input
                 name="recipientName"
                 autoComplete="shipping name"
-                required
                 className="admin-input mt-0 w-full"
               />
             </Field>
             <Field
               icon={<Phone className="h-3.5 w-3.5" strokeWidth={1.9} />}
               label={t("customers.phoneNumber")}
-              required
+              optionalLabel={t("users.optional")}
             >
               <input
                 name="shipPhone"
                 type="tel"
                 autoComplete="shipping tel"
-                required
                 className="admin-input mt-0 w-full"
               />
             </Field>
             <Field
               icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.9} />}
               label={t("customers.line1")}
-              required
+              optionalLabel={t("users.optional")}
               error={fieldErrors.line1}
               className="sm:col-span-2"
             >
               <input
                 name="line1"
-                required
                 aria-invalid={Boolean(fieldErrors.line1)}
                 onChange={() => clearField("line1")}
                 placeholder={t("users.phLine1")}
@@ -509,12 +492,11 @@ export default function AddUserForm({
             <Field
               icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.9} />}
               label={t("customers.city")}
-              required
+              optionalLabel={t("users.optional")}
               error={fieldErrors.city}
             >
               <input
                 name="city"
-                required
                 aria-invalid={Boolean(fieldErrors.city)}
                 onChange={() => clearField("city")}
                 placeholder={t("users.phCity")}
@@ -535,12 +517,11 @@ export default function AddUserForm({
             <Field
               icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.9} />}
               label={t("customers.postalCode")}
-              required
+              optionalLabel={t("users.optional")}
               error={fieldErrors.postalCode}
             >
               <input
                 name="postalCode"
-                required
                 aria-invalid={Boolean(fieldErrors.postalCode)}
                 onChange={() => clearField("postalCode")}
                 placeholder={t("users.phPostal")}
@@ -550,12 +531,11 @@ export default function AddUserForm({
             <Field
               icon={<MapPin className="h-3.5 w-3.5" strokeWidth={1.9} />}
               label={t("customers.country")}
-              required
+              optionalLabel={t("users.optional")}
               error={fieldErrors.country}
             >
               <input
                 name="country"
-                required
                 defaultValue="United States"
                 aria-invalid={Boolean(fieldErrors.country)}
                 onChange={() => clearField("country")}

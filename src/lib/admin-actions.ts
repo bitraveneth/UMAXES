@@ -10,6 +10,10 @@ import type {
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { CASE_MOQ_CASES, TEST_STATION_SKU, caseMoqFromStored, isCasePackedSku } from "@/lib/pack";
+import {
+  orderStockAlreadyRestored,
+  releaseOrderInventoryHold,
+} from "@/lib/create-order";
 import { canAccessAdmin } from "@/lib/rbac";
 import { deleteOrderPaymentSlip } from "@/lib/payment-slip-ops";
 import { isValidPhone } from "@/lib/phone";
@@ -230,24 +234,24 @@ function isCustomerLevel(value: string): value is CustomerLevel {
  */
 export async function createCustomerOnBehalf(input: {
   level: CustomerLevel;
-  companyName: string;
+  companyName?: string;
   taxId?: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  password: string;
+  contactName?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
   confirmPassword?: string;
   creditLimit?: number;
   paymentTermsDays?: number;
   /** Ignored — staff-created accounts are always APPROVED and usable now. */
   status?: "APPROVED" | "PENDING";
   address?: {
-    line1: string;
+    line1?: string;
     line2?: string;
-    city: string;
+    city?: string;
     region?: string;
-    postalCode: string;
-    country: string;
+    postalCode?: string;
+    country?: string;
     label?: string;
     recipientName?: string;
     phone?: string;
@@ -260,28 +264,33 @@ export async function createCustomerOnBehalf(input: {
     throw new Error("Choose wholesaler, distributor, or retail");
   }
 
-  const companyName = input.companyName.trim();
-  const contactName = input.contactName.trim();
-  const email = input.email?.trim().toLowerCase() || "";
-  const phone = input.phone?.trim() || "";
-  const password = input.password;
+  const levelLabel =
+    input.level === "DISTRO"
+      ? "Distributor"
+      : input.level === "WHOLESALER"
+        ? "Wholesaler"
+        : "Retail";
+  const companyName =
+    input.companyName?.trim() || `New ${levelLabel}`;
+  const contactName = input.contactName?.trim() || null;
+  const email = input.email?.trim().toLowerCase() || null;
+  const phone = input.phone?.trim() || null;
+  const password = input.password?.trim() || "";
   const confirmPassword = input.confirmPassword;
 
-  if (!companyName) throw new Error("Company name required");
-  if (!contactName) throw new Error("Contact name required");
-  if (!email) throw new Error("Email is required");
-  if (!email.includes("@") || !email.includes(".")) {
+  if (email && (!email.includes("@") || !email.includes("."))) {
     throw new Error("Enter a valid email");
   }
-  if (!phone) throw new Error("Phone is required");
-  const phoneDigits = phone.replace(/\D/g, "");
-  if (phoneDigits.length < 7 || phoneDigits.length > 15) {
-    throw new Error("Enter a valid phone number");
+  if (phone) {
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+      throw new Error("Enter a valid phone number");
+    }
   }
-  if (!password || password.length < 6) {
+  if (password && password.length < 6) {
     throw new Error("Password must be at least 6 characters");
   }
-  if (confirmPassword !== undefined && confirmPassword !== password) {
+  if (password && confirmPassword !== undefined && confirmPassword !== password) {
     throw new Error("Passwords do not match");
   }
 
@@ -289,14 +298,18 @@ export async function createCustomerOnBehalf(input: {
   const city = input.address?.city?.trim() || "";
   const postalCode = input.address?.postalCode?.trim() || "";
   const country = input.address?.country?.trim() || "";
-  if (!line1 || !city || !postalCode || !country) {
-    throw new Error("Shipping address is required");
-  }
+  const hasAddress = Boolean(line1 || city || postalCode || country);
+  // Create address only when enough core fields are present.
+  const canSaveAddress = Boolean(line1 && city && postalCode && country);
 
-  const existsEmail = await prisma.user.findUnique({ where: { email } });
-  if (existsEmail) throw new Error("Email is already registered");
-  const existsPhone = await prisma.user.findUnique({ where: { phone } });
-  if (existsPhone) throw new Error("Phone is already registered");
+  if (email) {
+    const existsEmail = await prisma.user.findUnique({ where: { email } });
+    if (existsEmail) throw new Error("Email is already registered");
+  }
+  if (phone) {
+    const existsPhone = await prisma.user.findUnique({ where: { phone } });
+    if (existsPhone) throw new Error("Phone is already registered");
+  }
 
   const defaults = creditDefaultsByLevel[input.level];
   const status = "APPROVED";
@@ -313,7 +326,10 @@ export async function createCustomerOnBehalf(input: {
       : defaults.paymentTermsDays;
 
   const bcrypt = await import("bcryptjs");
-  const passwordHash = await bcrypt.hash(password, 12);
+  const { randomBytes } = await import("crypto");
+  const passwordToHash =
+    password || randomBytes(18).toString("base64url");
+  const passwordHash = await bcrypt.hash(passwordToHash, 12);
 
   const created = await prisma.$transaction(async (tx) => {
     const co = await tx.company.create({
@@ -341,22 +357,26 @@ export async function createCustomerOnBehalf(input: {
       },
     });
 
-    await tx.address.create({
-      data: {
-        companyId: co.id,
-        label: input.address?.label?.trim() || "Default",
-        recipientName:
-          input.address?.recipientName?.trim() || contactName,
-        phone: input.address?.phone?.trim() || phone,
-        line1,
-        line2: input.address?.line2?.trim() || null,
-        city,
-        region: input.address?.region?.trim() || null,
-        postalCode,
-        country,
-        isDefault: true,
-      },
-    });
+    if (canSaveAddress) {
+      await tx.address.create({
+        data: {
+          companyId: co.id,
+          label: input.address?.label?.trim() || "Default",
+          recipientName:
+            input.address?.recipientName?.trim() || contactName,
+          phone: input.address?.phone?.trim() || phone,
+          line1,
+          line2: input.address?.line2?.trim() || null,
+          city,
+          region: input.address?.region?.trim() || null,
+          postalCode,
+          country,
+          isDefault: true,
+        },
+      });
+    } else if (hasAddress) {
+      // Partial address ignored — staff can complete later in directory/edit.
+    }
 
     await tx.auditLog.create({
       data: {
@@ -372,6 +392,8 @@ export async function createCustomerOnBehalf(input: {
           userId: user.id,
           emailVerifySkipped: true,
           role: "CUSTOMER",
+          passwordSetByStaff: Boolean(password),
+          addressSaved: canSaveAddress,
         }),
       },
     });
@@ -849,6 +871,18 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
     }),
   ]);
 
+  // First transition into CANCELLED restores inventory holds from order create.
+  if (status === "CANCELLED" && before.status !== "CANCELLED") {
+    const already = await orderStockAlreadyRestored(orderId);
+    if (!already) {
+      await releaseOrderInventoryHold(orderId, {
+        actorUserId: session.user.id,
+        orderNumber: before.orderNumber,
+        source: "cancel",
+      });
+    }
+  }
+
   if (status === "SENT_TO_SUPPLIER" || status === "COMPLETED") {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -884,6 +918,50 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   revalidatePath("/admin/logistics");
   revalidatePath("/admin/suppliers");
   revalidatePath("/admin/notifications");
+  if (status === "CANCELLED") {
+    revalidatePath("/admin/warehouse");
+    revalidatePath("/admin/catalog");
+  }
+}
+
+/**
+ * Manual stock restore for cancelled orders that never got inventory back
+ * (e.g. cancelled before the restore fix). Safe to click once — blocked after.
+ */
+export async function restoreCancelledOrderStock(orderId: string) {
+  const session = await requireRoles(["ADMIN", "SUPER_ADMIN"]);
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, orderNumber: true, status: true },
+  });
+  if (!order) throw new Error("Order not found");
+  if (order.status !== "CANCELLED") {
+    throw new Error("Only cancelled orders can restore stock");
+  }
+  if (await orderStockAlreadyRestored(orderId)) {
+    throw new Error("Stock was already restored for this order");
+  }
+
+  await releaseOrderInventoryHold(orderId, {
+    actorUserId: session.user.id,
+    orderNumber: order.orderNumber,
+    source: "manual",
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "ORDER_STOCK_RESTORE_MANUAL",
+      entity: "Order",
+      entityId: orderId,
+      meta: JSON.stringify({ orderNumber: order.orderNumber }),
+    },
+  });
+
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/warehouse");
+  revalidatePath("/admin/catalog");
 }
 
 export async function assignOrderToSupplier(
@@ -1572,9 +1650,11 @@ export async function updateProductPrice(
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) throw new Error("Product not found");
 
-  const storedMoq = isCasePackedSku(product.sku)
-    ? caseMoqFromStored(moq)
-    : Math.max(1, Math.floor(Number(moq) || 1));
+  // SHOP MOQ = pieces; Distro/Wholesaler case-packed MOQ = cases.
+  const storedMoq =
+    level === "SHOP" || !isCasePackedSku(product.sku)
+      ? Math.max(1, Math.floor(Number(moq) || 1))
+      : caseMoqFromStored(moq);
 
   await prisma.priceByLevel.upsert({
     where: { productId_level: { productId, level } },
@@ -3183,9 +3263,12 @@ export async function setProductVisibility(
   levels: CustomerLevel[],
 ) {
   const session = await requireRoles(["ADMIN"]);
+  // Empty selection = visible to everyone (same as all three checked).
+  const nextLevels =
+    levels.length === 0 ? (["DISTRO", "WHOLESALER", "SHOP"] as CustomerLevel[]) : levels;
   await prisma.product.update({
     where: { id: productId },
-    data: { visibleLevels: levels },
+    data: { visibleLevels: nextLevels },
   });
   await prisma.auditLog.create({
     data: {
@@ -3193,7 +3276,7 @@ export async function setProductVisibility(
       action: "PRODUCT_VISIBILITY",
       entity: "Product",
       entityId: productId,
-      meta: JSON.stringify({ levels }),
+      meta: JSON.stringify({ levels: nextLevels }),
     },
   });
   revalidatePath("/admin/catalog");
@@ -3229,6 +3312,8 @@ export async function createProduct(input: {
       description: input.description?.trim() || null,
       image: input.image?.trim() || null,
       active: input.active !== false,
+      // Default: visible to every buyer tier. Admin can uncheck + save to restrict.
+      visibleLevels: ["DISTRO", "WHOLESALER", "SHOP"],
       inventory: { create: { quantity: stock, reserved: 0 } },
       prices: {
         create: [
@@ -3245,7 +3330,8 @@ export async function createProduct(input: {
           {
             level: "SHOP",
             unitPrice: Number(input.shopPrice ?? 0),
-            moq: Math.max(1, Math.floor(input.shopMoq ?? CASE_MOQ_CASES)),
+            // Retail MOQ is pieces (units), not cases.
+            moq: Math.max(1, Math.floor(input.shopMoq ?? 1)),
           },
         ],
       },

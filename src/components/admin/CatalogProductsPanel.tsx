@@ -303,6 +303,7 @@ function ProductEditPanel({
               <input
                 type="checkbox"
                 name={level}
+                // Default all tiers on (empty = all). Uncheck only to hide a level.
                 defaultChecked={
                   product.visibleLevels.length === 0 ||
                   product.visibleLevels.includes(level)
@@ -356,13 +357,13 @@ function ProductEditPanel({
                   />
                 </label>
                 <label className="admin-label mt-2 text-xs">
-                  {t("catalog.moq")}
+                  {level === "SHOP" ? t("catalog.moqPcs") : t("catalog.moq")}
                   <input
                     name="moq"
                     type="number"
                     min={1}
                     defaultValue={
-                      product.sku === TEST_STATION_SKU
+                      product.sku === TEST_STATION_SKU || level === "SHOP"
                         ? (price?.moq ?? 1)
                         : caseMoqFromStored(price?.moq ?? CASE_MOQ_CASES)
                     }
@@ -373,7 +374,9 @@ function ProductEditPanel({
                 <p className="mt-1 text-[11px] leading-snug text-[var(--admin-muted)]">
                   {product.sku === TEST_STATION_SKU
                     ? t("catalog.bonusMoqHint")
-                    : t("catalog.moqHint")}
+                    : level === "SHOP"
+                      ? t("catalog.moqPcsHint")
+                      : t("catalog.moqHint")}
                 </p>
                 <button
                   type="submit"

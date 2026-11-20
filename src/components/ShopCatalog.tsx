@@ -404,6 +404,7 @@ export default function ShopCatalog() {
                     <div className="mt-1">
                       <DualStorePrice
                         amount={unitPrice}
+                        sku={flavors[0].id}
                         className="font-display text-4xl font-extrabold tracking-tight text-black"
                       />
                     </div>

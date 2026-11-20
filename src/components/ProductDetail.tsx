@@ -384,6 +384,7 @@ export default function ProductDetail({ flavor }: { flavor: Flavor }) {
             <div className="mt-2.5 sm:mt-3">
               <DualStorePrice
                 amount={unitPrice}
+                sku={flavor.id}
                 className="font-display text-[1.75rem] font-bold tracking-tight text-black sm:text-4xl"
               />
             </div>

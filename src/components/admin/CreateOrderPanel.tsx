@@ -190,6 +190,8 @@ export default function CreateOrderPanel({
     void Promise.resolve().then(() => selectCompany(id));
   }, [initialCompanyId, companies]);
 
+  const isShop = ctx?.company.level === "SHOP";
+
   function setCases(sku: string, stockPcs: number, raw: string) {
     const cases = Math.floor(Number(raw) || 0);
     const maxCases = Math.floor(stockPcs / pcsPerCase);
@@ -210,6 +212,24 @@ export default function CreateOrderPanel({
     const currentCases = casesFromPcs(currentPcs);
     const nextCases = currentCases + delta;
     setCases(sku, stockPcs, String(nextCases));
+  }
+
+  function setPcs(sku: string, stockPcs: number, raw: string) {
+    const pcs = Math.floor(Number(raw) || 0);
+    setQtyBySku((prev) => {
+      const next = { ...prev };
+      if (pcs <= 0) {
+        delete next[sku];
+      } else {
+        next[sku] = Math.min(stockPcs, Math.max(1, pcs));
+      }
+      return next;
+    });
+  }
+
+  function bumpPcs(sku: string, stockPcs: number, delta: number) {
+    const currentPcs = qtyBySku[sku] || 0;
+    setPcs(sku, stockPcs, String(currentPcs + delta));
   }
 
   function submit() {
@@ -401,8 +421,9 @@ export default function CreateOrderPanel({
               <div>
                 <h2 className="text-base font-semibold">2. Add products</h2>
                 <p className="mt-1 text-sm text-[var(--admin-muted)]">
-                  Same as the storefront: sold by the case ({pcsPerCase} pcs).{" "}
-                  {TEST_STATION_PER_CASE_COPY}.
+                  {isShop
+                    ? "Retail (SHOP): sold by the piece. MOQ is in pcs."
+                    : `Same as the storefront: sold by the case (${pcsPerCase} pcs). ${TEST_STATION_PER_CASE_COPY}.`}
                 </p>
               </div>
               <label className="relative block w-full max-w-xs">
@@ -422,8 +443,8 @@ export default function CreateOrderPanel({
                   <tr>
                     <th>Product</th>
                     <th>Stock</th>
-                    <th className="w-40">Cases</th>
-                    <th>Pcs</th>
+                    <th className="w-40">{isShop ? "Pcs" : "Cases"}</th>
+                    {!isShop ? <th>Pcs</th> : <th>MOQ</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -431,7 +452,10 @@ export default function CreateOrderPanel({
                     const pcs = qtyBySku[p.sku] || 0;
                     const cases = casesFromPcs(pcs);
                     const stockCases = Math.floor(p.stock / pcsPerCase);
-                    const disabled = p.stock < pcsPerCase || p.unitPrice <= 0;
+                    const moqPcs = Math.max(1, Math.floor(p.moq || 1));
+                    const disabled = isShop
+                      ? p.stock < moqPcs || p.unitPrice <= 0
+                      : p.stock < pcsPerCase || p.unitPrice <= 0;
                     return (
                       <tr key={p.id}>
                         <td>
@@ -444,18 +468,28 @@ export default function CreateOrderPanel({
                           </p>
                         </td>
                         <td className="tabular-nums text-sm">
-                          {stockCases > 0
-                            ? formatCases(stockCases)
-                            : "0 cases"}
+                          {isShop
+                            ? `${p.stock.toLocaleString()} pcs`
+                            : stockCases > 0
+                              ? formatCases(stockCases)
+                              : "0 cases"}
                         </td>
                         <td>
                           <div className="flex items-center gap-1.5">
                             <button
                               type="button"
-                              disabled={disabled || cases < 1}
-                              onClick={() => bumpCases(p.sku, p.stock, -1)}
+                              disabled={
+                                disabled || (isShop ? pcs < 1 : cases < 1)
+                              }
+                              onClick={() =>
+                                isShop
+                                  ? bumpPcs(p.sku, p.stock, -1)
+                                  : bumpCases(p.sku, p.stock, -1)
+                              }
                               className="admin-btn admin-btn-secondary admin-btn-sm !px-2"
-                              aria-label="Remove one case"
+                              aria-label={
+                                isShop ? "Remove one piece" : "Remove one case"
+                              }
                             >
                               −
                             </button>
@@ -464,26 +498,43 @@ export default function CreateOrderPanel({
                               min={0}
                               step={1}
                               disabled={disabled}
-                              value={cases || ""}
+                              value={isShop ? pcs || "" : cases || ""}
                               onChange={(e) =>
-                                setCases(p.sku, p.stock, e.target.value)
+                                isShop
+                                  ? setPcs(p.sku, p.stock, e.target.value)
+                                  : setCases(p.sku, p.stock, e.target.value)
                               }
                               placeholder="0"
                               className="admin-input w-16 text-center tabular-nums"
                             />
                             <button
                               type="button"
-                              disabled={disabled || cases >= stockCases}
-                              onClick={() => bumpCases(p.sku, p.stock, 1)}
+                              disabled={
+                                disabled ||
+                                (isShop
+                                  ? pcs >= p.stock
+                                  : cases >= stockCases)
+                              }
+                              onClick={() =>
+                                isShop
+                                  ? bumpPcs(p.sku, p.stock, 1)
+                                  : bumpCases(p.sku, p.stock, 1)
+                              }
                               className="admin-btn admin-btn-secondary admin-btn-sm !px-2"
-                              aria-label="Add one case"
+                              aria-label={
+                                isShop ? "Add one piece" : "Add one case"
+                              }
                             >
                               +
                             </button>
                           </div>
                         </td>
                         <td className="tabular-nums text-sm text-[var(--admin-muted)]">
-                          {pcs > 0 ? pcs.toLocaleString() : "—"}
+                          {isShop
+                            ? `${moqPcs} pcs`
+                            : pcs > 0
+                              ? pcs.toLocaleString()
+                              : "—"}
                         </td>
                       </tr>
                     );

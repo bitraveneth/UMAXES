@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
@@ -72,13 +72,16 @@ function matchesFilter(o: ShipmentsWorkspaceOrder, filter: ShipmentFilter) {
   return true;
 }
 
+function shipmentHref(id: string) {
+  return `/admin/logistics/shipments/${id}`;
+}
+
 export default function ShipmentsWorkspace({
   orders,
 }: {
   orders: ShipmentsWorkspaceOrder[];
 }) {
   const { t, locale } = useAdminI18n();
-  const router = useRouter();
   const [filter, setFilter] = useState<ShipmentFilter>("all");
 
   const shipments = useMemo(() => orders.filter(isShipment), [orders]);
@@ -110,10 +113,6 @@ export default function ShipmentsWorkspace({
     { key: "in_transit", labelKey: "logistics.filterTransit" },
     { key: "delivered", labelKey: "logistics.filterDelivered" },
   ];
-
-  function openView(id: string) {
-    router.push(`/admin/logistics/shipments/${id}`);
-  }
 
   return (
     <div className="space-y-4">
@@ -167,49 +166,51 @@ export default function ShipmentsWorkspace({
                 </tr>
               </thead>
               <tbody>
-                {list.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="cursor-pointer"
-                    onClick={() => openView(order.id)}
-                  >
-                    <td className="font-semibold text-[var(--admin-muted)]">
-                      {order.orderNumber}
-                    </td>
-                    <td className="font-medium text-[var(--admin-text)]">
-                      {order.companyName}
-                    </td>
-                    <td className="max-w-[10rem] truncate text-sm">
-                      {order.route}
-                    </td>
-                    <td className="whitespace-nowrap text-sm text-[var(--admin-muted)]">
-                      {formatDate(order.updatedAt)}
-                    </td>
-                    <td className="tabular-nums">{order.boxCount ?? "—"}</td>
-                    <td className="max-w-[10rem] truncate text-sm text-[var(--admin-muted)]">
-                      {order.shipment?.trackingNumber
-                        ? `${order.shipment.carrier || ""} ${order.shipment.trackingNumber}`.trim()
-                        : t("logistics.noTrackingYet")}
-                    </td>
-                    <td>
-                      <AdminBadge tone={statusTone(order.status)}>
-                        {statusLabel(order.status)}
-                      </AdminBadge>
-                    </td>
-                    <td className="text-right">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openView(order.id);
-                        }}
-                        className="admin-btn admin-btn-primary admin-btn-sm"
-                      >
-                        {t("logistics.view")}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {list.map((order) => {
+                  const href = shipmentHref(order.id);
+                  return (
+                    <tr key={order.id} className="group relative">
+                      <td className="font-semibold text-[var(--admin-muted)]">
+                        <Link
+                          href={href}
+                          prefetch
+                          className="text-inherit hover:text-[var(--admin-brand-700)] hover:underline"
+                        >
+                          {order.orderNumber}
+                        </Link>
+                      </td>
+                      <td className="font-medium text-[var(--admin-text)]">
+                        {order.companyName}
+                      </td>
+                      <td className="max-w-[10rem] truncate text-sm">
+                        {order.route}
+                      </td>
+                      <td className="whitespace-nowrap text-sm text-[var(--admin-muted)]">
+                        {formatDate(order.updatedAt)}
+                      </td>
+                      <td className="tabular-nums">{order.boxCount ?? "—"}</td>
+                      <td className="max-w-[10rem] truncate text-sm text-[var(--admin-muted)]">
+                        {order.shipment?.trackingNumber
+                          ? `${order.shipment.carrier || ""} ${order.shipment.trackingNumber}`.trim()
+                          : t("logistics.noTrackingYet")}
+                      </td>
+                      <td>
+                        <AdminBadge tone={statusTone(order.status)}>
+                          {statusLabel(order.status)}
+                        </AdminBadge>
+                      </td>
+                      <td className="text-right">
+                        <Link
+                          href={href}
+                          prefetch
+                          className="admin-btn admin-btn-primary admin-btn-sm"
+                        >
+                          {t("logistics.view")}
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

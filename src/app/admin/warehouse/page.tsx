@@ -58,6 +58,9 @@ export default async function WarehousePage() {
         logs={logs.map((row) => {
           let sku = "";
           let product = "—";
+          let detail: string | null = null;
+          let reason: string | null = null;
+          let orderNumber: string | null = null;
           let previousQuantity: number | null = null;
           let quantity: number | null = null;
           if (row.meta) {
@@ -67,9 +70,27 @@ export default async function WarehousePage() {
                 name?: string;
                 previousQuantity?: number;
                 quantity?: number;
+                reason?: string;
+                orderNumber?: string;
+                source?: string;
               };
               sku = m.sku || "";
-              product = m.name || m.sku || "—";
+              const rawName = m.name || m.sku || "—";
+              // Strip " · cancel UMX-…" / " · restore …" baked into older logs
+              product = rawName.split(" · ")[0] || rawName;
+              reason = m.reason || null;
+              orderNumber = m.orderNumber || null;
+              if (reason === "ORDER_CANCELLED") {
+                detail = orderNumber
+                  ? `Cancel restore · ${orderNumber}`
+                  : "Cancel restore";
+              } else if (reason === "ORDER_CANCELLED_RESTORE") {
+                detail = orderNumber
+                  ? `Manual restore · ${orderNumber}`
+                  : "Manual restore";
+              } else if (rawName.includes(" · ")) {
+                detail = rawName.split(" · ").slice(1).join(" · ");
+              }
               previousQuantity = m.previousQuantity ?? null;
               quantity = m.quantity ?? null;
             } catch {
@@ -82,6 +103,9 @@ export default async function WarehousePage() {
             who: row.user?.name || row.user?.email || "—",
             sku,
             product,
+            detail,
+            reason,
+            orderNumber,
             previousQuantity,
             quantity,
           };

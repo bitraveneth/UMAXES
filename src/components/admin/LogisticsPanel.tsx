@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { AdminBadge, AdminCard } from "@/components/admin/ui";
 import { useAdminI18n } from "@/components/admin/AdminI18n";
@@ -95,7 +95,6 @@ export default function LogisticsPanel({
   shippedQty: number;
 }) {
   const { t, locale } = useAdminI18n();
-  const router = useRouter();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -139,8 +138,8 @@ export default function LogisticsPanel({
     delivered: t("logistics.timelineDelivered"),
   };
 
-  function openOrder(id: string) {
-    router.push(`/admin/logistics/orders/${id}`);
+  function orderHref(id: string) {
+    return `/admin/logistics/orders/${id}`;
   }
 
   return (
@@ -266,6 +265,7 @@ export default function LogisticsPanel({
               <tbody>
                 {filtered.map((order) => {
                   const open = expandedId === order.id;
+                  const href = orderHref(order.id);
                   return (
                     <Fragment key={order.id}>
                       <tr
@@ -277,10 +277,16 @@ export default function LogisticsPanel({
                         onClick={() =>
                           setExpandedId(open ? null : order.id)
                         }
-                        onDoubleClick={() => openOrder(order.id)}
                       >
                         <td className="font-semibold text-[var(--admin-muted)]">
-                          {order.orderNumber}
+                          <Link
+                            href={href}
+                            prefetch
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-inherit hover:text-[var(--admin-brand-700)] hover:underline"
+                          >
+                            {order.orderNumber}
+                          </Link>
                         </td>
                         <td className="font-medium text-[var(--admin-text)]">
                           {order.companyName}
@@ -303,18 +309,16 @@ export default function LogisticsPanel({
                           <DocLinks orderId={order.id} />
                         </td>
                         <td className="text-right">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openOrder(order.id);
-                            }}
+                          <Link
+                            href={href}
+                            prefetch
+                            onClick={(e) => e.stopPropagation()}
                             className="admin-btn admin-btn-primary admin-btn-sm"
                           >
                             {order.hasPacking
                               ? t("logistics.open")
                               : t("logistics.createShipment")}
-                          </button>
+                          </Link>
                         </td>
                       </tr>
                       {open ? (
@@ -329,13 +333,13 @@ export default function LogisticsPanel({
                                 size="sm"
                               />
                               <div className="mt-3 flex justify-end">
-                                <button
-                                  type="button"
-                                  onClick={() => openOrder(order.id)}
+                                <Link
+                                  href={href}
+                                  prefetch
                                   className="admin-btn admin-btn-secondary admin-btn-sm"
                                 >
                                   {t("logistics.openShipment")}
-                                </button>
+                                </Link>
                               </div>
                             </div>
                           </td>
